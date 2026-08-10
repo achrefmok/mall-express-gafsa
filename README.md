@@ -488,16 +488,89 @@ $$);
 
 ## Déploiement
 
+Tout tient dans les offres gratuites : **Vercel Hobby** pour le site, **Supabase
+Free** pour la base. Aucune carte bancaire.
+
+### 1 · Pousser le code
+
 ```bash
-npm run build
+git push -u origin main
 ```
 
-1. Appliquer les migrations et la partie A du seed.
-2. Renseigner les variables d'environnement chez l'hébergeur.
-3. Configurer les URLs de redirection Supabase sur le domaine de production.
-4. Déployer. Sur Vercel, le cron est repris de `vercel.json`.
-5. Créer le premier compte administrateur (voir **Administrateurs**), puis
-   nommer les suivants depuis `/admin/membres`.
+Le dépôt est prêt : `.gitignore` écarte `.env.local`, et aucune clé ne se trouve
+dans l'historique. **Gardez-le privé** — Vercel déploie les dépôts privés sans
+supplément, et un dépôt public expose vos choix d'infrastructure sans bénéfice.
+
+### 2 · Importer dans Vercel
+
+[vercel.com/new](https://vercel.com/new) → *Import Git Repository*. Le framework
+est détecté depuis `vercel.json` ; aucune commande à saisir.
+
+### 3 · Variables d'environnement
+
+À coller dans Vercel → Settings → Environment Variables, pour *Production* et
+*Preview* :
+
+| Variable | Valeur | Exposée au navigateur |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` | oui |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé publique (protégée par RLS) | oui |
+| `SUPABASE_SERVICE_ROLE_KEY` | clé secrète | **non — jamais** |
+| `NEXT_PUBLIC_SITE_URL` | `https://votre-domaine` | oui |
+| `CRON_SECRET` | `openssl rand -hex 32` | non |
+| `NEXT_PUBLIC_CONTACT_EMAIL` / `_PHONE` / `_ADDRESS` | facultatif, affiché sur `/` | oui |
+
+Le préfixe `NEXT_PUBLIC_` n'est pas décoratif : il fait entrer la valeur dans le
+paquet JavaScript envoyé au navigateur. Ne le mettez jamais devant un secret.
+
+### 4 · Reprendre la configuration Supabase sur le domaine réel
+
+Authentication → URL Configuration :
+
+```
+Site URL       https://votre-domaine
+Redirect URLs  https://votre-domaine/**
+```
+
+Sans cela, la connexion Google / Facebook aboutit chez Supabase puis s'arrête :
+le dernier saut vers votre site est refusé.
+
+### 5 · Maintenance planifiée
+
+`vercel.json` déclare une tâche **quotidienne** — c'est le maximum du plan
+Hobby, qui plafonne aussi à deux tâches. La maintenance mérite mieux :
+expiration des bons plans et recalcul des horaires d'ouverture gagnent à tourner
+tous les quarts d'heure. Planifiez-la depuis Supabase, où c'est gratuit et sans
+plafond — voir **Maintenance planifiée** ci-dessus. La tâche Vercel reste un
+filet de sécurité.
+
+### 6 · Avant d'ouvrir aux vrais utilisateurs
+
+```bash
+npm run db:check      # variables, migrations, fournisseurs OAuth, administrateurs
+npm run db:smoke      # les 88 requêtes de l'application, sur la vraie base
+```
+
+- [ ] Migrations 01 → 07 appliquées, **partie A du seed** chargée
+- [ ] **Partie B du seed retirée** — les comptes de démonstration partagent le
+      mot de passe `demo1234`, publié dans ce fichier. Tant qu'ils existent,
+      n'importe qui peut se connecter comme vendeur. Supprimez-les, ou changez
+      leur mot de passe depuis Supabase → Authentication → Users
+- [ ] « Confirm email » décoché (voir **Confirmation d'e-mail**)
+- [ ] Premier administrateur créé, puis mot de passe changé depuis `/profil/reglages`
+- [ ] `CRON_SECRET` renseigné — sans lui, `/api/cron/*` est ouvert à tous
+- [ ] Application Meta / Google en mode **Live**
+
+### Ce qui protège l'application
+
+| Couche | Mécanisme |
+|---|---|
+| Base | RLS **activée et forcée** sur les 32 tables. `orders` et `notifications` n'ont aucune policy d'insertion : on ne peut y écrire que par les fonctions `SECURITY DEFINER`, qui portent leur propre contrôle d'accès |
+| Privilèges | Rôle, statut de boutique et badge « Vérifié » neutralisés par des triggers `guard_*` pour tout appelant non administrateur. Le rôle `admin` ne peut pas être demandé à l'inscription |
+| Session | `getUser()` et non `getSession()` : le jeton est revalidé auprès du serveur d'authentification, jamais lu depuis un cookie que le client pourrait forger |
+| Transport | CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` — voir `next.config.ts`. `frame-src` n'autorise que Facebook et Google |
+| Redirections | Tout `suite=` est vérifié interne avant usage : pas de redirection ouverte |
+| Secrets | La clé `service_role` ne sort jamais du serveur. `npm run db:check` refuse d'afficher la moindre valeur de clé |
 
 ---
 
