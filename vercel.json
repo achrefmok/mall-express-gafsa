@@ -4,7 +4,6 @@
   "regions": ["cdg1"],
   "crons": [
     {
-      "//": "Le plan Hobby n'accepte qu'une exécution par jour et deux tâches au total. Pour la granularité réelle attendue par la maintenance — expiration des bons plans, recalcul des horaires d'ouverture toutes les 15 minutes —, planifiez-la depuis Supabase avec pg_cron : c'est gratuit et sans plafond. Voir README, section « Maintenance planifiée ». Cette tâche quotidienne reste un filet de sécurité si pg_cron n'est pas configuré.",
       "path": "/api/cron/maintenance",
       "schedule": "0 3 * * *"
     }
