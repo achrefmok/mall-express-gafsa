@@ -538,7 +538,9 @@ le dernier saut vers votre site est refusé.
 ### 5 · Maintenance planifiée
 
 `vercel.json` déclare une tâche **quotidienne** — c'est le maximum du plan
-Hobby, qui plafonne aussi à deux tâches. La maintenance mérite mieux :
+Hobby, qui plafonne aussi à deux tâches. Ce fichier n'accepte aucune clé hors
+schéma : pas de `"//"` en guise de commentaire, le build échoue avec
+*« should NOT have additional property »*. Les explications vivent donc ici. La maintenance mérite mieux :
 expiration des bons plans et recalcul des horaires d'ouverture gagnent à tourner
 tous les quarts d'heure. Planifiez-la depuis Supabase, où c'est gratuit et sans
 plafond — voir **Maintenance planifiée** ci-dessus. La tâche Vercel reste un
