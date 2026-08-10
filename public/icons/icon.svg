@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mall Express Gafsa">
+  <defs>
+    <linearGradient id="halo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d4b8f"/>
+      <stop offset="1" stop-color="#241f2e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#halo)"/>
+
+  <!-- Auvent de boutique : trois arches, la silhouette du mall -->
+  <path d="M116 196h280l22 62a38 38 0 0 1-74 10 38 38 0 0 1-73 0 38 38 0 0 1-73 0 38 38 0 0 1-74-10z"
+        fill="#f4f1fa" opacity="0.96"/>
+
+  <!-- Façade -->
+  <path d="M148 316v96a16 16 0 0 0 16 16h184a16 16 0 0 0 16-16v-96"
+        fill="none" stroke="#f4f1fa" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+  <!-- Porte -->
+  <rect x="226" y="342" width="60" height="86" rx="8" fill="#6d4b8f"/>
+
+  <!-- Point « en direct » -->
+  <circle cx="368" cy="152" r="34" fill="#d0455f"/>
+  <circle cx="368" cy="152" r="13" fill="#fff"/>
+</svg>

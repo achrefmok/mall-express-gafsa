@@ -1,0 +1,15 @@
+# Fins de ligne normalisées en LF dans le dépôt, quel que soit le poste.
+# Sans cela, un aller-retour Windows / Linux réécrit des fichiers entiers et
+# noie les vraies modifications dans le diff.
+* text=auto eol=lf
+
+# Fichiers binaires : ne jamais y toucher.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary

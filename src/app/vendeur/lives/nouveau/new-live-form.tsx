@@ -1,0 +1,248 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useI18n } from "@/lib/i18n/provider";
+import { createLive } from "@/app/actions/lives";
+import { cx, formatPrice } from "@/lib/format";
+import { TopBar } from "@/components/shell/top-bar";
+import { Button, Card, Divider } from "@/components/ui/primitives";
+import { MAX_VIEWERS } from "@/lib/live/webrtc";
+import type { LiveSource } from "@/types/database";
+
+const FIELD =
+  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
+const LABEL = "text-[10px] text-[var(--color-muted)]";
+
+/**
+ * Programmation d'un direct. Le choix de la source est le point structurant :
+ * il décide de qui transporte la vidéo, et donc du plafond d'audience.
+ */
+export function NewLiveForm({
+  products,
+  shopApproved,
+}: {
+  products: Array<{ id: string; name: string; price: number; stock: number }>;
+  shopApproved: boolean;
+}) {
+  const { t, locale } = useI18n();
+  const router = useRouter();
+
+  const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
+  const [source, setSource] = useState<LiveSource>("camera");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [hlsUrl, setHlsUrl] = useState("");
+  const [pinnedProductId, setPinnedProductId] = useState<string | null>(null);
+  const [percentOff, setPercentOff] = useState("30");
+  const [offerMinutes, setOfferMinutes] = useState("10");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const sources: Array<{ value: LiveSource; label: string; hint: string }> = [
+    {
+      value: "camera",
+      label: t.live.sourceCamera,
+      hint: `Diffusion directe depuis votre téléphone, jusqu'à ${MAX_VIEWERS} spectateurs simultanés.`,
+    },
+    {
+      value: "facebook",
+      label: t.live.sourceFacebook,
+      hint: "Vous diffusez sur votre page Facebook ; le direct est relayé ici avec vos produits. Audience illimitée.",
+    },
+    {
+      value: "hls",
+      label: t.live.sourceHls,
+      hint: "Flux fourni par un prestataire externe (Mux, Cloudflare Stream…).",
+    },
+  ];
+
+  function onCreate() {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await createLive({
+        title,
+        titleAr,
+        source,
+        facebookUrl,
+        hlsUrl,
+        pinnedProductId: pinnedProductId ?? undefined,
+        percentOff: Number.parseInt(percentOff, 10) || undefined,
+        offerMinutes: Number.parseInt(offerMinutes, 10) || undefined,
+      });
+
+      if (result.ok) router.push(`/vendeur/lives/${result.data.id}`);
+      else setError(result.error);
+    });
+  }
+
+  return (
+    <>
+      <TopBar title={t.vendor.newLive} back="/vendeur/lives" />
+
+      <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
+        {!shopApproved && (
+          <p
+            role="status"
+            className="rounded-[14px] bg-[var(--color-live-tint)] p-3 text-[11px] font-semibold text-[var(--color-live)]"
+          >
+            {t.vendor.pendingBanner} — {t.vendor.pendingBody}
+          </p>
+        )}
+
+        <Card className="flex flex-col gap-[10px] p-3">
+          <label className="flex flex-col gap-1">
+            <span className={LABEL}>{t.vendor.liveTitle}</span>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className={FIELD} />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className={LABEL}>العنوان بالعربية</span>
+            <input
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              dir="rtl"
+              lang="ar"
+              className={FIELD}
+            />
+          </label>
+        </Card>
+
+        {/* ─── Source vidéo ──────────────────────────────────────────── */}
+        <Card className="flex flex-col gap-2 p-3">
+          <span className={LABEL}>{t.vendor.liveSource}</span>
+
+          <div role="radiogroup" aria-label={t.vendor.liveSource} className="flex flex-col gap-2">
+            {sources.map((option) => {
+              const active = source === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setSource(option.value)}
+                  className={cx(
+                    "flex flex-col gap-1 rounded-[14px] p-[10px] text-start transition-colors",
+                    active
+                      ? "bg-[var(--color-brand)] text-white"
+                      : "border border-[var(--color-outline)]",
+                  )}
+                >
+                  <span className="text-[11.5px] font-bold">{option.label}</span>
+                  <span
+                    className={cx(
+                      "text-[10px] leading-[1.4]",
+                      active ? "opacity-85" : "text-[var(--color-muted)]",
+                    )}
+                  >
+                    {option.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {source === "facebook" && (
+            <label className="mt-1 flex flex-col gap-1">
+              <span className={LABEL}>{t.vendor.facebookUrl}</span>
+              <input
+                value={facebookUrl}
+                onChange={(e) => setFacebookUrl(e.target.value)}
+                type="url"
+                inputMode="url"
+                placeholder="https://www.facebook.com/…/videos/…"
+                className={FIELD}
+              />
+              <span className="text-[9.5px] text-[var(--color-muted)]">
+                {t.vendor.facebookUrlHint}
+              </span>
+            </label>
+          )}
+
+          {source === "hls" && (
+            <label className="mt-1 flex flex-col gap-1">
+              <span className={LABEL}>{t.vendor.hlsUrl}</span>
+              <input
+                value={hlsUrl}
+                onChange={(e) => setHlsUrl(e.target.value)}
+                type="url"
+                inputMode="url"
+                placeholder="https://…/index.m3u8"
+                className={FIELD}
+              />
+            </label>
+          )}
+        </Card>
+
+        {/* ─── Produit épinglé et offre ──────────────────────────────── */}
+        <Card className="flex flex-col gap-2 p-3">
+          <span className={LABEL}>{t.vendor.pinProduct}</span>
+
+          {products.length === 0 ? (
+            <p className="text-[10.5px] text-[var(--color-muted)]">{t.common.empty}</p>
+          ) : (
+            <div className="no-sb flex max-h-[160px] flex-col gap-1 overflow-y-auto">
+              {products.map((product) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() =>
+                    setPinnedProductId(product.id === pinnedProductId ? null : product.id)
+                  }
+                  className={cx(
+                    "flex items-center gap-2 rounded-[12px] px-2 py-2 text-start",
+                    pinnedProductId === product.id
+                      ? "bg-[var(--color-brand)] text-white"
+                      : "hover:bg-[var(--color-brand-tint)]",
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold">
+                    {product.name}
+                  </span>
+                  <span className="flex-none text-[11px] font-bold">
+                    {formatPrice(product.price, locale)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Divider />
+
+          <div className="flex gap-2">
+            <label className="flex flex-1 flex-col gap-1">
+              <span className={LABEL}>{t.vendor.livediscount}</span>
+              <input
+                value={percentOff}
+                onChange={(e) => setPercentOff(e.target.value)}
+                inputMode="numeric"
+                className={FIELD}
+              />
+            </label>
+            <label className="flex flex-1 flex-col gap-1">
+              <span className={LABEL}>{t.vendor.offerDuration}</span>
+              <input
+                value={offerMinutes}
+                onChange={(e) => setOfferMinutes(e.target.value)}
+                inputMode="numeric"
+                className={FIELD}
+              />
+            </label>
+          </div>
+        </Card>
+
+        {error && (
+          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+            {error}
+          </p>
+        )}
+
+        <Button block onClick={onCreate} disabled={pending || !title.trim() || !shopApproved}>
+          {pending ? t.common.loading : t.vendor.schedule}
+        </Button>
+      </div>
+    </>
+  );
+}
