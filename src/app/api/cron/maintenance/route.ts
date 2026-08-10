@@ -1,0 +1,65 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { createAdminClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+/**
+ * Tâches périodiques : expiration des bons plans et recalcul de l'état
+ * d'ouverture des boutiques.
+ *
+ * Protégée par CRON_SECRET, comparé en temps constant : sans cela, la route
+ * serait un levier de charge accessible à n'importe qui.
+ *
+ * Cadence conseillée : toutes les 15 minutes.
+ *   vercel.json → { "crons": [{ "path": "/api/cron/maintenance", "schedule": "*​/15 * * * *" }] }
+ *
+ * Alternative sans hébergeur : activer pg_cron sur Supabase et planifier
+ * directement `select public.expire_stale_deals();`.
+ */
+export async function GET(request: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "CRON_SECRET non configuré" }, { status: 503 });
+  }
+
+  const header = request.headers.get("authorization") ?? "";
+  const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
+
+  if (!timingSafeEqual(provided, secret)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const supabase = createAdminClient();
+
+    const [expired, refreshed] = await Promise.all([
+      supabase.rpc("expire_stale_deals"),
+      supabase.rpc("refresh_shops_open_state"),
+    ]);
+
+    if (expired.error) throw new Error(expired.error.message);
+    if (refreshed.error) throw new Error(refreshed.error.message);
+
+    return NextResponse.json({
+      ok: true,
+      expiredDeals: expired.data ?? 0,
+      refreshedShops: refreshed.data ?? 0,
+      at: new Date().toISOString(),
+    });
+  } catch (cause) {
+    console.error("Maintenance échouée", cause);
+    return NextResponse.json({ error: "Maintenance échouée" }, { status: 500 });
+  }
+}
+
+/** Comparaison à durée constante : ne fuit pas la longueur du préfixe correct. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}

@@ -1,0 +1,183 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
+import { getT } from "@/lib/i18n/server";
+import { format } from "@/lib/i18n/dictionaries";
+import { fullName, monogram } from "@/lib/format";
+import { TopBar } from "@/components/shell/top-bar";
+import { Avatar, Card } from "@/components/ui/primitives";
+import { ChevronRightIcon, GearIcon } from "@/components/ui/icons";
+import { InviteButton, SignOutButton } from "./profile-client";
+
+export const metadata: Metadata = {
+  title: "Mon compte",
+  robots: { index: false, follow: false },
+};
+
+export const dynamic = "force-dynamic";
+
+/** Paliers de fidélité. Le seuil courant pilote la barre de progression. */
+const TIERS = [
+  { key: "tierBronze", threshold: 0, next: 200 },
+  { key: "tierSilver", threshold: 200, next: 500 },
+  { key: "tierGold", threshold: 500, next: null },
+] as const;
+
+export default async function ProfilePage() {
+  const profile = await getProfile();
+  if (!profile) redirect("/connexion?suite=/profil");
+
+  const { t } = await getT();
+  const supabase = await createClient();
+
+  const [orders, favorites, reviews] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("status", "delivered"),
+    supabase.from("favorites").select("product_id", { count: "exact", head: true }).eq("user_id", profile.id),
+    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", profile.id),
+  ]);
+
+  const points = profile.loyalty_points;
+  const tierIndex = Math.max(
+    0,
+    TIERS.findLastIndex((tier) => points >= tier.threshold),
+  );
+  const tier = TIERS[tierIndex];
+  const nextTier = TIERS[tierIndex + 1] ?? null;
+
+  const progress = tier.next
+    ? Math.min(100, Math.round(((points - tier.threshold) / (tier.next - tier.threshold)) * 100))
+    : 100;
+
+  const rows = [
+    { href: "/commandes", label: t.account.myOrders, monogram: "CM" },
+    { href: "/profil/favoris", label: t.account.favoriteShops, monogram: "FV" },
+    { href: "/messages", label: t.account.messages, monogram: "MS" },
+    { href: "/profil/demarches", label: t.account.myProcedures, monogram: "SC" },
+    // Seul point d'entrée vers la présentation depuis un téléphone : la barre
+    // de bureau n'y est pas affichée.
+    { href: "/", label: "Le projet, l'équipe, le contact", monogram: "PR" },
+  ];
+
+  return (
+    <>
+      <TopBar
+        title={t.account.title}
+        action={
+          <Link href="/profil/reglages" aria-label={t.nav.settings} className="text-[var(--color-ink)]">
+            <GearIcon />
+          </Link>
+        }
+      />
+
+      <div className="flex flex-none flex-col items-center gap-2 px-4 py-[18px]">
+        <Avatar
+          src={profile.avatar_url}
+          initials={monogram(profile.first_name, profile.last_name)}
+          size={74}
+          className="bg-[var(--color-ink)]"
+        />
+        <p className="text-[18px] font-semibold text-[var(--color-ink)]">{fullName(profile) || "—"}</p>
+        <p className="text-[11px] text-[var(--color-muted)]">{profile.city ?? "Gafsa"}, Tunisie</p>
+
+        <div className="mt-[6px] flex gap-6 text-[11px] text-[var(--color-muted)]">
+          <span>
+            <b className="text-[var(--color-ink)]">{orders.count ?? 0}</b> {t.account.purchases}
+          </span>
+          <span>
+            <b className="text-[var(--color-ink)]">{favorites.count ?? 0}</b> {t.account.favorites}
+          </span>
+          <span>
+            <b className="text-[var(--color-ink)]">{reviews.count ?? 0}</b> {t.account.reviewsCount}
+          </span>
+        </div>
+      </div>
+
+      <div className="col-reading no-sb flex flex-1 flex-col gap-2 overflow-y-auto px-4 pt-[6px] pb-[14px]">
+        {/* ─── Carte de fidélité ──────────────────────────────────────── */}
+        <div className="flex flex-none flex-col gap-2 rounded-[18px] bg-[image:var(--gradient-brand)] p-3 text-white">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[11.5px] font-bold">{t.account.loyaltyCard}</p>
+            <p className="text-[10.5px] opacity-80">{t.account[tier.key]}</p>
+          </div>
+          <div className="h-[5px] overflow-hidden rounded-[3px] bg-white/25">
+            <div className="h-full bg-white" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-[10px] opacity-85">
+            {nextTier
+              ? format(t.account.pointsProgress, {
+                  current: points,
+                  target: tier.next ?? 0,
+                  left: (tier.next ?? points) - points,
+                  next: t.account[nextTier.key],
+                })
+              : format(t.account.pointsMax, { current: points })}
+          </p>
+        </div>
+
+        {/* ─── Parrainage ─────────────────────────────────────────────── */}
+        <Card className="flex flex-none items-center gap-[10px] p-3">
+          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+            +2
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.account.referTitle}</p>
+            <p className="text-[10.5px] text-[var(--color-muted)]">{t.account.referBody}</p>
+          </div>
+          <InviteButton code={profile.referral_code ?? ""} />
+        </Card>
+
+        {/* ─── Raccourcis d'espace ────────────────────────────────────── */}
+        {profile.role === "vendor" && (
+          <Link
+            href="/vendeur"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-brand)] p-3 text-white"
+          >
+            <span className="flex-1 text-[12.5px] font-bold">{t.account.vendorSpace}</span>
+            <ChevronRightIcon size={14} />
+          </Link>
+        )}
+        {profile.role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-ink)] p-3 text-white"
+          >
+            <span className="flex-1 text-[12.5px] font-bold">{t.account.adminSpace}</span>
+            <ChevronRightIcon size={14} />
+          </Link>
+        )}
+        {profile.role === "client" && (
+          <Link
+            href="/inscription?role=vendeur"
+            className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-outline)] p-3 text-[var(--color-ink)]"
+          >
+            <span className="flex-1 text-[12.5px] font-semibold">{t.account.becomeVendor}</span>
+            <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
+          </Link>
+        )}
+
+        {/* ─── Lignes de navigation ───────────────────────────────────── */}
+        {rows.map((row) => (
+          <Link
+            key={row.href}
+            href={row.href}
+            className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
+          >
+            <span className="w-6 flex-none text-[16px] font-semibold tracking-[0.5px] text-[var(--color-brand)]">
+              {row.monogram}
+            </span>
+            <span className="flex-1 text-[12.5px] font-semibold text-[var(--color-ink)]">{row.label}</span>
+            <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
+          </Link>
+        ))}
+
+        <SignOutButton />
+      </div>
+    </>
+  );
+}

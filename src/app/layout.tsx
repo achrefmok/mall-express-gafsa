@@ -1,0 +1,98 @@
+import type { Metadata, Viewport } from "next";
+import { Cairo } from "next/font/google";
+import { getPreferences } from "@/lib/i18n/server";
+import { I18nProvider } from "@/lib/i18n/provider";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { ServiceWorkerBridge } from "@/components/pwa/service-worker-bridge";
+import "./globals.css";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+/**
+ * Cairo couvre le latin et l'arabe : une seule famille pour les deux
+ * directions, comme spécifié dans le handoff. Servie depuis notre domaine
+ * (next/font), donc pas d'aller-retour vers Google au premier rendu — ce qui
+ * compte sur les connexions mobiles visées.
+ */
+const cairo = Cairo({
+  subsets: ["latin", "arabic"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-cairo",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Mall Express Gafsa — boutiques, marketplace et services de Gafsa",
+    template: "%s · Mall Express Gafsa",
+  },
+  description:
+    "Les boutiques du mall de Gafsa en ligne : marketplace, ventes en direct, bons plans partagés par les habitants et services citoyens. En français et en arabe.",
+  applicationName: "Mall Express Gafsa",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Mall Express",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
+  openGraph: {
+    type: "website",
+    locale: "fr_TN",
+    alternateLocale: "ar_TN",
+    siteName: "Mall Express Gafsa",
+    url: siteUrl,
+    title: "Mall Express Gafsa",
+    description:
+      "Marketplace, ventes en direct, bons plans et services citoyens — pour Gafsa.",
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5, // jamais 1 : bloquer le zoom casse l'accessibilité
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f1fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#241f2e" },
+  ],
+  viewportFit: "cover", // permet l'usage de env(safe-area-inset-*)
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const prefs = await getPreferences();
+  const t = getDictionary(prefs.locale);
+
+  return (
+    <html
+      lang={prefs.locale}
+      dir={prefs.dir}
+      data-text-scale={prefs.textScale}
+      data-simplified={String(prefs.simplified)}
+      className={cairo.variable}
+      suppressHydrationWarning
+    >
+      <head>
+        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+      </head>
+      <body>
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-3 focus:top-3 focus:z-50 focus:rounded-[12px] focus:bg-[var(--color-brand)] focus:px-4 focus:py-2 focus:text-[12px] focus:font-bold focus:text-white"
+        >
+          {t.a11y.skipToContent}
+        </a>
+        {/* ServiceWorkerBridge lit le dictionnaire (bandeau hors ligne,
+            invitation à l'installation) : il doit vivre sous le fournisseur. */}
+        <I18nProvider initial={prefs}>
+          {children}
+          <ServiceWorkerBridge />
+        </I18nProvider>
+      </body>
+    </html>
+  );
+}

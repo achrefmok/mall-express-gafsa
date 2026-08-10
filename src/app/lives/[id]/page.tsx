@@ -1,0 +1,87 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
+import { LiveRoom } from "@/components/live/live-room";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("lives")
+    .select("title, shop:shops(name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  return {
+    title: data ? `${data.title} — ${data.shop?.name}` : "Direct",
+    robots: { index: false, follow: true }, // un direct est éphémère
+  };
+}
+
+export default async function LivePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const [{ data: live }, profile] = await Promise.all([
+    supabase
+      .from("lives")
+      .select(
+        `id, title, status, source, facebook_url, hls_url, live_percent_off, offer_ends_at,
+         viewers_count, likes_count, purchases_count, pinned_product_id,
+         shop:shops!inner(id, name, slug)`,
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    getProfile(),
+  ]);
+
+  if (!live) notFound();
+
+  const [pinned, comments, liked] = await Promise.all([
+    live.pinned_product_id
+      ? supabase
+          .from("products")
+          .select("id, name, price, images, stock")
+          .eq("id", live.pinned_product_id)
+          .maybeSingle()
+          .then(({ data }) => data)
+      : Promise.resolve(null),
+
+    supabase
+      .from("live_comments")
+      .select("id, body, created_at, author:profiles(first_name, last_name)")
+      .eq("live_id", id)
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }) => (data ?? []).reverse()),
+
+    profile
+      ? supabase
+          .from("live_likes")
+          .select("live_id")
+          .match({ live_id: id, user_id: profile.id })
+          .maybeSingle()
+          .then(({ data }) => Boolean(data))
+      : Promise.resolve(false),
+  ]);
+
+  return (
+    <LiveRoom
+      live={live}
+      pinnedProduct={pinned}
+      initialComments={comments}
+      viewerId={profile?.id ?? null}
+      initiallyLiked={liked}
+      contactPhone={profile?.phone ?? ""}
+    />
+  );
+}
