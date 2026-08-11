@@ -121,8 +121,37 @@ const app = await (async () => {
 
   const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   const body = await response.json().catch(() => null);
+
   if (!response.ok) {
-    warn(`Lecture de l'application impossible : ${body?.error?.message ?? response.status}`);
+    const message = body?.error?.message ?? `HTTP ${response.status}`;
+
+    /*
+      « API access blocked » avec un jeton d'application valide : Meta a
+      restreint ou désactivé l'application. Le jeton continue d'être délivré,
+      mais toute lecture est refusée — et côté visiteur, le dialogue affiche
+      « Application inactive ». Aucun réglage du code n'y change quoi que ce
+      soit ; la cause et le recours sont dans le tableau de bord Meta.
+    */
+    if (/API access blocked|application (has been )?(disabled|restricted)/i.test(message)) {
+      bad("Meta a restreint ou désactivé cette application");
+      info(`Réponse de Facebook : « ${message} »`);
+      console.log(`
+    ${C.bold}Ce que voit un visiteur :${C.reset} « Application inactive — cette application
+    n'est pas accessible pour le moment ». Rien dans le code ne peut le lever.
+
+    ${C.bold}Où regarder :${C.reset} ${C.cyan}developers.facebook.com/apps/${appId}${C.reset}
+    Le bandeau en haut du tableau de bord donne le motif et le recours.
+    Causes usuelles :
+      · l'application est en mode « Development » et le compte qui se connecte
+        n'y a aucun rôle — ajoutez-le en testeur, ou passez en « Live » ;
+      · des informations obligatoires manquent — politique de confidentialité,
+        catégorie, e-mail de contact ;
+      · de nouvelles conditions Meta sont à accepter ;
+      · vérification d'entreprise demandée pour les permissions de page.`);
+      return null;
+    }
+
+    warn(`Lecture de l'application impossible : ${message}`);
     return null;
   }
   return body;

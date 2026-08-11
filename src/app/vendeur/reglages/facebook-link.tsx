@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   disconnectFacebookPage,
@@ -46,9 +46,19 @@ export function FacebookLink({
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; message: string } | null>(null);
 
-  // Messages posés par /api/facebook/callback au retour de Facebook.
-  const outcome = params.get("facebook");
-  const reason = params.get("motif");
+  /*
+    Résultat posé dans l'URL par /api/facebook/callback — seul moyen pour une
+    route d'API de parler à un écran.
+
+    Capturé au premier rendu, et non relu à chaque fois : l'effet ci-dessous
+    nettoie l'URL, et un message dérivé des paramètres disparaîtrait aussitôt.
+  */
+  const [arrival] = useState(() => ({
+    outcome: params.get("facebook"),
+    reason: params.get("motif"),
+  }));
+
+  const { outcome, reason } = arrival;
 
   const banner =
     feedback ??
@@ -70,6 +80,28 @@ export function FacebookLink({
   // aiguillage — d'où un encart avec les deux chemins possibles, plutôt
   // qu'une ligne rouge sans issue.
   const noPage = outcome === "sans-page";
+
+  /*
+    Le résultat reste dans l'URL après lecture : un rechargement, un retour
+    arrière ou un lien partagé ressuscitent alors un message périmé — on a vu
+    un ancien « aucune page rattachée » réapparaître après une tentative
+    entièrement différente.
+
+    On nettoie donc l'URL, une seule fois. `replace` et non `push` : la
+    bascule ne doit pas s'empiler dans l'historique du navigateur.
+  */
+  useEffect(() => {
+    if (!outcome) return;
+
+    const next = new URLSearchParams(window.location.search);
+    next.delete("facebook");
+    next.delete("motif");
+
+    const query = next.toString();
+    router.replace(`/vendeur/reglages${query ? `?${query}` : ""}`, { scroll: false });
+    // `outcome` vient d'un état figé au premier rendu : cet effet ne tourne
+    // qu'une fois, et ne réagit pas au changement d'URL qu'il provoque.
+  }, [outcome, router]);
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>, success: string) {
     setFeedback(null);
