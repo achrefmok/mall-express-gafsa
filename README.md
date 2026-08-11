@@ -679,7 +679,25 @@ tous les quarts d'heure. Planifiez-la depuis Supabase, où c'est gratuit et sans
 plafond — voir **Maintenance planifiée** ci-dessus. La tâche Vercel reste un
 filet de sécurité.
 
-### 6 · Avant d'ouvrir aux vrais utilisateurs
+### 6 · Contrôler le site en ligne
+
+```bash
+npm run prod:check -- https://votre-domaine
+```
+
+Vérifie ce qui ne peut pas l'être en local : que le déploiement porte bien le
+code attendu, que les en-têtes de sécurité survivent à l'hébergeur, que le
+manifeste ouvre `/accueil`, et que les routes protégées refusent bien un appel
+sans jeton. Il détecte aussi le cas où une adresse est **verrouillée par la
+Deployment Protection** de Vercel — invisible pour vos visiteurs comme pour Meta.
+
+> **Adresse de déploiement ≠ production.** Une URL contenant un identifiant
+> (`…-62y6-66omwy7dn-achref1.vercel.app`) est une adresse de déploiement,
+> protégée par défaut : elle répond 302 vers `vercel.com/sso-api` pour tout le
+> monde sauf vous. Pour publier : Deployments → ⋯ → « Promote to Production »,
+> ou `vercel --prod`.
+
+### 7 · Avant d'ouvrir aux vrais utilisateurs
 
 ```bash
 npm run db:check      # variables, migrations, fournisseurs OAuth, administrateurs
