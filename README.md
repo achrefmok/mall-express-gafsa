@@ -113,12 +113,14 @@ SQL de Supabase, **dans l'ordre des noms**.
 | `…000500_storage_and_realtime.sql` | Buckets, policies de stockage, publication Realtime |
 | `…000600_fix_privilege_guards.sql` | Les gardes `guard_*` ne bloquent plus l'exploitant |
 | `…000700_admin_bootstrap.sql` | Premier administrateur, gestion de l'équipe |
+| `…000800_facebook_live_sync.sql` | Relais automatique des directs Facebook |
 
-Les deux dernières doivent souvent être appliquées à la main, sur un projet
-déjà en ligne. Pour ne faire qu'un seul collage :
+Les dernières doivent souvent être appliquées à la main, sur un projet déjà
+en ligne. Pour ne faire qu'un seul collage :
 
 ```bash
-npm run db:sql        # réunit 06 + 07 et les met dans le presse-papiers
+npm run db:sql                       # la dernière à appliquer
+npm run db:sql -- 000600 000700 000800   # ou plusieurs à la fois
 ```
 
 Puis Supabase → SQL Editor → New query → coller → Run, et `npm run db:check`.
@@ -449,6 +451,32 @@ select cron.schedule('meg-facebook', '*/15 * * * *', $$
   );
 $$);
 ```
+
+#### Déboguer la liaison
+
+```bash
+npm run fb:debug                              # avec l'URL locale
+npm run fb:debug -- https://votre-domaine     # avec celle de production
+```
+
+Vérifie ce qui est vérifiable, et le dit quand ça ne l'est pas :
+
+- l'App ID a la bonne forme, et **le couple App ID / secret est accepté par
+  Facebook** — un jeton d'application est demandé pour le prouver ;
+- le nom de l'application, sa politique de confidentialité (exigée pour le mode
+  Live) et ses domaines déclarés ;
+- la chaîne de permissions exacte que le serveur va envoyer ;
+- l'URI de redirection construite à l'exécution — elle diffère entre le poste
+  de développement et le site en ligne, **les deux doivent être déclarées** chez
+  Meta ;
+- enfin l'URL du dialogue, à ouvrir dans un navigateur.
+
+> **Ce qu'un terminal ne peut pas trancher.** Meta diffère ses refus après
+> authentification : il rend sa page de connexion sans se prononcer, accepte même
+> une URI de redirection jamais déclarée, et ne montre « Invalid Scopes » qu'aux
+> administrateurs de l'application. Une absence de refus dans le diagnostic ne
+> prouve donc rien — seul un refus est une information. C'est pourquoi le script
+> finit par vous donner l'URL à ouvrir vous-même.
 
 #### Pourquoi pas le webhook par défaut
 
