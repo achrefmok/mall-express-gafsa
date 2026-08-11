@@ -140,6 +140,81 @@ export async function createLive(input: {
 }
 
 /**
+ * Crée un direct Facebook et le passe à l'antenne d'un seul geste.
+ *
+ * Sert le partage depuis le système : le commerçant diffuse sur Facebook,
+ * touche « Partager », choisit Mall Express — et le direct est en ligne ici,
+ * avec sa couche commerce. Rien à saisir.
+ *
+ * Le produit épinglé et la remise sont reportés du direct précédent : c'est
+ * presque toujours la même boutique qui vend la même chose, et ce sont deux
+ * champs de moins à remplir dans l'urgence d'une diffusion qui a commencé.
+ */
+export async function relayFacebookLive(input: { url: string; title?: string }) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+
+  if (shop.status !== "approved") {
+    return fail("Votre boutique doit être approuvée avant de diffuser");
+  }
+
+  const checked = normalizeFacebookLiveUrl(input.url);
+  if (!checked.ok) return fail(checked.error);
+
+  // Déjà relayé — on y renvoie au lieu d'ouvrir un doublon.
+  const { data: existing } = await supabase
+    .from("lives")
+    .select("id")
+    .eq("shop_id", shop.id)
+    .eq("facebook_url", checked.url)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.rpc("start_live", { target_live: existing.id, peer: null });
+    revalidatePath("/lives");
+    return ok({ id: existing.id, reused: true });
+  }
+
+  const { data: previous } = await supabase
+    .from("lives")
+    .select("pinned_product_id, live_percent_off")
+    .eq("shop_id", shop.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: created, error: insertError } = await supabase
+    .from("lives")
+    .insert({
+      shop_id: shop.id,
+      title: input.title?.trim() || `Direct de ${shop.name}`,
+      source: "facebook",
+      facebook_url: checked.url,
+      pinned_product_id: previous?.pinned_product_id ?? null,
+      live_percent_off: previous?.live_percent_off ?? null,
+      scheduled_at: new Date().toISOString(),
+      status: "scheduled",
+    })
+    .select("id")
+    .single();
+
+  if (insertError) return fail(readableError(insertError));
+
+  const { error: startError } = await supabase.rpc("start_live", {
+    target_live: created.id,
+    peer: null,
+  });
+
+  if (startError) return fail(readableError(startError));
+
+  revalidatePath("/lives");
+  revalidatePath("/accueil");
+  revalidatePath("/vendeur/lives");
+
+  return ok({ id: created.id, reused: false });
+}
+
+/**
  * Passe le direct à l'antenne. `peerId` n'est transmis qu'en source caméra :
  * c'est l'identifiant sur lequel les spectateurs adressent leur offre WebRTC.
  */

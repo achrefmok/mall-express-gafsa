@@ -472,6 +472,32 @@ Ce n'est pas une impasse, et l'écran le dit — il propose les deux chemins :
 retenue. Rare pour une boutique de quartier, mais c'est un pari — changer de page
 demande aujourd'hui de refaire la liaison.
 
+#### Sans coller de lien, depuis un profil personnel
+
+La Graph API n'expose l'edge `live_videos` que sur une **page**. Pour un profil,
+la permission qui l'ouvrait — `publish_video` — n'est plus délivrée aux nouvelles
+applications : la détection automatique y est donc impossible, et gratter les
+pages de Facebook casserait à la première refonte de leur HTML.
+
+Le collage, lui, se supprime — par deux mécanismes standards.
+
+**Partage système** — Android, Chrome ou Edge, application installée. Le
+manifeste déclare `share_target` : Mall Express apparaît dans la feuille
+« Partager » du téléphone. Le commerçant lance son direct sur Facebook, touche
+**Partager → Mall Express**, et
+[`/vendeur/lives/partage`](src/app/vendeur/lives/partage/page.tsx) met le direct
+en ligne d'un bouton. Rien à copier.
+
+Facebook ne place pas l'adresse au même endroit selon les cas — tantôt dans
+`url`, tantôt noyée dans le texte partagé. Les deux sont fouillés. Le produit
+épinglé et la remise du direct précédent sont reportés : deux champs de moins à
+remplir alors que la diffusion a déjà commencé.
+
+**Coller le lien copié** — partout ailleurs, iPhone compris. Safari iOS
+n'implémente pas les cibles de partage ; l'écran de diffusion offre donc un
+bouton qui lit le presse-papiers, soit un geste au lieu d'un appui long suivi
+d'un « Coller ».
+
 #### Déboguer la liaison
 
 ```bash

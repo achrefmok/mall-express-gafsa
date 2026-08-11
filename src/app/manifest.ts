@@ -56,5 +56,34 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
     ],
+
+    /*
+      Cible de partage.
+
+      Rend l'application choisissable dans la feuille « Partager » du système.
+      Un commerçant qui diffuse depuis son profil Facebook — cas où la Graph API
+      n'expose rien — touche « Partager » sur sa vidéo, choisit Mall Express, et
+      le lien arrive ici sans qu'il ait à le copier.
+
+      Pris en charge par Chrome et Edge sur Android, une fois l'application
+      installée. Safari iOS ne l'implémente pas : là-bas, le bouton
+      « Coller le lien copié » de l'écran de diffusion fait le même travail.
+
+      Absent du type Manifest de Next, qui suit une version plus ancienne de la
+      spécification — d'où l'élargissement ci-dessous.
+    */
+    share_target: {
+      action: "/vendeur/lives/partage",
+      method: "GET",
+      enctype: "application/x-www-form-urlencoded",
+      params: { title: "titre", text: "texte", url: "lien" },
+    },
+  } as MetadataRoute.Manifest & {
+    share_target: {
+      action: string;
+      method: string;
+      enctype: string;
+      params: Record<string, string>;
+    };
   };
 }

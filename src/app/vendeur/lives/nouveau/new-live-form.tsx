@@ -147,16 +147,51 @@ export function NewLiveForm({
           {source === "facebook" && (
             <label className="mt-1 flex flex-col gap-1">
               <span className={LABEL}>{t.vendor.facebookUrl}</span>
-              <input
-                value={facebookUrl}
-                onChange={(e) => setFacebookUrl(e.target.value)}
-                type="url"
-                inputMode="url"
-                placeholder="https://www.facebook.com/…/videos/…"
-                className={FIELD}
-              />
-              <span className="text-[9.5px] text-[var(--color-muted)]">
+
+              <span className="flex gap-2">
+                <input
+                  value={facebookUrl}
+                  onChange={(e) => setFacebookUrl(e.target.value)}
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://www.facebook.com/…/videos/…"
+                  className={cx(FIELD, "min-w-0 flex-1")}
+                />
+
+                {/*
+                  Un geste au lieu d'un appui long suivi d'un « Coller ».
+                  Le commerçant vient de toucher « Copier le lien » sur
+                  Facebook : le presse-papiers contient déjà ce qu'il faut.
+
+                  `readText` exige un geste de l'utilisateur et n'existe pas
+                  partout — d'où le repli silencieux sur la saisie manuelle,
+                  le champ restant à côté.
+                */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const pasted = await navigator.clipboard?.readText();
+                      if (pasted?.trim()) setFacebookUrl(pasted.trim());
+                    } catch {
+                      // Refusé ou indisponible : le champ reste utilisable.
+                    }
+                  }}
+                  className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-white/70 px-3 text-[10.5px] font-bold whitespace-nowrap text-[var(--color-brand)]"
+                >
+                  Coller le lien
+                </button>
+              </span>
+
+              <span className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
                 {t.vendor.facebookUrlHint}
+              </span>
+
+              <span className="mt-1 rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[9.5px] leading-[1.5] text-[var(--color-ink)]">
+                <strong>Plus rapide, sur Android :</strong> installez
+                l&apos;application, puis touchez « Partager » sur votre vidéo
+                Facebook et choisissez Mall Express. Le direct se met en ligne
+                sans que vous ayez à copier quoi que ce soit.
               </span>
             </label>
           )}
