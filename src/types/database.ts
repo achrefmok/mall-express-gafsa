@@ -377,6 +377,8 @@ export interface Database {
           status: LiveStatus;
           source: LiveSource;
           facebook_url: string | null;
+          /** Identifiant de la vidéo chez Facebook, pour ne pas relayer deux fois. */
+          facebook_video_id: string | null;
           hls_url: string | null;
           broadcaster_peer_id: string | null;
           pinned_product_id: string | null;
@@ -429,6 +431,46 @@ export interface Database {
           FK<"live_likes_live_id_fkey", ["live_id"], "lives">,
           FK<"live_likes_user_id_fkey", ["user_id"], "profiles">,
         ];
+      };
+
+      /* ─── shop_facebook_pages ────────────────────────────────────────
+         Lien boutique ↔ page Facebook, jeton d'accès compris.
+         Aucune policy pour `anon` ni `authenticated` : seule la clé secrète
+         y accède, côté serveur. L'interface vendeur lit l'état par
+         `facebook_page_status()`, qui ne renvoie pas le jeton. */
+      shop_facebook_pages: {
+        Row: {
+          shop_id: string;
+          page_id: string;
+          page_name: string;
+          page_token: string;
+          is_subscribed: boolean;
+          connected_at: string;
+          last_checked_at: string | null;
+          last_error: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          shop_id: string;
+          page_id: string;
+          page_name: string;
+          page_token: string;
+          is_subscribed?: boolean;
+          connected_at?: string;
+          last_checked_at?: string | null;
+          last_error?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          page_id: string;
+          page_name: string;
+          page_token: string;
+          is_subscribed: boolean;
+          last_checked_at: string | null;
+          last_error: string | null;
+          updated_at: string;
+        }>;
+        Relationships: [FK<"shop_facebook_pages_shop_id_fkey", ["shop_id"], "shops">];
       };
 
       /* ─── deals ──────────────────────────────────────────────────── */
@@ -808,6 +850,26 @@ export interface Database {
         }>;
       };
       grant_admin_by_email: { Args: { target_email: string }; Returns: string };
+      facebook_page_status: {
+        Args: { target_shop: string };
+        Returns: Array<{
+          page_name: string;
+          is_subscribed: boolean;
+          connected_at: string;
+          last_checked_at: string | null;
+          last_error: string | null;
+        }>;
+      };
+      sync_facebook_live: {
+        Args: {
+          target_shop: string;
+          video_id: string;
+          permalink: string;
+          video_title: string;
+          live_now: boolean;
+        };
+        Returns: string | null;
+      };
       set_member_role: { Args: { target: string; new_role: UserRole }; Returns: undefined };
       my_shop_id: { Args: Record<PropertyKey, never>; Returns: string | null };
       owns_shop: { Args: { target_shop_id: string }; Returns: boolean };

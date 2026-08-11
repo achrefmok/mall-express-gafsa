@@ -33,7 +33,9 @@ function walk(dir, visit) {
 
 const routes = [];
 walk(appDir, (path, name) => {
-  if (name !== "page.tsx") return;
+  // `route.ts` autant que `page.tsx` : un formulaire ou un lien peut viser un
+  // gestionnaire de route — /api/facebook/connect ouvre le dialogue Facebook.
+  if (name !== "page.tsx" && name !== "route.ts") return;
 
   const segments = relative(appDir, dirname(path))
     .split(/[\\/]/)

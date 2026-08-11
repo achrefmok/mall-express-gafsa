@@ -446,6 +446,23 @@ if (has07 === null) {
   info("dans l'éditeur SQL de Supabase, APRÈS la 06.");
 }
 
+// La migration 08 apporte le relais automatique des directs Facebook.
+const has08 = await hasFunction("sync_facebook_live", JSON.stringify({
+  target_shop: "00000000-0000-0000-0000-000000000000",
+  video_id: "", permalink: "", video_title: "", live_now: false,
+}));
+
+if (has08 === null) {
+  warn("Vérification du relais Facebook impossible");
+} else if (has08) {
+  ok("08 · Relais automatique des directs Facebook disponible");
+} else {
+  warn("Migration 20260811000800 non appliquée");
+  info("Sans elle, une boutique ne peut pas relier sa page Facebook :");
+  info("le relais reste manuel (coller le lien du direct).");
+  info("npm run db:sql -- 000800");
+}
+
 /* ─── 4 · Données de référence ───────────────────────────────────────── */
 
 title("4 · Données de référence");

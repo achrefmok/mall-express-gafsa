@@ -401,7 +401,59 @@ Pour une grande audience en caméra directe sans changer l'interface : brancher
 un SFU (LiveKit) et alimenter la source `hls`. Le lecteur est déjà polymorphe,
 rien d'autre ne bouge.
 
-### Relayer un direct Facebook
+### Relais automatique : la boutique relie sa page
+
+Le commerçant relie sa page **une fois**, dans `/vendeur/reglages` → *Direct
+Facebook* → « Connecter ma page Facebook ». Ensuite il lance ses directs depuis
+Facebook comme d'habitude : ils s'ouvrent ici tout seuls, avec commentaires,
+réactions, produit épinglé et achat. Plus rien à coller.
+
+```
+Le vendeur passe en direct sur sa page
+        │
+        ▼  webhook `live_videos`
+POST /api/facebook/webhook        signature HMAC vérifiée
+        │
+        ▼  on redemande la vidéo à Facebook (statut, permalien, titre)
+sync_facebook_live()              crée le direct + notifie les abonnés
+        │
+        ▼
+/lives/<id> — la couche commerce se pose par-dessus
+```
+
+**Ce que ça coûte : rien.** La Graph API est gratuite pour cet usage, et les
+webhooks évitent d'interroger Facebook en boucle.
+
+**Ce que ça demande à l'exploitant** — trois variables, plus une revue chez Meta :
+
+| Variable | Où la prendre |
+|---|---|
+| `FACEBOOK_APP_ID` | developers.facebook.com → Paramètres → Général |
+| `FACEBOOK_APP_SECRET` | même écran. **Jamais** de préfixe `NEXT_PUBLIC_` |
+| `FACEBOOK_WEBHOOK_VERIFY_TOKEN` | une chaîne que vous choisissez, recopiée dans Meta |
+
+Meta → **Webhooks** → *Page* → URL de rappel `https://votre-domaine/api/facebook/webhook`,
+jeton de vérification identique à la variable, champ abonné : **`live_videos`**.
+
+Les permissions `pages_show_list`, `pages_read_engagement` et
+`pages_manage_metadata` exigent une **App Review** pour lire les pages de tiers.
+Gratuite, quelques jours. En attendant, la liaison ne fonctionne que pour les
+pages dont vous êtes administrateur — et l'interface le dit : quand l'abonnement
+est refusé, elle bascule sur un bouton « Vérifier maintenant » qui interroge
+Facebook à la demande et relaie le direct de la même façon.
+
+**Où vit le jeton de page.** Dans `shop_facebook_pages`, une table sans aucune
+policy pour `anon` ni `authenticated` : avec RLS forcée, cela vaut refus total
+via PostgREST, y compris pour le propriétaire de la boutique. Seul le serveur y
+accède avec la clé secrète. L'interface lit son état par
+`facebook_page_status()`, qui ne renvoie que le nom de la page et les dates.
+
+**Pourquoi la signature du webhook est vérifiée.** La route est publique et non
+authentifiée. Sans le contrôle HMAC-SHA256 du corps brut contre le secret de
+l'application, n'importe qui pourrait déclencher de faux directs, notifier tous
+les abonnés d'une boutique et lui prêter une vidéo qu'elle n'a jamais diffusée.
+
+### Relayer un direct à la main
 
 Le parcours vendeur : lancer le direct sur sa page Facebook, puis
 `/vendeur/lives/nouveau` → source **Direct Facebook** → coller le lien de la

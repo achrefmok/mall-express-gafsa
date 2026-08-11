@@ -107,6 +107,16 @@ walk(srcDir, (path, name) => {
   const source = readFileSync(path, "utf8");
   const file = relative(root, path).replace(/\\/g, "/");
 
+  /*
+    Les fichiers qui utilisent la clé secrète sont hors sujet ici : leurs
+    requêtes contournent RLS par construction, et certaines visent des tables
+    volontairement fermées aux utilisateurs — `shop_facebook_pages`, qui
+    contient des jetons d'accès. Les rejouer avec un jeton de client
+    échouerait, et cet échec serait la preuve que la sécurité fonctionne, pas
+    d'un défaut.
+  */
+  if (source.includes("createAdminClient")) return;
+
   for (const match of source.matchAll(FROM_SELECT)) {
     const [, table, between, , columns] = match;
 

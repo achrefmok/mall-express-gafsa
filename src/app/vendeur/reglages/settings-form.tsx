@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { Suspense, useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import {
   updateShopCategories,
@@ -12,6 +12,7 @@ import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch } from "@/components/ui/primitives";
+import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
 
 interface DayHours {
@@ -31,12 +32,16 @@ export function ShopSettingsForm({
   categories,
   selectedCategoryIds,
   locale,
+  facebookStatus,
+  facebookConfigured,
 }: {
   shop: Shop;
   hours: DayHours[];
   categories: Category[];
   selectedCategoryIds: string[];
   locale: AppLocale;
+  facebookStatus: FacebookLinkStatus;
+  facebookConfigured: boolean;
 }) {
   const { t } = useI18n();
 
@@ -127,6 +132,15 @@ export function ShopSettingsForm({
       />
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-[14px] pb-6">
+        {/* ─── Direct Facebook ───────────────────────────────────────── */}
+        <Suspense fallback={null}>
+          <FacebookLink
+            status={facebookStatus}
+            configured={facebookConfigured}
+            locale={locale}
+          />
+        </Suspense>
+
         {/* ─── Aperçu client ─────────────────────────────────────────── */}
         <Card className="flex flex-none items-center gap-[10px] p-3">
           <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
