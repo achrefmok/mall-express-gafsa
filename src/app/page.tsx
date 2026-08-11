@@ -514,6 +514,7 @@ export default async function PresentationPage() {
               ["/lives", "Lives"],
               ["/bons-plans", "Bons plans"],
               ["/services", "Services"],
+              ["/confidentialite", "Confidentialité"],
             ].map(([href, label]) => (
               <Link
                 key={href}

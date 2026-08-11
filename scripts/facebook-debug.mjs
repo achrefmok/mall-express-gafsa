@@ -134,7 +134,10 @@ if (app) {
   if (app.privacy_policy_url) info(`Politique de confidentialité : ${app.privacy_policy_url}`);
   else {
     warn("Aucune politique de confidentialité déclarée");
-    info("Elle est exigée pour passer l'application en mode « Live ».");
+    info("Exigée pour passer l'application en mode « Live » et pour la revue.");
+    info("Le site en sert une — collez ces deux URL dans Meta :");
+    info(`  Confidentialité       ${siteUrl}/confidentialite`);
+    info(`  Suppression données   ${siteUrl}/suppression-donnees`);
   }
 
   const domains = app.app_domains ?? [];
