@@ -97,8 +97,13 @@ export function FacebookLink({
     next.delete("facebook");
     next.delete("motif");
 
+    // Chemin et requête séparés : une interpolation collée au chemin ferait
+    // lire « /vendeur/reglages[param] » à `npm run check:links`, qui n'a aucun
+    // moyen de distinguer un segment dynamique d'une chaîne de requête.
     const query = next.toString();
-    router.replace(`/vendeur/reglages${query ? `?${query}` : ""}`, { scroll: false });
+    const target = query ? `/vendeur/reglages?${query}` : "/vendeur/reglages";
+
+    router.replace(target, { scroll: false });
     // `outcome` vient d'un état figé au premier rendu : cet effet ne tourne
     // qu'une fois, et ne réagit pas au changement d'URL qu'il provoque.
   }, [outcome, router]);
