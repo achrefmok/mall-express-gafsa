@@ -67,9 +67,20 @@ export function normalizeFacebookLiveUrl(input: string): FacebookUrlCheck {
   }
 
   const clean = new URL(`https://${host}${parsed.pathname}`);
-  // Seul l'identifiant de vidéo est utile au greffon.
-  const videoId = parsed.searchParams.get("v");
-  if (videoId) clean.searchParams.set("v", videoId);
+
+  /*
+    On ne garde que les paramètres qui désignent la vidéo, et on écarte le
+    suivi (`fbclid`, `mibextid`, `rdid`…).
+
+    `story_fbid` et `id` comptent autant que `v` : sur `permalink.php` et
+    `story.php`, ce sont eux qui portent l'identifiant — le chemin seul ne
+    désigne rien, et une URL amputée de ces paramètres afficherait une iframe
+    vide.
+  */
+  for (const key of ["v", "story_fbid", "id"]) {
+    const value = parsed.searchParams.get(key);
+    if (value) clean.searchParams.set(key, value);
+  }
 
   return { ok: true, url: clean.toString() };
 }

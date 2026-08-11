@@ -452,6 +452,26 @@ select cron.schedule('meg-facebook', '*/15 * * * *', $$
 $$);
 ```
 
+#### Page, et pas profil personnel
+
+La reprise automatique lit les directs d'une **page** Facebook. La Graph API
+n'expose pas ceux d'un profil personnel, et c'est délibéré chez Meta : un profil
+n'est pas un objet commercial. Un commerçant qui diffuse depuis son profil verra
+donc « Ce compte Facebook n'administre aucune page ».
+
+Ce n'est pas une impasse, et l'écran le dit — il propose les deux chemins :
+
+1. **Créer une page** pour la boutique. Gratuit, deux minutes, et c'est de toute
+   façon ce que cherchent les clients sur Facebook.
+2. **Garder le profil** et coller le lien du direct à chaque diffusion, par
+   `/vendeur/lives/nouveau`. Fonctionne dès maintenant, à condition que la vidéo
+   soit **publique** : le greffon vidéo de Facebook refuse une audience
+   restreinte.
+
+**Limite connue** : quand un compte administre plusieurs pages, la première est
+retenue. Rare pour une boutique de quartier, mais c'est un pari — changer de page
+demande aujourd'hui de refaire la liaison.
+
 #### Déboguer la liaison
 
 ```bash

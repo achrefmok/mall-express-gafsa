@@ -62,13 +62,30 @@ export async function GET(request: NextRequest) {
   try {
     const pages = await pagesForCode(code, `${origin}/api/facebook/callback`);
 
+    /*
+      Aucune page administrée par ce compte.
+
+      La détection automatique n'est pas possible dans ce cas : la Graph API
+      n'expose les directs que d'une *page*, jamais d'un profil personnel — et
+      c'est délibéré chez Meta, un profil n'est pas un objet commercial.
+
+      Ce n'est pas une impasse pour autant : le relais manuel accepte un
+      permalien de direct depuis un profil, si la vidéo est publique. On y
+      renvoie plutôt que de laisser le commerçant devant un refus sec.
+    */
     if (pages.length === 0) {
       return back(
-        "erreur",
-        "Aucune page Facebook n'est rattachée à ce compte. Le relais fonctionne avec une page, pas avec un profil personnel.",
+        "sans-page",
+        "Ce compte Facebook n'administre aucune page.",
       );
     }
 
+    /*
+      Plusieurs pages : on retient la première. Rare pour une boutique de
+      quartier, mais deviner reste un pari. Changer de page demande aujourd'hui
+      de refaire la liaison depuis l'autre compte, ou de retirer son rôle
+      d'administrateur sur la page en trop.
+    */
     const page = pages[0];
 
     // L'abonnement au webhook n'est tenté que si l'application a la permission
