@@ -30,11 +30,14 @@ export type FacebookLinkStatus = {
 export function FacebookLink({
   status,
   configured,
+  webhookEnabled,
   locale,
 }: {
   status: FacebookLinkStatus;
   /** L'application Meta est-elle renseignée côté serveur ? */
   configured: boolean;
+  /** L'application a-t-elle le droit de s'abonner au webhook Facebook ? */
+  webhookEnabled: boolean;
   locale: AppLocale;
 }) {
   const router = useRouter();
@@ -50,11 +53,11 @@ export function FacebookLink({
     feedback ??
     (outcome === "connecte"
       ? { kind: "ok" as const, message: "Page reliée. Vos directs Facebook arriveront tout seuls." }
-      : outcome === "connecte-sans-webhook"
+      : outcome === "connecte-planifie"
         ? {
-            kind: "error" as const,
+            kind: "ok" as const,
             message:
-              "Page reliée, mais Facebook a refusé la détection automatique. Utilisez « Vérifier maintenant » en attendant.",
+              "Page reliée. Vos directs seront repris automatiquement, au plus tard un quart d’heure après leur lancement.",
           }
         : outcome === "annule"
           ? { kind: "error" as const, message: reason ?? "Connexion annulée." }
@@ -103,15 +106,12 @@ export function FacebookLink({
 
             <p
               className={cx(
-                "rounded-[12px] px-[10px] py-2 text-[10.5px] leading-[1.5]",
-                status.isSubscribed
-                  ? "bg-[var(--color-brand-tint)] text-[var(--color-ink)]"
-                  : "bg-[var(--color-live-tint)] text-[var(--color-ink)]",
+                "rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-2 text-[10.5px] leading-[1.5] text-[var(--color-ink)]",
               )}
             >
               {status.isSubscribed
-                ? "Détection automatique active. Lancez votre direct depuis Facebook : il apparaîtra ici en quelques secondes, avec vos produits."
-                : "Détection automatique indisponible — Facebook n'a pas accepté l'abonnement. Lancez votre direct, puis touchez « Vérifier maintenant »."}
+                ? "Détection immédiate active. Lancez votre direct depuis Facebook : il apparaîtra ici en quelques secondes, avec vos produits."
+                : "Reprise automatique active. Lancez votre direct depuis Facebook : il apparaîtra ici au plus tard un quart d’heure après. Pour ne pas attendre, touchez « Vérifier maintenant »."}
             </p>
 
             {status.lastCheckedAt && (
@@ -145,7 +145,7 @@ export function FacebookLink({
                 {pending ? "…" : "Vérifier maintenant"}
               </Button>
 
-              {!status.isSubscribed && (
+              {webhookEnabled && !status.isSubscribed && (
                 <Button
                   tone="outline"
                   size="sm"

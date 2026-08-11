@@ -34,6 +34,7 @@ export function ShopSettingsForm({
   locale,
   facebookStatus,
   facebookConfigured,
+  facebookWebhookEnabled,
 }: {
   shop: Shop;
   hours: DayHours[];
@@ -42,6 +43,7 @@ export function ShopSettingsForm({
   locale: AppLocale;
   facebookStatus: FacebookLinkStatus;
   facebookConfigured: boolean;
+  facebookWebhookEnabled: boolean;
 }) {
   const { t } = useI18n();
 
@@ -137,6 +139,7 @@ export function ShopSettingsForm({
           <FacebookLink
             status={facebookStatus}
             configured={facebookConfigured}
+            webhookEnabled={facebookWebhookEnabled}
             locale={locale}
           />
         </Suspense>

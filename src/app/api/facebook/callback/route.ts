@@ -7,6 +7,7 @@ import {
   OAUTH_STATE_COOKIE,
   pagesForCode,
   subscribePage,
+  WEBHOOK_ENABLED,
 } from "@/lib/live/facebook-graph";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +70,11 @@ export async function GET(request: NextRequest) {
     }
 
     const page = pages[0];
-    const subscribed = await subscribePage(page.id, page.token);
+
+    // L'abonnement au webhook n'est tenté que si l'application a la permission
+    // correspondante. Sinon on s'en remet à la vérification planifiée, qui ne
+    // demande rien de plus.
+    const subscribed = WEBHOOK_ENABLED ? await subscribePage(page.id, page.token) : false;
 
     const admin = createAdminClient();
     const { error } = await admin.from("shop_facebook_pages").upsert(
@@ -91,10 +96,9 @@ export async function GET(request: NextRequest) {
       return back("erreur", "Enregistrement impossible. Réessayez dans un instant.");
     }
 
-    // Sans abonnement, le relais reste manuel : la console propose alors
-    // « Vérifier maintenant ». L'interface le dit, plutôt que de laisser
-    // croire à une détection qui n'aura pas lieu.
-    return back(subscribed ? "connecte" : "connecte-sans-webhook");
+    // Deux modes, tous deux automatiques : le webhook prévient dans la
+    // seconde, la vérification planifiée passe tous les quarts d'heure.
+    return back(subscribed ? "connecte" : "connecte-planifie");
   } catch (cause) {
     const detail = cause instanceof GraphError ? cause.message : "Erreur inattendue";
     console.error("Liaison Facebook échouée", detail);

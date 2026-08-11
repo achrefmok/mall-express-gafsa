@@ -24,11 +24,27 @@ export const OAUTH_STATE_COOKIE = "meg-fb-oauth-state";
 export const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID ?? "";
 const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET ?? "";
 
-/** Permissions demandées au commerçant. Aucune autre : chacune passe en revue. */
+/**
+ * Permissions demandées au commerçant — le strict nécessaire.
+ *
+ * Ces deux-là suffisent à relayer les directs : lister les pages, puis lire
+ * leurs vidéos. C'est la vérification planifiée qui déclenche le relais.
+ *
+ * `pages_manage_metadata` en est volontairement absente. Elle ne sert qu'à
+ * abonner la page au webhook `live_videos`, et beaucoup d'applications ne
+ * l'ont pas : Facebook répond alors « Invalid Scopes: pages_manage_metadata »
+ * et bloque tout le dialogue pour les administrateurs de l'app. Une permission
+ * facultative ne doit pas empêcher la connexion.
+ *
+ * Si votre application y a droit, `FACEBOOK_ENABLE_WEBHOOK=1` la redemande et
+ * réactive la détection poussée, plus immédiate que la vérification planifiée.
+ */
+export const WEBHOOK_ENABLED = process.env.FACEBOOK_ENABLE_WEBHOOK === "1";
+
 export const PAGE_SCOPES = [
   "pages_show_list", // lister ses pages
   "pages_read_engagement", // lire les vidéos de la page
-  "pages_manage_metadata", // abonner la page au webhook `live_videos`
+  ...(WEBHOOK_ENABLED ? ["pages_manage_metadata"] : []),
 ].join(",");
 
 export function facebookConfigured(): boolean {

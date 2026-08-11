@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { isOnAir, liveVideoById } from "@/lib/live/facebook-graph";
+import { isOnAir, liveVideoById, WEBHOOK_ENABLED } from "@/lib/live/facebook-graph";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -55,9 +55,19 @@ export async function POST(request: NextRequest) {
   // exacts. `request.json()` les reformaterait et invaliderait le calcul.
   const raw = await request.text();
 
+  /*
+    La signature est vérifiée avant toute autre considération, y compris avant
+    de regarder si le webhook est activé. Cette garantie ne doit pas dépendre
+    d'un réglage : une requête non signée est refusée dans tous les cas, et le
+    jour où l'on activera la détection poussée, il n'y aura rien à revérifier.
+  */
   if (!signatureMatches(raw, request.headers.get("x-hub-signature-256"), appSecret)) {
     return new NextResponse("Signature invalide", { status: 401 });
   }
+
+  // Le webhook est facultatif : sans FACEBOOK_ENABLE_WEBHOOK, le relais passe
+  // par la vérification planifiée et cette route ne doit rien déclencher.
+  if (!WEBHOOK_ENABLED) return NextResponse.json({ ok: true, disabled: true });
 
   let payload: { object?: string; entry?: Entry[] };
   try {

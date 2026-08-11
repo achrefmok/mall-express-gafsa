@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCategories, getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { facebookConfigured } from "@/lib/live/facebook-graph";
+import { facebookConfigured, WEBHOOK_ENABLED } from "@/lib/live/facebook-graph";
 import { ShopSettingsForm } from "./settings-form";
 import type { FacebookLinkStatus } from "./facebook-link";
 
@@ -61,6 +61,7 @@ export default async function ShopSettingsPage() {
       locale={locale}
       facebookStatus={facebookStatus}
       facebookConfigured={facebookConfigured()}
+      facebookWebhookEnabled={WEBHOOK_ENABLED}
     />
   );
 }

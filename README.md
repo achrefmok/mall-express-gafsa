@@ -424,23 +424,56 @@ sync_facebook_live()              crée le direct + notifie les abonnés
 **Ce que ça coûte : rien.** La Graph API est gratuite pour cet usage, et les
 webhooks évitent d'interroger Facebook en boucle.
 
-**Ce que ça demande à l'exploitant** — trois variables, plus une revue chez Meta :
+**Deux variables suffisent :**
 
 | Variable | Où la prendre |
 |---|---|
 | `FACEBOOK_APP_ID` | developers.facebook.com → Paramètres → Général |
 | `FACEBOOK_APP_SECRET` | même écran. **Jamais** de préfixe `NEXT_PUBLIC_` |
-| `FACEBOOK_WEBHOOK_VERIFY_TOKEN` | une chaîne que vous choisissez, recopiée dans Meta |
 
-Meta → **Webhooks** → *Page* → URL de rappel `https://votre-domaine/api/facebook/webhook`,
-jeton de vérification identique à la variable, champ abonné : **`live_videos`**.
+Deux permissions sont demandées au commerçant, et deux seulement :
+`pages_show_list` pour lister ses pages, `pages_read_engagement` pour lire leurs
+directs. Elles exigent une **App Review** de Meta pour lire les pages de tiers —
+gratuite, quelques jours. En attendant, la liaison fonctionne pour les pages dont
+vous êtes administrateur.
 
-Les permissions `pages_show_list`, `pages_read_engagement` et
-`pages_manage_metadata` exigent une **App Review** pour lire les pages de tiers.
-Gratuite, quelques jours. En attendant, la liaison ne fonctionne que pour les
-pages dont vous êtes administrateur — et l'interface le dit : quand l'abonnement
-est refusé, elle bascule sur un bouton « Vérifier maintenant » qui interroge
-Facebook à la demande et relaie le direct de la même façon.
+**Planifier la vérification** — c'est elle qui déclenche le relais. Le plan Hobby
+de Vercel plafonne les tâches à une par jour ; passez par pg_cron sur Supabase,
+gratuit et sans plafond :
+
+```sql
+select cron.schedule('meg-facebook', '*/15 * * * *', $$
+  select net.http_get(
+    url     := 'https://votre-domaine/api/cron/facebook-sync',
+    headers := '{"Authorization": "Bearer <CRON_SECRET>"}'::jsonb
+  );
+$$);
+```
+
+#### Pourquoi pas le webhook par défaut
+
+Facebook peut nous *prévenir* à la seconde, via le champ `live_videos`. C'est
+plus élégant, mais s'y abonner exige une troisième permission,
+`pages_manage_metadata` — que beaucoup d'applications Meta n'ont pas. Le
+symptôme est net et bloquant :
+
+```
+Invalid Scopes: pages_manage_metadata
+Ce contenu n'est pas disponible pour le moment
+```
+
+Facebook ignore silencieusement une permission invalide pour les visiteurs
+ordinaires, mais **bloque tout le dialogue pour les administrateurs de l'app** —
+donc pour vous, pendant vos essais. Une permission facultative ne doit pas
+empêcher la connexion : elle n'est donc pas demandée.
+
+Si votre application y a droit, posez `FACEBOOK_ENABLE_WEBHOOK=1` et
+`FACEBOOK_WEBHOOK_VERIFY_TOKEN`, puis Meta → **Webhooks** → *Page* → URL de
+rappel `https://votre-domaine/api/facebook/webhook`, même jeton de vérification,
+champ abonné `live_videos`. La détection passe alors de « un quart d'heure » à
+« quelques secondes », sans rien changer d'autre : les trois déclencheurs — le
+webhook, la vérification planifiée et le bouton du vendeur — partagent le même
+code, [`syncPage()`](src/lib/live/facebook-sync.ts).
 
 **Où vit le jeton de page.** Dans `shop_facebook_pages`, une table sans aucune
 policy pour `anon` ni `authenticated` : avec RLS forcée, cela vaut refus total
