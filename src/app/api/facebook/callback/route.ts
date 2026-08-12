@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   if (!shop) return back("erreur", "Connectez-vous avec votre compte vendeur.");
 
   try {
-    const pages = await pagesForCode(code, `${origin}/api/facebook/callback`);
+    const { userId, pages } = await pagesForCode(code, `${origin}/api/facebook/callback`);
 
     /*
       Aucune page administrée par ce compte.
@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
         page_id: page.id,
         page_name: page.name,
         page_token: page.token,
+        facebook_user_id: userId,
         is_subscribed: subscribed,
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

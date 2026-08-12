@@ -114,6 +114,7 @@ SQL de Supabase, **dans l'ordre des noms**.
 | `…000600_fix_privilege_guards.sql` | Les gardes `guard_*` ne bloquent plus l'exploitant |
 | `…000700_admin_bootstrap.sql` | Premier administrateur, gestion de l'équipe |
 | `…000800_facebook_live_sync.sql` | Relais automatique des directs Facebook |
+| `…000900_facebook_data_deletion.sql` | Rappel de suppression des données exigé par Meta |
 
 Les dernières doivent souvent être appliquées à la main, sur un projet déjà
 en ligne. Pour ne faire qu'un seul collage :
@@ -499,6 +500,35 @@ remplir alors que la diffusion a déjà commencé.
 n'implémente pas les cibles de partage ; l'écran de diffusion offre donc un
 bouton qui lit le presse-papiers, soit un geste au lieu d'un appui long suivi
 d'un « Coller ».
+
+#### Suppression des données, côté Meta
+
+Meta réclame, pour toute application utilisant Facebook Login, un moyen de faire
+supprimer les données d'un utilisateur. Deux formes sont acceptées, et le projet
+fournit les deux :
+
+| Champ Meta | Valeur |
+|---|---|
+| URL d'instructions | `https://votre-domaine/suppression-donnees` |
+| **Rappel de suppression** | `https://votre-domaine/api/facebook/data-deletion` |
+
+Le rappel est préférable : quand un commerçant retire l'application depuis les
+paramètres de son compte Facebook, Meta l'appelle, la liaison de page et son
+jeton sont supprimés, et nous répondons une adresse de suivi avec un code.
+
+La charge est signée par Meta avec le secret de l'application. La signature est
+vérifiée avant toute suppression, et un `algorithm` autre que `HMAC-SHA256` est
+refusé : sans cela, n'importe qui pourrait faire effacer la liaison d'une
+boutique en devinant un identifiant.
+
+Le code de confirmation est dérivé de l'identifiant Facebook et du secret :
+reproductible pour nous, imprévisible pour un tiers, sans table à tenir.
+
+> **Si le champ « URL d'instructions » est refusé** avec *« should represent a
+> valid URL »* alors que la page répond 200 : videz le champ entièrement et
+> retapez l'adresse. Un copier-coller depuis l'interface Meta y glisse parfois un
+> espace de largeur nulle. Une application restreinte par Meta rend aussi ses
+> écrans de réglages capricieux — levez d'abord la restriction.
 
 #### Déboguer la liaison
 

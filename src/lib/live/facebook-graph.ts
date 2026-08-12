@@ -103,6 +103,8 @@ async function exchangeCode(code: string, redirectUri: string): Promise<string> 
 
 export type FacebookPage = { id: string; name: string; token: string };
 
+export type PagesResult = { userId: string | null; pages: FacebookPage[] };
+
 /**
  * Pages administrées par le commerçant.
  *
@@ -111,7 +113,7 @@ export type FacebookPage = { id: string; name: string; token: string };
  * durée (~60 jours) : les jetons de page qui en découlent n'expirent alors
  * plus tant que le commerçant ne révoque pas l'accès.
  */
-export async function pagesForCode(code: string, redirectUri: string): Promise<FacebookPage[]> {
+export async function pagesForCode(code: string, redirectUri: string): Promise<PagesResult> {
   const shortLived = await exchangeCode(code, redirectUri);
 
   const { access_token: longLived } = await graph<{ access_token: string }>(
@@ -129,7 +131,19 @@ export async function pagesForCode(code: string, redirectUri: string): Promise<F
     { access_token: longLived, fields: "id,name,access_token", limit: "50" },
   );
 
-  return (data ?? []).map((page) => ({ id: page.id, name: page.name, token: page.access_token }));
+  /*
+    L identifiant du compte, indispensable au rappel de suppression : Meta n y
+    transmet que celui-la, et sans lui nous ne saurions pas quelle liaison
+    effacer quand le commercant retire l application.
+  */
+  const userId = await graph<{ id?: string }>("me", { access_token: longLived, fields: "id" })
+    .then((me) => me.id ?? null)
+    .catch(() => null);
+
+  return {
+    userId,
+    pages: (data ?? []).map((page) => ({ id: page.id, name: page.name, token: page.access_token })),
+  };
 }
 
 /* ─── Abonnement au webhook ──────────────────────────────────────────── */

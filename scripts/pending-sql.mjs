@@ -21,7 +21,7 @@ const dir = join(root, "supabase", "migrations");
 const C = { reset: "[0m", bold: "[1m", dim: "[2m", green: "[32m", cyan: "[36m" };
 
 // Par défaut, les deux correctifs qui n'ont jamais pu passer par le CLI.
-const wanted = process.argv.slice(2).length ? process.argv.slice(2) : ["000800"];
+const wanted = process.argv.slice(2).length ? process.argv.slice(2) : ["000900"];
 
 const files = readdirSync(dir)
   .filter((name) => name.endsWith(".sql"))

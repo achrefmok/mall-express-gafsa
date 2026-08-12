@@ -444,6 +444,7 @@ export interface Database {
           page_id: string;
           page_name: string;
           page_token: string;
+          facebook_user_id: string | null;
           is_subscribed: boolean;
           connected_at: string;
           last_checked_at: string | null;
@@ -455,6 +456,7 @@ export interface Database {
           page_id: string;
           page_name: string;
           page_token: string;
+          facebook_user_id?: string | null;
           is_subscribed?: boolean;
           connected_at?: string;
           last_checked_at?: string | null;
@@ -465,6 +467,7 @@ export interface Database {
           page_id: string;
           page_name: string;
           page_token: string;
+          facebook_user_id: string | null;
           is_subscribed: boolean;
           last_checked_at: string | null;
           last_error: string | null;

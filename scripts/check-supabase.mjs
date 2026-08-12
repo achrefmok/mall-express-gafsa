@@ -463,6 +463,24 @@ if (has08 === null) {
   info("npm run db:sql -- 000800");
 }
 
+/*
+  La migration 09 ajoute la colonne que réclame le rappel de suppression de
+  Meta. Une colonne absente ne se voit pas au démarrage : elle se manifeste le
+  jour où un commerçant retire l'application, par un 500 côté Facebook.
+*/
+try {
+  const probe = await rest("shop_facebook_pages?select=facebook_user_id&limit=0");
+  if (probe.status === 400) {
+    warn("Migration 20260812000900 non appliquée");
+    info("La colonne facebook_user_id manque : le rappel de suppression de");
+    info("données de Meta répondra 500. npm run db:sql -- 000900");
+  } else if (probe.ok || probe.status === 401 || probe.status === 403) {
+    ok("09 · Rappel de suppression des données prêt");
+  }
+} catch {
+  warn("Vérification du rappel de suppression impossible");
+}
+
 /* ─── 4 · Données de référence ───────────────────────────────────────── */
 
 title("4 · Données de référence");
