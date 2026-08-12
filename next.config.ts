@@ -24,8 +24,20 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    // camera/microphone requis pour la diffusion live depuis l'appareil du vendeur
-    value: "camera=(self), microphone=(self), geolocation=(self), payment=()",
+    /*
+      camera/microphone requis pour la diffusion live depuis l'appareil du
+      vendeur.
+
+      `autoplay` doit être accordé explicitement à Facebook. Sans mention, la
+      liste par défaut de cette permission est `self` — qui n'inclut pas
+      l'iframe du greffon vidéo. Le `allow="autoplay"` porté par l'iframe ne
+      peut déléguer que ce que le document parent possède déjà pour cette
+      origine, et les navigateurs mobiles appliquent la règle bien plus
+      strictement que ceux de bureau : le direct relayé y restait muet et noir
+      là où il démarrait sur un ordinateur.
+    */
+    value:
+      'camera=(self), microphone=(self), geolocation=(self), payment=(), autoplay=(self "https://www.facebook.com")',
   },
   {
     key: "Content-Security-Policy",

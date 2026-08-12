@@ -102,6 +102,9 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
 
 /* ─── Source Facebook ──────────────────────────────────────────────────── */
 
+/** Largeur de repli quand la mesure échoue : celle d'un téléphone courant. */
+const FALLBACK_WIDTH = 380;
+
 /**
  * Relais d'un direct Facebook via le plugin vidéo officiel.
  * L'URL a déjà été validée à l'enregistrement (hôtes Facebook uniquement) ;
@@ -114,25 +117,34 @@ function FacebookRelay({ url }: { url: string }) {
 
   /*
     La largeur entre dans l'adresse de l'iframe, et changer `src` recharge
-    l'iframe : le direct repart alors de zéro, écran noir compris. Deux
-    précautions, donc.
+    l'iframe : le direct repart alors de zéro, écran noir compris. D'où le
+    palier de 32 px plus bas — la largeur bouge pour des raisons qui ne nous
+    regardent pas (clavier, barre de défilement, rotation d'un pixel), et sans
+    palier le direct se coupait à chacune.
 
-    Zéro au départ, et pas de rendu avant la mesure : une valeur initiale
-    arbitraire serait aussitôt corrigée par l'observateur, ce qui chargeait le
-    greffon deux fois à chaque ouverture.
+    La mesure est prise deux fois, et ce n'est pas une précaution de trop :
+    `ResizeObserver` ne notifie que les *changements*. Si sa première mesure
+    valait zéro et que la mise en page ne bougeait plus ensuite, la largeur
+    restait à zéro pour toujours — aucune iframe, écran noir définitif. La
+    mesure synchrone au montage ferme ce piège.
 
-    Ensuite un palier de 32 px. La largeur bouge pour des raisons qui ne nous
-    regardent pas — apparition du clavier, barre de défilement, changement de
-    l'orientation d'un pixel. Sans palier, le direct se coupait à chacune.
+    Et si les deux échouent, on prend `FALLBACK_WIDTH`. Une largeur approchée
+    donne au pire une vidéo mal cadrée ; l'absence de largeur ne donne rien du
+    tout, et c'est toujours le mauvais choix face à un client qui regarde.
   */
   useEffect(() => {
     const element = boxRef.current;
     if (!element) return;
 
+    const apply = (measured: number) =>
+      setWidth((current) => (Math.abs(measured - current) < 32 ? current : measured));
+
+    const initial = Math.round(element.getBoundingClientRect().width);
+    apply(initial > 0 ? initial : FALLBACK_WIDTH);
+
     const observer = new ResizeObserver(([entry]) => {
       const measured = Math.round(entry.contentRect.width);
-      if (measured <= 0) return;
-      setWidth((current) => (Math.abs(measured - current) < 32 ? current : measured));
+      if (measured > 0) apply(measured);
     });
     observer.observe(element);
     return () => observer.disconnect();
