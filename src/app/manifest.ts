@@ -32,6 +32,12 @@ export default function manifest(): MetadataRoute.Manifest {
     // Raccourcis à l'appui long sur l'icône installée
     shortcuts: [
       {
+        name: "Passer en direct",
+        short_name: "Direct",
+        url: "/vendeur/lives/partage",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+      },
+      {
         name: "Marketplace",
         short_name: "Marketplace",
         url: "/marketplace",

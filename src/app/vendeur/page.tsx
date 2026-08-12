@@ -66,6 +66,7 @@ export default async function VendorDashboard() {
     { href: "/vendeur/promotions", monogram: "PR", label: t.vendor.promotions },
     { href: "/vendeur/reglages#horaires", monogram: "HR", label: t.vendor.hours },
     { href: "/vendeur/reglages#localisation", monogram: "LO", label: t.vendor.location },
+    { href: "/vendeur/lives/partage", monogram: "FB", label: "Relayer mon direct Facebook", accent: true },
     { href: "/vendeur/lives/nouveau", monogram: "LV", label: t.vendor.startLive, accent: true },
   ];
 

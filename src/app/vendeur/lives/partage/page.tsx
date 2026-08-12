@@ -1,14 +1,13 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getMyShop } from "@/lib/queries";
 import { normalizeFacebookLiveUrl } from "@/lib/live/facebook";
 import { TopBar } from "@/components/shell/top-bar";
-import { Card } from "@/components/ui/primitives";
 import { SharedLiveConfirm } from "./shared-live-confirm";
+import { QuickRelay } from "./quick-relay";
 
 export const metadata: Metadata = {
-  title: "Relayer ce direct",
+  title: "Passer en direct",
   robots: { index: false, follow: false },
 };
 
@@ -39,7 +38,7 @@ export default async function ShareTargetPage({
 
   return (
     <>
-      <TopBar title="Relayer ce direct" back="/vendeur/lives" />
+      <TopBar title="Passer en direct" back="/vendeur/lives" />
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-[14px] pb-6">
         {checked?.ok ? (
@@ -50,30 +49,23 @@ export default async function ShareTargetPage({
             approved={shop.status === "approved"}
           />
         ) : (
-          <Card className="flex flex-col gap-3 p-4">
-            <p className="text-[13px] font-bold text-[var(--color-ink)]">
-              Ce partage ne contient pas de lien de vidéo Facebook
-            </p>
-
-            <p className="text-[12px] leading-[1.6] text-[var(--color-muted)]">
-              {checked && !checked.ok
+          /*
+            Deux arrivées sur le même écran : un partage entrant inexploitable,
+            ou une visite directe depuis le tableau de bord. Dans les deux cas,
+            la suite est la même — d'où un seul composant, qui porte le message
+            d'échec quand il y en a un.
+          */
+          <QuickRelay
+            shopName={shop.name}
+            approved={shop.status === "approved"}
+            initialError={
+              checked && !checked.ok
                 ? checked.error
-                : "Rien d'exploitable n'est arrivé. Depuis Facebook, partagez la vidéo elle-même — pas votre page ni votre profil."}
-            </p>
-
-            {candidate && (
-              <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[10.5px] break-all text-[var(--color-muted)]">
-                Reçu : {candidate}
-              </p>
-            )}
-
-            <Link
-              href="/vendeur/lives/nouveau"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[16px] bg-[var(--color-brand)] px-4 text-[12.5px] font-bold text-white"
-            >
-              Programmer un direct à la main
-            </Link>
-          </Card>
+                : candidate
+                  ? `Ce lien n'a pas été reconnu : ${candidate}`
+                  : undefined
+            }
+          />
         )}
       </div>
     </>

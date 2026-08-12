@@ -660,10 +660,29 @@ Le dépôt est prêt : `.gitignore` écarte `.env.local`, et aucune clé ne se t
 dans l'historique. **Gardez-le privé** — Vercel déploie les dépôts privés sans
 supplément, et un dépôt public expose vos choix d'infrastructure sans bénéfice.
 
-### 2 · Importer dans Vercel
+### 2 · Importer dans Vercel, et déployer à chaque poussée
 
 [vercel.com/new](https://vercel.com/new) → *Import Git Repository*. Le framework
 est détecté depuis `vercel.json` ; aucune commande à saisir.
+
+**Le point qui compte : l'import doit passer par Git.** Un projet créé à la
+ligne de commande n'est relié à aucun dépôt, et chaque `vercel` sans `--prod`
+produit une **prévisualisation** — visible de vous seul, derrière la Deployment
+Protection, pendant que la production reste figée sur un vieux build.
+
+Vercel → Settings → **Git** → *Connect Git Repository* → `mall-express-gafsa`,
+branche de production `main`. Chaque poussée déploie alors toute seule.
+
+> **À défaut**, `.github/workflows/deploy.yml` fait le même travail depuis
+> GitHub Actions. Il réclame trois secrets — `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
+> `VERCEL_PROJECT_ID` — et s'arrête proprement tant qu'ils manquent.
+> **N'activez pas les deux** : chaque poussée déploierait deux fois.
+
+**Contrôles automatiques.** `.github/workflows/ci.yml` rejoue à chaque poussée
+la suite complète — types, style, liens internes, build de production. Aucun
+secret : les variables Supabase y sont factices, le build ne s'appuyant sur la
+base que pour pré-rendre les fiches boutique, avec repli sur une liste vide.
+`db:check` et `db:smoke` restent manuels : ils écrivent dans un projet réel.
 
 ### 3 · Variables d'environnement
 

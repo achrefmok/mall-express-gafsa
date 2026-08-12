@@ -1,0 +1,59 @@
+# Contrôles à chaque poussée.
+#
+# Ce que la machine vérifie ici, personne n'a à y penser : la suite complète
+# tourne avant que le code n'arrive en production. Un « check:links » rouge est
+# déjà passé inaperçu une fois — plus maintenant.
+#
+# Aucun secret n'est requis. Les variables Supabase sont des valeurs factices :
+# le build n'appelle la base que pour pré-rendre les fiches boutique, et le code
+# retombe proprement sur une liste vide quand elle est injoignable. Les
+# vérifications qui ont besoin de la vraie base — db:check, db:smoke — restent
+# manuelles, elles écrivent dans un projet réel.
+
+name: Contrôles
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Une poussée qui en suit une autre annule la précédente : inutile de vérifier
+# un état déjà dépassé.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://exemple.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: cle-factice-pour-le-build
+      NEXT_PUBLIC_SITE_URL: https://exemple.test
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Style
+        run: npx next lint
+
+      - name: Liens internes
+        run: npm run check:links
+
+      - name: Build de production
+        run: npx next build
