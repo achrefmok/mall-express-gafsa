@@ -109,15 +109,30 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
  */
 function FacebookRelay({ url }: { url: string }) {
   const { t } = useI18n();
-  const [width, setWidth] = useState(400);
+  const [width, setWidth] = useState(0);
   const boxRef = useRef<HTMLDivElement>(null);
 
+  /*
+    La largeur entre dans l'adresse de l'iframe, et changer `src` recharge
+    l'iframe : le direct repart alors de zéro, écran noir compris. Deux
+    précautions, donc.
+
+    Zéro au départ, et pas de rendu avant la mesure : une valeur initiale
+    arbitraire serait aussitôt corrigée par l'observateur, ce qui chargeait le
+    greffon deux fois à chaque ouverture.
+
+    Ensuite un palier de 32 px. La largeur bouge pour des raisons qui ne nous
+    regardent pas — apparition du clavier, barre de défilement, changement de
+    l'orientation d'un pixel. Sans palier, le direct se coupait à chacune.
+  */
   useEffect(() => {
     const element = boxRef.current;
     if (!element) return;
 
     const observer = new ResizeObserver(([entry]) => {
-      setWidth(Math.round(entry.contentRect.width));
+      const measured = Math.round(entry.contentRect.width);
+      if (measured <= 0) return;
+      setWidth((current) => (Math.abs(measured - current) < 32 ? current : measured));
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -127,14 +142,16 @@ function FacebookRelay({ url }: { url: string }) {
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
-      <iframe
-        src={embed}
-        title={t.live.facebookRelay}
-        className="h-full w-full border-0"
-        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
+      {width > 0 && (
+        <iframe
+          src={embed}
+          title={t.live.facebookRelay}
+          className="h-full w-full border-0"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      )}
       <a
         href={url}
         target="_blank"

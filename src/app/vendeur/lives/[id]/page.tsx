@@ -27,7 +27,7 @@ export default async function VendorLiveConsolePage({
   const [{ data: live }, { data: products }] = await Promise.all([
     supabase
       .from("lives")
-      .select("id, title, status, source, facebook_url, pinned_product_id, live_percent_off")
+      .select("id, title, status, source, facebook_url, hls_url, pinned_product_id, live_percent_off")
       .eq("id", id)
       .eq("shop_id", shop.id)
       .maybeSingle(),

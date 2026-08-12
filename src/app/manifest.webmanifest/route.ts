@@ -1,12 +1,28 @@
+import { NextResponse } from "next/server";
 import type { MetadataRoute } from "next";
 
+export const dynamic = "force-static";
+
 /**
- * Manifeste PWA. `display: standalone` + `start_url` sur l'accueil : une
- * fois installée, l'application s'ouvre sans barre d'adresse, comme une
- * application native.
+ * Manifeste PWA, servi par une route et non par `app/manifest.ts`.
+ *
+ * `display: standalone` + `start_url` sur `/accueil` : une fois installée,
+ * l'application s'ouvre sur le fil, sans barre d'adresse.
+ *
+ * Pourquoi : `app/manifest.ts` fait émettre à Next un `<link rel="manifest">`
+ * automatique, sans attribut `crossorigin`. Le navigateur récupère alors le
+ * manifeste sans cookie, et derrière tout portail à session — la Deployment
+ * Protection de Vercel, un intranet — la requête est redirigée vers un autre
+ * domaine : `ERR_FAILED` en boucle, invitation à installer cassée, et
+ * préchargement du service worker en échec.
+ *
+ * Impossible de lui ajouter `crossorigin` ; en déclarant le lien nous-mêmes
+ * dans `<head>` et en servant le manifeste ici, il n en reste qu un seul.
  */
-export default function manifest(): MetadataRoute.Manifest {
-  return {
+export function GET() {
+  const manifest: MetadataRoute.Manifest & {
+    share_target?: unknown;
+  } = {
     name: "Mall Express Gafsa",
     short_name: "Mall Express",
     description:
@@ -84,12 +100,11 @@ export default function manifest(): MetadataRoute.Manifest {
       enctype: "application/x-www-form-urlencoded",
       params: { title: "titre", text: "texte", url: "lien" },
     },
-  } as MetadataRoute.Manifest & {
-    share_target: {
-      action: string;
-      method: string;
-      enctype: string;
-      params: Record<string, string>;
-    };
   };
+
+  // Le type MIME exact du manifeste : certains navigateurs refusent un
+  // `application/json` générique.
+  return NextResponse.json(manifest, {
+    headers: { "content-type": "application/manifest+json; charset=utf-8" },
+  });
 }

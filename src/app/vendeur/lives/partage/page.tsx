@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getMyShop } from "@/lib/queries";
-import { normalizeFacebookLiveUrl } from "@/lib/live/facebook";
+import { resolveFacebookLiveUrl } from "@/lib/live/facebook";
 import { TopBar } from "@/components/shell/top-bar";
 import { SharedLiveConfirm } from "./shared-live-confirm";
 import { QuickRelay } from "./quick-relay";
@@ -34,7 +34,7 @@ export default async function ShareTargetPage({
 
   const { lien, texte, titre } = await searchParams;
   const candidate = firstFacebookUrl(lien) ?? firstFacebookUrl(texte);
-  const checked = candidate ? normalizeFacebookLiveUrl(candidate) : null;
+  const checked = candidate ? await resolveFacebookLiveUrl(candidate) : null;
 
   return (
     <>

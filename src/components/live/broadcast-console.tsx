@@ -10,6 +10,7 @@ import { cx, formatCount, formatPrice, shortName } from "@/lib/format";
 import { startBroadcast, MAX_VIEWERS, type BroadcasterHandle } from "@/lib/live/webrtc";
 import { Button, Card } from "@/components/ui/primitives";
 import { CameraIcon, CloseIcon, MicIcon } from "@/components/ui/icons";
+import { LiveVideo } from "./live-video";
 import type { LiveSource } from "@/types/database";
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
     status: "scheduled" | "live" | "ended" | "cancelled";
     source: LiveSource;
     facebook_url: string | null;
+    hls_url: string | null;
     pinned_product_id: string | null;
     live_percent_off: number | null;
   };
@@ -55,6 +57,14 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
 
   const isCamera = live.source === "camera";
   const onAir = live.status === "live";
+
+  /*
+    L'adresse à relayer, s'il y en a une. Jamais en source `camera` : là,
+    `LiveVideo` ouvrirait une connexion de *spectateur* vers notre propre
+    diffusion, alors que la capture locale est déjà à l'écran juste au-dessus.
+  */
+  const relayUrl =
+    live.source === "facebook" ? live.facebook_url : live.source === "hls" ? live.hls_url : null;
 
   /* ─── Fil de commentaires, pour répondre pendant le direct ─────────── */
   useEffect(() => {
@@ -207,6 +217,26 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
             muted
             className="h-full w-full object-cover"
             aria-label={t.live.sourceCamera}
+          />
+        ) : relayUrl ? (
+          /*
+            Le relais tel que le voit un client.
+
+            Cette console montrait un texte d'explication à la place de la
+            vidéo : le vendeur ne pouvait donc pas savoir si son relais
+            fonctionnait, et l'apprenait de ses clients — ou pas du tout. Un
+            lien invalide donnait un cadre noir en pleine vente, sans le
+            moindre signe ici.
+
+            Le même composant que côté spectateur, délibérément : si l'aperçu
+            est bon, ce que voient les clients l'est aussi.
+          */
+          <LiveVideo
+            liveId={live.id}
+            source={live.source}
+            facebookUrl={live.facebook_url}
+            hlsUrl={live.hls_url}
+            isLive={onAir}
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">

@@ -22,7 +22,7 @@ export default async function AdminSettingsPage() {
   const [profile, { t }] = await Promise.all([getProfile(), getT()]);
   const supabase = await createClient();
 
-  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports] =
+  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays] =
     await Promise.all([
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -39,6 +39,18 @@ export default async function AdminSettingsPage() {
         .gte("ends_at", new Date().toISOString()),
       supabase.from("city_alerts").select("id", { count: "exact", head: true }).eq("is_active", true),
       supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
+
+      /*
+        Relais Facebook dont la propriété n'est pas prouvée : adresse collée à
+        la main, `facebook_video_id` resté vide faute d'être passé par la page
+        connectée. Compté ici pour que le contrôle se voie depuis le pilotage,
+        au lieu d'attendre qu'on pense à aller le chercher.
+      */
+      supabase
+        .from("lives")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "facebook")
+        .is("facebook_video_id", null),
     ]);
 
   const links = [
@@ -47,6 +59,11 @@ export default async function AdminSettingsPage() {
     { href: "/admin/categories", label: t.admin.manageCategories, value: format(t.admin.categoriesCount, { n: categories.count ?? 0 }) },
     { href: "/admin/membres", label: t.nav.members, value: formatCount(users.count ?? 0) },
     { href: "/admin/signalements", label: t.admin.reportsTitle, value: String(reports.count ?? 0) },
+    {
+      href: "/admin/relais",
+      label: "Relais Facebook",
+      value: `${unverifiedRelays.count ?? 0} à contrôler`,
+    },
   ];
 
   const stats = [

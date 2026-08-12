@@ -97,6 +97,27 @@ const withSerwist = withSerwistInit({
   cacheOnNavigation: true,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
+
+  /*
+    L'écran hors ligne, mis en cache dès l'installation.
+
+    Le `fallbacks` du service worker ne sait servir qu'une entrée *préchargée* :
+    il appelle `matchPrecache("/hors-ligne")`. Or le manifeste de préchargement
+    que génère @serwist/next ne liste que les fichiers produits par la
+    construction — le fragment JavaScript de la page en fait partie, jamais son
+    document HTML. Sans la ligne ci-dessous, `matchPrecache` ne trouve rien, le
+    repli ne rend rien du tout, et chaque navigation en échec ressort en
+    « no-response » dans la console au lieu d'afficher l'écran hors ligne.
+
+    La révision suit le commit : chaque déploiement remplace la copie en cache.
+
+    La page lit la langue dans un cookie ; la copie enregistrée est donc celle
+    de la langue active au moment de l'installation. Acceptable pour un écran de
+    repli de trois lignes — la vraie page, elle, reste traduite.
+  */
+  additionalPrecacheEntries: [
+    { url: "/hors-ligne", revision: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev" },
+  ],
 });
 
 export default withSerwist(nextConfig);

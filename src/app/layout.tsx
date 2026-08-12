@@ -30,7 +30,19 @@ export const metadata: Metadata = {
   description:
     "Les boutiques du mall de Gafsa en ligne : marketplace, ventes en direct, bons plans partagés par les habitants et services citoyens. En français et en arabe.",
   applicationName: "Mall Express Gafsa",
-  manifest: "/manifest.webmanifest",
+  /*
+    Le manifeste n'est pas déclaré ici mais dans <head>, à la main.
+
+    `metadata.manifest` émet un <link> sans attribut `crossorigin`, et le
+    navigateur récupère alors le manifeste *sans* cookie. Derrière tout portail
+    à session — la Deployment Protection de Vercel sur une prévisualisation, un
+    intranet, une authentification d'entreprise — la requête est redirigée vers
+    un autre domaine, ce qui donne `ERR_FAILED` en boucle, casse l'invitation à
+    installer, et fait échouer le préchargement du service worker.
+
+    `use-credentials` fait envoyer les cookies de même origine. Sans effet sur
+    un site public, indispensable dès qu'il y en a un.
+  */
   appleWebApp: {
     capable: true,
     title: "Mall Express",
@@ -78,6 +90,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        {/* Voir le commentaire sur `manifest` dans `metadata`, plus haut. */}
+        <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
       </head>
       <body>
         <a

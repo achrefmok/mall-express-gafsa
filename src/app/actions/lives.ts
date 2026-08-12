@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
-import { normalizeFacebookLiveUrl } from "@/lib/live/facebook";
+import { resolveFacebookLiveUrl } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -104,7 +104,7 @@ export async function createLive(input: {
     if (!input.facebookUrl?.trim()) {
       return fail("Collez le lien du direct de votre page Facebook");
     }
-    const checked = normalizeFacebookLiveUrl(input.facebookUrl);
+    const checked = await resolveFacebookLiveUrl(input.facebookUrl);
     if (!checked.ok) return fail(checked.error);
     facebookUrl = checked.url;
   }
@@ -158,7 +158,7 @@ export async function relayFacebookLive(input: { url: string; title?: string }) 
     return fail("Votre boutique doit être approuvée avant de diffuser");
   }
 
-  const checked = normalizeFacebookLiveUrl(input.url);
+  const checked = await resolveFacebookLiveUrl(input.url);
   if (!checked.ok) return fail(checked.error);
 
   // Déjà relayé — on y renvoie au lieu d'ouvrir un doublon.

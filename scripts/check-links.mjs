@@ -50,15 +50,22 @@ walk(appDir, (path, name) => {
  * Chaque motif capture le chemin en groupe 1, et l'ouverture éventuelle
  * d'une interpolation `${` en groupe 2 : `/produit/${id}` est alors ramené à
  * `/produit/[param]`, qui correspond bien au segment dynamique `[id]`.
+ *
+ * Le point fait partie des chemins valides. Sans lui, `/manifest.webmanifest`
+ * était tronqué en `/manifest` et signalé comme mort alors que la route
+ * existe — un contrôle qui crie au loup finit par être ignoré, ce qui coûte
+ * plus cher que le lien qu'il cherchait.
  */
+const PATH = String.raw`(\/[a-zA-Z0-9/_.-]*)`;
+
 const PATTERNS = [
-  /href=\{?["`](\/[a-zA-Z0-9/_-]*)(\$\{)?/g,
-  /href:\s*["`](\/[a-zA-Z0-9/_-]*)(\$\{)?/g,
-  /(?:push|replace|redirect)\(["`](\/[a-zA-Z0-9/_-]*)(\$\{)?/g,
+  new RegExp(String.raw`href=\{?["\`]${PATH}(\$\{)?`, "g"),
+  new RegExp(String.raw`href:\s*["\`]${PATH}(\$\{)?`, "g"),
+  new RegExp(String.raw`(?:push|replace|redirect)\(["\`]${PATH}(\$\{)?`, "g"),
   // Destination après connexion, confirmation d'e-mail ou réinitialisation :
   // ces chemins ne sont jamais cliqués pendant le développement, donc jamais
   // testés. C'est là que les 404 se cachent le plus longtemps.
-  /[?&]suite=(\/[a-zA-Z0-9/_-]*)(\$\{)?/g,
+  new RegExp(String.raw`[?&]suite=${PATH}(\$\{)?`, "g"),
 ];
 
 const links = new Map(); // lien -> fichiers qui le référencent
