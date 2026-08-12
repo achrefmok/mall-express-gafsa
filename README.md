@@ -195,6 +195,8 @@ de choisir. Le correctif consiste à nommer la contrainte :
 | Modification de `.env.local` sans effet | **Redémarrez le serveur** : les variables sont lues une seule fois au démarrage |
 | Première variable du fichier ignorée | `.env.local` enregistré en « UTF-8 avec BOM ». Réenregistrez en **UTF-8 sans BOM** — `db:check` le détecte |
 | `relation "public.x" does not exist` | Migrations non appliquées, ou appliquées dans le désordre |
+| Les poussées ne changent rien en production | Le dépôt est connecté, mais **Production Branch** ne vaut pas `main` : Vercel traite alors chaque poussée comme une prévisualisation. Signe distinctif — `<projet>-git-main-<compte>.vercel.app` existe (302 vers `vercel.com/sso-api`) alors que `<projet>.vercel.app` reste figé |
+| Plusieurs projets Vercel sur le même dépôt | Celui qui reçoit les poussées n'est pas celui qui porte le domaine partagé. Comparez `/api/version` sur chaque domaine : il donne le commit réellement en ligne |
 | Le projet ne répond plus après quelques jours | Les projets Supabase gratuits se mettent en pause après 7 jours d'inactivité. Réveillez-le depuis le tableau de bord |
 
 ### Configuration Supabase
