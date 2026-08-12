@@ -70,9 +70,55 @@ if ((root.headers.get("location") ?? "").includes("vercel.com/sso")) {
 if (root.status !== 200) bad(`La racine répond ${root.status}`);
 else ok("La racine répond 200");
 
+/* ─── Quelle version est en ligne ? ──────────────────────────────────── */
+
+title("2 · Version déployée");
+
+/*
+ * `/api/version` renvoie le commit que Vercel a construit. C'est la seule
+ * réponse fiable à « ma modification est-elle en ligne ? » : comparer
+ * l'apparence d'une page trompe, et le middleware masque les routes absentes
+ * sous /vendeur en répondant 307 même quand elles n'existent pas.
+ */
+const version = await (async () => {
+  try {
+    const response = await fetch(`${target}/api/version`, {
+      signal: AbortSignal.timeout(20_000),
+    });
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+})();
+
+// Le commit local, pour la comparaison.
+const local = await (async () => {
+  try {
+    const { execSync } = await import("node:child_process");
+    return execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    return null;
+  }
+})();
+
+if (!version) {
+  bad("/api/version absent — ce déploiement est antérieur à son introduction");
+  if (local) console.log(`    ${C.dim}Votre commit local : ${local.slice(0, 7)}${C.reset}`);
+} else if (!version.commit) {
+  warn(`Aucun commit rapporté (environnement : ${version.environnement})`);
+} else {
+  const line = `${version.court} sur ${version.branche}${version.message ? ` — ${version.message}` : ""}`;
+
+  if (local && local === version.commit) ok(`En ligne : ${line}`);
+  else if (local) {
+    bad(`En ligne : ${line}`);
+    console.log(`    ${C.dim}Votre local : ${local.slice(0, 7)} — le déploiement est en retard.${C.reset}`);
+  } else ok(`En ligne : ${line}`);
+}
+
 /* ─── Les routes attendues ───────────────────────────────────────────── */
 
-title("2 · Routes");
+title("3 · Routes");
 
 const routes = [
   ["/", 200, "présentation"],
@@ -85,6 +131,10 @@ const routes = [
   ["/robots.txt", 200, "robots"],
   ["/sitemap.xml", 200, "plan de site"],
   ["/manifest.webmanifest", 200, "manifeste PWA"],
+  ["/api/version", 200, "commit déployé"],
+  // Les chemins sous /vendeur sont interceptés par le middleware avant tout
+  // routage : ils répondent 307 même s'ils n'existent pas. On sonde donc les
+  // routes d'API, qui, elles, disent la vérité.
   ["/api/facebook/connect", 307, "liaison Facebook (refus sans session)"],
   ["/api/cron/maintenance", 401, "maintenance (refus sans jeton)"],
   ["/api/cron/facebook-sync", 401, "reprise Facebook (refus sans jeton)"],
@@ -98,7 +148,7 @@ for (const [path, expected, label] of routes) {
 
 /* ─── En-têtes de sécurité ───────────────────────────────────────────── */
 
-title("3 · En-têtes de sécurité");
+title("4 · En-têtes de sécurité");
 
 const expectedHeaders = [
   ["content-security-policy", /default-src 'self'/, "CSP"],
@@ -118,7 +168,7 @@ for (const [name, pattern, label] of expectedHeaders) {
 
 /* ─── Cohérence du contenu ───────────────────────────────────────────── */
 
-title("4 · Contenu");
+title("5 · Contenu");
 
 try {
   const manifest = await (await fetch(`${target}/manifest.webmanifest`)).json();

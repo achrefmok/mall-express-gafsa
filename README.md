@@ -742,6 +742,17 @@ Deployment Protection** de Vercel — invisible pour vos visiteurs comme pour Me
 > monde sauf vous. Pour publier : Deployments → ⋯ → « Promote to Production »,
 > ou `vercel --prod`.
 
+> **Quel commit est en ligne ?** `/api/version` renvoie le commit construit par
+> Vercel, et `prod:check` le compare à votre `HEAD` local. C'est la seule réponse
+> fiable : l'apparence d'une page trompe, et le middleware fait répondre 307 à
+> tout chemin sous `/vendeur`, y compris à ceux qui n'existent pas.
+>
+> **Un projet Vercel par domaine.** Deux projets peuvent coexister sur le même
+> dépôt : l'un reçoit les poussées, l'autre garde le domaine que vous partagez —
+> et rien ne se met à jour. Le nom du projet apparaît dans l'URL de ses réglages
+> (`vercel.com/<compte>/<projet>/settings`) : vérifiez qu'il correspond au
+> domaine que vous testez.
+
 ### 7 · Avant d'ouvrir aux vrais utilisateurs
 
 ```bash
