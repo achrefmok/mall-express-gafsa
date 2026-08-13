@@ -186,9 +186,11 @@ export function facebookVideoId(url: string): string | null {
  *   · Ce point d'accès n'est pas documenté. Il n'est ni signé ni horodaté — il
  *     ne demande que l'identifiant public de la vidéo, ce qui le rend bien plus
  *     stable que les adresses CDN, mais Facebook peut le restreindre.
- *   · Il ne répond qu'aux clients iOS. Mesuré : agent iPhone ou agent absent,
- *     HTTP 200 avec six qualités ; agent Android ou de bureau, HTTP 400. Cela
- *     tombe juste, puisque c'est iOS que nous cherchons à servir.
+ *   · Facebook ne le sert qu'aux clients iOS : mesuré, un agent Android ou de
+ *     bureau reçoit un HTTP 400. D'où le passage par notre route, qui l'obtient
+ *     côté serveur et le rend accessible à tous. Les variantes citées dans la
+ *     liste, elles, sont ouvertes à tous les agents et pointent directement sur
+ *     le CDN : la vidéo ne transite pas par nous.
  *   · Il ne sert que les directs en cours. Une vidéo terminée renvoie une
  *     réponse qui n'est pas une liste de lecture — d'où le repli sur le greffon
  *     dès que la lecture échoue.
@@ -196,7 +198,9 @@ export function facebookVideoId(url: string): string | null {
  */
 export function facebookHlsUrl(url: string): string | null {
   const id = facebookVideoId(url);
-  return id ? `https://www.facebook.com/video/playback/playlist.m3u8?v=${id}` : null;
+  // Par notre relais : Facebook ne sert cette liste qu'aux clients iOS, et le
+  // navigateur ne peut donc pas la demander lui-même. Voir la route.
+  return id ? `/api/live/facebook-playlist?v=${id}` : null;
 }
 
 /* ─── Vidéo réellement intégrable ────────────────────────────────────────── */

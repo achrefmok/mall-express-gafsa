@@ -151,16 +151,35 @@ const FALLBACK_WIDTH = 380;
 const FALLBACK_HEIGHT = 675;
 
 /**
+ * Ce navigateur lit-il le HLS nativement ?
+ *
+ * On interroge la capacité plutôt que l'identité : `canPlayType` répond pour ce
+ * navigateur-ci, là où renifler l'agent revient à tenir une liste d'appareils
+ * qui vieillit mal. Safari et iOS répondent oui, la plupart des navigateurs
+ * Android aussi, Chrome de bureau non — et là le greffon de Facebook fonctionne
+ * très bien, on le lui laisse.
+ *
+ * Le navigateur renvoie « probably », « maybe » ou une chaîne vide. On accepte
+ * les deux premières : « maybe » est la réponse habituelle de Safari pour le
+ * HLS, et la refuser écarterait précisément les appareils que l'on vise.
+ */
+function playsHlsNatively(): boolean {
+  if (typeof document === "undefined") return false;
+  const probe = document.createElement("video");
+  return probe.canPlayType("application/vnd.apple.mpegurl") !== "";
+}
+
+/**
  * iPhone ou iPad ?
  *
- * Renifler l'agent est une mauvaise habitude, mais ici la différence est réelle
- * et vérifiée : le greffon vidéo de Facebook ne lit pas en ligne sur iOS. Il
- * exige le plein écran, y compris servi nu par Facebook hors de toute iframe —
- * donc rien de ce que nous écrivons n'y changera rien. Dire « touchez pour
- * lancer » à un spectateur pour qui toucher ne lance rien est pire que se taire.
+ * Sert uniquement à rédiger la consigne quand on retombe sur le greffon : là-bas
+ * le lecteur de Facebook refuse de lire en ligne et impose le plein écran, alors
+ * qu'ailleurs un simple appui suffit. Ce n'est pas une capacité qu'on peut
+ * interroger — c'est un comportement de plateforme —, d'où le recours à l'agent,
+ * qui reste le moindre mal pour ne pas donner une consigne fausse.
  *
- * iPadOS 13 et suivants se présentent comme un Mac : d'où le second test, sur
- * un Mac tactile, qui n'existe pas.
+ * iPadOS 13 et suivants se présentent comme un Mac : d'où le second test, sur un
+ * Mac tactile, qui n'existe pas.
  */
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -256,6 +275,7 @@ function FacebookRelay({ url }: { url: string }) {
     ce signal, et un délai de repli couvre les navigateurs qui ne l'émettent pas.
   */
   const [showHint, setShowHint] = useState(true);
+  const [hlsCapable, setHlsCapable] = useState(false);
   const [onIOS, setOnIOS] = useState(false);
   const [nativeFailed, setNativeFailed] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -263,9 +283,13 @@ function FacebookRelay({ url }: { url: string }) {
 
   const giveUpNative = useCallback(() => setNativeFailed(true), []);
 
-  // Après hydratation seulement : le serveur ne connaît pas l'appareil, et
-  // rendre deux textes différents de part et d'autre casserait l'hydratation.
-  useEffect(() => setOnIOS(isIOS()), []);
+  // Après hydratation seulement : le serveur ne connaît pas les capacités du
+  // navigateur, et rendre deux arbres différents de part et d'autre casserait
+  // l'hydratation.
+  useEffect(() => {
+    setHlsCapable(playsHlsNatively());
+    setOnIOS(isIOS());
+  }, []);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -313,20 +337,23 @@ function FacebookRelay({ url }: { url: string }) {
   const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
 
   /*
-    Sur iOS, notre propre lecteur plutôt que celui de Facebook.
+    Notre propre lecteur dès que le navigateur sait lire du HLS.
 
-    Le greffon y exige le plein écran pour démarrer, ce qui recouvre toute la
-    couche commerce au moment de vendre. Facebook sert le même direct en HLS,
-    que Safari lit nativement : en ligne, en sourdine, sans aucun geste.
+    Le greffon de Facebook ne démarre jamais seul — il renvoie
+    `Permissions-Policy: autoplay=()` — et sur iOS il refuse même de lire en
+    ligne, imposant un plein écran qui recouvre toute la couche commerce au
+    moment précis où le commerçant vend. Le même direct servi en HLS dans une
+    balise `video` en sourdine démarre, lui, sans aucun geste.
 
-    Partout ailleurs — ordinateur, Android — le greffon fonctionne et reste
-    utilisé : il compte les vues du commerçant et porte l'attribution Facebook.
+    Là où le HLS n'est pas lu nativement — Chrome de bureau — le greffon reste
+    utilisé : il y fonctionne, compte les vues du commerçant et porte
+    l'attribution Facebook. Nous n'embarquons pas de bibliothèque pour l'éviter.
 
-    `nativeFailed` ramène à l'iframe dès que la lecture échoue — direct terminé,
-    point d'accès modifié, réseau. Mieux vaut le plein écran qu'un écran noir.
+    `nativeFailed` ramène à l'iframe dès que la lecture échoue : direct terminé,
+    point d'accès modifié, réseau. Mieux vaut le greffon qu'un écran noir.
   */
   const hls = facebookHlsUrl(url);
-  const useNativePlayer = onIOS && hls !== null && !nativeFailed;
+  const useNativePlayer = hlsCapable && hls !== null && !nativeFailed;
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
