@@ -236,10 +236,14 @@ function FacebookRelay({ url }: { url: string }) {
   */
   const [showHint, setShowHint] = useState(true);
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const focusedByUs = useRef(false);
 
   useEffect(() => {
     const frame = frameRef.current;
-    const hide = () => setShowHint(false);
+    const hide = () => {
+      // Ignorer le focus que nous posons nous-mêmes juste en dessous.
+      if (!focusedByUs.current) setShowHint(false);
+    };
 
     frame?.addEventListener("focus", hide);
     const timer = setTimeout(hide, 20_000);
@@ -249,6 +253,33 @@ function FacebookRelay({ url }: { url: string }) {
       clearTimeout(timer);
     };
   }, [box.width]);
+
+  /*
+    Donner le focus à l'iframe dès qu'elle est chargée.
+
+    Safari sur iOS demande un premier appui pour donner le focus à une iframe
+    d'une autre origine ; seul le second actionne le contrôle visé. D'où le
+    « il faut agrandir, puis démarrer » — deux gestes là où un seul devrait
+    suffire. En posant ce focus nous-mêmes, le premier appui du spectateur
+    tombe directement sur le bouton de lecture.
+
+    `preventScroll` est indispensable : sans lui, donner le focus fait défiler
+    la page jusqu'à l'élément, ce qui déplacerait l'écran du direct.
+
+    Réserve honnête : ce comportement d'iOS n'est pas documenté noir sur blanc
+    et je n'ai pas pu le reproduire depuis un terminal. La manœuvre est sans
+    risque — au pire elle ne change rien.
+  */
+  const focusFrame = () => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    focusedByUs.current = true;
+    frame.focus({ preventScroll: true });
+    setTimeout(() => {
+      focusedByUs.current = false;
+    }, 0);
+  };
 
   const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
 
@@ -263,14 +294,21 @@ function FacebookRelay({ url }: { url: string }) {
           allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={focusFrame}
         />
       )}
 
+      {/*
+        Le libellé seul, sous le centre.
+
+        Nous dessinions ici un disque de lecture, qui se posait pile sur celui
+        du greffon — déjà centré — et le masquait. Le spectateur croyait toucher
+        notre bouton, et nous cachions le vrai. On garde donc uniquement la
+        phrase, décalée sous le centre pour laisser le bouton de Facebook visible
+        et libre.
+      */}
       {showHint && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <span className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-white/90 text-[26px] text-[var(--color-brand)] shadow-lg">
-            ▶
-          </span>
+        <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
             {t.live.tapToPlay}
           </span>
