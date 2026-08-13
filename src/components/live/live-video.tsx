@@ -218,24 +218,37 @@ function FacebookRelay({ url }: { url: string }) {
     ordinateur. Le paramètre `autoplay=true` ci-dessous ne change donc rien : la
     vidéo ne démarre que sur un geste du spectateur.
 
-    Or rien ne le lui disait. Il voyait un rectangle noir et en concluait que le
-    direct ne marchait pas. D'où cette indication, effacée au bout de quelques
-    secondes pour ne pas encombrer la vidéo une fois lancée.
+    Or rien ne l'indiquait, et le bouton du greffon est petit et posé en bas à
+    gauche — juste à côté de notre champ de commentaire. Le spectateur tâtonnait,
+    et finissait par toucher « Agrandir ». Un appui au centre de la vidéo lance
+    aussi la lecture : c'est donc là qu'on l'invite à appuyer, avec une cible
+    large qu'on ne peut pas manquer.
 
     `pointer-events-none` est ici indispensable : le geste doit atteindre le
-    bouton du greffon, à l'intérieur de l'iframe. Un calque qui l'intercepterait
+    lecteur, à l'intérieur de l'iframe. Un calque qui l'intercepterait
     empêcherait définitivement la lecture — c'est exactement ce que faisait le
     bandeau de l'écran spectateur.
 
-    Nous ne pouvons pas savoir si la lecture a démarré : l'iframe est d'une autre
-    origine, son contenu nous est fermé. Un délai est donc le seul mécanisme
-    honnête ; prétendre détecter l'état mènerait à afficher un message faux.
+    Nous ne pouvons pas lire l'état du lecteur : l'iframe est d'une autre
+    origine. Mais nous savons quand le spectateur y a touché — un appui dans une
+    iframe donne le focus à l'élément côté parent. L'indication s'effave donc sur
+    ce signal, et un délai de repli couvre les navigateurs qui ne l'émettent pas.
   */
   const [showHint, setShowHint] = useState(true);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => setShowHint(false), 8_000);
-    return () => clearTimeout(timer);
-  }, []);
+    const frame = frameRef.current;
+    const hide = () => setShowHint(false);
+
+    frame?.addEventListener("focus", hide);
+    const timer = setTimeout(hide, 20_000);
+
+    return () => {
+      frame?.removeEventListener("focus", hide);
+      clearTimeout(timer);
+    };
+  }, [box.width]);
 
   const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
 
@@ -243,6 +256,7 @@ function FacebookRelay({ url }: { url: string }) {
     <div ref={boxRef} className="absolute inset-0 bg-black">
       {box.width > 0 && (
         <iframe
+          ref={frameRef}
           src={embed}
           title={t.live.facebookRelay}
           className="h-full w-full border-0"
@@ -253,7 +267,10 @@ function FacebookRelay({ url }: { url: string }) {
       )}
 
       {showHint && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-1/4 flex justify-center px-6">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3">
+          <span className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-white/90 text-[26px] text-[var(--color-brand)] shadow-lg">
+            ▶
+          </span>
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
             {t.live.tapToPlay}
           </span>
