@@ -345,15 +345,20 @@ function FacebookRelay({ url }: { url: string }) {
     moment précis où le commerçant vend. Le même direct servi en HLS dans une
     balise `video` en sourdine démarre, lui, sans aucun geste.
 
-    Là où le HLS n'est pas lu nativement — Chrome de bureau — le greffon reste
-    utilisé : il y fonctionne, compte les vues du commerçant et porte
-    l'attribution Facebook. Nous n'embarquons pas de bibliothèque pour l'éviter.
+    Réservé à iOS, et pas par préférence : Facebook ne sert cette liste de
+    lecture qu'aux clients iOS, l'appareil devant la demander lui-même. Relayer
+    la requête par notre serveur pour en faire profiter Android a été tenté et
+    échoue — Facebook refuse les serveurs de l'hébergeur, agent iOS explicite
+    compris. C'est l'adresse d'origine qui est filtrée.
+
+    Ailleurs — Android, ordinateur — le greffon reste utilisé : il y fonctionne,
+    compte les vues du commerçant et porte l'attribution Facebook.
 
     `nativeFailed` ramène à l'iframe dès que la lecture échoue : direct terminé,
     point d'accès modifié, réseau. Mieux vaut le greffon qu'un écran noir.
   */
   const hls = facebookHlsUrl(url);
-  const useNativePlayer = hlsCapable && hls !== null && !nativeFailed;
+  const useNativePlayer = onIOS && hlsCapable && hls !== null && !nativeFailed;
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
