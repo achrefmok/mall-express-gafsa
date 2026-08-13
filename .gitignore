@@ -32,3 +32,6 @@ supabase/.env
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Local Netlify folder
+.netlify

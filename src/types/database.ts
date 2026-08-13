@@ -433,6 +433,20 @@ export interface Database {
         ];
       };
 
+      /* ─── live_products ──────────────────────────────────────────────
+         Articles présentés pendant un direct, ordonnés par le vendeur.
+         `lives.pinned_product_id` reste à côté : il désigne celui dont on
+         parle à l'instant, mis en avant au-dessus de la liste. */
+      live_products: {
+        Row: { live_id: string; product_id: string; position: number; added_at: string };
+        Insert: { live_id: string; product_id: string; position?: number; added_at?: string };
+        Update: Partial<{ position: number }>;
+        Relationships: [
+          FK<"live_products_live_id_fkey", ["live_id"], "lives">,
+          FK<"live_products_product_id_fkey", ["product_id"], "products">,
+        ];
+      };
+
       /* ─── shop_facebook_pages ────────────────────────────────────────
          Lien boutique ↔ page Facebook, jeton d'accès compris.
          Aucune policy pour `anon` ni `authenticated` : seule la clé secrète

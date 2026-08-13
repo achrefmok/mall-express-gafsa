@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
+import { upsertProduct } from "./vendor";
 import { checkFacebookEmbeddable, resolveFacebookLiveUrl } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
@@ -266,6 +267,102 @@ export async function updatePinnedProduct(liveId: string, productId: string | nu
 
   if (updateError) return fail(readableError(updateError));
   return done();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Les articles présentés pendant le direct
+   ═══════════════════════════════════════════════════════════════════════
+
+   `lives.pinned_product_id` désigne l'article dont on parle à l'instant ;
+   `live_products` porte la liste complète, ordonnée par le vendeur. Les deux
+   coexistent : l'un met en avant, l'autre laisse acheter le reste sans quitter
+   l'écran.
+
+   La policy de la table vérifie déjà que l'article appartient à la boutique qui
+   diffuse. On ne la double pas ici : une vérification recopiée finit par diverger
+   de celle qui fait autorité. */
+
+export async function addProductToLive(liveId: string, productId: string) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+
+  // Placé en fin de liste : le vendeur ajoute au fil de sa présentation.
+  const { data: last } = await supabase
+    .from("live_products")
+    .select("position")
+    .eq("live_id", liveId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error: insertError } = await supabase
+    .from("live_products")
+    .insert({ live_id: liveId, product_id: productId, position: (last?.position ?? -1) + 1 });
+
+  // 23505 = déjà présent dans ce direct : l'intention est satisfaite.
+  if (insertError && insertError.code !== "23505") return fail(readableError(insertError));
+
+  revalidatePath(`/lives/${liveId}`);
+  return done();
+}
+
+export async function removeProductFromLive(liveId: string, productId: string) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+
+  const { error: deleteError } = await supabase
+    .from("live_products")
+    .delete()
+    .eq("live_id", liveId)
+    .eq("product_id", productId);
+
+  if (deleteError) return fail(readableError(deleteError));
+
+  revalidatePath(`/lives/${liveId}`);
+  return done();
+}
+
+/**
+ * Créer un article et le présenter, d'un seul geste.
+ *
+ * Le chemin rapide du vendeur en pleine diffusion : il photographie ce qu'il
+ * tient, saisit un nom et un prix, et l'article devient achetable pendant qu'il
+ * en parle. Passer par le formulaire produit complet demanderait de quitter la
+ * console, donc d'interrompre le direct.
+ *
+ * La création délègue à `upsertProduct` : mêmes contrôles, même plafond de cinq
+ * articles avant approbation de la boutique. Recopier ces règles ici les aurait
+ * laissées diverger au premier changement.
+ *
+ * Le stock vaut 1 par défaut — un vendeur qui filme une pièce en main en a
+ * généralement une seule. Il reste modifiable depuis la fiche produit.
+ *
+ * `description` n'est pas rempli : le brancher sur une extraction automatique
+ * depuis la photo se fera ici, sans toucher au reste de la chaîne.
+ */
+export async function quickAddProductToLive(input: {
+  liveId: string;
+  name: string;
+  price: number;
+  stock?: number;
+  images?: string[];
+  pin?: boolean;
+}) {
+  const created = await upsertProduct({
+    name: input.name,
+    price: input.price,
+    stock: input.stock ?? 1,
+    images: input.images ?? [],
+  });
+  if (!created.ok) return created;
+
+  const linked = await addProductToLive(input.liveId, created.data.id);
+  if (!linked.ok) return linked;
+
+  // Épinglé par défaut : on vient d'en parler, c'est celui qu'on regarde.
+  if (input.pin !== false) await updatePinnedProduct(input.liveId, created.data.id);
+
+  return ok({ id: created.data.id });
 }
 
 export async function hideLiveComment(commentId: string) {
