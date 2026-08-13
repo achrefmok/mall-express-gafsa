@@ -145,8 +145,9 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
 
 /* ─── Source Facebook ──────────────────────────────────────────────────── */
 
-/** Largeur de repli quand la mesure échoue : celle d'un téléphone courant. */
+/** Dimensions de repli quand la mesure échoue : celles d'un téléphone courant. */
 const FALLBACK_WIDTH = 380;
+const FALLBACK_HEIGHT = 675;
 
 /**
  * Relais d'un direct Facebook via le plugin vidéo officiel.
@@ -155,39 +156,57 @@ const FALLBACK_WIDTH = 380;
  */
 function FacebookRelay({ url }: { url: string }) {
   const { t } = useI18n();
-  const [width, setWidth] = useState(0);
+  const [box, setBox] = useState({ width: 0, height: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
 
   /*
-    La largeur entre dans l'adresse de l'iframe, et changer `src` recharge
-    l'iframe : le direct repart alors de zéro, écran noir compris. D'où le
-    palier de 32 px plus bas — la largeur bouge pour des raisons qui ne nous
-    regardent pas (clavier, barre de défilement, rotation d'un pixel), et sans
-    palier le direct se coupait à chacune.
+    Les deux dimensions entrent dans l'adresse de l'iframe.
+
+    La hauteur y était absente, et c'était une erreur : sans elle le greffon
+    dimensionne la vidéo sur la seule largeur et la colle en haut du cadre. Sur
+    un téléphone en portrait, une vidéo paysage n'occupait donc qu'un bandeau
+    supérieur, le reste en noir — et son bouton de lecture, minuscule, se perdait
+    au milieu de ce bandeau. Avec les deux dimensions, le greffon ajuste la vidéo
+    dans le cadre entier et centre ses contrôles.
+
+    Changer `src` recharge l'iframe et le direct repart de zéro. D'où le palier
+    de 32 px : la largeur bouge pour des raisons qui ne nous regardent pas, et
+    sans palier le direct se coupait à chacune.
+
+    La hauteur, elle, ne déclenche jamais de rechargement à elle seule — elle est
+    relevée en même temps que la largeur. Sur mobile la hauteur `dvh` varie quand
+    la barre d'adresse se replie : la lier au rechargement couperait le direct au
+    premier défilement. Une rotation, elle, change la largeur, donc les deux sont
+    bien reprises quand cela compte.
 
     La mesure est prise deux fois, et ce n'est pas une précaution de trop :
     `ResizeObserver` ne notifie que les *changements*. Si sa première mesure
-    valait zéro et que la mise en page ne bougeait plus ensuite, la largeur
-    restait à zéro pour toujours — aucune iframe, écran noir définitif. La
-    mesure synchrone au montage ferme ce piège.
+    valait zéro et que la mise en page ne bougeait plus ensuite, elle restait à
+    zéro pour toujours — aucune iframe, écran noir définitif.
 
-    Et si les deux échouent, on prend `FALLBACK_WIDTH`. Une largeur approchée
-    donne au pire une vidéo mal cadrée ; l'absence de largeur ne donne rien du
+    Et si les deux échouent, on prend les valeurs de repli. Un cadre approché
+    donne au pire une vidéo mal ajustée ; l'absence de mesure ne donne rien du
     tout, et c'est toujours le mauvais choix face à un client qui regarde.
   */
   useEffect(() => {
     const element = boxRef.current;
     if (!element) return;
 
-    const apply = (measured: number) =>
-      setWidth((current) => (Math.abs(measured - current) < 32 ? current : measured));
+    const apply = (width: number, height: number) =>
+      setBox((current) =>
+        Math.abs(width - current.width) < 32 ? current : { width, height },
+      );
 
-    const initial = Math.round(element.getBoundingClientRect().width);
-    apply(initial > 0 ? initial : FALLBACK_WIDTH);
+    const rect = element.getBoundingClientRect();
+    apply(
+      Math.round(rect.width) || FALLBACK_WIDTH,
+      Math.round(rect.height) || FALLBACK_HEIGHT,
+    );
 
     const observer = new ResizeObserver(([entry]) => {
-      const measured = Math.round(entry.contentRect.width);
-      if (measured > 0) apply(measured);
+      const width = Math.round(entry.contentRect.width);
+      const height = Math.round(entry.contentRect.height);
+      if (width > 0) apply(width, height || FALLBACK_HEIGHT);
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -218,11 +237,11 @@ function FacebookRelay({ url }: { url: string }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${width}`;
+  const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
-      {width > 0 && (
+      {box.width > 0 && (
         <iframe
           src={embed}
           title={t.live.facebookRelay}
