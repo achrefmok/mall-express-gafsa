@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { joinBroadcast, type ViewerState } from "@/lib/live/webrtc";
 import type { LiveSource } from "@/types/database";
@@ -43,18 +43,44 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
   const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<ViewerState>(isLive ? "connecting" : "ended");
+  const [needsTap, setNeedsTap] = useState(false);
+
+  /*
+    Démarrer la lecture, et savoir si le navigateur a refusé.
+
+    `play()` renvoie une promesse qui peut être rejetée : le flux est là, la
+    connexion est bonne, mais la politique de lecture automatique de l'appareil
+    s'y oppose. L'ancien code avalait ce refus (`catch(() => undefined)`), ce qui
+    donnait le pire des résultats — un rectangle noir, aucun message, aucun
+    moyen d'agir. Les navigateurs mobiles refusent bien plus volontiers que ceux
+    de bureau : c'est exactement la panne « ça marche sur PC, noir sur le
+    téléphone ».
+
+    En cas de refus, on propose donc au spectateur de toucher l'écran. Un geste
+    lève la restriction sur tous les navigateurs.
+  */
+  const tryPlay = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      await video.play();
+      setNeedsTap(false);
+    } catch {
+      setNeedsTap(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLive) return;
 
     const viewer = joinBroadcast(liveId, {
       onStream: (stream) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // La lecture automatique n'est tolérée qu'en muet ; le spectateur
-          // rétablit le son d'un geste (bouton plus bas dans l'écran live).
-          void videoRef.current.play().catch(() => undefined);
-        }
+        const video = videoRef.current;
+        if (!video) return;
+        // La lecture automatique n'est tolérée qu'en muet ; le spectateur
+        // rétablit le son d'un geste (bouton plus bas dans l'écran live).
+        video.srcObject = stream;
+        void tryPlay();
       },
       onState: setState,
     });
@@ -62,7 +88,7 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
     return () => {
       void viewer.stop();
     };
-  }, [liveId, isLive]);
+  }, [liveId, isLive, tryPlay]);
 
   const message: Partial<Record<ViewerState, { title: string; body?: string }>> = {
     connecting: { title: t.live.connecting },
@@ -72,7 +98,10 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
       body: "Le nombre de places en caméra directe est atteint. Réessayez dans un instant.",
     },
     ended: { title: t.live.ended, body: t.live.endedBody },
-    error: { title: t.common.error, body: t.common.retry },
+    error: {
+      title: "Connexion au direct impossible",
+      body: "Votre réseau bloque la liaison vidéo directe. Essayez en Wi-Fi, ou depuis un autre réseau.",
+    },
   };
 
   const overlay = state === "playing" ? null : message[state];
@@ -95,6 +124,20 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
             <p className="text-[11px] leading-relaxed text-white/65">{overlay.body}</p>
           )}
         </div>
+      )}
+
+      {/* Le flux est reçu mais l'appareil refuse de le lancer seul. */}
+      {!overlay && needsTap && (
+        <button
+          type="button"
+          onClick={() => void tryPlay()}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45"
+        >
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/95 text-[22px] text-[var(--color-brand)]">
+            ▶
+          </span>
+          <span className="text-[12px] font-bold text-white">{t.live.tapToPlay}</span>
+        </button>
       )}
     </div>
   );
