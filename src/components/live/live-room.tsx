@@ -294,8 +294,23 @@ export function LiveRoom({
         isLive={live.status === "live"}
       />
 
-      {/* ─── Bandeau haut ──────────────────────────────────────────────── */}
-      <div className="pt-safe absolute inset-x-0 top-0 z-20 flex items-start justify-between p-[14px]">
+      {/*
+        ─── Bandeau haut ──────────────────────────────────────────────────
+
+        `pointer-events-none` sur le conteneur, rétabli sur le seul élément
+        cliquable qu'il porte.
+
+        Ce bandeau couvre toute la largeur en `z-20`, juste au-dessus du
+        lecteur. Or le greffon Facebook aligne sa vidéo en haut de l'iframe et
+        la dimensionne sur la largeur : sur un téléphone, une vidéo paysage
+        n'occupe que le haut de l'écran, et son bouton de lecture tombe sous
+        ce bandeau — que l'encart de sécurité d'un iPhone à encoche descend
+        encore plus bas. Facebook interdisant l'autoplay dans son greffon
+        (`autoplay=()` dans ses propres en-têtes), cette touche est le seul
+        moyen de lancer la vidéo : captée par un badge décoratif, elle laissait
+        un écran noir définitif là où un ordinateur, sans encart, s'en sortait.
+      */}
+      <div className="pt-safe pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-[14px]">
         <div className="flex items-center gap-2">
           {live.status === "live" ? (
             <span className="rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px]">
@@ -315,7 +330,7 @@ export function LiveRoom({
           type="button"
           onClick={() => router.push("/lives")}
           aria-label={t.common.close}
-          className="rounded-full bg-black/40 p-2"
+          className="pointer-events-auto rounded-full bg-black/40 p-2"
         >
           <CloseIcon size={18} />
         </button>

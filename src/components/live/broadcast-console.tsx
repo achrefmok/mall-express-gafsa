@@ -253,10 +253,12 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
 
         {onAir && (
           <>
-            <span className="absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
+            {/* Décoratifs : ils ne doivent pas capter une touche destinée au
+                lecteur relayé, qui exige un geste pour démarrer. */}
+            <span className="pointer-events-none absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
               {t.live.onAir}
             </span>
-            <span className="absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px] text-white">
+            <span className="pointer-events-none absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px] text-white">
               {formatCount(viewers)}
               {isCamera && ` / ${MAX_VIEWERS}`}
             </span>
