@@ -9,6 +9,7 @@ import { postLiveComment, reportViewerCount, toggleLiveLike } from "@/app/action
 import { placeOrder } from "@/app/actions/cart";
 import { countdown, cx, formatCount, formatPrice, shortName } from "@/lib/format";
 import { LiveVideo } from "./live-video";
+import { LiveProducts, type LiveProduct } from "./live-products";
 import { ChatIcon, CloseIcon, HeartIcon, ShareIcon } from "@/components/ui/icons";
 import { Placeholder } from "@/components/ui/primitives";
 import type { LiveSource } from "@/types/database";
@@ -35,6 +36,7 @@ export interface LiveRoomProps {
     images: string[];
     stock: number;
   } | null;
+  liveProducts: LiveProduct[];
   initialComments: Array<{
     id: string;
     body: string;
@@ -62,6 +64,7 @@ type Comment = LiveRoomProps["initialComments"][number];
 export function LiveRoom({
   live: initialLive,
   pinnedProduct: initialPinned,
+  liveProducts,
   initialComments,
   viewerId,
   initiallyLiked,
@@ -408,6 +411,14 @@ export function LiveRoom({
           </button>
         </div>
       )}
+
+      {/* ─── La boutique du direct ─────────────────────────────────────── */}
+      <LiveProducts
+        liveId={live.id}
+        initialProducts={liveProducts}
+        percentOff={offerActive ? live.live_percent_off : null}
+        canBuy={live.status === "live"}
+      />
 
       {/* ─── Colonne d'actions ─────────────────────────────────────────── */}
       <div className="absolute bottom-[34px] end-[14px] z-20 flex w-[52px] flex-col items-center gap-[14px]">

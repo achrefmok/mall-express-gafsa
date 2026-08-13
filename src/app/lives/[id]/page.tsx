@@ -45,7 +45,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
 
   if (!live) notFound();
 
-  const [pinned, comments, liked] = await Promise.all([
+  const [pinned, comments, liveProducts, liked] = await Promise.all([
     live.pinned_product_id
       ? supabase
           .from("products")
@@ -64,6 +64,24 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
       .limit(30)
       .then(({ data }) => (data ?? []).reverse()),
 
+    supabase
+      .from("live_products")
+      .select("position, product:products(id, name, price, images, stock, is_online, is_draft)")
+      .eq("live_id", id)
+      .order("position")
+      .then(({ data }) =>
+        (data ?? [])
+          .map((row) => row.product)
+          .filter((product) => product && product.is_online && !product.is_draft)
+          .map((product) => ({
+            id: product!.id,
+            name: product!.name,
+            price: product!.price,
+            images: product!.images,
+            stock: product!.stock,
+          })),
+      ),
+
     profile
       ? supabase
           .from("live_likes")
@@ -80,6 +98,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
       pinnedProduct={pinned}
       initialComments={comments}
       viewerId={profile?.id ?? null}
+      liveProducts={liveProducts}
       initiallyLiked={liked}
       contactPhone={profile?.phone ?? ""}
     />

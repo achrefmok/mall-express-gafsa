@@ -35,3 +35,4 @@ supabase/.env
 
 # Local Netlify folder
 .netlify
+deno.lock
