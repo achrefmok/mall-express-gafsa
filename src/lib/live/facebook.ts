@@ -201,7 +201,26 @@ export function facebookVideoId(url: string): string | null {
  */
 export function facebookHlsUrl(url: string): string | null {
   const id = facebookVideoId(url);
-  return id ? `https://www.facebook.com/video/playback/playlist.m3u8?v=${id}` : null;
+  if (!id) return null;
+
+  /*
+    Le relais, s'il est configuré. Il annonce un agent iOS à Facebook et répond
+    avec les en-têtes CORS, ce qui ouvre le flux à tous les appareils au lieu des
+    seuls iPhone. Voir `netlify/edge-functions/facebook-hls.ts`.
+
+    Sans lui, on vise Facebook directement : cela ne fonctionne que sur iOS, mais
+    cela fonctionne. Le relais est donc un ajout, jamais un prérequis — une
+    variable oubliée ou un site Netlify en panne ne casse pas les iPhone.
+  */
+  const relay = process.env.NEXT_PUBLIC_HLS_RELAY;
+  if (relay) return `${relay}${relay.includes("?") ? "&" : "?"}v=${id}`;
+
+  return `https://www.facebook.com/video/playback/playlist.m3u8?v=${id}`;
+}
+
+/** Un relais est-il configuré ? Décide de quels appareils peuvent lire le flux. */
+export function hasHlsRelay(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_HLS_RELAY);
 }
 
 /* ─── Vidéo réellement intégrable ────────────────────────────────────────── */

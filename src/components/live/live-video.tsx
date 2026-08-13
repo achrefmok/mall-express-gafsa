@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { joinBroadcast, type ViewerState } from "@/lib/live/webrtc";
-import { facebookHlsUrl } from "@/lib/live/facebook";
+import { facebookHlsUrl, hasHlsRelay } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
 /**
@@ -345,20 +345,24 @@ function FacebookRelay({ url }: { url: string }) {
     moment précis où le commerçant vend. Le même direct servi en HLS dans une
     balise `video` en sourdine démarre, lui, sans aucun geste.
 
-    Réservé à iOS, et pas par préférence : Facebook ne sert cette liste de
-    lecture qu'aux clients iOS, l'appareil devant la demander lui-même. Relayer
-    la requête par notre serveur pour en faire profiter Android a été tenté et
-    échoue — Facebook refuse les serveurs de l'hébergeur, agent iOS explicite
-    compris. C'est l'adresse d'origine qui est filtrée.
+    Qui y a droit dépend du relais.
 
-    Ailleurs — Android, ordinateur — le greffon reste utilisé : il y fonctionne,
-    compte les vues du commerçant et porte l'attribution Facebook.
+    Sans relais, on vise Facebook directement, et seuls les iPhone y arrivent :
+    Facebook ne sert cette liste qu'aux clients iOS, les autres reçoivent un 400.
+    Avec un relais — une fonction Edge qui annonce un agent iOS et répond en CORS
+    — tout appareil sachant lire le HLS nativement y a droit, ce qui ajoute la
+    plupart des navigateurs Android.
+
+    Chrome de bureau ne lit pas le HLS nativement et reste donc sur le greffon,
+    où il fonctionne. L'y amener demanderait une bibliothèque de lecture, que
+    nous n'embarquons pas pour l'instant.
 
     `nativeFailed` ramène à l'iframe dès que la lecture échoue : direct terminé,
-    point d'accès modifié, réseau. Mieux vaut le greffon qu'un écran noir.
+    relais injoignable, réseau. Mieux vaut le greffon qu'un écran noir.
   */
   const hls = facebookHlsUrl(url);
-  const useNativePlayer = onIOS && hlsCapable && hls !== null && !nativeFailed;
+  const deviceCanFetch = hasHlsRelay() ? hlsCapable : onIOS && hlsCapable;
+  const useNativePlayer = deviceCanFetch && hls !== null && !nativeFailed;
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
