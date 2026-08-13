@@ -193,6 +193,31 @@ function FacebookRelay({ url }: { url: string }) {
     return () => observer.disconnect();
   }, []);
 
+  /*
+    Facebook interdit la lecture automatique dans son propre greffon — ses
+    en-têtes renvoient `autoplay=()`, mesuré identique sur iPhone, Android et
+    ordinateur. Le paramètre `autoplay=true` ci-dessous ne change donc rien : la
+    vidéo ne démarre que sur un geste du spectateur.
+
+    Or rien ne le lui disait. Il voyait un rectangle noir et en concluait que le
+    direct ne marchait pas. D'où cette indication, effacée au bout de quelques
+    secondes pour ne pas encombrer la vidéo une fois lancée.
+
+    `pointer-events-none` est ici indispensable : le geste doit atteindre le
+    bouton du greffon, à l'intérieur de l'iframe. Un calque qui l'intercepterait
+    empêcherait définitivement la lecture — c'est exactement ce que faisait le
+    bandeau de l'écran spectateur.
+
+    Nous ne pouvons pas savoir si la lecture a démarré : l'iframe est d'une autre
+    origine, son contenu nous est fermé. Un délai est donc le seul mécanisme
+    honnête ; prétendre détecter l'état mènerait à afficher un message faux.
+  */
+  const [showHint, setShowHint] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 8_000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${width}`;
 
   return (
@@ -207,11 +232,26 @@ function FacebookRelay({ url }: { url: string }) {
           referrerPolicy="strict-origin-when-cross-origin"
         />
       )}
+
+      {showHint && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-1/4 flex justify-center px-6">
+          <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
+            {t.live.tapToPlay}
+          </span>
+        </div>
+      )}
+
+      {/*
+        Porte de sortie quand le greffon ne veut rien afficher. Elle était en bas
+        au centre, donc masquée par la barre de commentaires de l'écran
+        spectateur : inatteignable au moment précis où elle sert. Remontée sous
+        le bandeau, et au-dessus des surcouches de l'écran.
+      */}
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute bottom-2 start-1/2 -translate-x-1/2 rounded-[10px] bg-black/55 px-3 py-1 text-[9.5px] font-semibold text-white rtl:translate-x-1/2"
+        className="absolute start-1/2 top-[52px] z-30 -translate-x-1/2 rounded-[10px] bg-black/55 px-3 py-1 text-[9.5px] font-semibold text-white rtl:translate-x-1/2"
       >
         {t.live.openOnFacebook}
       </a>

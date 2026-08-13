@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
-import { resolveFacebookLiveUrl } from "@/lib/live/facebook";
+import { checkFacebookEmbeddable, resolveFacebookLiveUrl } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -106,6 +106,11 @@ export async function createLive(input: {
     }
     const checked = await resolveFacebookLiveUrl(input.facebookUrl);
     if (!checked.ok) return fail(checked.error);
+
+    // Le refus se dit ici, pendant la préparation, et pas devant les clients.
+    const embed = await checkFacebookEmbeddable(checked.url);
+    if (!embed.embeddable) return fail(embed.error);
+
     facebookUrl = checked.url;
   }
 
@@ -160,6 +165,9 @@ export async function relayFacebookLive(input: { url: string; title?: string }) 
 
   const checked = await resolveFacebookLiveUrl(input.url);
   if (!checked.ok) return fail(checked.error);
+
+  const embed = await checkFacebookEmbeddable(checked.url);
+  if (!embed.embeddable) return fail(embed.error);
 
   // Déjà relayé — on y renvoie au lieu d'ouvrir un doublon.
   const { data: existing } = await supabase

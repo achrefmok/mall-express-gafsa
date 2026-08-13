@@ -144,6 +144,56 @@ const RESOLVER_HEADERS = {
 const SHARE_HELP =
   "Ce lien de partage n'a pas pu être ouvert. Affichez la vidéo sur Facebook, puis copiez l'adresse de la barre du navigateur (elle contient /videos/ ou /reel/).";
 
+/* ─── Vidéo réellement intégrable ────────────────────────────────────────── */
+
+export type EmbedCheck = { embeddable: true } | { embeddable: false; error: string };
+
+const NOT_EMBEDDABLE =
+  "Facebook refuse d'intégrer cette vidéo. Elle est probablement privée ou réservée à certaines personnes, supprimée, ou le direct est terminé sans rediffusion publique. Rendez-la publique, puis recollez le lien.";
+
+/**
+ * Le greffon accepte-t-il réellement d'afficher cette vidéo ?
+ *
+ * Une adresse peut être parfaitement formée, canonique, sur le bon domaine — et
+ * ne rien donner : vidéo privée, réservée à une liste d'amis, supprimée, ou
+ * direct terminé sans rediffusion. Le greffon ne le dit jamais franchement, il
+ * répond 200 avec une page vide de vidéo. Le vendeur, lui, l'apprend devant un
+ * carré noir en pleine vente.
+ *
+ * On interroge donc le greffon comme le fera le navigateur, et on regarde s'il
+ * y a une vidéo au bout. Mesuré sur cinq cas, avec notre agent comme avec celui
+ * d'un navigateur : une vidéo publique donne ~180 Ko contenant `dash_manifest`
+ * et une adresse `fbcdn.net/v/` ; tout le reste — identifiant inexistant, lien
+ * de partage non résolu, répertoire sans vidéo — donne 47 Ko sans aucun des
+ * deux. L'écart est franc, sans zone grise.
+ *
+ * En cas de doute on laisse passer, délibérément. Un faux refus empêcherait un
+ * commerçant de diffuser, ce qui est plus grave qu'un carré noir : si Facebook
+ * ne répond pas, change le format de sa réponse ou nous limite, la vente doit
+ * pouvoir commencer.
+ */
+export async function checkFacebookEmbeddable(url: string): Promise<EmbedCheck> {
+  const probe = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=400`;
+
+  try {
+    const response = await fetch(probe, {
+      cache: "no-store",
+      headers: RESOLVER_HEADERS,
+      signal: AbortSignal.timeout(8_000),
+    });
+
+    if (!response.ok) return { embeddable: true };
+
+    const html = await response.text();
+    const playable = html.includes("dash_manifest") && html.includes("fbcdn.net/v/");
+
+    return playable ? { embeddable: true } : { embeddable: false, error: NOT_EMBEDDABLE };
+  } catch {
+    // Réseau absent, délai dépassé : on ne condamne pas sur un doute.
+    return { embeddable: true };
+  }
+}
+
 /**
  * Valide un lien de direct Facebook et le ramène à son permalien canonique.
  *
