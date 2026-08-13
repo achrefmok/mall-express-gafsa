@@ -55,7 +55,31 @@ const securityHeaders = [
       `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net`,
       `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com`,
       "media-src 'self' blob: https:",
-      "frame-src 'self' https://www.facebook.com https://web.facebook.com https://accounts.google.com",
+      /*
+        Le greffon vidéo change d'hôte selon l'appareil, et il faut le suivre.
+
+        Mesuré sur `www.facebook.com/plugins/video.php`, même vidéo, seul
+        l'agent change :
+
+          iPhone  → 302 vers m.facebook.com
+          iPad    → 302 vers m.facebook.com
+          Android → 200, aucune redirection
+          bureau  → 200, aucune redirection
+
+        `frame-src` gouverne aussi les redirections d'une iframe. En ne listant
+        que `www` et `web`, on bloquait donc la redirection sur iOS : l'iframe
+        restait vide, et le spectateur voyait un écran noir sans le moindre
+        élément de lecteur — ni bouton, ni image, ni message. Sur ordinateur et
+        sur Android, sans redirection, tout fonctionnait. D'où un défaut visible
+        des seuls iPhone, longtemps pris pour un problème de mise en page.
+
+        Le joker sur `facebook.com` est délibéré : nous intégrons déjà le
+        greffon de Facebook, et énumérer ses hôtes nous a déjà coûté cette
+        panne. Un hôte régional ou une future variante ne la ramènera pas.
+        Le lecteur servi par `m.facebook.com` est complet — vérifié, 65 Ko
+        avec `dash_manifest` et une adresse `fbcdn.net/v/`.
+      */
+      "frame-src 'self' https://*.facebook.com https://accounts.google.com",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       "upgrade-insecure-requests",
