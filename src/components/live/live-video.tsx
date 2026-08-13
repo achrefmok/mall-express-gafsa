@@ -150,6 +150,26 @@ const FALLBACK_WIDTH = 380;
 const FALLBACK_HEIGHT = 675;
 
 /**
+ * iPhone ou iPad ?
+ *
+ * Renifler l'agent est une mauvaise habitude, mais ici la différence est réelle
+ * et vérifiée : le greffon vidéo de Facebook ne lit pas en ligne sur iOS. Il
+ * exige le plein écran, y compris servi nu par Facebook hors de toute iframe —
+ * donc rien de ce que nous écrivons n'y changera rien. Dire « touchez pour
+ * lancer » à un spectateur pour qui toucher ne lance rien est pire que se taire.
+ *
+ * iPadOS 13 et suivants se présentent comme un Mac : d'où le second test, sur
+ * un Mac tactile, qui n'existe pas.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+/**
  * Relais d'un direct Facebook via le plugin vidéo officiel.
  * L'URL a déjà été validée à l'enregistrement (hôtes Facebook uniquement) ;
  * elle est ré-encodée ici avant d'entrer dans l'iframe.
@@ -235,8 +255,13 @@ function FacebookRelay({ url }: { url: string }) {
     ce signal, et un délai de repli couvre les navigateurs qui ne l'émettent pas.
   */
   const [showHint, setShowHint] = useState(true);
+  const [onIOS, setOnIOS] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const focusedByUs = useRef(false);
+
+  // Après hydratation seulement : le serveur ne connaît pas l'appareil, et
+  // rendre deux textes différents de part et d'autre casserait l'hydratation.
+  useEffect(() => setOnIOS(isIOS()), []);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -310,7 +335,7 @@ function FacebookRelay({ url }: { url: string }) {
       {showHint && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
-            {t.live.tapToPlay}
+            {onIOS ? t.live.tapFullscreenToPlay : t.live.tapToPlay}
           </span>
         </div>
       )}
