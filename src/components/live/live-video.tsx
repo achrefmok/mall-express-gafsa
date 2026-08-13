@@ -277,11 +277,12 @@ function FacebookRelay({ url }: { url: string }) {
   const [showHint, setShowHint] = useState(true);
   const [hlsCapable, setHlsCapable] = useState(false);
   const [onIOS, setOnIOS] = useState(false);
-  const [nativeFailed, setNativeFailed] = useState(false);
+  const [nativeFailed, setNativeFailed] = useState<string | null>(null);
+  const [diag, setDiag] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const focusedByUs = useRef(false);
 
-  const giveUpNative = useCallback(() => setNativeFailed(true), []);
+  const giveUpNative = useCallback((raison: string) => setNativeFailed(raison), []);
 
   // Après hydratation seulement : le serveur ne connaît pas les capacités du
   // navigateur, et rendre deux arbres différents de part et d'autre casserait
@@ -289,6 +290,8 @@ function FacebookRelay({ url }: { url: string }) {
   useEffect(() => {
     setHlsCapable(playsHlsNatively());
     setOnIOS(isIOS());
+    // `?diag=1` : le lecteur affiche alors ce qui a décidé de son choix.
+    setDiag(new URLSearchParams(window.location.search).get("diag") === "1");
   }, []);
 
   useEffect(() => {
@@ -392,6 +395,24 @@ function FacebookRelay({ url }: { url: string }) {
         phrase, décalée sous le centre pour laisser le bouton de Facebook visible
         et libre.
       */}
+      {/*
+        Panneau de diagnostic, sur `?diag=1` uniquement.
+
+        Le choix du lecteur se joue entièrement dans le navigateur, et un
+        « ça ne marche pas » ne dit pas laquelle des quatre conditions a cédé.
+        Lire la console d'un iPhone demande un Mac ; ce panneau se photographie.
+      */}
+      {diag && (
+        <div className="pointer-events-none absolute inset-x-0 top-[76px] z-40 flex justify-center px-3">
+          <div className="max-w-full overflow-x-auto rounded-[10px] bg-black/85 p-2.5 text-[10px] leading-[1.5] text-white">
+            <div>iOS : <strong>{String(onIOS)}</strong> · HLS natif : <strong>{String(hlsCapable)}</strong></div>
+            <div>lecteur : <strong>{useNativePlayer ? "le nôtre" : "greffon Facebook"}</strong></div>
+            <div>échec : <strong>{nativeFailed ?? "aucun"}</strong></div>
+            <div className="break-all">flux : {hls ?? "aucun identifiant"}</div>
+          </div>
+        </div>
+      )}
+
       {/* Sans objet quand notre lecteur prend la main : il démarre tout seul. */}
       {showHint && !useNativePlayer && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
@@ -436,7 +457,7 @@ function FacebookHlsVideo({
   label,
 }: {
   src: string;
-  onFail: () => void;
+  onFail: (raison: string) => void;
   label: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -448,12 +469,20 @@ function FacebookHlsVideo({
     // Safari lit le HLS nativement ; ailleurs il faudrait une bibliothèque, et
     // ailleurs le greffon fonctionne déjà.
     if (!video.canPlayType("application/vnd.apple.mpegurl")) {
-      onFail();
+      onFail("canPlayType refuse le HLS");
       return;
     }
 
     video.src = src;
-    void video.play().catch(() => undefined);
+    void video.play().catch((cause: unknown) => {
+      /*
+        Un refus de `play()` n'est pas un échec du flux : la vidéo est chargée,
+        seule la lecture automatique est refusée. Repasser au greffon ici serait
+        une régression — les contrôles natifs sont là, un geste suffit.
+      */
+      const nom = cause instanceof Error ? cause.name : "inconnu";
+      if (process.env.NODE_ENV !== "production") console.warn("play() refusé :", nom);
+    });
   }, [src, onFail]);
 
   return (
@@ -463,7 +492,11 @@ function FacebookHlsVideo({
       autoPlay
       muted
       controls
-      onError={onFail}
+      onError={() => {
+        // `MEDIA_ERR_*` : 1 abandon, 2 réseau, 3 décodage, 4 source refusée.
+        const code = videoRef.current?.error?.code;
+        onFail(`erreur média ${code ?? "?"}`);
+      }}
       aria-label={label}
       className="h-full w-full object-contain"
     />
