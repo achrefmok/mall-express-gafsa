@@ -254,10 +254,16 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
         {onAir && (
           <>
             {/* Décoratifs : ils ne doivent pas capter une touche destinée au
-                lecteur relayé, qui exige un geste pour démarrer. */}
-            <span className="pointer-events-none absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
-              {t.live.onAir}
-            </span>
+                lecteur relayé, qui exige un geste pour démarrer.
+
+                En source Facebook, le lecteur affiche déjà son propre
+                « EN DIRECT » au même endroit : garder le nôtre superposait deux
+                étiquettes illisibles. Même choix que sur l'écran spectateur. */}
+            {live.source !== "facebook" && (
+              <span className="pointer-events-none absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
+                {t.live.onAir}
+              </span>
+            )}
             <span className="pointer-events-none absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px] text-white">
               {formatCount(viewers)}
               {isCamera && ` / ${MAX_VIEWERS}`}

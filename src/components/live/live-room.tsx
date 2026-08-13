@@ -313,9 +313,21 @@ export function LiveRoom({
       <div className="pt-safe pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-[14px]">
         <div className="flex items-center gap-2">
           {live.status === "live" ? (
-            <span className="rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px]">
-              {t.live.onAir}
-            </span>
+            /*
+              En source Facebook, le lecteur dessine déjà son propre « EN DIRECT »
+              au même endroit : les deux se chevauchaient et devenaient illisibles.
+              On efface le nôtre, qui n'apprend rien de plus une fois le direct à
+              l'antenne. Le compteur de spectateurs reste : c'est le nôtre, il
+              compte l'audience de la boutique et non celle de Facebook.
+
+              Hors antenne — programmé, terminé — notre badge est le seul à
+              porter l'information, puisque le lecteur n'affiche alors rien.
+            */
+            live.source !== "facebook" && (
+              <span className="rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px]">
+                {t.live.onAir}
+              </span>
+            )
           ) : (
             <span className="rounded-[4px] bg-white/20 px-[9px] py-1 text-[10px] font-bold">
               {live.status === "scheduled" ? t.live.scheduled : t.live.ended}
