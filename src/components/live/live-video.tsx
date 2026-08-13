@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { joinBroadcast, type ViewerState } from "@/lib/live/webrtc";
+import { facebookHlsUrl } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
 /**
@@ -256,8 +257,11 @@ function FacebookRelay({ url }: { url: string }) {
   */
   const [showHint, setShowHint] = useState(true);
   const [onIOS, setOnIOS] = useState(false);
+  const [nativeFailed, setNativeFailed] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const focusedByUs = useRef(false);
+
+  const giveUpNative = useCallback(() => setNativeFailed(true), []);
 
   // Après hydratation seulement : le serveur ne connaît pas l'appareil, et
   // rendre deux textes différents de part et d'autre casserait l'hydratation.
@@ -308,19 +312,39 @@ function FacebookRelay({ url }: { url: string }) {
 
   const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
 
+  /*
+    Sur iOS, notre propre lecteur plutôt que celui de Facebook.
+
+    Le greffon y exige le plein écran pour démarrer, ce qui recouvre toute la
+    couche commerce au moment de vendre. Facebook sert le même direct en HLS,
+    que Safari lit nativement : en ligne, en sourdine, sans aucun geste.
+
+    Partout ailleurs — ordinateur, Android — le greffon fonctionne et reste
+    utilisé : il compte les vues du commerçant et porte l'attribution Facebook.
+
+    `nativeFailed` ramène à l'iframe dès que la lecture échoue — direct terminé,
+    point d'accès modifié, réseau. Mieux vaut le plein écran qu'un écran noir.
+  */
+  const hls = facebookHlsUrl(url);
+  const useNativePlayer = onIOS && hls !== null && !nativeFailed;
+
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
-      {box.width > 0 && (
-        <iframe
-          ref={frameRef}
-          src={embed}
-          title={t.live.facebookRelay}
-          className="h-full w-full border-0"
-          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-          allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin"
-          onLoad={focusFrame}
-        />
+      {useNativePlayer ? (
+        <FacebookHlsVideo src={hls} onFail={giveUpNative} label={t.live.facebookRelay} />
+      ) : (
+        box.width > 0 && (
+          <iframe
+            ref={frameRef}
+            src={embed}
+            title={t.live.facebookRelay}
+            className="h-full w-full border-0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+            onLoad={focusFrame}
+          />
+        )
       )}
 
       {/*
@@ -332,7 +356,8 @@ function FacebookRelay({ url }: { url: string }) {
         phrase, décalée sous le centre pour laisser le bouton de Facebook visible
         et libre.
       */}
-      {showHint && (
+      {/* Sans objet quand notre lecteur prend la main : il démarre tout seul. */}
+      {showHint && !useNativePlayer && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
             {onIOS ? t.live.tapFullscreenToPlay : t.live.tapToPlay}
@@ -355,6 +380,57 @@ function FacebookRelay({ url }: { url: string }) {
         {t.live.openOnFacebook}
       </a>
     </div>
+  );
+}
+
+/**
+ * Le direct Facebook, lu par notre balise vidéo depuis son flux HLS.
+ *
+ * Réservé à iOS, où le greffon refuse de lire en ligne. `muted` est ce qui rend
+ * le démarrage sans geste possible : c'est la seule lecture automatique que les
+ * navigateurs mobiles tolèrent. `controls` laisse le spectateur rétablir le son
+ * d'un geste, comme sur n'importe quelle vidéo.
+ *
+ * Toute défaillance — format refusé, flux absent parce que le direct est fini,
+ * réseau — remonte à l'appelant, qui repasse alors au greffon.
+ */
+function FacebookHlsVideo({
+  src,
+  onFail,
+  label,
+}: {
+  src: string;
+  onFail: () => void;
+  label: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Safari lit le HLS nativement ; ailleurs il faudrait une bibliothèque, et
+    // ailleurs le greffon fonctionne déjà.
+    if (!video.canPlayType("application/vnd.apple.mpegurl")) {
+      onFail();
+      return;
+    }
+
+    video.src = src;
+    void video.play().catch(() => undefined);
+  }, [src, onFail]);
+
+  return (
+    <video
+      ref={videoRef}
+      playsInline
+      autoPlay
+      muted
+      controls
+      onError={onFail}
+      aria-label={label}
+      className="h-full w-full object-contain"
+    />
   );
 }
 

@@ -144,6 +144,61 @@ const RESOLVER_HEADERS = {
 const SHARE_HELP =
   "Ce lien de partage n'a pas pu être ouvert. Affichez la vidéo sur Facebook, puis copiez l'adresse de la barre du navigateur (elle contient /videos/ ou /reel/).";
 
+/* ─── Flux HLS d'un direct ───────────────────────────────────────────────── */
+
+/**
+ * Identifiant de la vidéo, extrait d'un permalien canonique.
+ *
+ * Trois formes le portent : `/videos/<id>/`, `/reel/<id>`, et le paramètre `v`
+ * de `/watch/` ou `/video.php`. Toute autre adresse renvoie `null`.
+ */
+export function facebookVideoId(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const inPath = /\/(?:videos?|reel)\/(\d+)/.exec(parsed.pathname);
+  if (inPath) return inPath[1];
+
+  const v = parsed.searchParams.get("v");
+  return v && /^\d+$/.test(v) ? v : null;
+}
+
+/**
+ * Liste de lecture HLS d'un direct Facebook.
+ *
+ * Pourquoi cette adresse existe dans notre code
+ * ─────────────────────────────────────────────
+ * Le greffon vidéo de Facebook ne lit pas en ligne sur iOS : il exige le plein
+ * écran, ce qui recouvre toute la couche commerce — produit épinglé, remise,
+ * commentaires, achat — au moment précis où le commerçant vend. Vérifié en
+ * ouvrant le greffon nu dans Safari, hors de notre application : même
+ * comportement, donc rien de ce que nous écrivons ne le change.
+ *
+ * Facebook sert par ailleurs le même direct en HLS à cette adresse, que Safari
+ * lit nativement dans une balise `video` : en ligne, en sourdine, sans geste.
+ *
+ * Ce qu'il faut savoir avant de s'y fier
+ * ──────────────────────────────────────
+ *   · Ce point d'accès n'est pas documenté. Il n'est ni signé ni horodaté — il
+ *     ne demande que l'identifiant public de la vidéo, ce qui le rend bien plus
+ *     stable que les adresses CDN, mais Facebook peut le restreindre.
+ *   · Il ne répond qu'aux clients iOS. Mesuré : agent iPhone ou agent absent,
+ *     HTTP 200 avec six qualités ; agent Android ou de bureau, HTTP 400. Cela
+ *     tombe juste, puisque c'est iOS que nous cherchons à servir.
+ *   · Il ne sert que les directs en cours. Une vidéo terminée renvoie une
+ *     réponse qui n'est pas une liste de lecture — d'où le repli sur le greffon
+ *     dès que la lecture échoue.
+ *   · Les spectateurs passant par ce lecteur ne sont pas comptés par Facebook.
+ */
+export function facebookHlsUrl(url: string): string | null {
+  const id = facebookVideoId(url);
+  return id ? `https://www.facebook.com/video/playback/playlist.m3u8?v=${id}` : null;
+}
+
 /* ─── Vidéo réellement intégrable ────────────────────────────────────────── */
 
 export type EmbedCheck = { embeddable: true } | { embeddable: false; error: string };
