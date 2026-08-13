@@ -50,7 +50,23 @@ export async function GET(request: Request) {
   try {
     const upstream = await fetch(
       `https://www.facebook.com/video/playback/playlist.m3u8?v=${videoId}`,
-      { cache: "no-store", signal: AbortSignal.timeout(8_000) },
+      {
+        cache: "no-store",
+        /*
+          L'agent est fixé, et il compte : Facebook ne sert cette liste qu'aux
+          clients iOS. Mesuré, un agent Android ou de bureau reçoit un HTTP 400.
+          Ne rien envoyer marchait depuis un poste de développement, mais rien ne
+          garantit ce que l'hébergeur ajoute à une requête sortante — et un agent
+          inattendu suffirait à faire retomber tous les spectateurs sur le
+          greffon, sans que rien ne le signale.
+        */
+        headers: {
+          "user-agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+          accept: "application/vnd.apple.mpegurl,*/*",
+        },
+        signal: AbortSignal.timeout(8_000),
+      },
     );
     if (!upstream.ok) return new NextResponse(null, { status: 404 });
     playlist = await upstream.text();
