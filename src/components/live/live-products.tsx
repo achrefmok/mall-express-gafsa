@@ -121,7 +121,7 @@ export function LiveProducts({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="absolute bottom-[162px] end-[14px] z-30 flex w-[52px] flex-col items-center"
+        className="absolute bottom-[162px] end-[14px] z-30 flex w-[52px] flex-col items-center [@media(max-height:520px)]:bottom-[92px]"
       >
         <span className="relative">
           <CartIcon size={21} />
@@ -137,7 +137,7 @@ export function LiveProducts({
       </button>
 
       {open && (
-        <div className="pb-safe absolute inset-x-0 bottom-0 z-40 flex max-h-[52%] flex-col rounded-t-[18px] bg-[var(--color-app)]">
+        <div className="pb-safe absolute inset-x-0 bottom-0 z-40 flex max-h-[52%] flex-col rounded-t-[18px] bg-[var(--color-app)] [@media(max-height:520px)]:max-h-[80%]">
           <div className="flex flex-none items-center justify-between px-4 pt-3 pb-2">
             <p className="text-[12.5px] font-bold text-[var(--color-ink)]">
               {t.live.products} · {products.length}

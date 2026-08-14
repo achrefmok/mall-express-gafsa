@@ -523,7 +523,17 @@ function FacebookHlsVideo({
         }}
         onPlaying={() => setBlocked(false)}
         aria-label={label}
-        className="h-full w-full object-contain"
+        /*
+          `object-cover` : la vidéo remplit le cadre sans jamais se déformer.
+
+          Un flux paysage dans un écran portrait ne peut pas à la fois garder ses
+          proportions et occuper tout l'espace — il faut choisir. `contain`
+          laissait deux bandes noires qui donnaient l'impression d'un lecteur en
+          panne ; `cover` recadre les bords, ce que font les applications de
+          vente en direct. Les proportions, elles, sont intactes dans les deux
+          cas : rien n'est étiré.
+        */
+        className="h-full w-full object-cover"
       />
 
       {blocked && (
