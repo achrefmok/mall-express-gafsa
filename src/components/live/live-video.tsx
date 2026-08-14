@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { joinBroadcast, type ViewerState } from "@/lib/live/webrtc";
-import { facebookHlsUrl, hasHlsRelay } from "@/lib/live/facebook";
 import type { LiveSource } from "@/types/database";
 
 /**
@@ -151,25 +150,6 @@ const FALLBACK_WIDTH = 380;
 const FALLBACK_HEIGHT = 675;
 
 /**
- * Ce navigateur lit-il le HLS nativement ?
- *
- * On interroge la capacité plutôt que l'identité : `canPlayType` répond pour ce
- * navigateur-ci, là où renifler l'agent revient à tenir une liste d'appareils
- * qui vieillit mal. Safari et iOS répondent oui, la plupart des navigateurs
- * Android aussi, Chrome de bureau non — et là le greffon de Facebook fonctionne
- * très bien, on le lui laisse.
- *
- * Le navigateur renvoie « probably », « maybe » ou une chaîne vide. On accepte
- * les deux premières : « maybe » est la réponse habituelle de Safari pour le
- * HLS, et la refuser écarterait précisément les appareils que l'on vise.
- */
-function playsHlsNatively(): boolean {
-  if (typeof document === "undefined") return false;
-  const probe = document.createElement("video");
-  return probe.canPlayType("application/vnd.apple.mpegurl") !== "";
-}
-
-/**
  * iPhone ou iPad ?
  *
  * Sert uniquement à rédiger la consigne quand on retombe sur le greffon : là-bas
@@ -275,23 +255,15 @@ function FacebookRelay({ url }: { url: string }) {
     ce signal, et un délai de repli couvre les navigateurs qui ne l'émettent pas.
   */
   const [showHint, setShowHint] = useState(true);
-  const [hlsCapable, setHlsCapable] = useState(false);
   const [onIOS, setOnIOS] = useState(false);
-  const [nativeFailed, setNativeFailed] = useState<string | null>(null);
-  const [diag, setDiag] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const focusedByUs = useRef(false);
-
-  const giveUpNative = useCallback((raison: string) => setNativeFailed(raison), []);
 
   // Après hydratation seulement : le serveur ne connaît pas les capacités du
   // navigateur, et rendre deux arbres différents de part et d'autre casserait
   // l'hydratation.
   useEffect(() => {
-    setHlsCapable(playsHlsNatively());
     setOnIOS(isIOS());
-    // `?diag=1` : le lecteur affiche alors ce qui a décidé de son choix.
-    setDiag(new URLSearchParams(window.location.search).get("diag") === "1");
   }, []);
 
   useEffect(() => {
@@ -348,42 +320,36 @@ function FacebookRelay({ url }: { url: string }) {
     moment précis où le commerçant vend. Le même direct servi en HLS dans une
     balise `video` en sourdine démarre, lui, sans aucun geste.
 
-    Qui y a droit dépend du relais.
+    Nous avons cherché à jouer ce flux nous-mêmes, et c'est impossible. Mesuré
+    sur un direct en cours :
 
-    Sans relais, on vise Facebook directement, et seuls les iPhone y arrivent :
-    Facebook ne sert cette liste qu'aux clients iOS, les autres reçoivent un 400.
-    Avec un relais — une fonction Edge qui annonce un agent iOS et répond en CORS
-    — tout appareil sachant lire le HLS nativement y a droit, ce qui ajoute la
-    plupart des navigateurs Android.
+      agent iOS seul .................. 200, la liste est servie
+      + `Sec-Fetch-Dest: video` ....... 400
+      + `Sec-Fetch-Dest: empty` ....... 400, et aucun en-tête CORS
 
-    Chrome de bureau ne lit pas le HLS nativement et reste donc sur le greffon,
-    où il fonctionne. L'y amener demanderait une bibliothèque de lecture, que
-    nous n'embarquons pas pour l'instant.
+    Or une balise `video` envoie toujours `Sec-Fetch-Dest: video`, et `fetch`
+    toujours `empty` : les deux seules façons pour un navigateur de demander ce
+    flux sont refusées. Un relais serveur ne sauve rien non plus — Facebook
+    filtre les adresses de centres de données, vérifié sur deux hébergeurs.
 
-    `nativeFailed` ramène à l'iframe dès que la lecture échoue : direct terminé,
-    relais injoignable, réseau. Mieux vaut le greffon qu'un écran noir.
+    Le greffon reste donc le seul lecteur possible pour une source Facebook. Il
+    démarre d'un clic en place sur Android et sur ordinateur ; sur iOS il exige
+    le plein écran, et rien de ce que nous écrivons ne le changera.
   */
-  const hls = facebookHlsUrl(url);
-  const deviceCanFetch = hasHlsRelay() ? hlsCapable : onIOS && hlsCapable;
-  const useNativePlayer = deviceCanFetch && hls !== null && !nativeFailed;
 
   return (
     <div ref={boxRef} className="absolute inset-0 bg-black">
-      {useNativePlayer ? (
-        <FacebookHlsVideo src={hls} onFail={giveUpNative} label={t.live.facebookRelay} />
-      ) : (
-        box.width > 0 && (
-          <iframe
-            ref={frameRef}
-            src={embed}
-            title={t.live.facebookRelay}
-            className="h-full w-full border-0"
-            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            onLoad={focusFrame}
-          />
-        )
+      {box.width > 0 && (
+        <iframe
+          ref={frameRef}
+          src={embed}
+          title={t.live.facebookRelay}
+          className="h-full w-full border-0"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={focusFrame}
+        />
       )}
 
       {/*
@@ -395,40 +361,7 @@ function FacebookRelay({ url }: { url: string }) {
         phrase, décalée sous le centre pour laisser le bouton de Facebook visible
         et libre.
       */}
-      {/*
-        Panneau de diagnostic, sur `?diag=1` uniquement.
-
-        Le choix du lecteur se joue entièrement dans le navigateur, et un
-        « ça ne marche pas » ne dit pas laquelle des quatre conditions a cédé.
-        Lire la console d'un iPhone demande un Mac ; ce panneau se photographie.
-      */}
-      {diag && (
-        <div className="pointer-events-none absolute inset-x-0 top-[76px] z-40 flex justify-center px-3">
-          <div className="max-w-full overflow-x-auto rounded-[10px] bg-black/85 p-2.5 text-[10px] leading-[1.5] text-white">
-            <div>iOS : <strong>{String(onIOS)}</strong> · HLS natif : <strong>{String(hlsCapable)}</strong></div>
-            <div>lecteur : <strong>{useNativePlayer ? "le nôtre" : "greffon Facebook"}</strong></div>
-            <div>échec : <strong>{nativeFailed ?? "aucun"}</strong></div>
-            <div className="break-all">flux : {hls ?? "aucun identifiant"}</div>
-          </div>
-        </div>
-      )}
-
-      {/*
-        Le flux du direct n'est plus servi : la diffusion est terminée, et c'est
-        le lecteur de Facebook qui prend le relais — celui qui, sur iOS, impose
-        le plein écran. Le dire franchement vaut mieux qu'un cadre muet dont le
-        spectateur conclut que le site est cassé.
-      */}
-      {onIOS && nativeFailed && (
-        <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
-          <span className="max-w-[30ch] rounded-[12px] bg-black/75 px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-white">
-            {t.live.replayNeedsFacebook}
-          </span>
-        </div>
-      )}
-
-      {/* Sans objet quand notre lecteur prend la main : il démarre tout seul. */}
-      {showHint && !useNativePlayer && !(onIOS && nativeFailed) && (
+      {showHint && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
             {onIOS ? t.live.tapFullscreenToPlay : t.live.tapToPlay}
@@ -451,120 +384,6 @@ function FacebookRelay({ url }: { url: string }) {
         {t.live.openOnFacebook}
       </a>
     </div>
-  );
-}
-
-/**
- * Le direct Facebook, lu par notre balise vidéo depuis son flux HLS.
- *
- * Réservé à iOS, où le greffon refuse de lire en ligne. `muted` est ce qui rend
- * le démarrage sans geste possible : c'est la seule lecture automatique que les
- * navigateurs mobiles tolèrent. `controls` laisse le spectateur rétablir le son
- * d'un geste, comme sur n'importe quelle vidéo.
- *
- * Toute défaillance — format refusé, flux absent parce que le direct est fini,
- * réseau — remonte à l'appelant, qui repasse alors au greffon.
- */
-function FacebookHlsVideo({
-  src,
-  onFail,
-  label,
-}: {
-  src: string;
-  onFail: (raison: string) => void;
-  label: string;
-}) {
-  const { t } = useI18n();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [blocked, setBlocked] = useState(false);
-
-  /*
-    Tenter la lecture, et savoir si l'appareil l'a refusée.
-
-    `play()` renvoie une promesse rejetable : le flux est là, la connexion est
-    bonne, mais la politique de lecture automatique s'y oppose. Avaler ce refus
-    laisserait un rectangle immobile sans explication ni recours — c'est
-    exactement la panne que le spectateur décrivait comme « il faut agrandir ».
-
-    On propose donc un bouton. Un geste lève la restriction sur tous les
-    navigateurs, et il n'y en a qu'un seul à faire.
-  */
-  const start = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video) return;
-    try {
-      video.muted = true; // la seule lecture que les mobiles tolèrent sans geste
-      await video.play();
-      setBlocked(false);
-    } catch {
-      setBlocked(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Safari lit le HLS nativement ; ailleurs il faudrait une bibliothèque, et
-    // ailleurs le greffon fonctionne déjà.
-    if (!video.canPlayType("application/vnd.apple.mpegurl")) {
-      onFail("canPlayType refuse le HLS");
-      return;
-    }
-
-    video.src = src;
-    void start();
-  }, [src, onFail, start]);
-
-  return (
-    <>
-      <video
-        ref={videoRef}
-        playsInline
-        autoPlay
-        muted
-        controls
-        /*
-          `controls` donne volume et plein écran natifs. Nous n'appelons jamais
-          le plein écran nous-mêmes : sur iOS il sort la vidéo du document et
-          recouvre tout, panier compris. L'écran du direct est déjà immersif en
-          pleine page — c'est là que les achats restent atteignables.
-        */
-        onError={() => {
-          // `MEDIA_ERR_*` : 1 abandon, 2 réseau, 3 décodage, 4 source refusée.
-          const code = videoRef.current?.error?.code;
-          onFail(`erreur média ${code ?? "?"}`);
-        }}
-        onPlaying={() => setBlocked(false)}
-        aria-label={label}
-        /*
-          `object-cover` : la vidéo remplit le cadre sans jamais se déformer.
-
-          Un flux paysage dans un écran portrait ne peut pas à la fois garder ses
-          proportions et occuper tout l'espace — il faut choisir. `contain`
-          laissait deux bandes noires qui donnaient l'impression d'un lecteur en
-          panne ; `cover` recadre les bords, ce que font les applications de
-          vente en direct. Les proportions, elles, sont intactes dans les deux
-          cas : rien n'est étiré.
-        */
-        className="h-full w-full object-cover"
-      />
-
-      {blocked && (
-        <button
-          type="button"
-          onClick={() => void start()}
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/55"
-        >
-          <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/95 text-[28px] text-[var(--color-brand)] shadow-lg">
-            ▶
-          </span>
-          <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-[12px] font-bold text-white">
-            {t.live.startLive}
-          </span>
-        </button>
-      )}
-    </>
   );
 }
 
