@@ -89,6 +89,38 @@ export function LiveRoom({
   const [, startTransition] = useTransition();
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [immersive, setImmersive] = useState(false);
+  const [canImmerse, setCanImmerse] = useState(false);
+
+  /*
+    Le plein écran porte sur NOTRE conteneur, pas sur l'iframe.
+
+    Agrandir l'iframe seule sortirait la vidéo de l'écran et emporterait avec
+    elle le panier, les produits et le produit épinglé — exactement ce que fait
+    le plein écran de Facebook, et exactement ce qu'il ne faut pas. En agrandissant
+    la racine du direct, tout ce qui est posé dessus reste à l'écran.
+
+    Le bouton ne s'affiche que là où l'API existe : un iPhone n'autorise le plein
+    écran que sur une balise vidéo, jamais sur un élément quelconque. Proposer un
+    bouton qui ne ferait rien serait pire que ne rien proposer.
+  */
+  useEffect(() => {
+    setCanImmerse(typeof document !== "undefined" && document.fullscreenEnabled === true);
+
+    const onChange = () => setImmersive(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  async function toggleImmersive() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await rootRef.current?.requestFullscreen();
+    } catch {
+      // Refus du navigateur : l'écran reste utilisable tel quel.
+    }
+  }
 
   /* ─── Compte à rebours de l'offre ──────────────────────────────────── */
   useEffect(() => {
@@ -290,7 +322,10 @@ export function LiveRoom({
   const progress = live.offer_ends_at && remaining !== null ? computeProgress(remaining) : null;
 
   return (
-    <div className="relative mx-auto h-dvh max-w-[520px] overflow-hidden bg-[#221c2b] text-white">
+    <div
+      ref={rootRef}
+      className="relative mx-auto h-dvh max-w-[520px] overflow-hidden bg-[#221c2b] text-white"
+    >
       <LiveVideo
         liveId={live.id}
         source={live.source}
@@ -343,14 +378,28 @@ export function LiveRoom({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/lives")}
-          aria-label={t.common.close}
-          className="pointer-events-auto rounded-full bg-black/40 p-2"
-        >
-          <CloseIcon size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          {canImmerse && (
+            <button
+              type="button"
+              onClick={() => void toggleImmersive()}
+              aria-label={immersive ? t.live.exitImmersive : t.live.immersive}
+              aria-pressed={immersive}
+              className="pointer-events-auto rounded-full bg-black/40 px-3 py-2 text-[11px] font-semibold"
+            >
+              {immersive ? "⤡" : "⤢"}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => router.push("/lives")}
+            aria-label={t.common.close}
+            className="pointer-events-auto rounded-full bg-black/40 p-2"
+          >
+            <CloseIcon size={18} />
+          </button>
+        </div>
       </div>
 
       {/* ─── Barre d'urgence : compte à rebours + progression ──────────── */}
