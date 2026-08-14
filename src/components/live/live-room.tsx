@@ -37,6 +37,7 @@ export interface LiveRoomProps {
     stock: number;
   } | null;
   liveProducts: LiveProduct[];
+  initialCartCount: number;
   initialComments: Array<{
     id: string;
     body: string;
@@ -65,6 +66,7 @@ export function LiveRoom({
   live: initialLive,
   pinnedProduct: initialPinned,
   liveProducts,
+  initialCartCount,
   initialComments,
   viewerId,
   initiallyLiked,
@@ -418,6 +420,7 @@ export function LiveRoom({
         initialProducts={liveProducts}
         percentOff={offerActive ? live.live_percent_off : null}
         canBuy={live.status === "live"}
+        initialCartCount={initialCartCount}
       />
 
       {/* ─── Colonne d'actions ─────────────────────────────────────────── */}

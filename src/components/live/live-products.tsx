@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { format } from "@/lib/i18n/dictionaries";
 import { createClient } from "@/lib/supabase/client";
 import { addToCart } from "@/app/actions/cart";
 import { cx, formatPrice } from "@/lib/format";
@@ -33,16 +34,19 @@ export function LiveProducts({
   initialProducts,
   percentOff,
   canBuy,
+  initialCartCount,
 }: {
   liveId: string;
   initialProducts: LiveProduct[];
   percentOff: number | null;
   canBuy: boolean;
+  initialCartCount: number;
 }) {
   const { t, locale } = useI18n();
   const [products, setProducts] = useState(initialProducts);
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState<string | null>(null);
+  const [cartCount, setCartCount] = useState(initialCartCount);
   const [pending, startTransition] = useTransition();
 
   /*
@@ -89,8 +93,16 @@ export function LiveProducts({
   function onAdd(productId: string) {
     startTransition(async () => {
       const result = await addToCart({ productId, quantity: 1 });
-      // Une confirmation brève vaut mieux qu'un panier qu'il faut aller vérifier.
-      setAdded(result.ok ? productId : null);
+      if (!result.ok) return;
+
+      /*
+        La pastille avance tout de suite, sans attendre de relire la base : le
+        spectateur regarde une vidéo, une page qui se recharge lui coûterait le
+        direct. `addToCart` a déjà confirmé l'écriture — le compte local ne peut
+        pas diverger tant qu'on reste sur cet écran.
+      */
+      setCartCount((n) => n + 1);
+      setAdded(productId);
       setTimeout(() => setAdded(null), 1800);
     });
   }
@@ -113,11 +125,15 @@ export function LiveProducts({
       >
         <span className="relative">
           <CartIcon size={21} />
-          <span className="absolute -end-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-live)] px-1 text-[9px] font-bold text-white">
-            {products.length}
-          </span>
+          {cartCount > 0 && (
+            <span className="absolute -end-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-live)] px-1 text-[9px] font-bold text-white">
+              {cartCount}
+            </span>
+          )}
         </span>
-        <span className="text-[9px]">{t.live.products}</span>
+        <span className="text-[9px]">
+          {t.live.products} · {products.length}
+        </span>
       </button>
 
       {open && (
@@ -167,6 +183,9 @@ export function LiveProducts({
                           {formatPrice(product.price, locale)}
                         </span>
                       ) : null}
+                    </p>
+                    <p className="text-[9.5px] text-[var(--color-muted)]">
+                      {soldOut ? t.product.outOfStock : format(t.live.inStock, { n: product.stock })}
                     </p>
                   </div>
 

@@ -460,7 +460,32 @@ function FacebookHlsVideo({
   onFail: (raison: string) => void;
   label: string;
 }) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [blocked, setBlocked] = useState(false);
+
+  /*
+    Tenter la lecture, et savoir si l'appareil l'a refusée.
+
+    `play()` renvoie une promesse rejetable : le flux est là, la connexion est
+    bonne, mais la politique de lecture automatique s'y oppose. Avaler ce refus
+    laisserait un rectangle immobile sans explication ni recours — c'est
+    exactement la panne que le spectateur décrivait comme « il faut agrandir ».
+
+    On propose donc un bouton. Un geste lève la restriction sur tous les
+    navigateurs, et il n'y en a qu'un seul à faire.
+  */
+  const start = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      video.muted = true; // la seule lecture que les mobiles tolèrent sans geste
+      await video.play();
+      setBlocked(false);
+    } catch {
+      setBlocked(true);
+    }
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -474,32 +499,48 @@ function FacebookHlsVideo({
     }
 
     video.src = src;
-    void video.play().catch((cause: unknown) => {
-      /*
-        Un refus de `play()` n'est pas un échec du flux : la vidéo est chargée,
-        seule la lecture automatique est refusée. Repasser au greffon ici serait
-        une régression — les contrôles natifs sont là, un geste suffit.
-      */
-      const nom = cause instanceof Error ? cause.name : "inconnu";
-      if (process.env.NODE_ENV !== "production") console.warn("play() refusé :", nom);
-    });
-  }, [src, onFail]);
+    void start();
+  }, [src, onFail, start]);
 
   return (
-    <video
-      ref={videoRef}
-      playsInline
-      autoPlay
-      muted
-      controls
-      onError={() => {
-        // `MEDIA_ERR_*` : 1 abandon, 2 réseau, 3 décodage, 4 source refusée.
-        const code = videoRef.current?.error?.code;
-        onFail(`erreur média ${code ?? "?"}`);
-      }}
-      aria-label={label}
-      className="h-full w-full object-contain"
-    />
+    <>
+      <video
+        ref={videoRef}
+        playsInline
+        autoPlay
+        muted
+        controls
+        /*
+          `controls` donne volume et plein écran natifs. Nous n'appelons jamais
+          le plein écran nous-mêmes : sur iOS il sort la vidéo du document et
+          recouvre tout, panier compris. L'écran du direct est déjà immersif en
+          pleine page — c'est là que les achats restent atteignables.
+        */
+        onError={() => {
+          // `MEDIA_ERR_*` : 1 abandon, 2 réseau, 3 décodage, 4 source refusée.
+          const code = videoRef.current?.error?.code;
+          onFail(`erreur média ${code ?? "?"}`);
+        }}
+        onPlaying={() => setBlocked(false)}
+        aria-label={label}
+        className="h-full w-full object-contain"
+      />
+
+      {blocked && (
+        <button
+          type="button"
+          onClick={() => void start()}
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/55"
+        >
+          <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/95 text-[28px] text-[var(--color-brand)] shadow-lg">
+            ▶
+          </span>
+          <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-[12px] font-bold text-white">
+            {t.live.startLive}
+          </span>
+        </button>
+      )}
+    </>
   );
 }
 
