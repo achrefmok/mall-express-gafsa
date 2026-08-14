@@ -11,6 +11,7 @@ import { startBroadcast, MAX_VIEWERS, type BroadcasterHandle } from "@/lib/live/
 import { Button, Card } from "@/components/ui/primitives";
 import { CameraIcon, CloseIcon, MicIcon } from "@/components/ui/icons";
 import { LiveVideo } from "./live-video";
+import { QuickProduct } from "./quick-product";
 import type { LiveSource } from "@/types/database";
 
 interface Props {
@@ -326,6 +327,14 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
           {t.live.startBroadcast}
         </Button>
       )}
+
+      {/*
+        Ajouter un article sans quitter la diffusion : le vendeur tient la pièce
+        en main, l'ouverture du formulaire produit complet lui coûterait son
+        direct. Placé au-dessus du produit épinglé, puisque c'est ce qu'il
+        épingle juste après.
+      */}
+      <QuickProduct liveId={live.id} />
 
       {/* ─── Produit épinglé ───────────────────────────────────────────── */}
       <Card className="flex flex-col gap-2 p-3">

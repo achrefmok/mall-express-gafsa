@@ -171,6 +171,9 @@ const fr = {
     products: "Articles",
     addedToCart: "Ajouté",
     startLive: "Démarrer le direct",
+    addProduct: "Ajouter un produit au direct",
+    productName: "Nom de l'article",
+    productPrice: "Prix",
     inStock: "{n} en stock",
     replayNeedsFacebook:
       "Ce direct est terminé. La rediffusion passe par le lecteur de Facebook : touchez ⤢ pour l'ouvrir.",
@@ -576,6 +579,9 @@ const ar: Dictionary = {
     products: "المنتجات",
     addedToCart: "أُضيف",
     startLive: "تشغيل البث",
+    addProduct: "إضافة منتج إلى البث",
+    productName: "اسم المنتج",
+    productPrice: "السعر",
     inStock: "{n} متوفر",
     replayNeedsFacebook:
       "انتهى هذا البث. إعادة العرض تمر عبر مشغّل فيسبوك: اضغط ⤢ لفتحه.",
