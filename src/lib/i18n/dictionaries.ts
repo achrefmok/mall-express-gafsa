@@ -172,6 +172,8 @@ const fr = {
     addedToCart: "Ajouté",
     startLive: "Démarrer le direct",
     inStock: "{n} en stock",
+    replayNeedsFacebook:
+      "Ce direct est terminé. La rediffusion passe par le lecteur de Facebook : touchez ⤢ pour l'ouvrir.",
     sourceCamera: "Caméra de l'appareil",
     sourceFacebook: "Direct Facebook",
     sourceHls: "Flux externe (HLS)",
@@ -575,6 +577,8 @@ const ar: Dictionary = {
     addedToCart: "أُضيف",
     startLive: "تشغيل البث",
     inStock: "{n} متوفر",
+    replayNeedsFacebook:
+      "انتهى هذا البث. إعادة العرض تمر عبر مشغّل فيسبوك: اضغط ⤢ لفتحه.",
     sourceCamera: "كاميرا الجهاز",
     sourceFacebook: "بث فيسبوك",
     sourceHls: "بث خارجي (HLS)",

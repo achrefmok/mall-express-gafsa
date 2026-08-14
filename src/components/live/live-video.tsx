@@ -413,8 +413,22 @@ function FacebookRelay({ url }: { url: string }) {
         </div>
       )}
 
+      {/*
+        Le flux du direct n'est plus servi : la diffusion est terminée, et c'est
+        le lecteur de Facebook qui prend le relais — celui qui, sur iOS, impose
+        le plein écran. Le dire franchement vaut mieux qu'un cadre muet dont le
+        spectateur conclut que le site est cassé.
+      */}
+      {onIOS && nativeFailed && (
+        <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
+          <span className="max-w-[30ch] rounded-[12px] bg-black/75 px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-white">
+            {t.live.replayNeedsFacebook}
+          </span>
+        </div>
+      )}
+
       {/* Sans objet quand notre lecteur prend la main : il démarre tout seul. */}
-      {showHint && !useNativePlayer && (
+      {showHint && !useNativePlayer && !(onIOS && nativeFailed) && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
           <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
             {onIOS ? t.live.tapFullscreenToPlay : t.live.tapToPlay}
