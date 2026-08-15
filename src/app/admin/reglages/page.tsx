@@ -22,7 +22,7 @@ export default async function AdminSettingsPage() {
   const [profile, { t }] = await Promise.all([getProfile(), getT()]);
   const supabase = await createClient();
 
-  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays] =
+  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers] =
     await Promise.all([
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -51,6 +51,13 @@ export default async function AdminSettingsPage() {
         .select("id", { count: "exact", head: true })
         .eq("source", "facebook")
         .is("facebook_video_id", null),
+
+      // Chauffeurs inscrits mais pas encore vérifiés : invisibles des clients
+      // tant que personne ne les a contrôlés.
+      supabase
+        .from("taxi_drivers")
+        .select("id", { count: "exact", head: true })
+        .eq("is_approved", false),
     ]);
 
   const links = [
@@ -63,6 +70,11 @@ export default async function AdminSettingsPage() {
       href: "/admin/relais",
       label: "Relais Facebook",
       value: `${unverifiedRelays.count ?? 0} à contrôler`,
+    },
+    {
+      href: "/admin/taxi",
+      label: "Chauffeurs de taxi",
+      value: `${pendingDrivers.count ?? 0} à vérifier`,
     },
   ];
 

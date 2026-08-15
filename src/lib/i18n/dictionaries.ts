@@ -202,6 +202,11 @@ const fr = {
     sharePosition: "Partager ma position",
     positionShared: "Position partagée",
     pendingApproval: "Votre inscription est en cours de vérification.",
+    register: "M'inscrire comme chauffeur",
+    driverName: "Nom affiché",
+    driverPhone: "Téléphone",
+    driverVehicle: "Véhicule (ex. Peugeot 301 blanche)",
+    driverPlate: "Immatriculation",
   },
 
   deals: {
@@ -631,6 +636,11 @@ const ar: Dictionary = {
     sharePosition: "مشاركة موقعي",
     positionShared: "تمت مشاركة الموقع",
     pendingApproval: "تسجيلك قيد التحقق.",
+    register: "التسجيل كسائق",
+    driverName: "الاسم المعروض",
+    driverPhone: "الهاتف",
+    driverVehicle: "المركبة (مثال: بيجو 301 بيضاء)",
+    driverPlate: "رقم التسجيل",
   },
 
   deals: {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
+import Link from "next/link";
 import { TopBar } from "@/components/shell/top-bar";
 import { TaxiClient } from "@/components/taxi/taxi-client";
 
@@ -34,6 +35,15 @@ export default async function TaxiPage() {
 
       <div className="col-reading flex flex-1 flex-col gap-3 overflow-hidden px-4 pt-2">
         <TaxiClient initialDrivers={drivers ?? []} />
+
+        {/* Un chauffeur arrive par cet écran comme n'importe quel client :
+            c'est le seul endroit où il pense à chercher. */}
+        <Link
+          href="/taxi/chauffeur"
+          className="flex-none pb-3 text-center text-[11px] font-semibold text-[var(--color-brand)]"
+        >
+          {t.taxi.driverSpace}
+        </Link>
       </div>
     </>
   );
