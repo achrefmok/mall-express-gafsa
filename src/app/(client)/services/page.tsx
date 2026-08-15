@@ -110,6 +110,27 @@ export default async function ServicesPage() {
           </div>
         </Card>
 
+        {/*
+          ─── Taxi ─────────────────────────────────────────────────────
+
+          Placé avant les infos municipales : chercher un taxi est un besoin
+          immédiat, consulter un avis de travaux ne l'est pas.
+        */}
+        <Link href="/taxi" className="lg:col-span-full">
+          <Card className="flex items-center gap-[10px] p-3">
+            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
+              T
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                {t.taxi.title}
+              </p>
+              <p className="truncate text-[10px] text-[var(--color-muted)]">{t.taxi.noneFree}</p>
+            </div>
+            <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />
+          </Card>
+        </Link>
+
         {/* ─── Infos municipales ──────────────────────────────────────── */}
         {municipal.length > 0 && (
           <>

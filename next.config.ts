@@ -52,7 +52,14 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       // Cairo est servie depuis notre domaine via next/font : aucun hôte tiers.
       "font-src 'self' data:",
-      `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net`,
+      /*
+        Les tuiles de la carte viennent d'OpenStreetMap. Elles sont servies en
+        images, pas en requêtes JavaScript : c'est `img-src` qui les gouverne, et
+        `connect-src` n'a pas à être ouvert. Choix délibéré d'OpenStreetMap plutôt
+        que d'un service commercial : gratuit, sans clé, et suffisant pour situer
+        des taxis dans une ville.
+      */
+      `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net https://*.tile.openstreetmap.org`,
       `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com`,
       "media-src 'self' blob: https:",
       /*

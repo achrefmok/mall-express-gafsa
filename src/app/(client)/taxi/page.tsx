@@ -1,0 +1,40 @@
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
+import { TopBar } from "@/components/shell/top-bar";
+import { TaxiClient } from "@/components/taxi/taxi-client";
+
+export const metadata: Metadata = {
+  title: "Taxi",
+  description: "Trouvez un taxi libre à Gafsa : qui est disponible, où il se trouve, et son numéro.",
+};
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Écran taxi côté client.
+ *
+ * Les chauffeurs non approuvés sont écartés par la policy de la table, pas par
+ * cette requête : la plateforme met en avant des inconnus auprès de ses clients,
+ * et cette garantie doit tenir même si quelqu'un interroge l'API directement.
+ */
+export default async function TaxiPage() {
+  const { t } = await getT();
+  const supabase = await createClient();
+
+  const { data: drivers } = await supabase
+    .from("taxi_drivers")
+    .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
+    .eq("is_approved", true)
+    .order("is_available", { ascending: false });
+
+  return (
+    <>
+      <TopBar title={t.taxi.title} />
+
+      <div className="col-reading flex flex-1 flex-col gap-3 overflow-hidden px-4 pt-2">
+        <TaxiClient initialDrivers={drivers ?? []} />
+      </div>
+    </>
+  );
+}

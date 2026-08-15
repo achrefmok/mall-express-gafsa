@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import type { Map as LeafletMap, Marker } from "leaflet";
+
+/** Centre de Gafsa : le repli quand aucun chauffeur n'a encore publié sa position. */
+const GAFSA: [number, number] = [34.425, 8.784];
+
+export interface DriverPin {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  available: boolean;
+}
+
+/**
+ * La carte des chauffeurs.
+ *
+ * OpenStreetMap et Leaflet : aucune clé, aucune facturation, aucun compte à
+ * ouvrir. Un service commercial coûterait des dizaines d'euros par mois pour
+ * situer des taxis dans une ville de cette taille — la dépense ne se justifie
+ * pas tant que le service n'a pas fait ses preuves.
+ *
+ * Leaflet est chargé à la demande plutôt qu'importé en tête : il pèse une
+ * quarantaine de kilo-octets et ne sert qu'à cet écran. L'importer normalement
+ * l'aurait ajouté au paquet commun de toutes les pages, y compris à celles d'un
+ * client qui ne cherchera jamais de taxi.
+ *
+ * Le style est injecté ici plutôt que par une feuille externe : la CSP interdit
+ * les feuilles de style tierces, et `style-src` autorise déjà l'inline.
+ */
+export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markersRef = useRef<Marker[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function draw() {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !boxRef.current) return;
+
+      if (!mapRef.current) {
+        mapRef.current = L.map(boxRef.current, { attributionControl: true }).setView(GAFSA, 13);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          // L'attribution n'est pas décorative : la licence d'OpenStreetMap
+          // l'exige, et l'omettre nous mettrait en faute.
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(mapRef.current);
+      }
+
+      const map = mapRef.current;
+
+      for (const marker of markersRef.current) marker.remove();
+      markersRef.current = [];
+
+      for (const driver of drivers) {
+        /*
+          Une pastille dessinée en HTML plutôt qu'une image : Leaflet cherche ses
+          icônes par défaut sur un chemin relatif qui n'existe pas dans un paquet
+          Next, et la couleur doit distinguer libre et occupé d'un coup d'œil.
+        */
+        const icon = L.divIcon({
+          className: "",
+          html: `<span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
+            driver.available ? "#2f7d5d" : "#948da6"
+          }"></span>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+
+        const marker = L.marker([driver.lat, driver.lng], { icon })
+          .addTo(map)
+          .bindPopup(`${driver.name}${driver.available ? " · libre" : " · occupé"}`);
+
+        markersRef.current.push(marker);
+      }
+
+      // Cadrer sur les chauffeurs présents, sans dézoomer à l'excès s'il n'y en
+      // a qu'un seul.
+      if (drivers.length > 0) {
+        const bounds = L.latLngBounds(drivers.map((d) => [d.lat, d.lng] as [number, number]));
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }
+
+    void draw();
+    return () => {
+      cancelled = true;
+    };
+  }, [drivers]);
+
+  // La carte est démontée avec l'écran : Leaflet garde sinon des écouteurs sur
+  // un nœud qui n'existe plus.
+  useEffect(() => {
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        .leaflet-container { height: 100%; width: 100%; background: var(--color-track); }
+        .leaflet-control-attribution { font-size: 9px; }
+      `}</style>
+      <div ref={boxRef} className="h-full w-full rounded-[18px]" />
+    </>
+  );
+}

@@ -490,6 +490,32 @@ export interface Database {
         Relationships: [FK<"shop_facebook_pages_shop_id_fkey", ["shop_id"], "shops">];
       };
 
+      /* ─── taxi_drivers ───────────────────────────────────────────────
+         Chauffeurs de taxi : coordonnées, disponibilité, dernière position.
+         `is_approved` n'est modifiable que par l'administration — la policy
+         le fige pour le chauffeur lui-même. */
+      taxi_drivers: {
+        Row: {
+          id: string;
+          display_name: string;
+          phone: string;
+          vehicle: string | null;
+          plate: string | null;
+          is_available: boolean;
+          lat: number | null;
+          lng: number | null;
+          position_updated_at: string | null;
+          is_approved: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { id: string; display_name: string; phone: string } & Partial<
+          Database["public"]["Tables"]["taxi_drivers"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["taxi_drivers"]["Row"]>;
+        Relationships: [FK<"taxi_drivers_id_fkey", ["id"], "profiles">];
+      };
+
       /* ─── deals ──────────────────────────────────────────────────── */
       deals: {
         Row: {

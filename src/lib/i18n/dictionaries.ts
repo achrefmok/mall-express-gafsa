@@ -187,6 +187,23 @@ const fr = {
     pinnedProduct: "Produit épinglé",
   },
 
+  taxi: {
+    title: "Taxi",
+    taxi: "Taxi",
+    free: "Libre",
+    busy: "Occupé",
+    call: "Appeler",
+    availableNow: "{n} chauffeur(s) libre(s) maintenant",
+    noneFree: "Aucun chauffeur libre pour l'instant",
+    none: "Aucun chauffeur inscrit",
+    noneBody: "Le service démarre. Les chauffeurs de Gafsa peuvent s'inscrire depuis leur profil.",
+    driverSpace: "Espace chauffeur",
+    availability: "Ma disponibilité",
+    sharePosition: "Partager ma position",
+    positionShared: "Position partagée",
+    pendingApproval: "Votre inscription est en cours de vérification.",
+  },
+
   deals: {
     title: "Bons plans",
     tabs: { popular: "Populaires", recent: "Récents", nearby: "Près de moi", expiring: "Expire aujourd'hui" },
@@ -597,6 +614,23 @@ const ar: Dictionary = {
     sourceFacebook: "بث فيسبوك",
     sourceHls: "بث خارجي (HLS)",
     pinnedProduct: "المنتج المثبّت",
+  },
+
+  taxi: {
+    title: "تاكسي",
+    taxi: "تاكسي",
+    free: "متاح",
+    busy: "مشغول",
+    call: "اتصال",
+    availableNow: "{n} سائق متاح الآن",
+    noneFree: "لا يوجد سائق متاح حالياً",
+    none: "لا يوجد سائقون مسجّلون",
+    noneBody: "الخدمة تنطلق. يمكن لسائقي قفصة التسجيل من ملفهم الشخصي.",
+    driverSpace: "فضاء السائق",
+    availability: "حالتي",
+    sharePosition: "مشاركة موقعي",
+    positionShared: "تمت مشاركة الموقع",
+    pendingApproval: "تسجيلك قيد التحقق.",
   },
 
   deals: {
