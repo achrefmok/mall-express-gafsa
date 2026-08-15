@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 import { format } from "@/lib/i18n/dictionaries";
@@ -54,6 +54,41 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
   const [pending, startTransition] = useTransition();
 
   const previewRef = useRef<HTMLVideoElement>(null);
+
+  /*
+    Capturer l'image du direct.
+
+    La prévisualisation est NOTRE balise vidéo, alimentée par le flux local : même
+    origine, canvas autorisé. Le vendeur montre l'article à la caméra, appuie une
+    fois, et la photo du produit est prise — sans lâcher ce qu'il tient, sans
+    ouvrir l'appareil photo, sans quitter la diffusion.
+
+    Un article filmé est presque toujours en portrait ou en carré ; on garde
+    simplement les dimensions natives de la vidéo, le recadrage viendrait ajouter
+    des choix que le vendeur n'a pas demandés.
+
+    `null` si la vidéo n'a pas encore de trame — au tout début de la diffusion,
+    `videoWidth` vaut zéro et le canvas serait vide.
+  */
+  const captureFrame = useCallback(async (): Promise<File | null> => {
+    const video = previewRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.85),
+    );
+    if (!blob) return null;
+
+    return new File([blob], `direct-${Date.now()}.webp`, { type: "image/webp" });
+  }, []);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const isCamera = live.source === "camera";
@@ -334,7 +369,7 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
         direct. Placé au-dessus du produit épinglé, puisque c'est ce qu'il
         épingle juste après.
       */}
-      <QuickProduct liveId={live.id} />
+      <QuickProduct liveId={live.id} captureFrame={isCamera ? captureFrame : undefined} />
 
       {/* ─── Produit épinglé ───────────────────────────────────────────── */}
       <Card className="flex flex-col gap-2 p-3">

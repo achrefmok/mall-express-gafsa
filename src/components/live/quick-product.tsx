@@ -27,7 +27,14 @@ const FIELD =
  * La description reste vide. C'est là que se branchera l'extraction automatique
  * depuis la photo, sans rien changer au reste de la chaîne.
  */
-export function QuickProduct({ liveId }: { liveId: string }) {
+export function QuickProduct({
+  liveId,
+  captureFrame,
+}: {
+  liveId: string;
+  /** Fourni en source caméra : prend une image du direct en cours. */
+  captureFrame?: () => Promise<File | null>;
+}) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -36,6 +43,26 @@ export function QuickProduct({ liveId }: { liveId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  /*
+    Prendre la photo dans le direct lui-même.
+
+    Le vendeur montre l'article à la caméra et appuie une fois : l'image est
+    extraite de la trame courante. Il ne lâche pas ce qu'il tient, n'ouvre pas
+    l'appareil photo, ne quitte pas la diffusion — trois gestes économisés au
+    moment où il parle à ses clients.
+  */
+  async function onCapture() {
+    if (!captureFrame) return;
+    const file = await captureFrame();
+    if (!file) {
+      setError("La vidéo n'est pas encore prête — réessayez dans un instant.");
+      return;
+    }
+    if (photo) URL.revokeObjectURL(photo.preview);
+    setError(null);
+    setPhoto({ file, preview: URL.createObjectURL(file) });
+  }
 
   function onPick(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -114,6 +141,17 @@ export function QuickProduct({ liveId }: { liveId: string }) {
               <CameraIcon size={20} />
             )}
           </button>
+
+          {captureFrame && (
+            <button
+              type="button"
+              onClick={() => void onCapture()}
+              className="flex h-[62px] w-[62px] flex-none flex-col items-center justify-center gap-1 rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-brand-tint)] text-[var(--color-brand)]"
+            >
+              <CameraIcon size={18} />
+              <span className="text-[8.5px] font-bold leading-none">{t.live.captureFrame}</span>
+            </button>
+          )}
 
           {/*
             `capture="environment"` ouvre directement l'appareil photo arrière sur

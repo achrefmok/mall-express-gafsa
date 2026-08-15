@@ -16,13 +16,56 @@ export async function generateMetadata({
 
   const { data } = await supabase
     .from("lives")
-    .select("title, shop:shops(name)")
+    .select("title, status, shop:shops(name), live_products(product:products(name, price, images))")
     .eq("id", id)
     .maybeSingle();
 
+  if (!data) return { title: "Direct", robots: { index: false, follow: true } };
+
+  const title = `${data.title} — ${data.shop?.name}`;
+
+  /*
+    L'aperçu du lien quand il est partagé, sur Facebook ou ailleurs.
+
+    Un direct se partage vers des gens qui sont déjà sur un réseau social : sans
+    image ni description, le lien s'affiche en texte nu et personne ne le suit.
+    On met donc en avant ce qui donne envie — la boutique, l'état du direct, et
+    les articles présentés avec leurs prix.
+
+    L'image est celle du premier article : c'est la seule vignette dont nous
+    disposons à coup sûr, la vidéo n'ayant pas d'image d'aperçu côté serveur.
+  */
+  const articles = (data.live_products ?? [])
+    .map((row) => row.product)
+    .filter((product) => product !== null);
+
+  const cover = articles.find((product) => product.images?.[0])?.images?.[0];
+
+  const description =
+    articles.length > 0
+      ? `${data.status === "live" ? "En direct" : "Direct"} chez ${data.shop?.name} · ${articles
+          .slice(0, 4)
+          .map((product) => product.name)
+          .join(", ")}`
+      : `${data.status === "live" ? "En direct" : "Direct"} chez ${data.shop?.name} — vente en direct sur Mall Express Gafsa.`;
+
   return {
-    title: data ? `${data.title} — ${data.shop?.name}` : "Direct",
+    title,
+    description,
     robots: { index: false, follow: true }, // un direct est éphémère
+    openGraph: {
+      title,
+      description,
+      type: "video.other",
+      siteName: "Mall Express Gafsa",
+      images: cover ? [{ url: cover }] : undefined,
+    },
+    twitter: {
+      card: cover ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: cover ? [cover] : undefined,
+    },
   };
 }
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { formatCount, formatDateTime } from "@/lib/format";
+import { formatCount, formatDateTime, formatPrice } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, EmptyState, Fab, Tag } from "@/components/ui/primitives";
 
@@ -26,7 +26,10 @@ export default async function VendorLivesPage() {
 
   const { data: lives } = await supabase
     .from("lives")
-    .select("id, title, status, source, scheduled_at, started_at, peak_viewers, purchases_count")
+    .select(
+      `id, title, status, source, scheduled_at, started_at, peak_viewers, purchases_count,
+       live_products(product:products(name, price))`,
+    )
     .eq("shop_id", shop.id)
     .order("created_at", { ascending: false })
     .limit(30);
@@ -53,6 +56,26 @@ export default async function VendorLivesPage() {
                   {live.status === "ended" && (
                     <p className="text-[10px] text-[var(--color-muted)]">
                       {formatCount(live.peak_viewers)} · {live.purchases_count} achats
+                    </p>
+                  )}
+
+                  {/*
+                    Ce qui a été présenté, et à quel prix.
+
+                    « 1 · 0 achats » ne dit rien de la vente : le vendeur ne
+                    reconnaît pas son direct dans ces deux chiffres. La liste des
+                    articles, elle, lui rappelle immédiatement de quoi il s'agit —
+                    et c'est aussi le seul endroit où il retrouve ce qu'il a
+                    ajouté au vol pendant la diffusion.
+                  */}
+                  {live.live_products?.length > 0 && (
+                    <p className="mt-[3px] truncate text-[10px] text-[var(--color-brand)]">
+                      {t.live.recap} :{" "}
+                      {live.live_products
+                        .map((row) => row.product)
+                        .filter((product) => product)
+                        .map((product) => `${product!.name} ${formatPrice(product!.price, locale)}`)
+                        .join(" · ")}
                     </p>
                   )}
                 </div>
