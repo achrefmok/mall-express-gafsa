@@ -121,3 +121,55 @@ export async function setDriverApproval(driverId: string, approved: boolean) {
   revalidatePath("/taxi");
   return done();
 }
+
+/**
+ * Ouvrir — ou fermer — l'espace chauffeur à un membre.
+ *
+ * L'accès ne s'auto-attribue pas : un membre qui conduit un taxi contacte
+ * l'administration, qui lui ouvre l'espace depuis cet écran. Sans cette porte,
+ * n'importe quel compte pouvait créer une fiche de chauffeur et se retrouver en
+ * file d'attente de vérification — du bruit pour l'administration, et une
+ * fonctionnalité visible de tous alors qu'elle ne concerne presque personne.
+ *
+ * L'ouverture ne vaut pas approbation : la fiche naît avec `is_approved` à faux
+ * et reste invisible des clients jusqu'au contrôle des pièces.
+ */
+export async function grantDriverAccess(input: {
+  profileId: string;
+  displayName: string;
+  phone: string;
+}) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const displayName = input.displayName.trim();
+  const phone = input.phone.trim();
+
+  if (displayName.length < 2) return fail("Nom trop court");
+  if (phone.length < 6) return fail("Numéro de téléphone requis");
+
+  const { error: writeError } = await supabase.from("taxi_drivers").upsert({
+    id: input.profileId,
+    display_name: displayName,
+    phone,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (writeError) return fail(readableError(writeError));
+
+  revalidatePath("/admin/taxi");
+  return done();
+}
+
+/** Retirer l'accès. La fiche disparaît, le membre redevient un client ordinaire. */
+export async function revokeDriverAccess(profileId: string) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: writeError } = await supabase.from("taxi_drivers").delete().eq("id", profileId);
+  if (writeError) return fail(readableError(writeError));
+
+  revalidatePath("/admin/taxi");
+  revalidatePath("/taxi");
+  return done();
+}

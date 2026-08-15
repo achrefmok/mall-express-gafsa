@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { EmptyState, SectionTitle } from "@/components/ui/primitives";
-import { DriverRow } from "./taxi-admin-client";
+import { DriverRow, GrantDriver } from "./taxi-admin-client";
 
 export const metadata: Metadata = {
   title: "Chauffeurs de taxi",
@@ -37,6 +37,15 @@ export default async function AdminTaxiPage() {
       <TopBar title="Chauffeurs de taxi" back="/admin/reglages" />
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-3 pb-4">
+        <section className="flex flex-none flex-col gap-2">
+          <SectionTitle>Ouvrir l&apos;espace chauffeur</SectionTitle>
+          <p className="text-[10.5px] leading-relaxed text-[var(--color-muted)]">
+            Un membre qui conduit un taxi vous contacte ; vous lui ouvrez l&apos;espace ici. Il ne
+            peut pas se l&apos;ouvrir lui-même, et le lien n&apos;apparaît pas chez les autres.
+          </p>
+          <GrantDriver />
+        </section>
+
         {rows.length === 0 ? (
           <EmptyState
             title="Aucun chauffeur inscrit"

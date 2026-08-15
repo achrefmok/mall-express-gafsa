@@ -34,6 +34,13 @@ export default async function DriverPage() {
     .eq("id", profile.id)
     .maybeSingle();
 
+  /*
+    Pas de fiche, pas d'espace. L'accès s'ouvre depuis l'administration, jamais
+    en devinant l'adresse — et la garde est ici, côté serveur, pas seulement dans
+    le lien qu'on affiche ou non.
+  */
+  if (!driver) redirect("/taxi");
+
   return (
     <>
       <TopBar title={t.taxi.driverSpace} back="/taxi" />

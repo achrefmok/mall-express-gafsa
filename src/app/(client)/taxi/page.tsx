@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import Link from "next/link";
 import { TopBar } from "@/components/shell/top-bar";
@@ -23,11 +24,32 @@ export default async function TaxiPage() {
   const { t } = await getT();
   const supabase = await createClient();
 
-  const { data: drivers } = await supabase
-    .from("taxi_drivers")
-    .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
-    .eq("is_approved", true)
-    .order("is_available", { ascending: false });
+  const profile = await getProfile();
+
+  const [{ data: drivers }, mine] = await Promise.all([
+    supabase
+      .from("taxi_drivers")
+      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
+      .eq("is_approved", true)
+      .order("is_available", { ascending: false }),
+
+    /*
+      L'espace chauffeur n'existe que pour qui a reçu l'accès.
+
+      Un membre qui conduit un taxi contacte l'administration, qui lui ouvre la
+      porte. Afficher le lien à tout le monde reviendrait à proposer une
+      fonctionnalité qui ne concerne presque personne, et à remplir la file de
+      vérification de comptes qui se sont inscrits par curiosité.
+    */
+    profile
+      ? supabase
+          .from("taxi_drivers")
+          .select("id")
+          .eq("id", profile.id)
+          .maybeSingle()
+          .then(({ data }) => Boolean(data))
+      : Promise.resolve(false),
+  ]);
 
   return (
     <>
@@ -38,12 +60,14 @@ export default async function TaxiPage() {
 
         {/* Un chauffeur arrive par cet écran comme n'importe quel client :
             c'est le seul endroit où il pense à chercher. */}
-        <Link
-          href="/taxi/chauffeur"
-          className="flex-none pb-3 text-center text-[11px] font-semibold text-[var(--color-brand)]"
-        >
-          {t.taxi.driverSpace}
-        </Link>
+        {mine && (
+          <Link
+            href="/taxi/chauffeur"
+            className="flex-none pb-3 text-center text-[11px] font-semibold text-[var(--color-brand)]"
+          >
+            {t.taxi.driverSpace}
+          </Link>
+        )}
       </div>
     </>
   );
