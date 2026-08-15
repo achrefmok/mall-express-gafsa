@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/dictionaries";
-import { formatCount, formatDateTime, monogram } from "@/lib/format";
+import { formatCount, formatDateTime, formatPrice, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, EmptyState, Placeholder, SectionTitle, Tag } from "@/components/ui/primitives";
 import { LiveDot } from "@/components/ui/icons";
@@ -24,7 +24,9 @@ export default async function LivesPage() {
   const { data: lives } = await supabase
     .from("lives")
     .select(
-      "id, title, title_ar, cover_url, status, scheduled_at, started_at, viewers_count, source, shop:shops!inner(name, slug, logo_url, status)",
+      `id, title, title_ar, cover_url, status, scheduled_at, started_at, viewers_count, source,
+       shop:shops!inner(name, slug, logo_url, status),
+       live_products(product:products(id, name, price, images, is_online, is_draft))`,
     )
     .in("status", ["live", "scheduled", "ended"])
     .eq("shops.status", "approved")
@@ -113,19 +115,69 @@ export default async function LivesPage() {
         {past.length > 0 && (
           <section className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:content-start">
             <SectionTitle className="lg:col-span-full">{t.live.past}</SectionTitle>
-            {past.map((live) => (
-              <Card key={live.id} className="flex items-center gap-[10px] p-[11px] opacity-70">
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-track)] text-[11px] font-bold text-[var(--color-muted)]">
-                  {monogram(live.shop?.name)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
-                    {live.title}
-                  </p>
-                  <p className="truncate text-[10px] text-[var(--color-muted)]">{live.shop?.name}</p>
-                </div>
-              </Card>
-            ))}
+            {past.map((live) => {
+              /*
+                Ce qui a été présenté pendant ce direct.
+
+                Un direct terminé n'a plus de vidéo à montrer, mais les articles,
+                eux, restent en vente. Les afficher transforme une ligne morte en
+                vitrine : le client a manqué le direct, il peut encore acheter ce
+                qu'on y présentait.
+
+                Les articles retirés de la vitrine sont écartés — un direct passé
+                ne doit pas ressusciter ce que la boutique a dépublié.
+              */
+              const articles = (live.live_products ?? [])
+                .map((row) => row.product)
+                .filter((product) => product && product.is_online && !product.is_draft);
+
+              return (
+                <Card key={live.id} className="flex flex-col gap-[9px] p-[11px]">
+                  <div className="flex items-center gap-[10px]">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-track)] text-[11px] font-bold text-[var(--color-muted)]">
+                      {monogram(live.shop?.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+                        {live.title}
+                      </p>
+                      <p className="truncate text-[10px] text-[var(--color-muted)]">
+                        {live.shop?.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {articles.length > 0 && (
+                    <div className="no-sb -mx-[11px] flex gap-2 overflow-x-auto px-[11px]">
+                      {articles.map((product) => (
+                        <Link
+                          key={product!.id}
+                          href={`/produit/${product!.id}`}
+                          className="flex w-[92px] flex-none flex-col gap-1"
+                        >
+                          {product!.images?.[0] ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- vignette 92px, hors flux Next/Image
+                            <img
+                              src={product!.images[0]}
+                              alt=""
+                              className="h-[92px] w-[92px] rounded-[14px] object-cover"
+                            />
+                          ) : (
+                            <Placeholder className="h-[92px] w-[92px]" rounded="tile" />
+                          )}
+                          <p className="truncate text-[10px] font-semibold text-[var(--color-ink)]">
+                            {product!.name}
+                          </p>
+                          <p className="text-[10.5px] font-bold text-[var(--color-brand)]">
+                            {formatPrice(product!.price, locale)}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </section>
         )}
       </div>
