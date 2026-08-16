@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 import { cx } from "@/lib/format";
+import { spaceHref } from "@/lib/space";
 import type { UserRole } from "@/types/database";
 
 /**
@@ -29,14 +30,14 @@ export function SpaceSwitcher({ role }: { role: UserRole }) {
       : "client";
 
   const spaces: Array<{ key: string; href: string; label: string }> = [
-    { key: "client", href: "/accueil", label: t.account.clientSpace },
+    { key: "client", href: spaceHref("/accueil"), label: t.account.clientSpace },
   ];
 
   if (role === "vendor" || role === "admin") {
-    spaces.push({ key: "vendor", href: "/vendeur", label: t.vendor.myShop });
+    spaces.push({ key: "vendor", href: spaceHref("/vendeur"), label: t.vendor.myShop });
   }
   if (role === "admin") {
-    spaces.push({ key: "admin", href: "/admin", label: t.account.adminSpace });
+    spaces.push({ key: "admin", href: spaceHref("/admin"), label: t.account.adminSpace });
   }
 
   return (
