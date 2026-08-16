@@ -69,6 +69,30 @@ const serwist = new Serwist({
       }),
     },
 
+    /* ─── Tuiles de la carte ───────────────────────────────────────── */
+    {
+      /*
+        Gafsa ne bouge pas : une tuile déjà vue n'a aucune raison d'être
+        redemandée. Le cache épargne le réseau du client et les serveurs
+        d'OpenStreetMap, dont l'usage est bénévole — leur politique demande
+        explicitement de mettre les tuiles en cache.
+
+        Le plafond est bas volontairement : quelques niveaux de zoom sur une
+        seule ville, pas un atlas.
+      */
+      matcher: ({ url }) => url.hostname.endsWith("tile.openstreetmap.org"),
+      handler: new CacheFirst({
+        cacheName: "meg-tuiles",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 200,
+            maxAgeSeconds: 14 * 24 * 60 * 60,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+
     /* ─── Pages publiques ──────────────────────────────────────────── */
     {
       matcher: ({ request, url }) =>

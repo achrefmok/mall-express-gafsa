@@ -53,10 +53,8 @@ const securityHeaders = [
       // Cairo est servie depuis notre domaine via next/font : aucun hôte tiers.
       "font-src 'self' data:",
       /*
-        Les tuiles de la carte viennent d'OpenStreetMap. Elles sont servies en
-        images, pas en requêtes JavaScript : c'est `img-src` qui les gouverne, et
-        `connect-src` n'a pas à être ouvert. Choix délibéré d'OpenStreetMap plutôt
-        que d'un service commercial : gratuit, sans clé, et suffisant pour situer
+        Les tuiles de la carte viennent d'OpenStreetMap. Choix délibéré plutôt
+        qu'un service commercial : gratuit, sans clé, et suffisant pour situer
         des taxis dans une ville.
 
         L'hôte est listé sous ses deux formes. Le joker `*.tile…` ne couvre pas
@@ -65,7 +63,20 @@ const securityHeaders = [
         qu'OpenStreetMap a déprécié la répartition sur a/b/c.
       */
       `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net https://tile.openstreetmap.org https://*.tile.openstreetmap.org`,
-      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com`,
+      /*
+        Les tuiles figurent aussi ici, et ce n'est pas une redondance.
+
+        Le service worker intercepte les images et les redemande lui-même par
+        `fetch()`. Une requête `fetch` relève de `connect-src`, jamais de
+        `img-src`, et le worker hérite de la CSP du document. Autoriser l'hôte
+        aux images ne suffisait donc pas : la balise passait le contrôle, la
+        reprise par le worker échouait juste derrière, et la carte restait grise
+        avec un « no-response » pour seule trace.
+
+        Le principe vaut pour tout hôte d'images tierces que le worker mettra en
+        cache : les deux directives vont par paire.
+      */
+      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org`,
       "media-src 'self' blob: https:",
       /*
         Le greffon vidéo change d'hôte selon l'appareil, et il faut le suivre.
