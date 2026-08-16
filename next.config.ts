@@ -58,8 +58,13 @@ const securityHeaders = [
         `connect-src` n'a pas à être ouvert. Choix délibéré d'OpenStreetMap plutôt
         que d'un service commercial : gratuit, sans clé, et suffisant pour situer
         des taxis dans une ville.
+
+        L'hôte est listé sous ses deux formes. Le joker `*.tile…` ne couvre pas
+        `tile.openstreetmap.org` lui-même — une source jokerisée exige au moins
+        une étiquette devant — et c'est précisément l'hôte canonique depuis
+        qu'OpenStreetMap a déprécié la répartition sur a/b/c.
       */
-      `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net https://*.tile.openstreetmap.org`,
+      `img-src 'self' data: blob: https://${supabaseHost} https://*.fbcdn.net https://scontent.xx.fbcdn.net https://tile.openstreetmap.org https://*.tile.openstreetmap.org`,
       `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com`,
       "media-src 'self' blob: https:",
       /*

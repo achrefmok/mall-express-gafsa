@@ -60,12 +60,33 @@ export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
       if (!mapRef.current) {
         mapRef.current = L.map(boxRef.current, { attributionControl: true }).setView(GAFSA, 13);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        /*
+          Le point d'accès canonique, sans sous-domaine.
+
+          L'ancien schéma `{s}.tile.openstreetmap.org` répartissait la charge sur
+          a/b/c ; OpenStreetMap l'a déprécié au profit d'un hôte unique. Le
+          conserver ajoutait trois hôtes à autoriser dans la CSP pour rien.
+        */
+        const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
           maxZoom: 19,
           // L'attribution n'est pas décorative : la licence d'OpenStreetMap
           // l'exige, et l'omettre nous mettrait en faute.
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(mapRef.current);
+        });
+
+        /*
+          Une tuile refusée ne dit rien d'elle-même : la carte reste simplement
+          grise, et l'on cherche du côté de la mise en page alors que le problème
+          est réseau. On le note une fois, sans noyer la console.
+        */
+        let reported = false;
+        tiles.on("tileerror", () => {
+          if (reported) return;
+          reported = true;
+          console.warn("Tuiles OpenStreetMap refusées — vérifier img-src dans la CSP.");
+        });
+
+        tiles.addTo(mapRef.current);
       }
 
       const map = mapRef.current;
