@@ -3,6 +3,20 @@
 import { useEffect, useRef } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 
+/*
+  La feuille de style de Leaflet, indispensable.
+
+  Elle positionne les tuiles, les calques et les contrôles ; sans elle la carte
+  se rend en un rectangle gris, tuiles chargées mais empilées au même endroit.
+  Deux règles écrites à la main n'y suffisent pas — il faut la vraie.
+
+  Importée depuis le paquet plutôt que depuis un CDN : la CSP interdit les
+  feuilles tierces, et Next la sert alors depuis notre domaine, ce que
+  `style-src 'self'` autorise. Elle est découpée avec ce composant, donc chargée
+  uniquement par l'écran taxi.
+*/
+import "leaflet/dist/leaflet.css";
+
 /** Centre de Gafsa : le repli quand aucun chauffeur n'a encore publié sa position. */
 const GAFSA: [number, number] = [34.425, 8.784];
 
@@ -27,8 +41,9 @@ export interface DriverPin {
  * l'aurait ajouté au paquet commun de toutes les pages, y compris à celles d'un
  * client qui ne cherchera jamais de taxi.
  *
- * Le style est injecté ici plutôt que par une feuille externe : la CSP interdit
- * les feuilles de style tierces, et `style-src` autorise déjà l'inline.
+ * La carte est invalidée après montage : Leaflet mesure son conteneur à la
+ * création, et un conteneur encore à zéro — le cas quand le composant arrive par
+ * un import dynamique — lui fait calculer une grille de tuiles vide.
  */
 export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -80,6 +95,16 @@ export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
         markersRef.current.push(marker);
       }
 
+      /*
+        Reprendre les mesures.
+
+        Leaflet retient la taille de son conteneur au moment de la création. Avec
+        un import dynamique, ce conteneur peut encore mesurer zéro : la carte
+        calcule alors une grille vide et n'affiche aucune tuile, même une fois la
+        mise en page stabilisée.
+      */
+      map.invalidateSize();
+
       // Cadrer sur les chauffeurs présents, sans dézoomer à l'excès s'il n'y en
       // a qu'un seul.
       if (drivers.length > 0) {
@@ -105,6 +130,7 @@ export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
 
   return (
     <>
+      {/* Le fond reprend nos jetons ; le reste vient de la feuille de Leaflet. */}
       <style>{`
         .leaflet-container { height: 100%; width: 100%; background: var(--color-track); }
         .leaflet-control-attribution { font-size: 9px; }
