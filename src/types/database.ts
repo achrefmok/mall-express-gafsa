@@ -11,6 +11,10 @@
  * `never`. Chaque entrée doit refléter une vraie contrainte de clé étrangère.
  */
 
+/* Les métiers du SOS vivent dans `src/lib/sos.ts`, à côté de la liste que
+   l'interface propose : les redéclarer ici les aurait laissés diverger. */
+import type { SosTrade } from "@/lib/sos";
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type UserRole = "client" | "vendor" | "admin";
@@ -514,6 +518,34 @@ export interface Database {
         >;
         Update: Partial<Database["public"]["Tables"]["taxi_drivers"]["Row"]>;
         Relationships: [FK<"taxi_drivers_id_fkey", ["id"], "profiles">];
+      };
+
+      /* ─── sos_providers ──────────────────────────────────────────────
+         Dépanneurs d'urgence : un métier, une disponibilité, un numéro.
+         Même contrat que `taxi_drivers`, `trade` en plus — c'est lui qui
+         rend le filtre possible, et la contrainte `check` de la base en
+         tient la liste. `is_approved` reste réservé à l'administration. */
+      sos_providers: {
+        Row: {
+          id: string;
+          trade: SosTrade;
+          display_name: string;
+          phone: string;
+          description: string | null;
+          travels: boolean;
+          is_available: boolean;
+          lat: number | null;
+          lng: number | null;
+          position_updated_at: string | null;
+          is_approved: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { id: string; trade: SosTrade; display_name: string; phone: string } & Partial<
+          Database["public"]["Tables"]["sos_providers"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["sos_providers"]["Row"]>;
+        Relationships: [FK<"sos_providers_id_fkey", ["id"], "profiles">];
       };
 
       /* ─── deals ──────────────────────────────────────────────────── */

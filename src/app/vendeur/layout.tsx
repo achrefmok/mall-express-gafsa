@@ -15,9 +15,9 @@ export default async function VendorLayout({ children }: { children: React.React
   const { t } = await getT();
 
   return (
-    <AppShell nav="vendor" role={profile.role}>
+    <AppShell nav="vendor" role={profile.role} hasShop={Boolean(shop)}>
       <div className="lg:hidden">
-        <SpaceSwitcher role={profile.role} />
+        <SpaceSwitcher role={profile.role} hasShop={Boolean(shop)} />
       </div>
 
       {/*

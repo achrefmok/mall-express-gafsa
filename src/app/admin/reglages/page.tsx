@@ -22,7 +22,7 @@ export default async function AdminSettingsPage() {
   const [profile, { t }] = await Promise.all([getProfile(), getT()]);
   const supabase = await createClient();
 
-  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers] =
+  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers, pendingProviders] =
     await Promise.all([
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -58,6 +58,13 @@ export default async function AdminSettingsPage() {
         .from("taxi_drivers")
         .select("id", { count: "exact", head: true })
         .eq("is_approved", false),
+
+      // Dépanneurs autorisés mais pas encore vérifiés : invisibles des clients
+      // tant que personne n'a contrôlé identité et qualification.
+      supabase
+        .from("sos_providers")
+        .select("id", { count: "exact", head: true })
+        .eq("is_approved", false),
     ]);
 
   const links = [
@@ -75,6 +82,11 @@ export default async function AdminSettingsPage() {
       href: "/admin/taxi",
       label: "Chauffeurs de taxi",
       value: `${pendingDrivers.count ?? 0} à vérifier`,
+    },
+    {
+      href: "/admin/sos",
+      label: "SOS dépannage",
+      value: `${pendingProviders.count ?? 0} à vérifier`,
     },
   ];
 

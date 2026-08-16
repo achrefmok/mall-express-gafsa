@@ -16,8 +16,17 @@ import type { UserRole } from "@/types/database";
  * fin, présent des deux côtés, tient ce rôle.
  *
  * Invisible pour un client : il n'a qu'un seul espace.
+ *
+ * « Ma boutique » n'apparaît que si une boutique existe réellement. Un compte
+ * marqué vendeur mais sans boutique — dossier supprimé, administrateur qui n'a
+ * jamais ouvert de commerce — voyait un onglet qui ne menait nulle part.
+ *
+ * Ce composant ne protège rien : il décide de ce qui s'affiche, pas de ce qui
+ * s'ouvre. La véritable garde est dans `src/app/vendeur/layout.tsx`, qui vérifie
+ * le rôle à chaque requête, côté serveur. Masquer un lien n'a jamais empêché
+ * personne de taper l'adresse.
  */
-export function SpaceSwitcher({ role }: { role: UserRole }) {
+export function SpaceSwitcher({ role, hasShop = false }: { role: UserRole; hasShop?: boolean }) {
   const { t } = useI18n();
   const pathname = usePathname();
 
@@ -33,7 +42,7 @@ export function SpaceSwitcher({ role }: { role: UserRole }) {
     { key: "client", href: spaceHref("/accueil"), label: t.account.clientSpace },
   ];
 
-  if (role === "vendor" || role === "admin") {
+  if ((role === "vendor" || role === "admin") && hasShop) {
     spaces.push({ key: "vendor", href: spaceHref("/vendeur"), label: t.vendor.myShop });
   }
   if (role === "admin") {

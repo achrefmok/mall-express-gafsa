@@ -41,16 +41,32 @@ export function isVendorPath(pathname: string): boolean {
   return VENDOR_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-/**
- * Ce déploiement sert-il cette route ?
- *
- * Les routes techniques — API, authentification, manifeste — restent servies
- * partout : une session se rafraîchit des deux côtés, et couper `/auth/callback`
- * sur l'un des deux casserait la connexion par courriel.
- */
+/*
+  Ce qui appartient aux deux espaces, quel que soit le découpage.
+
+  Les routes techniques d'abord : une session se rafraîchit des deux côtés, et
+  couper `/auth/callback` sur l'un des deux casserait la connexion par courriel.
+
+  Les écrans de connexion et d'inscription ensuite, et c'est indispensable. Sans
+  eux, l'espace vendeur renvoyait `/connexion` vers l'hôte client — où le vendeur
+  se connectait, pour un cookie qui ne vaut que là-bas. Deux adresses en
+  `.vercel.app` n'ayant pas de domaine parent commun, la session ne revenait
+  jamais : l'espace vendeur était inaccessible à tout le monde, définitivement.
+  Chaque espace doit porter sa propre porte d'entrée.
+*/
+const SHARED_PREFIXES = ["/api/", "/auth/", "/connexion", "/inscription", "/hors-ligne"];
+
+function isSharedPath(pathname: string): boolean {
+  return SHARED_PREFIXES.some(
+    (prefix) =>
+      pathname === prefix || pathname.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`),
+  );
+}
+
+/** Ce déploiement sert-il cette route ? */
 export function servesPath(pathname: string): boolean {
   if (APP_SPACE === "all") return true;
-  if (pathname.startsWith("/api/") || pathname.startsWith("/auth/")) return true;
+  if (isSharedPath(pathname)) return true;
 
   return APP_SPACE === "vendor" ? isVendorPath(pathname) : !isVendorPath(pathname);
 }
@@ -72,6 +88,23 @@ const VENDOR_URL = process.env.NEXT_PUBLIC_VENDOR_URL?.replace(/\/$/, "") ?? "";
  * hébergement — sinon il tombe sur une route que ce déploiement ne sert pas.
  * Sans découpage, la fonction rend le chemin inchangé.
  */
+/**
+ * Adresse d'une route *chez l'autre espace*, ou `null` si rien n'est découpé.
+ *
+ * `spaceHref` ne sait renvoyer que ce qui n'est pas servi ici ; certains liens
+ * doivent au contraire désigner explicitement l'autre hébergement, alors même
+ * que la route existe des deux côtés. L'inscription en est le cas type : chaque
+ * espace la sert, mais un commerçant venu du côté client doit être envoyé créer
+ * sa boutique là où elle se gère.
+ *
+ * `null` plutôt qu'un chemin relatif : l'appelant peut alors masquer le lien
+ * quand il n'y a pas d'autre espace, au lieu d'en afficher un qui tourne en rond.
+ */
+export function crossSpaceHref(space: "client" | "vendor", pathname: string): string | null {
+  const base = space === "vendor" ? VENDOR_URL : CLIENT_URL;
+  return base ? `${base}${pathname}` : null;
+}
+
 export function spaceHref(pathname: string): string {
   if (APP_SPACE === "all") return pathname;
 

@@ -16,7 +16,16 @@ import type { UserRole } from "@/types/database";
  * hautes, et les espaces d'un compte à plusieurs rôles listés bout à bout
  * au lieu d'être cachés derrière une bascule.
  */
-export function SideNav({ variant, role }: { variant: NavVariant; role?: UserRole }) {
+export function SideNav({
+  variant,
+  role,
+  hasShop = false,
+}: {
+  variant: NavVariant;
+  role?: UserRole;
+  /** Sans boutique, l'onglet ne mènerait qu'à un écran vide. */
+  hasShop?: boolean;
+}) {
   const { t } = useI18n();
   const pathname = usePathname();
   const items = useNavItems(variant);
@@ -26,7 +35,7 @@ export function SideNav({ variant, role }: { variant: NavVariant; role?: UserRol
   const spaces: Array<{ href: string; label: string; variant: NavVariant }> = [
     { href: "/accueil", label: t.account.clientSpace, variant: "client" },
   ];
-  if (role === "vendor" || role === "admin") {
+  if ((role === "vendor" || role === "admin") && hasShop) {
     spaces.push({ href: "/vendeur", label: t.vendor.myShop, variant: "vendor" });
   }
   if (role === "admin") {

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getProfile } from "@/lib/queries";
+import { getMyShop, getProfile } from "@/lib/queries";
 import { AppShell } from "@/components/shell/app-shell";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
@@ -15,8 +15,12 @@ export default async function ClientLayout({ children }: { children: React.React
   // sa boutique depuis n'importe quel écran. Rien ne s'affiche pour un client.
   const profile = await getProfile();
 
+  // Un compte marqué vendeur n'a pas forcément de boutique : le lien ne
+  // s'affiche que s'il mène quelque part.
+  const hasShop = profile && profile.role !== "client" ? Boolean(await getMyShop()) : false;
+
   return (
-    <AppShell nav="client" role={profile?.role}>
+    <AppShell nav="client" role={profile?.role} hasShop={hasShop}>
       {/* `useSearchParams` exige une frontière Suspense si la page est statique. */}
       <Suspense fallback={null}>
         <AccessNotice />
@@ -25,7 +29,7 @@ export default async function ClientLayout({ children }: { children: React.React
       {/* Sur ordinateur, les espaces sont listés dans la colonne latérale. */}
       {profile && (
         <div className="lg:hidden">
-          <SpaceSwitcher role={profile.role} />
+          <SpaceSwitcher role={profile.role} hasShop={hasShop} />
         </div>
       )}
 

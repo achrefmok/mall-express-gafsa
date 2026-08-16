@@ -28,6 +28,7 @@ export function AppShell({
   children,
   nav,
   role,
+  hasShop,
   contentWidth = "wide",
   className,
 }: {
@@ -35,6 +36,8 @@ export function AppShell({
   /** Jeu d'onglets latéraux. Omis sur les écrans d'authentification. */
   nav?: NavVariant;
   role?: UserRole;
+  /** Une boutique existe-t-elle ? Décide de l'onglet « Ma boutique ». */
+  hasShop?: boolean;
   contentWidth?: "wide" | "reading";
   className?: string;
 }) {
@@ -51,7 +54,7 @@ export function AppShell({
         className,
       )}
     >
-      {nav && <SideNav variant={nav} role={role} />}
+      {nav && <SideNav variant={nav} role={role} hasShop={hasShop} />}
 
       <div
         className={cx(
