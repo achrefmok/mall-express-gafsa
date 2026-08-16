@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { APP_SPACE } from "@/lib/space";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,19 @@ export const runtime = "nodejs";
  * directement `select public.expire_stale_deals();`.
  */
 export async function GET(request: NextRequest) {
+  /*
+    Une seule fois, même si l'application est déployée en plusieurs exemplaires.
+
+    Le découpage client/vendeur produit deux hébergements du même dépôt, donc
+    deux planificateurs pour le même `vercel.json`. Les tâches s'exécuteraient en
+    double : deux expirations concurrentes de bons plans, deux synchronisations
+    Facebook. La façade client s'abstient ; le côté qui porte l'administration
+    garde la charge.
+  */
+  if (APP_SPACE === "client") {
+    return NextResponse.json({ ignore: "espace client" }, { status: 204 });
+  }
+
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json({ error: "CRON_SECRET non configuré" }, { status: 503 });
