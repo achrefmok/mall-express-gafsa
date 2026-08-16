@@ -42,7 +42,9 @@ export async function GET(request: NextRequest) {
     garde la charge.
   */
   if (APP_SPACE === "client") {
-    return NextResponse.json({ ignore: "espace client" }, { status: 204 });
+    // 200 et non 204 : ce dernier interdit tout corps, et `NextResponse.json`
+    // y lève une exception — la route ressortait en 500 à chaque passage.
+    return NextResponse.json({ ignore: "espace client" });
   }
 
   const secret = process.env.CRON_SECRET;

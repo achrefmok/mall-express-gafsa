@@ -29,7 +29,16 @@ export async function GET(request: NextRequest) {
     garde la charge.
   */
   if (APP_SPACE === "client") {
-    return NextResponse.json({ ignore: "espace client" }, { status: 204 });
+    /*
+      200 et non 204 : un 204 déclare « pas de contenu » et la spécification lui
+      interdit tout corps, si bien que `NextResponse.json` y lève une exception
+      et que la route ressortait en 500. Le planificateur voyait un échec chaque
+      nuit pour une tâche qui n'avait, ici, rien à faire.
+
+      Un 200 explicite vaut mieux qu'une réponse vide : le journal dit pourquoi
+      rien ne s'est produit.
+    */
+    return NextResponse.json({ ignore: "espace client" });
   }
 
   const secret = process.env.CRON_SECRET;
