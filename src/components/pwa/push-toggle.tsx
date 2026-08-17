@@ -31,6 +31,26 @@ function readKeys(subscription: PushSubscription): { p256dh: string; auth: strin
   return { p256dh: keys.p256dh, auth: keys.auth };
 }
 
+/**
+ * Rendre l'échec lisible.
+ *
+ * Un « réessayez dans un instant » ne dit rien à l'utilisateur et rien à celui
+ * qui doit corriger : il faut savoir *quoi* a échoué. Les navigateurs donnent un
+ * nom d'erreur précis — `NotAllowedError` pour une permission refusée,
+ * `AbortError` quand le service de notification du navigateur ne répond pas,
+ * `InvalidStateError` quand un abonnement existe déjà avec une autre clé.
+ *
+ * Le nom est affiché tel quel, sans traduction : il est destiné à être recopié
+ * lors d'un signalement, et le traduire le rendrait introuvable.
+ */
+function describe(error: unknown): string {
+  if (error instanceof Error) {
+    const name = error.name && error.name !== "Error" ? `${error.name} — ` : "";
+    return `${name}${error.message || "cause inconnue"}`;
+  }
+  return String(error);
+}
+
 type State =
   | { kind: "checking" }
   /** Ni service worker, ni API de notifications — navigateur trop ancien. */
@@ -129,7 +149,24 @@ export function PushToggle() {
           return;
         }
 
-        const registration = await navigator.serviceWorker.ready;
+        /*
+          Attendre le service worker, mais pas indéfiniment.
+
+          `serviceWorker.ready` ne rejette jamais : si aucun service worker n'est
+          actif — première visite dont l'enregistrement n'a pas abouti, onglet
+          privé, enregistrement refusé — la promesse reste en attente pour
+          toujours, et le bouton semble simplement ne rien faire. Une limite de
+          temps transforme ce silence en message.
+        */
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Le service worker n'est pas actif sur cette page")),
+              8000,
+            ),
+          ),
+        ]);
 
         /*
           `userVisibleOnly: true` est obligatoire, pas optionnel : les navigateurs
@@ -163,8 +200,11 @@ export function PushToggle() {
         }
 
         setState({ kind: "on" });
-      } catch {
-        setError(t.push.failed);
+      } catch (caught) {
+        // Consigné aussi dans la console : le message affiché est court, la trace
+        // complète y reste disponible pour un diagnostic.
+        console.error("Activation des alertes impossible", caught);
+        setError(`${t.push.failed} (${describe(caught)})`);
       }
     });
   }
@@ -183,8 +223,9 @@ export function PushToggle() {
         }
 
         setState({ kind: "off" });
-      } catch {
-        setError(t.push.failed);
+      } catch (caught) {
+        console.error("Désactivation des alertes impossible", caught);
+        setError(`${t.push.failed} (${describe(caught)})`);
       }
     });
   }
