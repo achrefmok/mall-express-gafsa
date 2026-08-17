@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/server";
+import { isValidVapidPublicKey, vapidPublicKey } from "@/lib/push-key";
 
 /*
   Runtime Node, pas Edge : le chiffrement des messages poussés repose sur le
@@ -47,8 +48,15 @@ interface Payload {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.PUSH_SECRET;
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
+
+  /*
+    La même clé publique que le navigateur, prise à la même source : les deux
+    doivent concorder au caractère près, sinon chaque envoi est rejeté par le
+    service de notifications. Les lire à deux endroits différents était une
+    invitation à les voir diverger.
+  */
+  const publicKey = vapidPublicKey();
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.replace(/\s+/g, "");
   const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@mall-express-gafsa.tn";
 
   /*
@@ -62,6 +70,29 @@ export async function POST(request: NextRequest) {
 
   if (!secretMatches(request.headers.get("x-push-secret"), secret)) {
     return NextResponse.json({ error: "Refusé" }, { status: 401 });
+  }
+
+  /*
+    Contrôler la forme des clés avant de les confier à `web-push`, qui lèverait
+    sinon une exception aboutissant en 500 — un code qui ne dit pas ce qui
+    manque. Une clé privée fait 32 octets, soit 43 caractères en base64url.
+  */
+  if (!isValidVapidPublicKey(publicKey)) {
+    return NextResponse.json(
+      { error: `Clé publique invalide : ${publicKey.length} caractères au lieu de 87` },
+      { status: 500 },
+    );
+  }
+
+  if (privateKey.length !== 43) {
+    return NextResponse.json(
+      {
+        error:
+          `Clé privée invalide : ${privateKey.length} caractères au lieu de 43. ` +
+          `Vérifier VAPID_PRIVATE_KEY — probablement tronquée au collage.`,
+      },
+      { status: 500 },
+    );
   }
 
   let payload: Payload;

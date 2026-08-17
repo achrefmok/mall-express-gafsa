@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { removePushSubscription, savePushSubscription } from "@/app/actions/push";
+import { vapidPublicKey } from "@/lib/push-key";
 import { Card } from "@/components/ui/primitives";
 
 /**
@@ -58,8 +59,8 @@ function readServerKey(raw: string): Uint8Array<ArrayBuffer> {
   if (bytes.length !== 65 || bytes[0] !== 4) {
     throw new Error(
       `Clé VAPID invalide : ${bytes.length} octets au lieu de 65 ` +
-        `(${key.length} caractères au lieu de 87). Probablement tronquée au collage ` +
-        `dans NEXT_PUBLIC_VAPID_PUBLIC_KEY.`,
+        `(${key.length} caractères au lieu de 87). La clé versionnée est correcte : ` +
+        `une variable NEXT_PUBLIC_VAPID_PUBLIC_KEY tronquée a dû la remplacer.`,
     );
   }
 
@@ -186,11 +187,16 @@ export function PushToggle() {
           return;
         }
 
-        const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!key) {
-          setError(t.push.notConfigured);
-          return;
-        }
+        /*
+          La clé vient du code, plus d'une variable d'environnement.
+
+          Elle est publique — le navigateur la reçoit en clair de toute façon — et
+          un mot de 87 caractères collé dans un tableau de bord se fait couper par
+          le retour à la ligne d'un terminal. Versionnée, elle ne peut plus arriver
+          tronquée. Une variable valide reste prioritaire, pour permettre un
+          changement de paire sans nouvelle mise en ligne.
+        */
+        const key = vapidPublicKey();
 
         /*
           Attendre le service worker, mais pas indéfiniment.
