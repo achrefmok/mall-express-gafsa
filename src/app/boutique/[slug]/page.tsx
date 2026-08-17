@@ -8,7 +8,7 @@ import { format } from "@/lib/i18n/dictionaries";
 import { formatCount, formatRating, formatTime, monogram } from "@/lib/format";
 import { ProductCard } from "@/components/cards/product-card";
 import { EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primitives";
-import { FollowButton, ShopTabs } from "./shop-client";
+import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
 
 /**
  * Écran 6 — profil boutique, vue client.
@@ -85,7 +85,7 @@ export default async function ShopPage({
     .select(
       `id, name, name_ar, description, description_ar, slug, logo_url, cover_url,
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count,
-       followers_count, posts_count, status,
+       followers_count, posts_count, views_count, status,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue)`,
     )
     .eq("slug", slug)
@@ -214,6 +214,13 @@ export default async function ShopPage({
               </p>
             </div>
             <FollowButton shopId={shop.id} initiallyFollowing={following} />
+            {/*
+              La visite est comptée depuis le navigateur, et non pendant le rendu :
+              cette page est servie en cache cinq minutes (`revalidate = 300`), si
+              bien qu'un incrément côté serveur n'aurait compté qu'une visite par
+              intervalle, quel que soit le nombre de visiteurs réels.
+            */}
+            <CountShopView shopId={shop.id} />
           </div>
 
           <div className="mt-[2px] flex justify-between gap-3 text-[11px] text-[var(--color-muted)]">
@@ -223,6 +230,10 @@ export default async function ShopPage({
             <span className="whitespace-nowrap">
               <b className="text-[var(--color-ink)]">{formatCount(shop.followers_count)}</b>{" "}
               {t.shop.followers}
+            </span>
+            <span className="whitespace-nowrap">
+              <b className="text-[var(--color-ink)]">{formatCount(shop.views_count)}</b>{" "}
+              {t.common.views}
             </span>
             <span className="whitespace-nowrap">
               <b className="text-[var(--color-ink)]">{rating}</b> ★ {t.shop.reviews}
@@ -247,12 +258,25 @@ export default async function ShopPage({
                 : t.shop.closed}
             </span>
 
-            <a
-              href={shop.phone ? `tel:${shop.phone}` : `/messages?boutique=${shop.id}`}
-              className="rounded-[12px] border border-[var(--color-outline)] px-[10px] py-[5px] text-[10px] font-semibold text-[var(--color-ink)]"
-            >
-              {t.shop.askVendor}
-            </a>
+            {/*
+              Trois portes vers le vendeur, et non plus une seule.
+
+              Le lien précédent choisissait à la place du visiteur : un numéro
+              renseigné menait à l'appel, et la messagerie du site devenait
+              alors inaccessible depuis la boutique — alors qu'elle est le seul
+              canal qui laisse une trace consultable des deux côtés. Un client
+              qui veut écrire à 23 h n'appelle pas ; un client pressé n'écrit pas.
+            */}
+            <ShopContact
+              shopId={shop.id}
+              shopName={shop.name}
+              phone={shop.phone}
+              labels={{
+                message: t.shop.askVendor,
+                call: t.taxi.call,
+                whatsApp: t.common.whatsApp,
+              }}
+            />
           </div>
         </div>
 

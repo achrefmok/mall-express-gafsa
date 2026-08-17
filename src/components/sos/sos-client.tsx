@@ -9,7 +9,7 @@ import { isPositionFresh } from "@/lib/geo";
 import { cx } from "@/lib/format";
 import { SOS_TRADES, type SosTrade } from "@/lib/sos";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
-import type { DriverPin } from "@/components/taxi/driver-map";
+import type { DriverPin, MapLabels } from "@/components/taxi/driver-map";
 
 /*
   La carte des chauffeurs, réemployée telle quelle.
@@ -99,7 +99,16 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
       lat: p.lat!,
       lng: p.lng!,
       available: p.is_available,
+      detail: t.sos.trades[p.trade],
+      phone: p.phone,
     }));
+
+  const labels: MapLabels = {
+    free: t.sos.free,
+    busy: t.sos.busy,
+    call: t.sos.call,
+    whatsApp: t.common.whatsApp,
+  };
 
   /* Seuls les métiers réellement représentés sont proposés : un filtre qui ne
      renvoie jamais rien n'apprend qu'une chose, c'est que le service est vide. */
@@ -141,7 +150,7 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
 
       {pins.length > 0 && (
         <div className="h-[32vh] min-h-[190px] flex-none overflow-hidden rounded-[18px]">
-          <ProviderMap drivers={pins} />
+          <ProviderMap drivers={pins} labels={labels} />
         </div>
       )}
 

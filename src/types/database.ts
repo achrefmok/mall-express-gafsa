@@ -903,6 +903,9 @@ export interface Database {
         Returns: undefined;
       };
       expire_stale_deals: { Args: Record<PropertyKey, never>; Returns: number };
+      /* Incrémente `shops.views_count`. `security definer` : un visiteur anonyme
+         n'a aucun droit d'écriture sur `shops`, et n'en a pas besoin pour ça. */
+      increment_shop_views: { Args: { shop: string }; Returns: undefined };
       refresh_shops_open_state: { Args: Record<PropertyKey, never>; Returns: number };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_service_context: { Args: Record<PropertyKey, never>; Returns: boolean };

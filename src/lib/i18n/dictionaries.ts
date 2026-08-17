@@ -94,6 +94,9 @@ const fr = {
     signInRequired: "Connectez-vous pour continuer",
     offline: "Vous êtes hors ligne",
     offlineBody: "Cette page sera à jour dès le retour du réseau.",
+    whatsApp: "WhatsApp",
+    message: "Message",
+    views: "vues",
   },
 
   home: {
@@ -584,6 +587,9 @@ const ar: Dictionary = {
     signInRequired: "سجّل الدخول للمتابعة",
     offline: "أنت غير متصل",
     offlineBody: "ستُحدَّث هذه الصفحة عند عودة الشبكة.",
+    whatsApp: "واتساب",
+    message: "رسالة",
+    views: "مشاهدة",
   },
 
   home: {

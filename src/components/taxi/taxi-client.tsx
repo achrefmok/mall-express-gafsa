@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { usePoll } from "@/lib/use-poll";
 import { isPositionFresh } from "@/lib/geo";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
-import type { DriverPin } from "./driver-map";
+import type { DriverPin, MapLabels } from "./driver-map";
 
 /*
   La carte ne se rend que dans le navigateur : Leaflet touche `window` dès son
@@ -91,7 +91,16 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
       lat: d.lat!,
       lng: d.lng!,
       available: d.is_available,
+      detail: [d.vehicle, d.plate].filter(Boolean).join(" · ") || null,
+      phone: d.phone,
     }));
+
+  const labels: MapLabels = {
+    free: t.taxi.free,
+    busy: t.taxi.busy,
+    call: t.taxi.call,
+    whatsApp: t.common.whatsApp,
+  };
 
   const free = drivers.filter((d) => d.is_available);
 
@@ -102,7 +111,7 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="h-[38vh] min-h-[220px] flex-none overflow-hidden rounded-[18px]">
-        <DriverMap drivers={pins} />
+        <DriverMap drivers={pins} labels={labels} />
       </div>
 
       <p className="flex-none text-[11px] font-bold text-[var(--color-ink)]">

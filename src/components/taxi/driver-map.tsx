@@ -17,6 +17,8 @@ import type { Map as LeafletMap, Marker } from "leaflet";
 */
 import "leaflet/dist/leaflet.css";
 
+import { telHref, whatsAppHref } from "@/lib/contact";
+
 /** Centre de Gafsa : le repli quand aucun chauffeur n'a encore publié sa position. */
 const GAFSA: [number, number] = [34.425, 8.784];
 
@@ -26,6 +28,71 @@ export interface DriverPin {
   lat: number;
   lng: number;
   available: boolean;
+  /** Ce qui distingue la personne : véhicule, immatriculation, ou métier. */
+  detail?: string | null;
+  /** Sans numéro, la bulle n'affiche que l'identité. */
+  phone?: string | null;
+}
+
+/** Libellés de la bulle. La carte est réemployée par le taxi et par le SOS. */
+export interface MapLabels {
+  free: string;
+  busy: string;
+  call: string;
+  whatsApp: string;
+}
+
+/*
+  Échapper avant d'insérer dans la bulle.
+
+  Leaflet ne rend que du HTML : `bindPopup` reçoit une chaîne, pas des nœuds
+  React. Or le nom et le véhicule sont saisis par le chauffeur lui-même. Sans
+  cette précaution, un nom contenant une balise s'exécuterait chez tous les
+  clients qui touchent son repère.
+*/
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Le contenu de la bulle : qui c'est, et comment le joindre.
+ *
+ * Trois façons de prendre contact, dans l'ordre où elles servent à Gafsa :
+ * l'appel d'abord — c'est ce qu'on fait pour un taxi — puis WhatsApp, qui
+ * permet d'envoyer un point de rendez-vous plutôt que de le décrire.
+ *
+ * Les liens portent `target="_blank"` pour WhatsApp seulement : un `tel:` ouvre
+ * le composeur du téléphone et ne doit pas laisser un onglet vide derrière lui.
+ */
+function popupHtml(pin: DriverPin, labels: MapLabels): string {
+  const state = pin.available ? labels.free : labels.busy;
+  const tel = telHref(pin.phone);
+  const wa = whatsAppHref(pin.phone, `Bonjour, je vous contacte depuis Mall Express Gafsa.`);
+
+  const button =
+    "display:inline-block;padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;text-decoration:none;";
+
+  return `
+    <div style="min-width:170px;font-family:inherit">
+      <div style="font-size:12.5px;font-weight:700;color:#1b1420">${esc(pin.name)}</div>
+      <div style="font-size:10.5px;color:#6b6474;margin-top:1px">
+        ${esc([pin.detail, state].filter(Boolean).join(" · "))}
+      </div>
+      ${
+        tel && wa
+          ? `<div style="display:flex;gap:6px;margin-top:8px">
+               <a href="${tel}" style="${button}background:#7a1f2b;color:#fff">${esc(labels.call)}</a>
+               <a href="${wa}" target="_blank" rel="noopener noreferrer"
+                  style="${button}background:#e6f4ea;color:#0f7a3d">${esc(labels.whatsApp)}</a>
+             </div>`
+          : ""
+      }
+    </div>`;
 }
 
 /**
@@ -45,7 +112,13 @@ export interface DriverPin {
  * création, et un conteneur encore à zéro — le cas quand le composant arrive par
  * un import dynamique — lui fait calculer une grille de tuiles vide.
  */
-export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
+export function DriverMap({
+  drivers,
+  labels,
+}: {
+  drivers: DriverPin[];
+  labels: MapLabels;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -111,7 +184,7 @@ export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
 
         const marker = L.marker([driver.lat, driver.lng], { icon })
           .addTo(map)
-          .bindPopup(`${driver.name}${driver.available ? " · libre" : " · occupé"}`);
+          .bindPopup(popupHtml(driver, labels));
 
         markersRef.current.push(marker);
       }
@@ -138,7 +211,7 @@ export function DriverMap({ drivers }: { drivers: DriverPin[] }) {
     return () => {
       cancelled = true;
     };
-  }, [drivers]);
+  }, [drivers, labels]);
 
   // La carte est démontée avec l'écran : Leaflet garde sinon des écouteurs sur
   // un nœud qui n'existe plus.

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
 import { done, fail, ok, readableError, requireProfile } from "./_helpers";
 import type { Database, ServiceRequestKind } from "@/types/database";
 
@@ -188,4 +189,25 @@ export async function submitServiceRequest(input: {
 
   revalidatePath("/profil/demarches");
   return ok({ id: data.id });
+}
+
+/* ─── Audience ─────────────────────────────────────────────────────────── */
+
+/**
+ * Compter une visite de boutique.
+ *
+ * Sans `requireProfile`, délibérément : l'essentiel de l'audience d'une vitrine
+ * vient de visiteurs qui n'ont pas de compte, et les exclure aurait vidé le
+ * chiffre de son sens.
+ *
+ * L'écriture passe par une fonction `security definer` : un visiteur anonyme n'a
+ * aucun droit sur `shops`, et ne doit pas en avoir. La fonction ne touche que ce
+ * compteur.
+ *
+ * Aucune valeur rendue et aucune erreur remontée : l'appelant est un composant
+ * qui n'affiche rien, et un compteur en panne ne doit rien casser à l'écran.
+ */
+export async function countShopView(shopId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc("increment_shop_views", { shop: shopId });
 }
