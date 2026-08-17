@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
+import { spaceHref } from "@/lib/space";
 import { cx } from "@/lib/format";
 import { isActive, useNavItems, type NavVariant } from "./nav-items";
 import type { UserRole } from "@/types/database";
@@ -32,14 +33,21 @@ export function SideNav({
 
   // Un vendeur ou un administrateur circule entre plusieurs espaces. Sur
   // téléphone c'est le rôle de `SpaceSwitcher` ; ici, autant les montrer.
+  /*
+    Les liens entre espaces passent par `spaceHref`, comme dans le bandeau
+    mobile. En relatif, ils désignaient une route que ce déploiement ne sert
+    pas : le middleware répondait par une redirection vers l'autre hôte, que le
+    service worker tentait de suivre depuis notre origine — « Unsafe attempt to
+    load URL », puis une page blanche.
+  */
   const spaces: Array<{ href: string; label: string; variant: NavVariant }> = [
-    { href: "/accueil", label: t.account.clientSpace, variant: "client" },
+    { href: spaceHref("/accueil"), label: t.account.clientSpace, variant: "client" },
   ];
   if ((role === "vendor" || role === "admin") && hasShop) {
-    spaces.push({ href: "/vendeur", label: t.vendor.myShop, variant: "vendor" });
+    spaces.push({ href: spaceHref("/vendeur"), label: t.vendor.myShop, variant: "vendor" });
   }
   if (role === "admin") {
-    spaces.push({ href: "/admin", label: t.account.adminSpace, variant: "admin" });
+    spaces.push({ href: spaceHref("/admin"), label: t.account.adminSpace, variant: "admin" });
   }
 
   return (

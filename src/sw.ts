@@ -2,7 +2,8 @@
 
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, ExpirationPlugin, NetworkOnly, Serwist, StaleWhileRevalidate } from "serwist";
+import { CacheFirst, ExpirationPlugin, NetworkFirst, NetworkOnly, Serwist } from "serwist";
+import { servesPath } from "@/lib/space";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -24,8 +25,9 @@ declare const self: ServiceWorkerGlobalScope;
  *      panier, commandes, authentification, session. Servir une version
  *      périmée d'un panier serait pire que ne rien servir.
  *   2. Les images de produits, quasi immuables, sont mises en cache long.
- *   3. Le reste passe en « stale-while-revalidate » : l'écran s'affiche
- *      instantanément avec la dernière version connue, puis se rafraîchit.
+ *   3. Les documents HTML passent en « réseau d'abord », avec le cache pour
+ *      filet : un document périmé désigne des fragments JavaScript que le
+ *      déploiement suivant a supprimés, et l'écran reste blanc.
  *
  * Le temps réel (WebSocket Supabase, WebRTC) contourne entièrement le
  * service worker : ces échanges ne passent pas par `fetch`.
@@ -38,6 +40,30 @@ const serwist = new Serwist({
   navigationPreload: true,
 
   runtimeCaching: [
+    /* ─── Navigations vers l'autre espace ──────────────────────────── */
+    {
+      /*
+        Une redirection hors origine ne se suit pas depuis un service worker.
+
+        Sur un déploiement découpé, `/vendeur` est renvoyée par le middleware
+        vers l'autre hébergement. Le service worker, lui, tentait de suivre cette
+        redirection depuis notre origine : le navigateur refuse — « Unsafe
+        attempt to load URL […] from frame with URL /sw.js » — et la navigation
+        échouait sur une page blanche, doublée d'un « no-response ».
+
+        `redirect: "manual"` produit une réponse opaque de redirection, que l'on
+        peut légitimement rendre pour une navigation : le navigateur la suit
+        alors lui-même, avec ses propres droits. C'est le seul moyen de laisser
+        passer une redirection inter-domaines à travers un service worker.
+
+        `servesPath` connaît l'espace de ce déploiement : sur un hébergement
+        unique, aucune route n'est concernée et cette règle ne s'applique jamais.
+      */
+      matcher: ({ request, url }) =>
+        request.mode === "navigate" && url.origin === self.location.origin && !servesPath(url.pathname),
+      handler: async ({ request }) => fetch(request, { redirect: "manual" }),
+    },
+
     /* ─── Jamais en cache ──────────────────────────────────────────── */
     {
       matcher: ({ url }) =>
@@ -103,8 +129,22 @@ const serwist = new Serwist({
           url.pathname.startsWith("/boutique/") ||
           url.pathname.startsWith("/services") ||
           url.pathname.startsWith("/bons-plans")),
-      handler: new StaleWhileRevalidate({
+      /*
+        « Réseau d'abord », et non « périmé puis rafraîchi ».
+
+        Un document HTML nomme des fragments JavaScript par leur empreinte. Servir
+        un document d'hier après un déploiement fait réclamer des fragments qui
+        n'existent plus : le serveur répond 404 en texte brut, et le navigateur
+        refuse d'exécuter du `text/plain` — « ChunkLoadError ». L'écran reste
+        blanc jusqu'à un rechargement.
+
+        Le cache ne sert donc plus que de filet hors réseau, où il reste précieux.
+        Le coût est un aller-retour réseau par navigation ; l'ancienne stratégie
+        échangeait cela contre un écran cassé à chaque mise en ligne.
+      */
+      handler: new NetworkFirst({
         cacheName: "meg-pages",
+        networkTimeoutSeconds: 4,
         plugins: [new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 24 * 60 * 60 })],
       }),
     },
