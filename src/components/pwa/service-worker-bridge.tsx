@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { useInstallPrompt } from "./use-install-prompt";
 
 /**
  * Trois responsabilités, volontairement réunies dans un seul composant monté
@@ -14,6 +15,7 @@ export function ServiceWorkerBridge() {
   return (
     <>
       <ServiceWorkerRegistration />
+      <InstallCapture />
       <OfflineBanner />
       <InstallPrompt />
     </>
@@ -68,40 +70,57 @@ function OfflineBanner() {
   );
 }
 
-/** Événement non standard, absent de lib.dom. */
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+/*
+  L'invite d'installation, captée une fois et partagée.
+
+  `beforeinstallprompt` n'est émis qu'une fois par chargement de page, et très
+  tôt. Chaque composant qui l'écoutait pour son compte risquait de le manquer —
+  ou de le consommer au nez de l'autre, puisqu'une invite ne se déclenche qu'une
+  seule fois. On la retient donc ici, au plus près du chargement, et on la
+  dépose sur `window` pour que le panneau du profil la retrouve, même monté
+  longtemps après.
+*/
+function InstallCapture() {
+  useEffect(() => {
+    const onPrompt = (event: Event) => {
+      event.preventDefault();
+      (window as Window & { __megInstallEvent?: Event }).__megInstallEvent = event;
+    };
+
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+  }, []);
+
+  return null;
 }
 
 const DISMISS_KEY = "meg-install-dismissed";
 
+/**
+ * Le bandeau d'invitation, en bas de l'écran.
+ *
+ * Il ne s'affiche que là où l'installation tient en un geste — donc pas sur
+ * iPhone, où aucune API ne l'autorise. Un bandeau qui ne saurait qu'expliquer un
+ * détour par le menu de partage se ferait fermer sans être lu ; cette
+ * explication vit dans le panneau du profil, où on la cherche.
+ */
 function InstallPrompt() {
   const { t } = useI18n();
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  const { canInstallInOneTap, install } = useInstallPrompt();
+  const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
     // Ne pas insister : une fois refusée, l'invitation ne revient pas avant
     // trente jours.
     const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) ?? 0);
-    if (Date.now() - dismissedAt < 30 * 86_400_000) return;
-
-    const onPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferred(event as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", () => setDeferred(null));
-
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    setHidden(Date.now() - dismissedAt < 30 * 86_400_000);
   }, []);
 
-  if (!deferred) return null;
+  if (hidden || !canInstallInOneTap) return null;
 
   function dismiss() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    setDeferred(null);
+    setHidden(true);
   }
 
   return (
@@ -111,23 +130,18 @@ function InstallPrompt() {
           <p className="text-[12px] font-bold">
             {t.brand.first} {t.brand.second}
           </p>
-          <p className="text-[10.5px] opacity-85">
-            Installez l&apos;application pour un accès hors ligne et plus rapide.
-          </p>
+          <p className="text-[10.5px] opacity-85">{t.install.bannerBody}</p>
         </div>
 
         <button
           type="button"
-          onClick={async () => {
-            const event = deferred;
-            setDeferred(null);
-            await event.prompt();
-            const { outcome } = await event.userChoice;
-            if (outcome === "dismissed") localStorage.setItem(DISMISS_KEY, String(Date.now()));
+          onClick={() => {
+            void install();
+            dismiss();
           }}
           className="flex-none rounded-[13px] bg-white px-3 py-[7px] text-[10.5px] font-bold text-[var(--color-ink)]"
         >
-          Installer
+          {t.install.action}
         </button>
 
         <button

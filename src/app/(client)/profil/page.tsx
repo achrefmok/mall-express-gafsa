@@ -9,6 +9,8 @@ import { fullName, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Avatar, Card } from "@/components/ui/primitives";
 import { ChevronRightIcon, GearIcon } from "@/components/ui/icons";
+import { InstallSheet } from "@/components/pwa/install-sheet";
+import { crossSpaceHref } from "@/lib/space";
 import { InviteButton, SignOutButton } from "./profile-client";
 
 export const metadata: Metadata = {
@@ -28,6 +30,14 @@ const TIERS = [
 export default async function ProfilePage() {
   const profile = await getProfile();
   if (!profile) redirect("/connexion?suite=/profil");
+
+  /*
+    L'inscription commerçant vit sur l'autre hébergement quand le site est
+    découpé. Un lien relatif y menait à l'inscription client — celle que ce
+    déploiement sert — et le visiteur y créait un second compte d'acheteur en
+    croyant ouvrir une boutique.
+  */
+  const vendorSignUpUrl = crossSpaceHref("vendor", "/inscription");
 
   const { t } = await getT();
   const supabase = await createClient();
@@ -153,7 +163,7 @@ export default async function ProfilePage() {
         )}
         {profile.role === "client" && (
           <Link
-            href="/inscription?role=vendeur"
+            href={vendorSignUpUrl ?? "/inscription?role=vendeur"}
             className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-outline)] p-3 text-[var(--color-ink)]"
           >
             <span className="flex-1 text-[12.5px] font-semibold">{t.account.becomeVendor}</span>
@@ -175,6 +185,15 @@ export default async function ProfilePage() {
             <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
           </Link>
         ))}
+
+        {/*
+          Le panneau d'installation, et l'invitation aux commerçants avec lui.
+
+          Il s'ouvre de lui-même à la première visite du profil : c'est l'écran
+          où l'on s'installe dans l'application, pas celui où l'on cherche un
+          produit.
+        */}
+        <InstallSheet vendorSignUpUrl={profile.role === "client" ? vendorSignUpUrl : null} />
 
         <SignOutButton />
       </div>

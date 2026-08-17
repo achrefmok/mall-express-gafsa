@@ -246,6 +246,21 @@ const fr = {
     proTravels: "Je me déplace chez le client",
   },
 
+  install: {
+    title: "Installer Mall Express",
+    body: "L'application s'ajoute à votre écran d'accueil. Aucun magasin d'applications, moins de 2 Mo, et elle fonctionne même sans réseau.",
+    action: "Installer l'application",
+    oneTap: "Installer maintenant",
+    openSheet: "À propos de l'application",
+    bannerBody: "Installez l'application : plus rapide, et disponible hors réseau.",
+    already: "L'application est déjà installée sur cet appareil.",
+    iosStep1: "Touchez le bouton de partage, en bas de Safari.",
+    iosStep2: "Faites défiler, puis touchez « Sur l'écran d'accueil ».",
+    iosStep3: "Touchez « Ajouter » : l'icône apparaît sur votre écran.",
+    otherHint:
+      "Ouvrez le menu de votre navigateur, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».",
+  },
+
   deals: {
     title: "Bons plans",
     tabs: { popular: "Populaires", recent: "Récents", nearby: "Près de moi", expiring: "Expire aujourd'hui" },
@@ -717,6 +732,20 @@ const ar: Dictionary = {
     proPhone: "الهاتف",
     proDescription: "ما الذي تقوم به (مثال: إصلاح بالمنزل، ليلاً وفي العطل)",
     proTravels: "أتنقّل إلى الحريف",
+  },
+
+  install: {
+    title: "تثبيت مول إكسبرس",
+    body: "يُضاف التطبيق إلى شاشتك الرئيسية. بدون متجر تطبيقات، أقل من 2 ميغابايت، ويعمل حتى بدون شبكة.",
+    action: "تثبيت التطبيق",
+    oneTap: "التثبيت الآن",
+    openSheet: "حول التطبيق",
+    bannerBody: "ثبّت التطبيق: أسرع، ويعمل بدون شبكة.",
+    already: "التطبيق مثبّت على هذا الجهاز.",
+    iosStep1: "اضغط زر المشاركة في أسفل سفاري.",
+    iosStep2: "مرّر ثم اضغط «إضافة إلى الشاشة الرئيسية».",
+    iosStep3: "اضغط «إضافة»: تظهر الأيقونة على شاشتك.",
+    otherHint: "افتح قائمة المتصفح ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».",
   },
 
   deals: {

@@ -16,15 +16,12 @@ import { Button, Card } from "@/components/ui/primitives";
 export function SignUpScreen({
   initialRole,
   lockedRole = false,
-  otherSpaceUrl = null,
   referralCode,
   providers = [],
 }: {
   initialRole: "client" | "vendor";
   /** L'adresse a déjà tranché : on n'affiche plus le choix du rôle. */
   lockedRole?: boolean;
-  /** Adresse de l'inscription de l'autre espace, si le site est découpé. */
-  otherSpaceUrl?: string | null;
   referralCode?: string;
   /** Fournisseurs tiers activés sur le projet. Vide = section masquée. */
   providers?: Array<"google" | "facebook">;
@@ -97,32 +94,6 @@ export function SignUpScreen({
       </header>
 
       <div className="no-sb flex flex-1 flex-col gap-[14px] overflow-y-auto px-4 pt-2 pb-6">
-        {/*
-          ─── Rôle imposé par l'espace ──────────────────────────────────
-          Un bandeau qui dit ce qu'on est en train de créer, et par où passer
-          si ce n'est pas ce qu'on cherchait. Sans lui, un commerçant arrivé
-          sur l'inscription client n'aurait aucun moyen de deviner qu'une autre
-          adresse existe.
-        */}
-        {lockedRole && (
-          <div className="flex flex-none flex-col gap-1 rounded-[18px] bg-[var(--color-brand-tint)] p-3">
-            <p className="text-[12.5px] font-bold text-[var(--color-ink)]">
-              {role === "vendor" ? t.auth.roleVendor : t.auth.roleClient}
-            </p>
-            <p className="text-[10px] leading-[1.4] text-[var(--color-muted)]">
-              {role === "vendor" ? t.auth.roleVendorBody : t.auth.roleClientBody}
-            </p>
-            {otherSpaceUrl && (
-              <a
-                href={otherSpaceUrl}
-                className="mt-1 text-[10.5px] font-bold text-[var(--color-brand)] underline"
-              >
-                {role === "vendor" ? t.auth.switchToClientSignUp : t.auth.switchToVendorSignUp}
-              </a>
-            )}
-          </div>
-        )}
-
         {/* ─── Choix du rôle ───────────────────────────────────────────── */}
         {!lockedRole && (
         <div className="flex flex-none gap-[10px]" role="radiogroup" aria-label={t.auth.roleClient}>

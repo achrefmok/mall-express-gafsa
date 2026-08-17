@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/queries";
 import { enabledOAuthProviders } from "@/lib/auth/providers";
-import { APP_SPACE, crossSpaceHref } from "@/lib/space";
+import { APP_SPACE } from "@/lib/space";
 import { SignUpScreen } from "./sign-up-screen";
 
 export const metadata: Metadata = {
@@ -40,21 +40,6 @@ export default async function SignUpPage({
     <SignUpScreen
       initialRole={forcedRole ?? (askedForVendor ? "vendor" : "client")}
       lockedRole={forcedRole !== null}
-      /*
-        Le pont vers l'autre espace.
-
-        Un commerçant qui atterrit sur l'inscription client doit pouvoir
-        rejoindre celle des boutiques sans qu'on lui demande de retenir une
-        seconde adresse. `null` quand rien n'est découpé : le lien serait alors
-        un aller-retour sur place.
-      */
-      otherSpaceUrl={
-        forcedRole === "client"
-          ? crossSpaceHref("vendor", "/inscription")
-          : forcedRole === "vendor"
-            ? crossSpaceHref("client", "/inscription")
-            : null
-      }
       referralCode={params.parrain}
       providers={await enabledOAuthProviders()}
     />
