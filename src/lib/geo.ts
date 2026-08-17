@@ -44,6 +44,32 @@ export function distanceMeters(
 export const MIN_MOVE_METERS = 50;
 export const MIN_INTERVAL_MS = 25_000;
 
+/**
+ * Cette position vaut-elle encore quelque chose ?
+ *
+ * Un chauffeur qui partage sa position écrit au moins toutes les vingt-cinq
+ * secondes. Passé dix minutes sans nouvelle, il a fermé l'écran, éteint son
+ * téléphone ou perdu le réseau — et son dernier point ne dit plus où il est.
+ *
+ * Une position périmée est pire que pas de position : elle envoie le client à un
+ * endroit précis, avec l'assurance que donne un point sur une carte. Un chauffeur
+ * sans position connue reste appelable ; un chauffeur mal situé fait perdre un
+ * déplacement.
+ *
+ * Le seuil est large à dessein. Un tunnel, un ascenseur, une minute sans réseau
+ * ne doivent pas faire disparaître quelqu'un de la carte.
+ */
+export const POSITION_FRESH_MS = 10 * 60_000;
+
+export function isPositionFresh(updatedAt: string | null, now = Date.now()): boolean {
+  if (!updatedAt) return false;
+
+  const at = Date.parse(updatedAt);
+  if (Number.isNaN(at)) return false;
+
+  return now - at <= POSITION_FRESH_MS;
+}
+
 export function shouldPublishPosition(
   last: { lat: number; lng: number; at: number } | null,
   next: { lat: number; lng: number },

@@ -207,6 +207,7 @@ const fr = {
     driverPhone: "Téléphone",
     driverVehicle: "Véhicule (ex. Peugeot 301 blanche)",
     driverPlate: "Immatriculation",
+    positionStale: "position non connue",
   },
 
   sos: {
@@ -228,6 +229,7 @@ const fr = {
     call: "Appeler",
     travels: "Se déplace",
     inShop: "En atelier",
+    positionStale: "position non connue",
     availableNow: "{n} professionnel(s) disponible(s)",
     noneFree: "Aucun professionnel disponible pour l'instant",
     none: "Aucun professionnel inscrit",
@@ -695,6 +697,7 @@ const ar: Dictionary = {
     driverPhone: "الهاتف",
     driverVehicle: "المركبة (مثال: بيجو 301 بيضاء)",
     driverPlate: "رقم التسجيل",
+    positionStale: "الموقع غير معروف",
   },
 
   sos: {
@@ -716,6 +719,7 @@ const ar: Dictionary = {
     call: "اتصال",
     travels: "يتنقّل",
     inShop: "في الورشة",
+    positionStale: "الموقع غير معروف",
     availableNow: "{n} حرفي متاح الآن",
     noneFree: "لا يوجد حرفي متاح حالياً",
     none: "لا يوجد حرفيّون مسجّلون",

@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { usePoll } from "@/lib/use-poll";
+import { isPositionFresh } from "@/lib/geo";
 import { cx } from "@/lib/format";
 import { SOS_TRADES, type SosTrade } from "@/lib/sos";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
@@ -36,10 +37,11 @@ export interface Provider {
   is_available: boolean;
   lat: number | null;
   lng: number | null;
+  position_updated_at: string | null;
 }
 
 const SELECT =
-  "id, trade, display_name, phone, description, travels, is_available, lat, lng";
+  "id, trade, display_name, phone, description, travels, is_available, lat, lng, position_updated_at";
 
 /**
  * SOS — trouver un dépanneur, tout de suite.
@@ -88,8 +90,9 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
   const shown = trade === "all" ? providers : providers.filter((p) => p.trade === trade);
   const free = shown.filter((p) => p.is_available);
 
+  // Même règle que pour les taxis : un point périmé trompe plus qu'il n'aide.
   const pins: DriverPin[] = shown
-    .filter((p) => p.lat !== null && p.lng !== null)
+    .filter((p) => p.lat !== null && p.lng !== null && isPositionFresh(p.position_updated_at))
     .map((p) => ({
       id: p.id,
       name: p.display_name,
@@ -173,6 +176,7 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
                 {[
                   t.sos.trades[provider.trade],
                   provider.travels ? t.sos.travels : t.sos.inShop,
+                  isPositionFresh(provider.position_updated_at) ? null : t.sos.positionStale,
                   provider.description,
                 ]
                   .filter(Boolean)

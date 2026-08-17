@@ -30,7 +30,7 @@ export default async function SosPage() {
   const [{ data: providers }, mine] = await Promise.all([
     supabase
       .from("sos_providers")
-      .select("id, trade, display_name, phone, description, travels, is_available, lat, lng")
+      .select("id, trade, display_name, phone, description, travels, is_available, lat, lng, position_updated_at")
       .eq("is_approved", true)
       .order("is_available", { ascending: false }),
 

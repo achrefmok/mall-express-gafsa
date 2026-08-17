@@ -29,7 +29,7 @@ export default async function TaxiPage() {
   const [{ data: drivers }, mine] = await Promise.all([
     supabase
       .from("taxi_drivers")
-      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
+      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng, position_updated_at")
       .eq("is_approved", true)
       .order("is_available", { ascending: false }),
 

@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { usePoll } from "@/lib/use-poll";
+import { isPositionFresh } from "@/lib/geo";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
 import type { DriverPin } from "./driver-map";
 
@@ -26,6 +27,7 @@ export interface Driver {
   is_available: boolean;
   lat: number | null;
   lng: number | null;
+  position_updated_at: string | null;
 }
 
 /**
@@ -64,7 +66,7 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
     const supabase = createClient();
     const { data } = await supabase
       .from("taxi_drivers")
-      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
+      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng, position_updated_at")
       .eq("is_approved", true)
       .order("is_available", { ascending: false });
 
@@ -73,8 +75,16 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
 
   usePoll(reload, 30_000);
 
+  /*
+    Seuls les points encore frais vont sur la carte.
+
+    Une position de la veille placerait un repère net à un endroit où plus
+    personne n'est : le client s'y rendrait avec la confiance que donne une carte.
+    Le chauffeur reste dans la liste, appelable, avec la mention que sa position
+    n'est plus connue — c'est l'information honnête.
+  */
   const pins: DriverPin[] = drivers
-    .filter((d) => d.lat !== null && d.lng !== null)
+    .filter((d) => d.lat !== null && d.lng !== null && isPositionFresh(d.position_updated_at))
     .map((d) => ({
       id: d.id,
       name: d.display_name,
@@ -113,7 +123,12 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
                 {driver.display_name}
               </p>
               <p className="truncate text-[10px] text-[var(--color-muted)]">
-                {[driver.vehicle, driver.plate].filter(Boolean).join(" · ") || t.taxi.taxi}
+                {[
+                  [driver.vehicle, driver.plate].filter(Boolean).join(" · ") || t.taxi.taxi,
+                  isPositionFresh(driver.position_updated_at) ? null : t.taxi.positionStale,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             </div>
 
