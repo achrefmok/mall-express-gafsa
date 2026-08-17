@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { registerDriver, setDriverAvailability, updateDriverPosition } from "@/app/actions/taxi";
+import { shouldPublishPosition } from "@/lib/geo";
 import { Button, Card } from "@/components/ui/primitives";
 
 const FIELD =
@@ -36,6 +37,8 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const watchRef = useRef<number | null>(null);
+  /* Dernière position réellement publiée, pour ne pas republier du bruit. */
+  const lastSentRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
 
   /*
     Le partage de position s'arrête avec l'écran.
@@ -104,7 +107,24 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
     */
     watchRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        void updateDriverPosition(position.coords.latitude, position.coords.longitude);
+        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+
+        /*
+          Ne publier que ce qui apprend quelque chose.
+
+          Le GPS livre un relevé toutes les une à trois secondes, et il en livre
+          même à l'arrêt : la position tremble de quelques mètres sans que rien ne
+          bouge. Chaque écriture était auparavant diffusée à tous les clients
+          regardant la carte, qui relisaient alors la liste entière — le quota
+          mensuel de messages partait en moins d'une journée.
+
+          Cinquante mètres, ou vingt-cinq secondes. Un taxi en ville franchit
+          cinquante mètres en quelques secondes : la carte ne perd rien.
+        */
+        if (!shouldPublishPosition(lastSentRef.current, next)) return;
+        lastSentRef.current = { ...next, at: Date.now() };
+
+        void updateDriverPosition(next.lat, next.lng);
         setDriver((current) =>
           current ? { ...current, position_updated_at: new Date().toISOString() } : current,
         );

@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
+import { usePoll } from "@/lib/use-poll";
 import { cx } from "@/lib/format";
 import { SOS_TRADES, type SosTrade } from "@/lib/sos";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
@@ -59,34 +60,26 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
 
   /*
     La disponibilité change en permanence, et c'est toute la valeur de l'écran.
-    Un annuaire qui affiche « disponible » pour quelqu'un déjà en intervention
-    est pire que pas d'annuaire : le client appelle, se fait éconduire, et ne
-    revient pas.
+    Un annuaire qui affiche « disponible » pour quelqu'un déjà en intervention est
+    pire que pas d'annuaire : le client appelle, se fait éconduire, et ne revient
+    pas.
+
+    Relecture périodique plutôt qu'abonnement, pour la raison détaillée dans
+    l'écran taxi : la diffusion temps réel multipliait les messages par le nombre
+    de spectateurs et épuisait le quota mensuel en moins d'un jour.
   */
-  useEffect(() => {
+  const reload = useCallback(async () => {
     const supabase = createClient();
+    const { data } = await supabase
+      .from("sos_providers")
+      .select(SELECT)
+      .eq("is_approved", true)
+      .order("is_available", { ascending: false });
 
-    const reload = async () => {
-      const { data } = await supabase
-        .from("sos_providers")
-        .select(SELECT)
-        .eq("is_approved", true)
-        .order("is_available", { ascending: false });
-
-      if (data) setProviders(data as Provider[]);
-    };
-
-    const channel = supabase
-      .channel("sos-providers")
-      .on("postgres_changes", { event: "*", schema: "public", table: "sos_providers" }, () =>
-        void reload(),
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+    if (data) setProviders(data as Provider[]);
   }, []);
+
+  usePoll(reload, 30_000);
 
   if (providers.length === 0) {
     return <EmptyState title={t.sos.none} body={t.sos.noneBody} />;

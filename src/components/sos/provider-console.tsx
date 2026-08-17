@@ -8,6 +8,7 @@ import {
   updateProviderPosition,
 } from "@/app/actions/sos";
 import { SOS_TRADES, type SosTrade } from "@/lib/sos";
+import { shouldPublishPosition } from "@/lib/geo";
 import { Button, Card } from "@/components/ui/primitives";
 
 const FIELD =
@@ -47,6 +48,8 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const watchRef = useRef<number | null>(null);
+  /* Dernière position réellement publiée, pour ne pas republier du bruit. */
+  const lastSentRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
 
   /*
     Le partage de position s'arrête avec l'écran. `watchPosition` continue sinon
@@ -109,7 +112,15 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
 
     watchRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        void updateProviderPosition(position.coords.latitude, position.coords.longitude);
+        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+
+        // Même garde-fou que pour les taxis : cinquante mètres, ou vingt-cinq
+        // secondes. Publier chaque tremblement du capteur coûtait le quota
+        // mensuel de messages temps réel en une journée.
+        if (!shouldPublishPosition(lastSentRef.current, next)) return;
+        lastSentRef.current = { ...next, at: Date.now() };
+
+        void updateProviderPosition(next.lat, next.lng);
         setProvider((current) => ({
           ...current,
           position_updated_at: new Date().toISOString(),

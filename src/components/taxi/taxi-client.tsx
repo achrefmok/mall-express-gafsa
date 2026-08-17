@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
+import { usePoll } from "@/lib/use-poll";
 import { Card, EmptyState, Tag } from "@/components/ui/primitives";
 import type { DriverPin } from "./driver-map";
 
@@ -44,35 +45,33 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
   const [drivers, setDrivers] = useState(initialDrivers);
 
   /*
-    La disponibilité change en permanence — c'est toute la valeur de l'écran.
-    Un annuaire qui affiche « libre » pour un chauffeur en course est pire que
-    pas d'annuaire du tout : le client appelle, se fait envoyer promener, et ne
+    La disponibilité change en permanence — c'est toute la valeur de l'écran. Un
+    annuaire qui affiche « libre » pour un chauffeur en course est pire que pas
+    d'annuaire du tout : le client appelle, se fait envoyer promener, et ne
     revient pas.
+
+    Relecture périodique, et non abonnement aux changements. L'abonnement
+    diffusait chaque position publiée à tous les spectateurs, et chacun relisait
+    ensuite la liste entière : le coût croissait comme le produit des chauffeurs
+    par les spectateurs, et le quota mensuel de messages temps réel s'épuisait en
+    moins d'une journée avec cinq chauffeurs et trente spectateurs.
+
+    Trente secondes ne se remarquent pas : un chauffeur qui prend une course
+    reste joignable, et la carte le montre libre une demi-minute de trop au pire.
+    Le crochet suspend tout quand l'onglet passe à l'arrière-plan.
   */
-  useEffect(() => {
+  const reload = useCallback(async () => {
     const supabase = createClient();
+    const { data } = await supabase
+      .from("taxi_drivers")
+      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
+      .eq("is_approved", true)
+      .order("is_available", { ascending: false });
 
-    const reload = async () => {
-      const { data } = await supabase
-        .from("taxi_drivers")
-        .select("id, display_name, phone, vehicle, plate, is_available, lat, lng")
-        .eq("is_approved", true)
-        .order("is_available", { ascending: false });
-
-      if (data) setDrivers(data);
-    };
-
-    const channel = supabase
-      .channel("taxi-drivers")
-      .on("postgres_changes", { event: "*", schema: "public", table: "taxi_drivers" }, () =>
-        void reload(),
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+    if (data) setDrivers(data);
   }, []);
+
+  usePoll(reload, 30_000);
 
   const pins: DriverPin[] = drivers
     .filter((d) => d.lat !== null && d.lng !== null)
