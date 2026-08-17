@@ -251,6 +251,20 @@ const fr = {
     proTravels: "Je me déplace chez le client",
   },
 
+  push: {
+    title: "Alertes sur mon téléphone",
+    bodyOff:
+      "Soyez prévenu d'une commande, d'un direct qui démarre ou d'une réponse, même site fermé.",
+    bodyOn: "Activées sur cet appareil. Vous serez prévenu sans ouvrir le site.",
+    bodyBlocked:
+      "Les notifications sont bloquées pour ce site. Autorisez-les dans les réglages du navigateur, puis revenez.",
+    bodyNeedsInstall:
+      "Sur iPhone, les alertes exigent que le site soit installé sur l'écran d'accueil. Installez-le depuis votre profil, puis revenez ici.",
+    bodyUnsupported: "Ce navigateur ne gère pas les alertes. Le site reste utilisable normalement.",
+    notConfigured: "Les alertes ne sont pas encore configurées sur le serveur.",
+    failed: "L'activation a échoué. Réessayez dans un instant.",
+  },
+
   install: {
     title: "Installer Mall Express",
     body: "L'application s'ajoute à votre écran d'accueil. Aucun magasin d'applications, moins de 2 Mo, et elle fonctionne même sans réseau.",
@@ -742,6 +756,18 @@ const ar: Dictionary = {
     proPhone: "الهاتف",
     proDescription: "ما الذي تقوم به (مثال: إصلاح بالمنزل، ليلاً وفي العطل)",
     proTravels: "أتنقّل إلى الحريف",
+  },
+
+  push: {
+    title: "تنبيهات على هاتفي",
+    bodyOff: "كن على علم بطلب جديد أو ببثّ ينطلق أو بردّ، حتى والموقع مغلق.",
+    bodyOn: "مُفعّلة على هذا الجهاز. ستُنبَّه دون فتح الموقع.",
+    bodyBlocked: "التنبيهات محجوبة لهذا الموقع. اسمح بها في إعدادات المتصفح ثم ارجع.",
+    bodyNeedsInstall:
+      "على الآيفون، تتطلّب التنبيهات تثبيت الموقع على الشاشة الرئيسية. ثبّته من ملفك الشخصي ثم ارجع.",
+    bodyUnsupported: "هذا المتصفح لا يدعم التنبيهات. الموقع يعمل بشكل عادي.",
+    notConfigured: "التنبيهات غير مهيّأة على الخادم بعد.",
+    failed: "فشل التفعيل. أعد المحاولة بعد قليل.",
   },
 
   install: {

@@ -5,6 +5,7 @@ import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { EmptyState } from "@/components/ui/primitives";
+import { PushToggle } from "@/components/pwa/push-toggle";
 import { MarkAllRead, NotificationRow } from "./notifications-client";
 
 export const metadata: Metadata = {
@@ -38,6 +39,15 @@ export default async function NotificationsPage() {
         back="/"
         action={unread > 0 ? <MarkAllRead count={unread} /> : undefined}
       />
+
+      {/*
+        L'interrupteur est ici, en tête de l'écran qu'on ouvre justement pour
+        chercher ses notifications. C'est le seul endroit où la proposition
+        « soyez prévenu sans venir voir » se comprend sans explication.
+      */}
+      <div className="flex-none px-4 pt-2">
+        <PushToggle />
+      </div>
 
       <div className="no-sb flex flex-1 flex-col gap-2 overflow-y-auto lg:grid lg:grid-cols-2 lg:content-start px-4 pt-2 pb-4">
         {rows.length === 0 ? (

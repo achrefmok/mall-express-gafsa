@@ -548,6 +548,30 @@ export interface Database {
         Relationships: [FK<"sos_providers_id_fkey", ["id"], "profiles">];
       };
 
+      /* ─── push_subscriptions ─────────────────────────────────────────
+         Un enregistrement par appareil et par navigateur : la même personne
+         sur son téléphone et sur son ordinateur en a deux, et doit être
+         prévenue sur les deux. `endpoint` est unique — un navigateur qui
+         redemande un abonnement remplace le précédent, sinon la notification
+         arriverait en double. */
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string | null;
+        };
+        Insert: { user_id: string; endpoint: string; p256dh: string; auth: string } & Partial<
+          Database["public"]["Tables"]["push_subscriptions"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Row"]>;
+        Relationships: [FK<"push_subscriptions_user_id_fkey", ["user_id"], "profiles">];
+      };
+
       /* ─── deals ──────────────────────────────────────────────────── */
       deals: {
         Row: {
