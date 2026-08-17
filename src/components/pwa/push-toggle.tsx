@@ -37,8 +37,16 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
  * minute au lieu d'une heure.
  */
 function readServerKey(raw: string): Uint8Array<ArrayBuffer> {
-  // Un retour à la ligne ou une espace en fin de collage suffit à tout casser.
-  const key = raw.trim();
+  /*
+    Toutes les espaces retirées, pas seulement celles des extrémités.
+
+    Une clé en base64url ne contient jamais d'espace ni de retour à la ligne : en
+    ôter la totalité ne peut donc rien abîmer, et rend le collage tolérant. C'est
+    ce qui permet de transmettre la clé sur plusieurs lignes courtes — un long
+    mot de 87 caractères se fait couper par le retour à la ligne d'un terminal,
+    et l'on colle alors la première moitié sans s'en apercevoir.
+  */
+  const key = raw.replace(/\s+/g, "");
 
   let bytes: Uint8Array<ArrayBuffer>;
   try {
