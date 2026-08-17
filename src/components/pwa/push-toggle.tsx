@@ -23,6 +23,41 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
+/**
+ * La clé est-elle bien celle qu'attend un navigateur ?
+ *
+ * Une clé VAPID publique est un point de courbe non compressé : exactement
+ * 65 octets, dont le premier vaut 4. Toute autre longueur est une clé abîmée —
+ * et le cas de loin le plus courant est la troncature au collage dans les
+ * variables d'environnement.
+ *
+ * Sans ce contrôle, le navigateur répond « The provided applicationServerKey is
+ * not valid », qui ne dit ni pourquoi ni où regarder. Le message ci-dessous
+ * donne les deux chiffres qu'il faut comparer, et on trouve la cause en une
+ * minute au lieu d'une heure.
+ */
+function readServerKey(raw: string): Uint8Array<ArrayBuffer> {
+  // Un retour à la ligne ou une espace en fin de collage suffit à tout casser.
+  const key = raw.trim();
+
+  let bytes: Uint8Array<ArrayBuffer>;
+  try {
+    bytes = urlBase64ToUint8Array(key);
+  } catch {
+    throw new Error(`Clé VAPID illisible (${key.length} caractères, base64url attendu)`);
+  }
+
+  if (bytes.length !== 65 || bytes[0] !== 4) {
+    throw new Error(
+      `Clé VAPID invalide : ${bytes.length} octets au lieu de 65 ` +
+        `(${key.length} caractères au lieu de 87). Probablement tronquée au collage ` +
+        `dans NEXT_PUBLIC_VAPID_PUBLIC_KEY.`,
+    );
+  }
+
+  return bytes;
+}
+
 /** Les deux clés de l'abonnement, en base64url, telles que le serveur les attend. */
 function readKeys(subscription: PushSubscription): { p256dh: string; auth: string } | null {
   const json = subscription.toJSON();
@@ -176,7 +211,7 @@ export function PushToggle() {
         */
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(key),
+          applicationServerKey: readServerKey(key),
         });
 
         const keys = readKeys(subscription);
