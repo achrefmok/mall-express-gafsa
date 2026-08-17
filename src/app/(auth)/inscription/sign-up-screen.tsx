@@ -279,8 +279,16 @@ export function SignUpScreen({
           </Link>
         </div>
 
-        {/* ─── Encart vendeur ──────────────────────────────────────────── */}
-        {role === "client" && (
+        {/*
+          ─── Encart vendeur ────────────────────────────────────────────
+
+          Il vantait le parcours commerçant à qui hésitait encore, du temps où
+          les deux rôles se choisissaient sur le même écran. Sur un espace
+          client dédié il n'a plus lieu d'être : il détaille deux champs que le
+          visiteur ne verra jamais, et le pont vers l'autre inscription est déjà
+          en tête d'écran. Conservé quand le choix du rôle est offert.
+        */}
+        {!lockedRole && role === "client" && (
           <div className="flex flex-none flex-col gap-2 rounded-[18px] bg-[var(--color-brand-tint)] p-3">
             <p className="text-[10.5px] font-bold text-[var(--color-ink)]">{t.auth.vendorExtra}</p>
             <div className="flex gap-2">
