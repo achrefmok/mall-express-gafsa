@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/site-url";
 import { createStaticClient } from "@/lib/supabase/server";
 
-const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const base = siteUrl();
 
 /**
  * Le plan de site ne liste que les pages publiques et durables : les espaces

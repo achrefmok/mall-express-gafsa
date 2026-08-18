@@ -6,7 +6,9 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { ServiceWorkerBridge } from "@/components/pwa/service-worker-bridge";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
+
+const siteUrl = resolveSiteUrl();
 
 /**
  * Cairo couvre le latin et l'arabe : une seule famille pour les deux

@@ -93,8 +93,21 @@ const STEPS_VENDOR = [
 ];
 
 export const metadata: Metadata = {
-  // Le gabarit racine suffixe « · Mall Express Gafsa » : ne pas le répéter.
-  title: "Notre projet",
+  /*
+    Le titre le plus important du site, et il ne se laisse pas au gabarit.
+
+    C'est la ligne bleue que Google affiche, et le signal de contenu le plus
+    fort d'une page. « Notre projet » ne disait ni ce qu'est le site, ni où il
+    se trouve : personne ne cherche « notre projet ». Le nom et la ville y
+    figurent désormais, parce que c'est ce que tapent les gens — « mall gafsa »,
+    « boutiques gafsa en ligne ».
+
+    `absolute` évite le suffixe du gabarit, qui répéterait « Mall Express
+    Gafsa » deux fois dans le même titre.
+  */
+  title: {
+    absolute: "Mall Express Gafsa — les boutiques du mall de Gafsa en ligne",
+  },
   description:
     "Mall Express Gafsa réunit les boutiques de Gafsa dans une seule application : marketplace de proximité, ventes en direct, bons plans vérifiés et services citoyens. À parcourir dans le navigateur ou à installer.",
   alternates: { canonical: "/" },
