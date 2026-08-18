@@ -5,6 +5,7 @@ import { format } from "@/lib/i18n/dictionaries";
 import { AppShell } from "@/components/shell/app-shell";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
+import { VendorTour } from "@/components/tour/tours";
 
 export default async function VendorLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
@@ -46,6 +47,8 @@ export default async function VendorLayout({ children }: { children: React.React
       </main>
 
       <BottomNav variant="vendor" />
+
+      <VendorTour />
     </AppShell>
   );
 }

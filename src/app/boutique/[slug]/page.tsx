@@ -8,6 +8,7 @@ import { format } from "@/lib/i18n/dictionaries";
 import { formatCount, formatRating, formatTime, monogram } from "@/lib/format";
 import { ProductCard } from "@/components/cards/product-card";
 import { EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primitives";
+import { BackButton } from "@/components/shell/back";
 import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
 
 /**
@@ -180,7 +181,22 @@ export default async function ShopPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main id="contenu" className="no-sb flex flex-1 flex-col overflow-y-auto">
+      <main id="contenu" className="no-sb relative flex flex-1 flex-col overflow-y-auto">
+        {/*
+          Une porte de sortie sur la vitrine.
+
+          Cette page n'avait aucune flèche de retour : un visiteur arrivé par un
+          lien partagé n'avait que le bouton du navigateur, qui le renvoyait hors
+          du site ou sur la page de présentation. La flèche flotte au-dessus de la
+          photo de couverture, faute de barre supérieure sur cet écran.
+        */}
+        <div className="absolute z-20 p-3">
+          <BackButton
+            fallback="/marketplace"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,0.88)] text-[var(--color-ink)] shadow-[0_2px_8px_rgba(30,20,45,0.25)] backdrop-blur-sm"
+          />
+        </div>
+
         {shop.cover_url ? (
           <Image
             src={shop.cover_url}

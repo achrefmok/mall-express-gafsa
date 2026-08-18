@@ -4,6 +4,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
 import { AccessNotice } from "@/components/shell/access-notice";
+import { ClientTour } from "@/components/tour/tours";
 
 /**
  * Coque des écrans client. Une seule zone de défilement vertical entre la
@@ -38,6 +39,13 @@ export default async function ClientLayout({ children }: { children: React.React
       </main>
 
       <BottomNav variant="client" />
+
+      {/*
+        Le guide se monte avec la coque, pas avec une page : il met en avant les
+        onglets, qui appartiennent à la coque. Il ne s'ouvre qu'à la première
+        visite et se relance depuis les réglages.
+      */}
+      <ClientTour />
     </AppShell>
   );
 }

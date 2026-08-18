@@ -4,6 +4,7 @@ import { getPreferences } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { ServiceWorkerBridge } from "@/components/pwa/service-worker-bridge";
+import { NavDepthTracker } from "@/components/shell/back";
 import "./globals.css";
 
 import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
@@ -106,7 +107,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             invitation à l'installation) : il doit vivre sous le fournisseur. */}
         <I18nProvider initial={prefs}>
           {children}
-          <ServiceWorkerBridge />
+          <NavDepthTracker />
+        <ServiceWorkerBridge />
         </I18nProvider>
       </body>
     </html>

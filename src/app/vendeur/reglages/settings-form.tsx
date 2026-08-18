@@ -14,6 +14,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch } from "@/components/ui/primitives";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
+import { ReplayVendorTour } from "@/components/tour/tours";
 
 interface DayHours {
   weekday: number;
@@ -371,6 +372,10 @@ export function ShopSettingsForm({
             </div>
           </Card>
         </section>
+
+        {/* Même service pour le vendeur : cinq écrans à retenir, dont la
+            diffusion en direct qu'il n'utilisera pas toutes les semaines. */}
+        <ReplayVendorTour />
 
         {feedback && (
           <p

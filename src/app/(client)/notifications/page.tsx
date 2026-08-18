@@ -36,7 +36,7 @@ export default async function NotificationsPage() {
     <>
       <TopBar
         title="Notifications"
-        back="/"
+        back="/accueil"
         action={unread > 0 ? <MarkAllRead count={unread} /> : undefined}
       />
 

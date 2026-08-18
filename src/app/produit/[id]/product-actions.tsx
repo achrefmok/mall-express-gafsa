@@ -7,7 +7,8 @@ import { useI18n } from "@/lib/i18n/provider";
 import { addToCart, toggleFavorite } from "@/app/actions/cart";
 import { cx } from "@/lib/format";
 import { Button } from "@/components/ui/primitives";
-import { ArrowLeftIcon, HeartIcon, ShareIcon } from "@/components/ui/icons";
+import { HeartIcon, ShareIcon } from "@/components/ui/icons";
+import { BackButton } from "@/components/shell/back";
 
 /** Barre supérieure de la fiche : retour, favori, partage. */
 export function ProductTopBar({
@@ -20,7 +21,6 @@ export function ProductTopBar({
   isFavorite: boolean;
 }) {
   const { t } = useI18n();
-  const router = useRouter();
   const [favorite, setFavorite] = useState(initial);
   const [, startTransition] = useTransition();
 
@@ -52,14 +52,15 @@ export function ProductTopBar({
 
   return (
     <header className="flex flex-none items-center justify-between px-[18px] pt-4 pb-3">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        aria-label={t.common.back}
-        className="-ms-1 p-1 text-[var(--color-ink)]"
-      >
-        <ArrowLeftIcon size={18} />
-      </button>
+      {/*
+        Repli sur la marketplace quand rien ne précède dans l'application.
+
+        `router.back()` seul remontait l'historique du navigateur : un visiteur
+        venu d'un lien partagé, d'une recherche Google ou de la page de
+        présentation se retrouvait renvoyé là, alors que la flèche signifiait pour
+        lui « revenir à la liste des produits ».
+      */}
+      <BackButton fallback="/marketplace" />
 
       <div className="flex items-center gap-4">
         <button

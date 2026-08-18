@@ -30,6 +30,10 @@ export function BottomNav({ variant }: { variant: NavVariant }) {
           <Link
             key={item.href}
             href={item.href}
+            /* Repère du guide d'utilisation. La colonne latérale porte le même :
+               l'un des deux est masqué selon la largeur, et le guide garde
+               celui qui est visible. */
+            data-tour={item.href}
             aria-current={active ? "page" : undefined}
             className={cx(
               "flex min-h-[44px] flex-1 flex-col items-center justify-start gap-[3px] text-center text-[9px] leading-[1.2]",

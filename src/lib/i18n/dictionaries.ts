@@ -265,6 +265,75 @@ const fr = {
     failed: "L'activation a échoué. Réessayez dans un instant.",
   },
 
+  tour: {
+    title: "Guide d'utilisation",
+    step: "Étape {n} sur {total}",
+    next: "Suivant",
+    skip: "Passer",
+    done: "J'ai compris",
+    replayClient: "Revoir le guide du site",
+    replayVendor: "Revoir le guide du vendeur",
+    client: [
+      {
+        target: "/accueil",
+        title: "Votre accueil",
+        body: "Les directs du moment, les promotions et les boutiques ouvertes. C'est le point de départ à chaque visite.",
+      },
+      {
+        target: "/marketplace",
+        title: "Tous les produits",
+        body: "Cherchez par catégorie, ou n'affichez que ce qui est disponible au mall pour un retrait en 30 minutes.",
+      },
+      {
+        target: "/lives",
+        title: "Les ventes en direct",
+        body: "Un commerçant présente ses articles en vidéo. Vous pouvez acheter pendant le direct, sans le quitter.",
+      },
+      {
+        target: "/bons-plans",
+        title: "Les bons plans",
+        body: "Les prix trouvés par les habitants de Gafsa. Dites si ça marche encore : cela aide tout le monde.",
+      },
+      {
+        target: "/services",
+        title: "Taxi, dépannage et services",
+        body: "Trouver un taxi libre, un mécanicien ou un plombier vérifié, et les appeler directement.",
+      },
+      {
+        target: "/profil",
+        title: "Votre compte",
+        body: "Vos commandes, vos favoris, vos messages avec les vendeurs — et l'installation de l'application sur votre écran d'accueil.",
+      },
+    ],
+    vendor: [
+      {
+        target: "/vendeur",
+        title: "Votre tableau de bord",
+        body: "Les commandes du jour, vos visites et l'état de votre boutique en un écran.",
+      },
+      {
+        target: "/vendeur/produits",
+        title: "Vos articles",
+        body: "Ajoutez un produit avec une photo, un prix et un stock. Une photo nette vend mieux qu'une longue description.",
+      },
+      {
+        target: "/vendeur/commandes",
+        title: "Les commandes",
+        body: "Chaque commande passe de « à préparer » à « prête ». Le client est prévenu à chaque étape.",
+      },
+      {
+        target: "/vendeur/lives",
+        title: "Vos directs",
+        body: "Diffusez avec la caméra du téléphone, ou relayez un direct Facebook. Pendant le direct, ajoutez un article en une photo.",
+      },
+      {
+        target: "/vendeur/reglages",
+        title: "Votre boutique",
+        body: "Nom, horaires, local au mall, téléphone. Un profil complet est mieux référencé et rassure les clients.",
+      },
+    ],
+  },
+
   install: {
     title: "Installer Mall Express",
     body: "L'application s'ajoute à votre écran d'accueil. Aucun magasin d'applications, moins de 2 Mo, et elle fonctionne même sans réseau.",
@@ -768,6 +837,75 @@ const ar: Dictionary = {
     bodyUnsupported: "هذا المتصفح لا يدعم التنبيهات. الموقع يعمل بشكل عادي.",
     notConfigured: "التنبيهات غير مهيّأة على الخادم بعد.",
     failed: "فشل التفعيل. أعد المحاولة بعد قليل.",
+  },
+
+  tour: {
+    title: "دليل الاستعمال",
+    step: "الخطوة {n} من {total}",
+    next: "التالي",
+    skip: "تخطّي",
+    done: "فهمت",
+    replayClient: "إعادة دليل الموقع",
+    replayVendor: "إعادة دليل التاجر",
+    client: [
+      {
+        target: "/accueil",
+        title: "صفحتك الرئيسية",
+        body: "البثّ المباشر الجاري، العروض، والمتاجر المفتوحة. نقطة الانطلاق في كل زيارة.",
+      },
+      {
+        target: "/marketplace",
+        title: "كل المنتجات",
+        body: "ابحث حسب الفئة، أو اعرض فقط ما هو متوفّر في المول للاستلام في 30 دقيقة.",
+      },
+      {
+        target: "/lives",
+        title: "البيع المباشر",
+        body: "يعرض التاجر منتجاته بالفيديو. يمكنك الشراء أثناء البثّ دون مغادرته.",
+      },
+      {
+        target: "/bons-plans",
+        title: "العروض",
+        body: "أسعار يكتشفها أهل قفصة. قل إن كان العرض ما زال ساريًا: هذا يفيد الجميع.",
+      },
+      {
+        target: "/services",
+        title: "تاكسي، نجدة وخدمات",
+        body: "ابحث عن سائق متاح، ميكانيكي أو سبّاك موثّق، واتصل به مباشرة.",
+      },
+      {
+        target: "/profil",
+        title: "حسابك",
+        body: "طلباتك، مفضّلاتك، رسائلك مع التجار — وتثبيت التطبيق على شاشتك الرئيسية.",
+      },
+    ],
+    vendor: [
+      {
+        target: "/vendeur",
+        title: "لوحة التحكّم",
+        body: "طلبات اليوم، عدد الزيارات، وحالة متجرك في شاشة واحدة.",
+      },
+      {
+        target: "/vendeur/produits",
+        title: "منتجاتك",
+        body: "أضف منتجًا بصورة وسعر ومخزون. صورة واضحة تبيع أكثر من وصف طويل.",
+      },
+      {
+        target: "/vendeur/commandes",
+        title: "الطلبات",
+        body: "كل طلب ينتقل من «قيد التحضير» إلى «جاهز». يُنبَّه الحريف في كل مرحلة.",
+      },
+      {
+        target: "/vendeur/lives",
+        title: "بثوثك المباشرة",
+        body: "ابثّ بكاميرا الهاتف أو انقل بثًّا من فيسبوك. أثناء البثّ، أضف منتجًا بصورة واحدة.",
+      },
+      {
+        target: "/vendeur/reglages",
+        title: "متجرك",
+        body: "الاسم، التوقيت، المحل في المول، الهاتف. ملف كامل يُفهرَس أفضل ويطمئن الحرفاء.",
+      },
+    ],
   },
 
   install: {

@@ -64,6 +64,7 @@ export function SideNav({
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.href}
               aria-current={active ? "page" : undefined}
               className={cx(
                 "flex min-h-[42px] items-center gap-3 rounded-[14px] px-3 text-[13.5px] font-semibold transition-colors",

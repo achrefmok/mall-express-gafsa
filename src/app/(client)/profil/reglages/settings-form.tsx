@@ -9,6 +9,7 @@ import { cx, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Avatar, Button, Card, Divider, KeyValueRow, SectionTitle, Switch } from "@/components/ui/primitives";
 import type { Profile } from "@/types/database";
+import { ReplayClientTour } from "@/components/tour/tours";
 
 const FIELD =
   "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
@@ -245,6 +246,10 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
             </span>
           </KeyValueRow>
         </Card>
+
+        {/* Le guide se revoit à la demande : personne ne retient six écrans du
+            premier coup, et le proposer ici évite d'avoir à le subir en boucle. */}
+        <ReplayClientTour />
 
         {feedback && (
           <p
