@@ -23,17 +23,36 @@ import "server-only";
  * canonique doit désigner l'adresse de production, jamais celle d'un
  * déploiement temporaire qui disparaîtra.
  */
+/**
+ * Une adresse locale n'est jamais publiable.
+ *
+ * `NEXT_PUBLIC_SITE_URL` valait `http://localhost:3000` en production : la valeur
+ * du fichier d'exemple, recopiée telle quelle dans le tableau de bord. Elle était
+ * donc « définie », et primait sur tout le reste — en annonçant aux moteurs une
+ * adresse qu'ils ne peuvent pas atteindre.
+ *
+ * Hors développement, une telle valeur est écartée au lieu d'être obéie. Un
+ * réglage explicite doit primer, mais pas jusqu'à l'absurde.
+ */
+function publiable(value: string | undefined): string | null {
+  const url = value?.trim();
+  if (!url) return null;
+
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|\/|$)/i.test(url);
+  if (local && process.env.VERCEL_ENV) return null;
+
+  return url;
+}
+
 function firstUsable(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) return explicit;
-
-  const client = process.env.NEXT_PUBLIC_CLIENT_URL?.trim();
-  if (client) return client;
-
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (vercel) return `https://${vercel}`;
-
-  return "http://localhost:3000";
+  return (
+    publiable(process.env.NEXT_PUBLIC_SITE_URL) ??
+    publiable(process.env.NEXT_PUBLIC_CLIENT_URL) ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.trim()}`
+      : null) ??
+    "http://localhost:3000"
+  );
 }
 
 /** Sans barre oblique finale : toutes les concaténations en dépendent. */
