@@ -548,6 +548,18 @@ export interface Database {
         Relationships: [FK<"sos_providers_id_fkey", ["id"], "profiles">];
       };
 
+      /* ─── app_settings ───────────────────────────────────────────────
+         Réglages serveur : adresse d'envoi des notifications et secret
+         partagé. RLS active sans aucune policy, donc illisible depuis le
+         client — seules les fonctions `security definer` et la clé de
+         service y accèdent. */
+      app_settings: {
+        Row: { key: string; value: string };
+        Insert: { key: string; value: string };
+        Update: Partial<{ value: string }>;
+        Relationships: [];
+      };
+
       /* ─── push_subscriptions ─────────────────────────────────────────
          Un enregistrement par appareil et par navigateur : la même personne
          sur son téléphone et sur son ordinateur en a deux, et doit être
