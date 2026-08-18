@@ -26,19 +26,37 @@ interface Spot {
 const PADDING = 6;
 const GAP = 12;
 
-/** L'élément est-il réellement à l'écran ? */
+/**
+ * Le repère *visible*, parmi tous ceux qui portent ce nom.
+ *
+ * `querySelectorAll` et non `querySelector`, et c'est tout le sujet : les deux
+ * navigations coexistent dans le document en permanence, seule la feuille de
+ * style en masque une selon la largeur. La colonne latérale précède la barre
+ * d'onglets dans l'ordre du document, si bien que `querySelector` la rendait
+ * toujours — visible sur ordinateur, réduite à un rectangle nul sur téléphone.
+ * Le guide fonctionnait donc sur ordinateur et ne s'ouvrait jamais sur mobile,
+ * toutes ses étapes ayant été écartées faute de cible mesurable.
+ *
+ * On parcourt donc les candidats et on garde le premier qui occupe réellement
+ * une place à l'écran.
+ */
+function findVisible(target: string): HTMLElement | null {
+  const nodes = document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`);
+
+  for (const node of nodes) {
+    const rect = node.getBoundingClientRect();
+    if (rect.width >= 4 && rect.height >= 4) return node;
+  }
+
+  return null;
+}
+
+/** Le rectangle à mettre en avant, ou `null` si rien n'est visible. */
 function measure(target: string): Spot | null {
-  const node = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
+  const node = findVisible(target);
   if (!node) return null;
 
-  /*
-    Un élément masqué par une requête de média — la barre d'onglets porte
-    `lg:hidden`, la colonne latérale l'inverse — occupe un rectangle vide. Le
-    mettre en avant dessinerait un cadre de un pixel dans un coin. Les deux
-    portent les mêmes repères : on garde celui qui est visible.
-  */
   const rect = node.getBoundingClientRect();
-  if (rect.width < 4 || rect.height < 4) return null;
 
   return {
     top: rect.top - PADDING,
@@ -128,8 +146,9 @@ export function ProductTour({
   useEffect(() => {
     if (!open || !step) return;
 
-    const node = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
-    node?.scrollIntoView({ block: "center", behavior: "smooth" });
+    // Le même élément que celui mis en évidence, sinon on ferait défiler vers
+    // une navigation masquée — donc nulle part.
+    findVisible(step.target)?.scrollIntoView({ block: "center", behavior: "smooth" });
 
     // Après le défilement, pas avant : les coordonnées auraient changé.
     const settle = setTimeout(reposition, 320);
