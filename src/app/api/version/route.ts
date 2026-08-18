@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,6 +29,22 @@ export function GET() {
       branche: process.env.VERCEL_GIT_COMMIT_REF ?? null,
       message: process.env.VERCEL_GIT_COMMIT_MESSAGE?.split("\n")[0] ?? null,
       environnement: process.env.VERCEL_ENV ?? "développement",
+
+      /*
+        L'adresse publique effectivement retenue, et d'où elle vient.
+
+        Elle gouverne les balises canoniques, le plan de site et `robots.txt` :
+        s'y tromper exclut le site de l'index sans le moindre message. La
+        signaler ici permet de le constater depuis l'extérieur, en une requête,
+        au lieu de lire le HTML de plusieurs pages.
+      */
+      adresse_publique: siteUrl(),
+      sources: {
+        NEXT_PUBLIC_SITE_URL: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
+        NEXT_PUBLIC_CLIENT_URL: Boolean(process.env.NEXT_PUBLIC_CLIENT_URL),
+        VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? null,
+        VERCEL_URL: process.env.VERCEL_URL ?? null,
+      },
     },
     { headers: { "cache-control": "no-store" } },
   );
