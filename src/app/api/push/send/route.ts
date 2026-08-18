@@ -59,6 +59,35 @@ interface Payload {
  * cause de recopie. La variable d'environnement reste acceptée en second
  * recours, pour un déploiement qui n'aurait pas la table.
  */
+/**
+ * La clé privée VAPID, de l'environnement ou de la base.
+ *
+ * Elle reste secrète — c'est elle qui signe les envois — et sa place naturelle
+ * est une variable d'environnement. Mais une clé de 43 caractères collée à la
+ * main se trompe de champ, se tronque, ou reçoit la clé publique à sa place :
+ * les trois nous sont arrivés. `app_settings` sert donc de second recours,
+ * table dont RLS est active sans aucune policy et que seule la clé de service
+ * peut lire.
+ *
+ * L'environnement garde la priorité, mais seulement s'il porte une valeur de la
+ * bonne longueur : une variable erronée ne doit pas masquer une base correcte.
+ */
+async function privateKeyFrom(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<string | null> {
+  const fromEnv = process.env.VAPID_PRIVATE_KEY?.replace(/\s+/g, "") ?? "";
+  if (fromEnv.length === 43) return fromEnv;
+
+  const { data } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "vapid_private_key")
+    .maybeSingle();
+
+  const fromDb = data?.value?.replace(/\s+/g, "");
+  return fromDb || fromEnv || null;
+}
+
 async function expectedSecret(
   supabase: ReturnType<typeof createAdminClient>,
 ): Promise<string | null> {
@@ -81,7 +110,7 @@ export async function POST(request: NextRequest) {
     invitation à les voir diverger.
   */
   const publicKey = vapidPublicKey();
-  const privateKey = process.env.VAPID_PRIVATE_KEY?.replace(/\s+/g, "");
+
   const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@mall-express-gafsa.tn";
 
   /*
@@ -90,7 +119,10 @@ export async function POST(request: NextRequest) {
     L'autorisation vient du secret partagé, vérifié juste après.
   */
   const supabase = createAdminClient();
-  const secret = await expectedSecret(supabase);
+  const [secret, privateKey] = await Promise.all([
+    expectedSecret(supabase),
+    privateKeyFrom(supabase),
+  ]);
 
   /*
     Non configuré : on répond 204 et non une erreur. Le déclencheur SQL n'a rien
