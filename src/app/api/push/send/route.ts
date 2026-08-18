@@ -46,8 +46,33 @@ interface Payload {
   link?: string | null;
 }
 
+/**
+ * Le secret attendu, lu dans la base plutôt que dans l'environnement.
+ *
+ * Il doit être identique des deux côtés : le déclencheur SQL l'envoie depuis
+ * `app_settings`, et cette route le compare. Le tenir à deux endroits — une
+ * ligne de table et une variable Vercel — obligeait à recopier à la main une
+ * chaîne aléatoire, et la moindre divergence produisait un « 401 Refusé » que
+ * rien n'expliquait. C'est exactement ce qui est arrivé.
+ *
+ * En le lisant à la source qui l'émet, la comparaison ne peut plus échouer pour
+ * cause de recopie. La variable d'environnement reste acceptée en second
+ * recours, pour un déploiement qui n'aurait pas la table.
+ */
+async function expectedSecret(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "push_secret")
+    .maybeSingle();
+
+  const fromDb = data?.value?.trim();
+  return fromDb || process.env.PUSH_SECRET?.trim() || null;
+}
+
 export async function POST(request: NextRequest) {
-  const secret = process.env.PUSH_SECRET;
 
   /*
     La même clé publique que le navigateur, prise à la même source : les deux
@@ -58,6 +83,14 @@ export async function POST(request: NextRequest) {
   const publicKey = vapidPublicKey();
   const privateKey = process.env.VAPID_PRIVATE_KEY?.replace(/\s+/g, "");
   const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@mall-express-gafsa.tn";
+
+  /*
+    Client d'administration : cette route lit les abonnements de quelqu'un
+    d'autre, ce que les policies interdisent — à raison — au client ordinaire.
+    L'autorisation vient du secret partagé, vérifié juste après.
+  */
+  const supabase = createAdminClient();
+  const secret = await expectedSecret(supabase);
 
   /*
     Non configuré : on répond 204 et non une erreur. Le déclencheur SQL n'a rien
@@ -108,13 +141,6 @@ export async function POST(request: NextRequest) {
   }
 
   webpush.setVapidDetails(`mailto:${contact}`, publicKey, privateKey);
-
-  /*
-    Client d'administration : cette route lit les abonnements de quelqu'un
-    d'autre, ce que les policies interdisent — à raison — au client ordinaire.
-    L'autorisation vient du secret partagé vérifié plus haut.
-  */
-  const supabase = createAdminClient();
 
   const { data: subscriptions, error } = await supabase
     .from("push_subscriptions")
