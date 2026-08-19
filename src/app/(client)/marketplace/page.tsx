@@ -6,7 +6,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { SearchBar } from "@/components/shell/search-bar";
 import { ProductCard } from "@/components/cards/product-card";
 import { EmptyState } from "@/components/ui/primitives";
-import { CategoryFilters, PickupToggle } from "./filters";
+import { CategoryFilters } from "./filters";
 
 export const metadata: Metadata = {
   title: "Marketplace — les produits des boutiques de Gafsa",
@@ -20,14 +20,13 @@ export const revalidate = 120;
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ categorie?: string; retrait?: string }>;
+  searchParams: Promise<{ categorie?: string }>;
 }) {
   const { t, locale } = await getT();
   const params = await searchParams;
   const supabase = await createClient();
 
   const activeSlug = params.categorie ?? null;
-  const pickupOnly = params.retrait !== "0"; // activé par défaut, comme la maquette
 
   const [categories, counts] = await Promise.all([getCategories(), getTopBarCounts()]);
 
@@ -55,8 +54,6 @@ export default async function MarketplacePage({
     query = query.in("category_id", ids);
   }
 
-  if (pickupOnly) query = query.eq("mall_pickup_available", true).gt("stock", 0);
-
   const { data: products } = await query;
 
   return (
@@ -70,8 +67,6 @@ export default async function MarketplacePage({
       <SearchBar placeholder={t.common.searchProduct} withVoice={false} withMenu={false} />
 
       <CategoryFilters categories={categories} activeSlug={activeSlug} locale={locale} />
-      <PickupToggle enabled={pickupOnly} />
-
       <div className="no-sb flex-1 overflow-y-auto px-4 pt-[6px] pb-4">
         {(products ?? []).length === 0 ? (
           <EmptyState title={t.marketplace.noResults} body={t.marketplace.noResultsBody} />
