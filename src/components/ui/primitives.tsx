@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryIcon } from "./category-icons";
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { cx } from "@/lib/format";
 
@@ -51,15 +52,30 @@ export function CategoryTile({
   hue,
   monogram,
   label,
+  slug,
   size = 48,
   href,
 }: {
   hue: number;
   monogram: string;
   label: string;
+  /** Sert à choisir le dessin ; sans lui, la tuile garde son monogramme. */
+  slug?: string;
   size?: number;
   href?: string;
 }) {
+  /*
+    Un dessin plutôt que deux lettres, quand la catégorie en a un.
+
+    « MO », « BE », « AL » demandent une lecture avant de renseigner — et la
+    lecture est précisément ce qu'on économise dans une rangée de tuiles. Une
+    part des clients visés lit peu le français : un cintre ou un panier se
+    comprend sans savoir écrire « alimentation ».
+
+    Le monogramme reste le repli. Une catégorie ajoutée depuis l'administration
+    s'affiche donc correctement sans qu'il faille livrer du code.
+  */
+  const Icon = slug ? categoryIcon(slug) : null;
   const inner = (
     <>
       <span
@@ -74,7 +90,7 @@ export function CategoryTile({
         }
         aria-hidden
       >
-        {monogram}
+        {Icon ? <Icon size={Math.round(size * 0.46)} /> : monogram}
       </span>
       <span className="text-center text-[9.5px] leading-tight text-[var(--color-ink)]">{label}</span>
     </>

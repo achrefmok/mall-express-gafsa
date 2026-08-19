@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { SiteMenu } from "./site-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cx, formatPrice } from "@/lib/format";
-import { MenuIcon, MicIcon, SearchIcon } from "@/components/ui/icons";
+import { MicIcon, SearchIcon } from "@/components/ui/icons";
 import type { Database } from "@/types/database";
 
 type Result = Database["public"]["Functions"]["search_catalog"]["Returns"][number];
@@ -22,13 +23,11 @@ export function SearchBar({
   placeholder,
   withVoice = true,
   withMenu = true,
-  onMenu,
   filterAction,
 }: {
   placeholder?: string;
   withVoice?: boolean;
   withMenu?: boolean;
-  onMenu?: () => void;
   filterAction?: React.ReactNode;
 }) {
   const { t, locale } = useI18n();
@@ -154,16 +153,15 @@ export function SearchBar({
 
       {filterAction}
 
-      {withMenu && (
-        <button
-          type="button"
-          onClick={onMenu}
-          aria-label={t.a11y.openMenu}
-          className="flex h-9 w-9 flex-none items-center justify-center rounded-[18px] bg-[var(--color-brand)] text-white"
-        >
-          <MenuIcon size={14} />
-        </button>
-      )}
+      {/*
+        Le menu porte son propre état.
+
+        Il attendait auparavant une fonction `onMenu` qu'aucun appelant ne
+        fournissait : le bouton s'affichait et ne répondait pas. Le déplacer dans
+        un composant autonome supprime la question — il ne peut plus être rendu
+        sans son comportement.
+      */}
+      {withMenu && <SiteMenu />}
 
       {open && results.length > 0 && (
         <ul className="absolute inset-x-4 top-full z-50 mt-1 max-h-[60vh] overflow-y-auto rounded-[18px] border border-[var(--color-surface-edge)] bg-white p-1 shadow-[0_12px_28px_rgba(60,40,90,0.14)]">

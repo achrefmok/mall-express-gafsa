@@ -423,6 +423,7 @@ export default async function HomePage() {
                 key={category.id}
                 hue={category.hue}
                 monogram={category.monogram}
+                slug={category.slug}
                 label={locale === "ar" ? category.name_ar : category.name_fr}
                 href={`/marketplace?categorie=${category.slug}`}
               />
