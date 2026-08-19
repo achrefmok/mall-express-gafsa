@@ -109,12 +109,22 @@ export function ImageZoom({
             Un seul geste à connaître, et il n'y a rien à viser : où que le doigt
             tombe, la visionneuse se referme. Les deux flèches sont les seules
             exceptions, et elles arrêtent la propagation pour cela.
+
+            L'arrêt de propagation sur la racine n'est pas une précaution
+            superflue : un portail déplace le nœud dans le document, mais pas
+            dans l'arbre React, et les événements de React remontent le long de
+            l'arbre des composants. Sans lui, le clic ressortait dans le lien de
+            la carte et ouvrait la fiche produit au lieu de fermer.
           */
           <div
             role="dialog"
             aria-modal="true"
             aria-label={alt}
-            onClick={close}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              close();
+            }}
             className="fixed inset-0 z-[90] flex cursor-zoom-out items-center justify-center bg-[rgba(14,10,20,0.94)] p-4"
           >
             <Image
@@ -132,6 +142,7 @@ export function ImageZoom({
                   type="button"
                   aria-label={t.common.back}
                   onClick={(event) => {
+                    event.preventDefault();
                     event.stopPropagation();
                     setIndex((i) => (i - 1 + images.length) % images.length);
                   }}
@@ -144,6 +155,7 @@ export function ImageZoom({
                   type="button"
                   aria-label={t.common.see}
                   onClick={(event) => {
+                    event.preventDefault();
                     event.stopPropagation();
                     setIndex((i) => (i + 1) % images.length);
                   }}
