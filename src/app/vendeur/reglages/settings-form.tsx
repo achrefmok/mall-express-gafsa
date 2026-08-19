@@ -11,7 +11,7 @@ import {
 import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch } from "@/components/ui/primitives";
+import { Button, Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch } from "@/components/ui/primitives";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
 import { ReplayVendorTour } from "@/components/tour/tours";
@@ -52,6 +52,21 @@ export function ShopSettingsForm({
   const [phone, setPhone] = useState(shop.phone ?? "");
   const [mallLevel, setMallLevel] = useState(shop.mall_level?.toString() ?? "");
   const [mallUnit, setMallUnit] = useState(shop.mall_unit ?? "");
+
+  /*
+    La position sur la carte des boutiques.
+
+    Sans elle, la boutique est listée mais pas située : le client sait qu'elle
+    existe, pas où aller. Le relevé se fait depuis le téléphone du commerçant,
+    debout dans son local — c'est la seule méthode qui donne le bon point sans
+    lui demander de lire des coordonnées.
+  */
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(
+    shop.latitude !== null && shop.longitude !== null
+      ? { lat: shop.latitude, lng: shop.longitude }
+      : null,
+  );
+  const [locating, setLocating] = useState(false);
   const [address, setAddress] = useState(shop.address ?? "");
   const [logoUrl, setLogoUrl] = useState(shop.logo_url);
   const [bannerUrl, setBannerUrl] = useState(shop.banner_url);
@@ -94,6 +109,8 @@ export function ShopSettingsForm({
           mallLevel: mallLevel === "" ? null : Number.parseInt(mallLevel, 10),
           mallUnit,
           address,
+          latitude: position?.lat ?? null,
+          longitude: position?.lng ?? null,
           deliversInGafsa: delivers,
           pickupInStore: pickup,
           isOpenNow: openNow,
@@ -360,6 +377,60 @@ export function ShopSettingsForm({
                   className={FIELD}
                 />
               </label>
+
+              {/*
+                Un relevé, pas une saisie.
+
+                Demander une latitude et une longitude à un commerçant serait le
+                meilleur moyen de n'en obtenir aucune. Le bouton se presse une
+                fois, debout dans la boutique, et la position est prise.
+              */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[10.5px] text-[var(--color-muted)]">
+                  Position sur la carte
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    tone="outline"
+                    disabled={locating}
+                    onClick={() => {
+                      if (!("geolocation" in navigator)) {
+                        setFeedback({ kind: "error", message: "Cet appareil ne permet pas la localisation." });
+                        return;
+                      }
+                      setLocating(true);
+                      navigator.geolocation.getCurrentPosition(
+                        (p) => {
+                          setPosition({ lat: p.coords.latitude, lng: p.coords.longitude });
+                          setLocating(false);
+                        },
+                        () => {
+                          setLocating(false);
+                          setFeedback({
+                            kind: "error",
+                            message:
+                              "Position refusée. Autorisez la localisation dans les réglages du navigateur.",
+                          });
+                        },
+                        { enableHighAccuracy: true, timeout: 15_000 },
+                      );
+                    }}
+                  >
+                    {locating ? "…" : position ? "Mettre à jour" : "Relever ma position"}
+                  </Button>
+
+                  {position && (
+                    <span className="text-[10px] text-[var(--color-muted)]">
+                      {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[9.5px] leading-[1.45] text-[var(--color-faint)]">
+                  À relever depuis la boutique elle-même : c’est ce point qui guidera les clients
+                  jusqu’à vous.
+                </p>
+              </div>
 
               <Divider />
 

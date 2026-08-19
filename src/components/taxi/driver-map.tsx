@@ -32,6 +32,15 @@ export interface DriverPin {
   detail?: string | null;
   /** Sans numéro, la bulle n'affiche que l'identité. */
   phone?: string | null;
+  /*
+    Une action propre au point, en plus d'appeler.
+
+    Pour un chauffeur, appeler suffit — il vient à vous. Pour une boutique,
+    c'est l'inverse : le client doit s'y rendre, et ce qui lui manque est un
+    itinéraire, pas un numéro. Le champ reste facultatif pour que la carte serve
+    les deux usages sans se dédoubler.
+  */
+  link?: { href: string; label: string } | null;
 }
 
 /** Libellés de la bulle. La carte est réemployée par le taxi et par le SOS. */
@@ -77,6 +86,11 @@ function popupHtml(pin: DriverPin, labels: MapLabels): string {
   const button =
     "display:inline-block;padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;text-decoration:none;";
 
+  const extra = pin.link
+    ? `<a href="${esc(pin.link.href)}" target="_blank" rel="noopener noreferrer"
+          style="${button}background:#efe9f5;color:#6d4b8f;margin-top:6px;display:block;text-align:center">${esc(pin.link.label)}</a>`
+    : "";
+
   return `
     <div style="min-width:170px;font-family:inherit">
       <div style="font-size:12.5px;font-weight:700;color:#1b1420">${esc(pin.name)}</div>
@@ -92,6 +106,7 @@ function popupHtml(pin: DriverPin, labels: MapLabels): string {
              </div>`
           : ""
       }
+      ${extra}
     </div>`;
 }
 

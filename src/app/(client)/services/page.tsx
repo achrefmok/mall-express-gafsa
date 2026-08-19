@@ -138,6 +138,25 @@ export default async function ServicesPage() {
           maintenant. La liste des métiers reste derrière le lien — l'annoncer
           ici transformerait l'écran Services en menu à rallonge.
         */}
+        {/* La carte des boutiques : chercher où aller est un besoin de service,
+            pas de catalogue. */}
+        <Link href="/boutiques" className="lg:col-span-full">
+          <Card className="flex items-center gap-[10px] p-3">
+            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
+              B
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                {t.shops.title}
+              </p>
+              <p className="truncate text-[10px] text-[var(--color-muted)]">
+                {t.shops.onMap}
+              </p>
+            </div>
+            <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />
+          </Card>
+        </Link>
+
         <Link href="/sos" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
             <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">

@@ -214,6 +214,18 @@ const fr = {
     positionStale: "position non connue",
   },
 
+  shops: {
+    title: "Boutiques vérifiées",
+    verified: "vérifiée",
+    directions: "Itinéraire",
+    onMap: "Située sur la carte",
+    noPosition:
+      "Aucune boutique n'a encore publié sa position. Les commerçants la renseignent depuis leurs réglages.",
+    noPositionShort: "Position non renseignée",
+    none: "Aucune boutique vérifiée",
+    noneBody: "Les boutiques apparaissent ici une fois leur dossier approuvé par l'administration.",
+  },
+
   sos: {
     title: "SOS dépannage",
     tagline: "Une panne, un numéro. Les professionnels vérifiés de Gafsa.",
@@ -789,6 +801,17 @@ const ar: Dictionary = {
     driverVehicle: "المركبة (مثال: بيجو 301 بيضاء)",
     driverPlate: "رقم التسجيل",
     positionStale: "الموقع غير معروف",
+  },
+
+  shops: {
+    title: "متاجر موثّقة",
+    verified: "موثّق",
+    directions: "المسار",
+    onMap: "محدّد على الخريطة",
+    noPosition: "لم ينشر أي متجر موقعه بعد. يحدّده التجّار من إعداداتهم.",
+    noPositionShort: "الموقع غير محدّد",
+    none: "لا توجد متاجر موثّقة",
+    noneBody: "تظهر المتاجر هنا بعد موافقة الإدارة على ملفها.",
   },
 
   sos: {
