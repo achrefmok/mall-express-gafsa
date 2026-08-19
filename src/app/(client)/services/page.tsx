@@ -132,14 +132,11 @@ export default async function ServicesPage() {
         </Link>
 
         {/*
-          ─── SOS dépannage ────────────────────────────────────────────
+          ─── Boutiques vérifiées ──────────────────────────────────────
 
-          Juste après le taxi, pour la même raison : une panne se règle
-          maintenant. La liste des métiers reste derrière le lien — l'annoncer
-          ici transformerait l'écran Services en menu à rallonge.
+          Chercher où aller est un besoin de service, pas de catalogue : on
+          ouvre cet écran en sachant ce qu'on veut, pas en flânant.
         */}
-        {/* La carte des boutiques : chercher où aller est un besoin de service,
-            pas de catalogue. */}
         <Link href="/boutiques" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
             <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
@@ -157,6 +154,13 @@ export default async function ServicesPage() {
           </Card>
         </Link>
 
+        {/*
+          ─── SOS dépannage ────────────────────────────────────────────
+
+          Juste après le taxi, pour la même raison : une panne se règle
+          maintenant. La liste des métiers reste derrière le lien — l'annoncer
+          ici transformerait l'écran Services en menu à rallonge.
+        */}
         <Link href="/sos" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
             <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
