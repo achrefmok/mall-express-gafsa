@@ -1,47 +1,33 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 
 /**
- * Agrandir une image d'un toucher.
+ * Agrandir une image d'un toucher, la refermer d'un autre.
  *
- * Les vignettes du fil font cent pixels de haut. Sur une photo de vêtement ou
- * de pièce détachée, cela ne suffit pas à décider : le client veut voir la
- * matière, la couleur exacte, l'état. Sans agrandissement, il ouvre la fiche,
- * regarde, revient — et perd le fil de ce qu'il parcourait.
+ * Les vignettes du fil font cent pixels de haut. Sur un vêtement, une pièce
+ * détachée ou l'étiquette de prix d'un bon plan, cela ne suffit pas à décider :
+ * le client ouvrait la fiche pour regarder, revenait, et perdait sa place dans
+ * la liste.
  *
- * Deux précautions rendent le geste sûr là où la vignette est déjà cliquable :
- *
- *   · `preventDefault` et `stopPropagation` sur le déclencheur. Ces images
- *     vivent souvent dans un lien qui mène à la fiche ; sans cela, le toucher
- *     ouvrirait la page *et* la visionneuse, et l'on verrait l'agrandissement
- *     disparaître pendant la navigation.
- *   · un lien vers la fiche à l'intérieur de la visionneuse. On retire l'accès
- *     que la vignette offrait, il faut le rendre — sinon regarder de plus près
- *     revient à s'éloigner de l'achat.
- *
- * Plusieurs images sont acceptées : le vendeur peut en déposer six, et les
- * parcourir depuis l'agrandissement évite d'ouvrir la fiche pour comparer deux
- * angles du même article.
+ * Aucun bouton, et c'est délibéré. Une première version portait « Voir
+ * l'article » et « Fermer » ; deux commandes de trop pour un geste qui n'en
+ * demande aucune. On touche l'image, elle grandit. On touche encore, elle se
+ * referme. Le seul cas qui justifie un contrôle est le passage d'une photo à la
+ * suivante, et il ne se produit que si l'article en a plusieurs.
  */
 export function ImageZoom({
   images,
   alt,
-  href,
-  linkLabel,
   className,
   children,
 }: {
   /** Toutes les photos de l'article. La première est celle de la vignette. */
   images: string[];
   alt: string;
-  /** Fiche à proposer depuis la visionneuse, si la vignette y menait. */
-  href?: string;
-  linkLabel?: string;
   className?: string;
   /** La vignette elle-même, rendue par l'appelant. */
   children: React.ReactNode;
@@ -49,18 +35,18 @@ export function ImageZoom({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+
   /*
     Rendue dans le corps du document, jamais sur place.
 
     Deux raisons, et chacune suffirait. D'abord la vignette vit dans un lien :
     rendue au même endroit, la visionneuse en devenait un enfant, et le moindre
-    toucher — « Fermer » compris — remontait jusqu'au lien et déclenchait la
-    navigation. Ensuite la carte porte `transition-transform` : pendant l'appui,
-    la transformation crée un repère de positionnement, et le plein écran se
-    retrouvait enfermé dans une vignette de cent pixels.
+    toucher remontait jusqu'au lien pour déclencher la navigation. Ensuite la
+    carte porte `transition-transform` : pendant l'appui, la transformation crée
+    un repère de positionnement, et le plein écran se retrouvait enfermé dans une
+    vignette de cent pixels.
 
-    Le portail règle les deux d'un coup — l'ouverture n'est possible qu'une fois
-    le composant monté, `document` n'existant pas au rendu serveur.
+    L'ouverture attend le montage : `document` n'existe pas au rendu serveur.
   */
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -97,8 +83,13 @@ export function ImageZoom({
     <>
       <button
         type="button"
-        aria-label={t.common.see}
+        aria-label={alt}
         onClick={(event) => {
+          /*
+            La vignette est presque toujours dans un lien vers la fiche. Sans ces
+            deux arrêts, le toucher ouvrirait la page *et* la visionneuse, et
+            l'agrandissement disparaîtrait pendant la navigation.
+          */
           event.preventDefault();
           event.stopPropagation();
           setIndex(0);
@@ -112,43 +103,20 @@ export function ImageZoom({
       {open &&
         mounted &&
         createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={alt}
           /*
-            Ceinture et bretelles : même hors du lien, un clic qui remonterait
-            jusqu'à un gestionnaire de la page n'a rien à y faire.
+            Toute la surface ferme.
+
+            Un seul geste à connaître, et il n'y a rien à viser : où que le doigt
+            tombe, la visionneuse se referme. Les deux flèches sont les seules
+            exceptions, et elles arrêtent la propagation pour cela.
           */
-          onClick={(event) => event.stopPropagation()}
-          className="fixed inset-0 z-[90] flex flex-col bg-[rgba(14,10,20,0.94)]"
-        >
-          {/* Le fond ferme au toucher : c'est le geste attendu d'une visionneuse. */}
-          <button
-            type="button"
-            aria-label={t.common.close}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={alt}
             onClick={close}
-            className="absolute inset-0 h-full w-full cursor-zoom-out"
-          />
-
-          {/*
-            Une croix en haut à droite, en plus du fond et du bouton du bas.
-
-            Trois sorties pour une seule porte, et ce n'est pas de trop : le
-            bouton du bas peut passer sous la barre d'adresse d'un navigateur
-            mobile, et toucher le fond ne se devine pas. Une visionneuse dont on
-            ne sait pas sortir est un piège, pas une fonctionnalité.
-          */}
-          <button
-            type="button"
-            aria-label={t.common.close}
-            onClick={close}
-            className="pt-safe absolute end-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-[18px] leading-none text-white backdrop-blur-sm"
+            className="fixed inset-0 z-[90] flex cursor-zoom-out items-center justify-center bg-[rgba(14,10,20,0.94)] p-4"
           >
-            ✕
-          </button>
-
-          <div className="pointer-events-none relative flex flex-1 items-center justify-center p-4">
             <Image
               src={images[index]}
               alt={alt}
@@ -157,53 +125,42 @@ export function ImageZoom({
               className="max-h-full w-auto max-w-full object-contain"
               sizes="100vw"
             />
-          </div>
 
-          <div className="pb-safe relative flex flex-none items-center justify-center gap-2 p-4">
             {images.length > 1 && (
-              <div className="flex items-center gap-2">
+              <>
                 <button
                   type="button"
                   aria-label={t.common.back}
-                  onClick={() => setIndex((i) => (i - 1 + images.length) % images.length)}
-                  className="rounded-full bg-white/15 px-3 py-2 text-[13px] font-bold text-white"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIndex((i) => (i - 1 + images.length) % images.length);
+                  }}
+                  className="absolute start-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[20px] leading-none text-white"
                 >
                   ‹
                 </button>
-                <span className="text-[11px] font-semibold text-white/80">
-                  {index + 1} / {images.length}
-                </span>
+
                 <button
                   type="button"
                   aria-label={t.common.see}
-                  onClick={() => setIndex((i) => (i + 1) % images.length)}
-                  className="rounded-full bg-white/15 px-3 py-2 text-[13px] font-bold text-white"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIndex((i) => (i + 1) % images.length);
+                  }}
+                  className="absolute end-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[20px] leading-none text-white"
                 >
                   ›
                 </button>
-              </div>
-            )}
 
-            {href && (
-              <Link
-                href={href}
-                className="ms-2 rounded-[14px] bg-white px-4 py-2 text-[11.5px] font-bold text-[var(--color-ink)]"
-              >
-                {linkLabel ?? t.common.see}
-              </Link>
+                {/* Le rang, pour savoir combien de photos restent à voir. */}
+                <span className="pb-safe absolute bottom-4 text-[11px] font-semibold text-white/70">
+                  {index + 1} / {images.length}
+                </span>
+              </>
             )}
-
-            <button
-              type="button"
-              onClick={close}
-              className="rounded-[14px] border border-white/30 px-4 py-2 text-[11.5px] font-semibold text-white"
-            >
-              {t.common.close}
-            </button>
-          </div>
-        </div>,
-        document.body,
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

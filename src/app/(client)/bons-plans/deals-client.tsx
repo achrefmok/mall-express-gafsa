@@ -179,7 +179,6 @@ export function DealCard({
         <ImageZoom
           images={deal.images}
           alt={deal.title}
-          href={`/bons-plans/${deal.id}`}
           className="block w-full cursor-zoom-in"
         >
           <Image

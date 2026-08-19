@@ -60,13 +60,13 @@ export function ProductCard({
           Toucher la photo l'agrandit ; toucher le nom ou le prix ouvre la
           fiche. Une vignette de cent pixels ne permet pas de juger une matière
           ou une couleur, et le client qui ouvrait la fiche pour cela perdait sa
-          place dans la liste. La visionneuse propose le lien vers l'article,
-          pour ne rien retirer au parcours d'achat.
+          place dans la liste. Le reste de la carte reste cliquable : le chemin
+          vers l'achat n'est pas retiré, il est simplement déplacé de deux
+          centimètres.
         */
         <ImageZoom
           images={product.images}
           alt={product.name}
-          href={`/produit/${product.id}`}
           className="block w-full cursor-zoom-in"
         >
           <Image

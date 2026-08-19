@@ -369,7 +369,6 @@ export default async function HomePage() {
                 <ImageZoom
                   images={promo.data.images}
                   alt={promo.data.name}
-                  href={`/produit/${promo.data.id}`}
                   className="block w-full cursor-zoom-in"
                 >
                   <Image
