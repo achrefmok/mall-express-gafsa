@@ -27,7 +27,8 @@ export default async function HomePage() {
   const { t, locale } = await getT();
   const supabase = await createClient();
 
-  const [status, categories, counts, sponsored, liveShops, promo, services] = await Promise.all([
+  const [status, categories, counts, sponsored, liveShops, promo, shopPromos, services] =
+    await Promise.all([
     getMallStatus(),
     getCategories(),
     getTopBarCounts(),
@@ -60,6 +61,32 @@ export default async function HomePage() {
       .order("sold_count", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    /*
+      Les promotions de boutique, absentes de cet écran jusqu'ici.
+
+      La requête voisine ne cherche qu'un produit à prix barré : deux mécanismes
+      distincts, et un commerçant qui créait « −10% sur toute la boutique » ne
+      voyait rien apparaître ici. C'était le défaut le plus visible pour un
+      vendeur, puisqu'il croyait sa promotion perdue.
+
+      Les trois bornes comptent autant l'une que l'autre : active, commencée, non
+      expirée. Sans la borne de début, une promotion programmée pour la semaine
+      prochaine s'afficherait aujourd'hui ; sans celle de fin, elle resterait
+      après son terme — le pire des deux, puisqu'un client s'y déplacerait.
+
+      `shops!inner` avec le filtre de statut : une boutique suspendue ne doit pas
+      continuer d'annoncer ses remises depuis la page d'accueil.
+    */
+    supabase
+      .from("promotions")
+      .select("id, title, title_ar, percent_off, ends_at, shop:shops!inner(name, slug, logo_url, status)")
+      .eq("is_active", true)
+      .eq("shops.status", "approved")
+      .lte("starts_at", new Date().toISOString())
+      .gte("ends_at", new Date().toISOString())
+      .order("percent_off", { ascending: false })
+      .limit(6),
 
     supabase
       .from("practical_services")
@@ -202,9 +229,49 @@ export default async function HomePage() {
         )}
 
         {/* ─── 3 · Promotions du moment ───────────────────────────────── */}
-        {promo.data && (
+        {(promo.data || (shopPromos.data ?? []).length > 0) && (
           <section className="flex flex-col gap-2 px-4">
             <SectionTitle>{t.home.promos}</SectionTitle>
+
+            {/*
+              Les remises de boutique, en tête et sur un rail.
+
+              Elles portent sur un commerce entier, là où la carte qui suit
+              porte sur un seul article : les présenter dans le même format
+              laisserait croire à un produit en promotion, et le client
+              chercherait un prix qui n'existe pas. D'où une tuile compacte qui
+              nomme la boutique et mène à sa page, où la remise est détaillée.
+            */}
+            {(shopPromos.data ?? []).length > 0 && (
+              <Rail gap={10}>
+                {(shopPromos.data ?? []).map((offer) => (
+                  <Link
+                    key={offer.id}
+                    href={`/boutique/${offer.shop?.slug}`}
+                    className="flex w-[196px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[10px] shadow-[var(--shadow-card)]"
+                  >
+                    <Avatar
+                      src={offer.shop?.logo_url}
+                      initials={monogram(offer.shop?.name)}
+                      size={34}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                        {offer.shop?.name}
+                      </p>
+                      <p className="truncate text-[10px] text-[var(--color-muted)]">
+                        {locale === "ar" && offer.title_ar ? offer.title_ar : offer.title}
+                      </p>
+                    </div>
+                    <span className="flex-none rounded-[10px] bg-[var(--color-live)] px-2 py-[3px] text-[9.5px] font-bold text-white">
+                      −{offer.percent_off}%
+                    </span>
+                  </Link>
+                ))}
+              </Rail>
+            )}
+
+            {promo.data && (
             <Link
               href={`/produit/${promo.data.id}`}
               className="overflow-hidden rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]"
@@ -248,6 +315,7 @@ export default async function HomePage() {
                 </p>
               </div>
             </Link>
+            )}
           </section>
         )}
 
