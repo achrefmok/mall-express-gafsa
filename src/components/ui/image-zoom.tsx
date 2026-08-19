@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 
@@ -48,6 +49,21 @@ export function ImageZoom({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  /*
+    Rendue dans le corps du document, jamais sur place.
+
+    Deux raisons, et chacune suffirait. D'abord la vignette vit dans un lien :
+    rendue au même endroit, la visionneuse en devenait un enfant, et le moindre
+    toucher — « Fermer » compris — remontait jusqu'au lien et déclenchait la
+    navigation. Ensuite la carte porte `transition-transform` : pendant l'appui,
+    la transformation crée un repère de positionnement, et le plein écran se
+    retrouvait enfermé dans une vignette de cent pixels.
+
+    Le portail règle les deux d'un coup — l'ouverture n'est possible qu'une fois
+    le composant monté, `document` n'existant pas au rendu serveur.
+  */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -93,11 +109,18 @@ export function ImageZoom({
         {children}
       </button>
 
-      {open && (
+      {open &&
+        mounted &&
+        createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label={alt}
+          /*
+            Ceinture et bretelles : même hors du lien, un clic qui remonterait
+            jusqu'à un gestionnaire de la page n'a rien à y faire.
+          */
+          onClick={(event) => event.stopPropagation()}
           className="fixed inset-0 z-[90] flex flex-col bg-[rgba(14,10,20,0.94)]"
         >
           {/* Le fond ferme au toucher : c'est le geste attendu d'une visionneuse. */}
@@ -108,6 +131,23 @@ export function ImageZoom({
             className="absolute inset-0 h-full w-full cursor-zoom-out"
           />
 
+          {/*
+            Une croix en haut à droite, en plus du fond et du bouton du bas.
+
+            Trois sorties pour une seule porte, et ce n'est pas de trop : le
+            bouton du bas peut passer sous la barre d'adresse d'un navigateur
+            mobile, et toucher le fond ne se devine pas. Une visionneuse dont on
+            ne sait pas sortir est un piège, pas une fonctionnalité.
+          */}
+          <button
+            type="button"
+            aria-label={t.common.close}
+            onClick={close}
+            className="pt-safe absolute end-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-[18px] leading-none text-white backdrop-blur-sm"
+          >
+            ✕
+          </button>
+
           <div className="pointer-events-none relative flex flex-1 items-center justify-center p-4">
             <Image
               src={images[index]}
@@ -116,7 +156,6 @@ export function ImageZoom({
               height={1200}
               className="max-h-full w-auto max-w-full object-contain"
               sizes="100vw"
-              priority
             />
           </div>
 
@@ -162,7 +201,8 @@ export function ImageZoom({
               {t.common.close}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
