@@ -13,6 +13,16 @@
  *
  * Le domaine `.test` est réservé (RFC 2606) et Supabase le refuse à
  * l'inscription publique : aucun compte réel ne peut porter cette adresse.
+ *
+ * D'autres domaines jetables peuvent être visés en argument — les comptes de
+ * démonstration livrés avec le projet portent `@demo.gafsa` :
+ *
+ *   node scripts/clean-test-accounts.mjs @demo.gafsa
+ *   node scripts/clean-test-accounts.mjs @demo.gafsa --dry
+ *
+ * `--dry` énumère sans rien supprimer. Sur une base de production, voir avant
+ * de faire n'est pas une précaution superflue : la suppression d'un compte
+ * emporte sa boutique, ses produits et ses directs, et rien ne les ramène.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -22,7 +32,17 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const C = { reset: "[0m", bold: "[1m", dim: "[2m", red: "[31m", green: "[32m" };
-const TEST_DOMAIN = "@mall-express.test";
+const args = process.argv.slice(2);
+const DRY = args.includes("--dry");
+
+/*
+  Les domaines visés. Sans argument, le comportement historique : les comptes
+  jetables des scripts de vérification, et eux seuls. Un domaine sans « @ »
+  initial serait une faute de frappe dangereuse — « gafsa » viserait toute
+  adresse contenant ce mot — alors on l'exige.
+*/
+const domains = args.filter((a) => a.startsWith("@"));
+const TARGETS = domains.length > 0 ? domains : ["@mall-express.test"];
 
 const envPath = join(root, ".env.local");
 if (!existsSync(envPath)) {
@@ -66,7 +86,7 @@ if (!listed.ok) {
 }
 
 const { users = [] } = await listed.json();
-const junk = users.filter((user) => user.email?.endsWith(TEST_DOMAIN));
+const junk = users.filter((user) => TARGETS.some((d) => user.email?.endsWith(d)));
 
 if (junk.length === 0) {
   console.log(`\n${C.green}✓ Aucun compte de test à supprimer.${C.reset}\n`);
@@ -79,10 +99,46 @@ if (junk.length === 0) {
 }
 
 async function purge(accounts) {
-console.log(`\n${C.bold}${accounts.length} compte(s) de test${C.reset}`);
+console.log(`\n${C.bold}${accounts.length} compte(s) visé(s)${C.reset} ${C.dim}(${TARGETS.join(", ")})${C.reset}`);
 for (const user of accounts) console.log(`  ${C.dim}${user.email}${C.reset}`);
 
 const userIds = inList(accounts.map((user) => user.id));
+
+/*
+  Voir avant de faire.
+
+  Sur une base de production, la suppression d'un compte emporte sa boutique,
+  ses produits et ses directs, et rien ne les ramène. Ce dénombrement est la
+  seule occasion de constater qu'on vise autre chose que ce qu'on croyait.
+
+  Placé ici, après le calcul de `userIds` et avant la première suppression :
+  la première version de ce garde-fou avait été insérée plus haut, où elle ne
+  s'exécutait jamais — un indicateur de sécurité muet, plus dangereux que pas
+  d'indicateur du tout, puisqu'on croit avoir regardé.
+*/
+if (DRY) {
+  const { rows: shops } = await rest(`shops?select=id,name&owner_id=in.${userIds}`);
+
+  const count = async (label, path) => {
+    const { rows } = await rest(path);
+    console.log(`  ${String(rows.length).padStart(3)} ${label}`);
+  };
+
+  console.log(`\n${C.bold}Seraient supprimés${C.reset}`);
+  console.log(`  ${String(shops.length).padStart(3)} boutique(s)${shops.length ? ` : ${shops.map((s) => s.name).join(", ")}` : ""}`);
+
+  if (shops.length > 0) {
+    const shopIds = inList(ids(shops));
+    await count("produit(s)", `products?select=id&shop_id=in.${shopIds}`);
+    await count("direct(s)", `lives?select=id&shop_id=in.${shopIds}`);
+    await count("commande(s) reçue(s)", `orders?select=id&shop_id=in.${shopIds}`);
+  }
+  await count("commande(s) passée(s)", `orders?select=id&user_id=in.${userIds}`);
+
+  console.log(`\n${C.bold}Rien n'a été supprimé.${C.reset} Relancer sans --dry pour agir.\n`);
+  process.exitCode = 0;
+  return;
+}
 
 /* ─── Suppression, des feuilles vers la racine ───────────────────────── */
 
