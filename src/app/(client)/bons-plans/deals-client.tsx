@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { ImageZoom } from "@/components/ui/image-zoom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
@@ -170,13 +171,25 @@ export function DealCard({
       </header>
 
       {deal.images?.[0] && (
-        <Image
-          src={deal.images[0]}
-          alt=""
-          width={520}
-          height={150}
-          className="h-[150px] w-full object-cover"
-        />
+        /*
+          La photo est la preuve du bon plan : l'étiquette de prix, le rayon,
+          la date de péremption. C'est précisément ce qu'on ne lit pas sur une
+          image de 150 pixels de haut.
+        */
+        <ImageZoom
+          images={deal.images}
+          alt={deal.title}
+          href={`/bons-plans/${deal.id}`}
+          className="block w-full cursor-zoom-in"
+        >
+          <Image
+            src={deal.images[0]}
+            alt=""
+            width={520}
+            height={150}
+            className="h-[150px] w-full object-cover"
+          />
+        </ImageZoom>
       )}
 
       <div className="flex flex-col gap-2 p-[11px_12px]">

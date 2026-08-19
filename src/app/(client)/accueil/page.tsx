@@ -11,6 +11,7 @@ import { SearchBar } from "@/components/shell/search-bar";
 import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { NotifyLiveButton } from "@/components/live/notify-live-button";
 import { ProductCard } from "@/components/cards/product-card";
+import { ImageZoom } from "@/components/ui/image-zoom";
 import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
 import { LiveDot } from "@/components/ui/icons";
 import type { PracticalService } from "@/types/database";
@@ -216,13 +217,21 @@ export default async function HomePage() {
                     {t.home.sponsoredBadge}
                   </span>
                   {slot.image_url ? (
-                    <Image
-                      src={slot.image_url}
+                    // Une bannière d'annonceur porte souvent un texte fin —
+                    // dates, conditions, adresse — illisible sur 96 pixels.
+                    <ImageZoom
+                      images={[slot.image_url]}
                       alt={slot.title}
-                      width={260}
-                      height={96}
-                      className="h-24 w-full object-cover"
-                    />
+                      className="block w-full cursor-zoom-in"
+                    >
+                      <Image
+                        src={slot.image_url}
+                        alt={slot.title}
+                        width={260}
+                        height={96}
+                        className="h-24 w-full object-cover"
+                      />
+                    </ImageZoom>
                   ) : (
                     <Placeholder label="bannière — annonceur" className="h-24 w-full" />
                   )}
@@ -357,14 +366,21 @@ export default async function HomePage() {
               className="overflow-hidden rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]"
             >
               {promo.data.images?.[0] ? (
-                <Image
-                  src={promo.data.images[0]}
+                <ImageZoom
+                  images={promo.data.images}
                   alt={promo.data.name}
-                  width={520}
-                  height={150}
-                  className="h-[150px] w-full object-cover"
-                  priority
-                />
+                  href={`/produit/${promo.data.id}`}
+                  className="block w-full cursor-zoom-in"
+                >
+                  <Image
+                    src={promo.data.images[0]}
+                    alt={promo.data.name}
+                    width={520}
+                    height={150}
+                    className="h-[150px] w-full object-cover"
+                    priority
+                  />
+                </ImageZoom>
               ) : (
                 <Placeholder label="photo boutique — vitrine" className="h-[150px] w-full" />
               )}

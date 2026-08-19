@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, percentOff } from "@/lib/format";
 import { Placeholder } from "@/components/ui/primitives";
+import { ImageZoom } from "@/components/ui/image-zoom";
 import type { AppLocale } from "@/types/database";
 
 export interface ProductCardData {
@@ -53,15 +56,29 @@ export function ProductCard({
       )}
 
       {cover ? (
-        <Image
-          src={cover}
+        /*
+          Toucher la photo l'agrandit ; toucher le nom ou le prix ouvre la
+          fiche. Une vignette de cent pixels ne permet pas de juger une matière
+          ou une couleur, et le client qui ouvrait la fiche pour cela perdait sa
+          place dans la liste. La visionneuse propose le lien vers l'article,
+          pour ne rien retirer au parcours d'achat.
+        */
+        <ImageZoom
+          images={product.images}
           alt={product.name}
-          width={200}
-          height={imageHeight}
-          sizes="(max-width: 520px) 50vw, 240px"
-          className="w-full object-cover"
-          style={{ height: imageHeight }}
-        />
+          href={`/produit/${product.id}`}
+          className="block w-full cursor-zoom-in"
+        >
+          <Image
+            src={cover}
+            alt={product.name}
+            width={200}
+            height={imageHeight}
+            sizes="(max-width: 520px) 50vw, 240px"
+            className="w-full object-cover"
+            style={{ height: imageHeight }}
+          />
+        </ImageZoom>
       ) : (
         <Placeholder label="produit" className="w-full" style={{ height: imageHeight }} />
       )}
