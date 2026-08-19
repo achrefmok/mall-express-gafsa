@@ -10,6 +10,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { SearchBar } from "@/components/shell/search-bar";
 import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { NotifyLiveButton } from "@/components/live/notify-live-button";
+import { ProductCard } from "@/components/cards/product-card";
 import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
 import { LiveDot } from "@/components/ui/icons";
 import type { PracticalService } from "@/types/database";
@@ -27,8 +28,17 @@ export default async function HomePage() {
   const { t, locale } = await getT();
   const supabase = await createClient();
 
-  const [status, categories, counts, sponsored, liveShops, promo, shopPromos, services] =
-    await Promise.all([
+  const [
+    status,
+    categories,
+    counts,
+    sponsored,
+    liveShops,
+    promo,
+    shopPromos,
+    catalogue,
+    services,
+  ] = await Promise.all([
     getMallStatus(),
     getCategories(),
     getTopBarCounts(),
@@ -88,6 +98,31 @@ export default async function HomePage() {
       .order("percent_off", { ascending: false })
       .limit(6),
 
+    /*
+      De quoi remplir l'écran quand aucun direct n'est en cours.
+
+      Le rail des directs est vide la plupart du temps — un commerçant diffuse
+      une heure par semaine, pas en continu — et l'accueil s'ouvrait alors sur
+      une bande de pastilles grises qui ne menaient nulle part. Autant montrer
+      ce que les boutiques mises en avant ont à vendre.
+
+      Une seule requête, large, plutôt que deux : on demande douze articles des
+      boutiques approuvées et l'on choisit ensuite ceux des boutiques à la une.
+      Interroger d'abord les boutiques mises en avant aurait ajouté un
+      aller-retour, et rendu la section vide le jour où plus aucune ne l'est.
+    */
+    supabase
+      .from("products")
+      .select(
+        "id, name, price, compare_at_price, images, stock, category:categories(hue), shop:shops!inner(name, slug, status, is_featured)",
+      )
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .eq("shops.status", "approved")
+      .gt("stock", 0)
+      .order("sold_count", { ascending: false })
+      .limit(12),
+
     supabase
       .from("practical_services")
       .select("*")
@@ -110,6 +145,28 @@ export default async function HomePage() {
     const bLive = b.lives?.some((l) => l.status === "live") ? 1 : 0;
     return bLive - aLive;
   });
+
+  /*
+    Y a-t-il vraiment un direct à l'antenne ?
+
+    Le rail affiche toutes les boutiques, celles qui diffusent en tête. Sans
+    aucun direct, il ne restait qu'une bande de pastilles grises sous un titre
+    qui promettait « en direct maintenant » — le genre de section qu'on apprend
+    à ignorer.
+  */
+  const anyLive = shops.some((shop) => shop.lives?.some((l) => l.status === "live"));
+
+  /*
+    Trois articles pour prendre la place, en préférant les boutiques à la une.
+
+    La préférence se fait ici plutôt que dans la requête : PostgREST ne trie pas
+    sur une colonne de table jointe, et un second appel n'aurait servi qu'à
+    obtenir un ordre. Si aucune boutique n'est mise en avant, on garde les plus
+    vendus — la section reste pleine, ce qui est tout son intérêt.
+  */
+  const allProducts = catalogue.data ?? [];
+  const featured = allProducts.filter((p) => p.shop?.is_featured);
+  const highlights = (featured.length > 0 ? featured : allProducts).slice(0, 3);
 
   const next = status.nextLive;
   const minutesToLive = next?.scheduled_at
@@ -181,8 +238,31 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ─── 2 · En direct maintenant ───────────────────────────────── */}
-        {withLiveFirst.length > 0 && (
+        {/*
+          ─── 2 · En direct maintenant, ou la sélection ─────────────────
+
+          L'une ou l'autre, jamais les deux. Un direct est un rendez-vous : tant
+          qu'il en existe un, rien ne doit lui disputer cette place. Le reste du
+          temps — c'est-à-dire presque toujours — la place revient à ce que les
+          boutiques mises en avant ont à vendre.
+        */}
+        {!anyLive && highlights.length > 0 && (
+          <section className="flex flex-col gap-2 px-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <SectionTitle>{t.home.featured}</SectionTitle>
+              <Link href="/marketplace" className="text-[10.5px] font-bold text-[var(--color-brand)]">
+                {t.common.seeAll}
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-[10px]">
+              {highlights.map((product) => (
+                <ProductCard key={product.id} product={product} locale={locale} imageHeight={92} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {anyLive && withLiveFirst.length > 0 && (
           <section className="flex flex-col gap-2 px-4">
             <SectionTitle>{t.home.liveNow}</SectionTitle>
             <Rail gap={14}>
