@@ -31,7 +31,12 @@ export const config = {
     /*
      * Tout sauf : fichiers statiques Next, images optimisées, favicon,
      * l'atelier du service worker et les fichiers du manifeste PWA.
+     *
+     * `.html` et `.txt` sont exclus depuis la vérification Google Search
+     * Console : ces fichiers sont servis tels quels depuis `public/`, et faire
+     * passer un robot d'indexation par un rafraîchissement de session Supabase
+     * n'apporte rien — ni au robot, ni au quota.
      */
-    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?|html|txt)$).*)",
   ],
 };
