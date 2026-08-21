@@ -13,9 +13,28 @@ const supabaseHost = (() => {
  * En-têtes de sécurité. `frame-src` autorise Facebook : l'écran Live peut
  * relayer un direct Facebook (source `facebook`) via le plugin vidéo officiel.
  */
+/*
+  L'encadrement est verrouillé en production, ouvert en développement.
+
+  `X-Frame-Options` et `frame-ancestors` empêchent une page tierce d'afficher ce
+  site dans un cadre invisible sous ses propres boutons — un détournement de clic
+  qui ferait valider une commande ou un changement de mot de passe à l'insu du
+  client. La protection est indispensable en ligne.
+
+  Sur `localhost`, elle n'a aucun objet : personne ne va piéger une page servie
+  par la machine du développeur. Elle empêchait en revanche les outils de
+  prévisualisation mobile de fonctionner — ils chargent le site dans une iframe
+  depuis leur propre page —, ce qui coûtait un aller-retour vers les outils du
+  navigateur à chaque vérification de mise en page.
+
+  La distinction se fait à la construction : un déploiement Vercel est toujours
+  en `production`, et ne peut donc pas hériter de l'assouplissement.
+*/
+const isDev = process.env.NODE_ENV !== "production";
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  ...(isDev ? [] : [{ key: "X-Frame-Options", value: "SAMEORIGIN" }]),
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-DNS-Prefetch-Control", value: "on" },
   {
@@ -46,7 +65,7 @@ const securityHeaders = [
       "base-uri 'self'",
       "object-src 'none'",
       "form-action 'self'",
-      "frame-ancestors 'self'",
+      isDev ? "frame-ancestors *" : "frame-ancestors 'self'",
       // Next.js injecte des scripts inline hydratation/runtime
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net",
       "style-src 'self' 'unsafe-inline'",

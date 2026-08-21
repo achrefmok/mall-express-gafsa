@@ -36,3 +36,6 @@ supabase/.env
 # Local Netlify folder
 .netlify
 deno.lock
+
+# Bytecode Python des scripts d'outillage (.claude/skills)
+__pycache__/
