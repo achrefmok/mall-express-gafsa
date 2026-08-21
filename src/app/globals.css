@@ -305,3 +305,66 @@ html[data-simplified="true"] body {
 @media print {
   .no-print { display: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Mouvement
+   ═══════════════════════════════════════════════════════════════════════
+
+   Quatre utilitaires, pas davantage. Un vocabulaire restreint est ce qui
+   sépare une interface qui semble tenue d'une interface animée au hasard :
+   quand chaque écran invente sa transition, l'ensemble paraît instable même
+   si chaque animation prise isolément est réussie.
+
+   Tout passe par `transform` et `opacity`, les deux seules propriétés que le
+   navigateur peut animer sans recalculer la mise en page — ce qui compte sur
+   les téléphones d'entrée de gamme visés ici.
+
+   Chaque utilitaire se neutralise sous `prefers-reduced-motion`. Ce réglage
+   est souvent activé pour raison médicale : le respecter n'est pas une
+   politesse. */
+
+@keyframes enter-up {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes enter-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Entrée d'un écran : une seule fois, à l'arrivée. */
+@utility enter-page {
+  animation: enter-up 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: enter-fade 0.01s both; }
+}
+
+/* Entrée d'un élément de liste. Le décalage se pose en style, item par item. */
+@utility enter-item {
+  animation: enter-up 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: enter-fade 0.01s both; }
+}
+
+/* Retour tactile à l'appui.
+
+   Le léger enfoncement en profondeur — `perspective` plus `translateZ` — donne
+   la sensation d'une surface qu'on presse plutôt que d'une image qui rétrécit.
+   C'est la seule 3D du projet, et elle dure cent millisecondes. */
+@utility press {
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  &:active {
+    transform: perspective(600px) translateZ(-6px) scale(0.985);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:active { transform: none; }
+  }
+}
+
+/* Apparition d'une image une fois décodée : évite le clignotement blanc puis
+   image, qui donne l'impression d'un écran qui se construit sous les yeux. */
+@utility fade-in-img {
+  animation: enter-fade 0.35s ease-out both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}

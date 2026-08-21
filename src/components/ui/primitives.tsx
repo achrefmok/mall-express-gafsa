@@ -99,7 +99,7 @@ export function CategoryTile({
   const className = "flex flex-col items-center gap-[5px]";
 
   return href ? (
-    <Link href={href} className={cx(className, "transition-opacity active:opacity-70")}>
+    <Link href={href} className={cx(className, "press")}>
       {inner}
     </Link>
   ) : (
@@ -212,8 +212,17 @@ export function Button({
   return (
     <button
       className={cx(
-        "inline-flex items-center justify-center rounded-[16px] font-semibold transition-[opacity,background-color]",
-        "disabled:cursor-not-allowed disabled:opacity-55",
+        /*
+          `press` porte l'enfoncement à l'appui. Posé sur la primitive plutôt que
+          sur chaque appelant : c'est le seul moyen que tous les boutons du
+          projet réagissent de la même façon, y compris ceux écrits demain.
+
+          `disabled:active:transform-none` annule l'enfoncement sur un bouton
+          désactivé — sans cela, il répondrait au doigt tout en n'agissant pas,
+          ce qui est exactement le signal inverse de celui qu'il doit donner.
+        */
+        "press inline-flex items-center justify-center rounded-[16px] font-semibold transition-[opacity,background-color]",
+        "disabled:cursor-not-allowed disabled:opacity-55 disabled:active:transform-none",
         size === "sm" ? "px-3 py-[7px] text-[10.5px]" : "px-4 py-3 text-[13px]",
         block && "w-full",
         BUTTON_TONES[tone],

@@ -3,6 +3,7 @@ import { getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/dictionaries";
 import { AppShell } from "@/components/shell/app-shell";
+import { PageTransition } from "@/components/shell/page-transition";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
 import { VendorTour } from "@/components/tour/tours";
@@ -42,8 +43,13 @@ export default async function VendorLayout({ children }: { children: React.React
         </div>
       )}
 
+      {/*
+        La transition enveloppe le contenu, jamais la navigation : la barre
+        d'onglets doit rester immobile pendant que l'écran change, sinon c'est
+        toute l'application qui semble sauter à chaque toucher.
+      */}
       <main id="contenu" className="flex min-h-0 flex-1 flex-col">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       <BottomNav variant="vendor" />

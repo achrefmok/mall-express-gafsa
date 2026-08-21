@@ -41,7 +41,7 @@ export function ProductCard({
   return (
     <Link
       href={`/produit/${product.id}`}
-      className="relative overflow-hidden rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] transition-transform active:scale-[0.985]"
+      className="relative overflow-hidden rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] press"
     >
       {discount !== null && (
         <span className="absolute start-2 top-2 z-10 rounded-[3px] bg-[var(--color-live)] px-[6px] py-[2px] text-[8px] font-bold text-white">
@@ -69,15 +69,29 @@ export function ProductCard({
           alt={product.name}
           className="block w-full cursor-zoom-in"
         >
-          <Image
-            src={cover}
-            alt={product.name}
-            width={200}
-            height={imageHeight}
-            sizes="(max-width: 520px) 50vw, 240px"
-            className="w-full object-cover"
-            style={{ height: imageHeight }}
-          />
+          {/*
+            Un cadre de hauteur fixe, et l'image le remplit.
+
+            La vignette recadre : elle occupe toute la largeur de la colonne,
+            sur une hauteur imposée, quel que soit le format de la photo
+            d'origine. L'écrire en `width` et `height` revenait à annoncer un
+            rapport de 200 × 110 que le rendu ne tenait jamais — la largeur
+            était étirée par la grille, la hauteur non —, et Next le signalait à
+            chaque image chargée. `fill` dit ce qui se passe réellement : le
+            cadre décide, l'image s'y ajuste.
+
+            Le `<span>` en bloc plutôt qu'un `<div>` : ce cadre vit dans le
+            bouton d'agrandissement, qui n'accepte pas de contenu de flux.
+          */}
+          <span className="relative block w-full" style={{ height: imageHeight }}>
+            <Image
+              src={cover}
+              alt={product.name}
+              fill
+              sizes="(max-width: 520px) 50vw, 240px"
+              className="fade-in-img object-cover"
+            />
+          </span>
         </ImageZoom>
       ) : (
         <Placeholder label="produit" className="w-full" style={{ height: imageHeight }} />

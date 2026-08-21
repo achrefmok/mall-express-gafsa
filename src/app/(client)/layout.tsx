@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getMyShop, getProfile } from "@/lib/queries";
 import { AppShell } from "@/components/shell/app-shell";
+import { PageTransition } from "@/components/shell/page-transition";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
 import { AccessNotice } from "@/components/shell/access-notice";
@@ -34,8 +35,13 @@ export default async function ClientLayout({ children }: { children: React.React
         </div>
       )}
 
+      {/*
+        La transition enveloppe le contenu, jamais la navigation : la barre
+        d'onglets doit rester immobile pendant que l'écran change, sinon c'est
+        toute l'application qui semble sauter à chaque toucher.
+      */}
       <main id="contenu" className="flex min-h-0 flex-1 flex-col">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       <BottomNav variant="client" />
