@@ -99,6 +99,10 @@ const fr = {
     views: "vues",
   },
 
+  welcome: {
+    tagline: "Les boutiques de Gafsa, dans votre poche.",
+  },
+
   home: {
     contextOpen: "Ouvert jusqu'à 22h · {n} boutiques actives",
     contextClosed: "Fermé · {n} boutiques référencées",
@@ -108,6 +112,8 @@ const fr = {
     notified: "Vous serez prévenu",
     sponsored: "Sponsorisé",
     sponsoredBadge: "SPONSORISÉ",
+    adsPause: "Mettre les publicités en pause",
+    adsResume: "Relancer les publicités",
     liveNow: "En direct maintenant",
     featured: "Sélection des boutiques à la une",
     promos: "Promotions du moment",
@@ -688,6 +694,10 @@ const ar: Dictionary = {
     views: "مشاهدة",
   },
 
+  welcome: {
+    tagline: "متاجر قفصة في جيبك.",
+  },
+
   home: {
     contextOpen: "مفتوح إلى 22:00 · {n} متجرًا نشطًا",
     contextClosed: "مغلق · {n} متجرًا مسجّلاً",
@@ -697,6 +707,8 @@ const ar: Dictionary = {
     notified: "سيتم إعلامك",
     sponsored: "إعلان",
     sponsoredBadge: "إعلان",
+    adsPause: "إيقاف الإعلانات مؤقتاً",
+    adsResume: "استئناف الإعلانات",
     liveNow: "مباشر الآن",
     featured: "مختارات من المتاجر المميّزة",
     promos: "عروض اللحظة",

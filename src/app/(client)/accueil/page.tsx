@@ -12,6 +12,7 @@ import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { NotifyLiveButton } from "@/components/live/notify-live-button";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
+import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
 import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
 import { LiveDot } from "@/components/ui/icons";
 import type { PracticalService } from "@/types/database";
@@ -44,9 +45,16 @@ export default async function HomePage() {
     getCategories(),
     getTopBarCounts(),
 
+    /*
+      La boutique est jointe pour son `slug`, pas pour son nom.
+
+      Le lien se construisait sur `shop_id`, alors que `/boutique/[slug]` attend
+      un slug : une publicité rattachée à une boutique menait donc à une page
+      introuvable. Le défaut ne se voyait pas, faute d'emplacement actif.
+    */
     supabase
       .from("sponsored_slots")
-      .select("*")
+      .select("*, shop:shops(slug, status)")
       .eq("is_active", true)
       .lte("starts_at", new Date().toISOString())
       .gte("ends_at", new Date().toISOString())
@@ -202,50 +210,15 @@ export default async function HomePage() {
           {next && <NotifyLiveButton liveId={next.id} />}
         </Card>
 
-        {/* ─── 1 · Sponsorisé ─────────────────────────────────────────── */}
-        {(sponsored.data ?? []).length > 0 && (
-          <section className="flex flex-col gap-2 px-4">
-            <SectionTitle>{t.home.sponsored}</SectionTitle>
-            <Rail>
-              {sponsored.data!.map((slot) => (
-                <Link
-                  key={slot.id}
-                  href={slot.link_url ?? (slot.shop_id ? `/boutique/${slot.shop_id}` : "#")}
-                  className="relative w-[260px] flex-none overflow-hidden rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]"
-                >
-                  <span className="absolute end-2 top-2 z-10 rounded-[3px] bg-[rgba(36,31,28,0.65)] px-[6px] py-[2px] text-[8px] tracking-[0.4px] text-white">
-                    {t.home.sponsoredBadge}
-                  </span>
-                  {slot.image_url ? (
-                    // Une bannière d'annonceur porte souvent un texte fin —
-                    // dates, conditions, adresse — illisible sur 96 pixels.
-                    <ImageZoom
-                      images={[slot.image_url]}
-                      alt={slot.title}
-                      className="block w-full cursor-zoom-in"
-                    >
-                      <Image
-                        src={slot.image_url}
-                        alt={slot.title}
-                        width={260}
-                        height={96}
-                        className="h-24 w-full object-cover"
-                      />
-                    </ImageZoom>
-                  ) : (
-                    <Placeholder label="bannière — annonceur" className="h-24 w-full" />
-                  )}
-                  <div className="p-[10px]">
-                    <p className="text-[11.5px] font-semibold text-[var(--color-ink)]">{slot.title}</p>
-                    {slot.subtitle && (
-                      <p className="text-[10.5px] text-[var(--color-muted)]">{slot.subtitle}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </Rail>
-          </section>
-        )}
+        {/*
+          ─── 1 · Sponsorisé ──────────────────────────────────────────
+
+          Une bannière pleine largeur que l'on fait glisser du doigt, et non
+          plus une vignette de 96 pixels avec titre, sous-titre et cadre. Un
+          annonceur qui paie une mise en avant n'achète pas une fiche de plus
+          dans une liste : il achète une image qu'on regarde.
+        */}
+        <SponsoredCarousel slots={(sponsored.data ?? []) as SponsoredSlot[]} />
 
         {/*
           ─── 2 · En direct maintenant, ou la sélection ─────────────────
@@ -256,18 +229,34 @@ export default async function HomePage() {
           boutiques mises en avant ont à vendre.
         */}
         {!anyLive && highlights.length > 0 && (
-          <section className="flex flex-col gap-2 px-4">
-            <div className="flex items-baseline justify-between gap-3">
-              <SectionTitle>{t.home.featured}</SectionTitle>
-              <Link href="/marketplace" className="text-[10.5px] font-bold text-[var(--color-brand)]">
-                {t.common.seeAll}
-              </Link>
-            </div>
-            <div className="grid grid-cols-3 gap-[10px]">
-              {highlights.map((product) => (
-                <ProductCard key={product.id} product={product} locale={locale} imageHeight={92} />
+          <section className="flex flex-col gap-2">
+            <SectionTitle className="px-4">{t.home.featured}</SectionTitle>
+
+            {/*
+              Un rail que l'on fait glisser, et plus de « Tout voir ».
+
+              Une rangée qui déborde de l'écran se comprend sans qu'on
+              l'explique : c'est le geste que tout le monde connaît. Le lien
+              qu'on remplace ne servait qu'à réparer une grille de trois
+              vignettes qui n'en montrait que trois.
+            */}
+            <Rail gap={10} className="px-4">
+              {highlights.map((product, i) => (
+                /*
+                  Arrivée décalée de soixante millisecondes par carte. Assez pour
+                  que l'œil suive la rangée de gauche à droite, trop peu pour
+                  qu'on attende la dernière — au-delà de trois ou quatre cartes,
+                  un décalage devient une file d'attente.
+                */
+                <div
+                  key={product.id}
+                  className="enter-item w-[150px] flex-none"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <ProductCard product={product} locale={locale} imageHeight={112} />
+                </div>
               ))}
-            </div>
+            </Rail>
           </section>
         )}
 
@@ -415,21 +404,28 @@ export default async function HomePage() {
         )}
 
         {/* ─── 4 · Catégories ─────────────────────────────────────────── */}
-        <section className="flex flex-col gap-[10px] px-4">
-          <SectionTitle>{t.home.categories}</SectionTitle>
-          <div className="grid grid-cols-4 gap-[10px] lg:grid-cols-6">
-            {categories.slice(0, 7).map((category) => (
+        <section className="flex flex-col gap-[10px]">
+          <SectionTitle className="px-4">{t.home.categories}</SectionTitle>
+          {/*
+            Toutes les catégories sur un rail, et plus de tuile « Plus ».
+
+            La grille n'en montrait que sept sur douze, et renvoyait le reste
+            derrière un bouton. Faire glisser la rangée les donne toutes, sans
+            détour ni page intermédiaire.
+          */}
+          <Rail gap={10} className="px-4">
+            {categories.map((category) => (
+              <div key={category.id} className="w-[62px] flex-none">
               <CategoryTile
-                key={category.id}
                 hue={category.hue}
                 monogram={category.monogram}
                 slug={category.slug}
                 label={locale === "ar" ? category.name_ar : category.name_fr}
                 href={`/marketplace?categorie=${category.slug}`}
               />
+              </div>
             ))}
-            <CategoryTile hue={20} monogram="+" label={t.home.more} href="/marketplace" />
-          </div>
+          </Rail>
         </section>
 
         {/* ─── 5 · Services pratiques ─────────────────────────────────── */}
