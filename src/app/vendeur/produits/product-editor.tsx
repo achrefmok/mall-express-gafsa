@@ -136,7 +136,7 @@ export function ProductEditor({
                   type="button"
                   onClick={() => setImages((c) => c.filter((u) => u !== url))}
                   aria-label={t.common.delete}
-                  className="absolute end-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(36,31,46,0.7)] text-[9px] text-white"
+                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[11px] leading-none text-white"
                 >
                   ✕
                 </button>
