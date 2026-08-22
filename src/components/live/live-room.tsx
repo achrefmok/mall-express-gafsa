@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { createClient } from "@/lib/supabase/client";
 import { postLiveComment, reportViewerCount, toggleLiveLike } from "@/app/actions/lives";
 import { placeOrder } from "@/app/actions/cart";
@@ -364,16 +364,16 @@ export function LiveRoom({
               porter l'information, puisque le lecteur n'affiche alors rien.
             */
             live.source !== "facebook" && (
-              <span className="rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px]">
+              <span className="rounded-[4px] bg-[var(--color-live-fill)] px-[9px] py-1 text-[0.625rem] font-bold tracking-[0.03125rem]">
                 {t.live.onAir}
               </span>
             )
           ) : (
-            <span className="rounded-[4px] bg-white/20 px-[9px] py-1 text-[10px] font-bold">
+            <span className="rounded-[4px] bg-white/20 px-[9px] py-1 text-[0.625rem] font-bold">
               {live.status === "scheduled" ? t.live.scheduled : t.live.ended}
             </span>
           )}
-          <span className="rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px]">
+          <span className="rounded-[12px] bg-black/50 px-[9px] py-1 text-[0.625rem]">
             {format(t.live.viewers, { n: formatCount(Math.max(viewers, live.viewers_count)) })}
           </span>
         </div>
@@ -385,7 +385,7 @@ export function LiveRoom({
               onClick={() => void toggleImmersive()}
               aria-label={immersive ? t.live.exitImmersive : t.live.immersive}
               aria-pressed={immersive}
-              className="pointer-events-auto rounded-full bg-black/40 px-3 py-2 text-[11px] font-semibold"
+              className="pointer-events-auto rounded-full bg-black/40 px-3 py-2 text-[0.6875rem] font-semibold"
             >
               {immersive ? "⤡" : "⤢"}
             </button>
@@ -406,7 +406,7 @@ export function LiveRoom({
       {offerActive && (
         <div className="absolute bottom-[192px] start-[14px] end-[70px] z-20 flex items-center gap-[9px] rounded-[14px] bg-black/50 p-[8px_11px]">
           {remaining !== null && (
-            <span className="flex-none rounded-[9px] bg-[var(--color-live)] px-[7px] py-[3px] text-[10px] font-bold tabular-nums">
+            <span className="flex-none rounded-[9px] bg-[var(--color-live-fill)] px-[7px] py-[3px] text-[0.625rem] font-bold tabular-nums">
               {countdown(remaining)}
             </span>
           )}
@@ -416,7 +416,7 @@ export function LiveRoom({
                 <div className="h-full bg-white transition-[width]" style={{ width: `${progress}%` }} />
               </div>
             )}
-            <p className="mt-1 truncate text-[9.5px] text-white/85">
+            <p className="mt-1 truncate text-[0.59375rem] text-white/85">
               {format(t.live.livePrice, {
                 n: live.live_percent_off ?? 0,
                 buyers: live.purchases_count,
@@ -441,11 +441,11 @@ export function LiveRoom({
           )}
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-semibold text-[var(--color-ink)]">{pinned.name}</p>
-            <p className="text-[12px] font-bold text-[var(--color-brand)]">
+            <p className="truncate text-[0.6875rem] font-semibold text-[var(--color-ink)]">{pinned.name}</p>
+            <p className="text-[0.75rem] font-bold text-[var(--color-brand)]">
               {formatPrice(livePrice, locale)}
               {offerActive && live.live_percent_off && (
-                <span className="ms-[6px] text-[10px] font-normal text-[var(--color-faint)] line-through">
+                <span className="ms-[6px] text-[0.625rem] font-normal text-[var(--color-faint)] line-through">
                   {formatPrice(pinned.price, locale)}
                 </span>
               )}
@@ -456,7 +456,7 @@ export function LiveRoom({
             type="button"
             onClick={onBuy}
             disabled={buying || pinned.stock <= 0 || live.status !== "live"}
-            className="flex-none rounded-[14px] bg-[var(--color-brand)] px-3 py-[7px] text-[10px] font-semibold text-white disabled:opacity-55"
+            className="flex-none rounded-[14px] bg-[var(--color-brand-fill)] px-3 py-[7px] text-[0.625rem] font-semibold text-white disabled:opacity-55"
           >
             {pinned.stock <= 0 ? t.product.outOfStock : buying ? "…" : t.live.buy}
           </button>
@@ -476,17 +476,17 @@ export function LiveRoom({
       <div className="absolute bottom-[34px] end-[14px] z-20 flex w-[52px] flex-col items-center gap-[14px]">
         <button type="button" onClick={onLike} className="flex flex-col items-center" aria-pressed={liked}>
           <HeartIcon size={22} filled={liked} className={liked ? "text-[var(--color-live)]" : ""} />
-          <span className="text-[9px]">{formatCount(likes)}</span>
+          <span className="text-[0.5625rem]">{formatCount(likes)}</span>
         </button>
 
         <div className="flex flex-col items-center" aria-hidden>
           <ChatIcon size={21} />
-          <span className="text-[9px]">{formatCount(comments.length)}</span>
+          <span className="text-[0.5625rem]">{formatCount(comments.length)}</span>
         </div>
 
         <button type="button" onClick={onShare} className="flex flex-col items-center">
           <ShareIcon size={21} />
-          <span className="text-[9px]">{t.common.share}</span>
+          <span className="text-[0.5625rem]">{t.common.share}</span>
         </button>
       </div>
 
@@ -496,7 +496,7 @@ export function LiveRoom({
           {comments.slice(-12).map((comment) => (
             <p
               key={comment.id}
-              className="w-fit max-w-full rounded-[10px] bg-black/35 px-[9px] py-1 text-[11px]"
+              className="w-fit max-w-full rounded-[10px] bg-black/35 px-[9px] py-1 text-[0.6875rem]"
             >
               <b>{shortName(comment.author) || "…"}:</b> {comment.body}
             </p>
@@ -512,12 +512,12 @@ export function LiveRoom({
               maxLength={500}
               placeholder={t.live.writeComment}
               aria-label={t.live.writeComment}
-              className="min-w-0 flex-1 rounded-[14px] bg-black/45 px-3 py-2 text-[11px] text-white outline-none placeholder:text-white/55 focus:bg-black/60"
+              className="min-w-0 flex-1 rounded-[14px] bg-black/45 px-3 py-2 text-[0.6875rem] text-white outline-none placeholder:text-white/55 focus:bg-black/60"
             />
             <button
               type="submit"
               disabled={!draft.trim()}
-              className="flex-none rounded-[14px] bg-[var(--color-brand)] px-3 py-2 text-[10px] font-bold disabled:opacity-40"
+              className="flex-none rounded-[14px] bg-[var(--color-brand-fill)] px-3 py-2 text-[0.625rem] font-bold disabled:opacity-40"
             >
               {t.live.send}
             </button>
@@ -530,8 +530,8 @@ export function LiveRoom({
           role="status"
           onAnimationEnd={() => setTimeout(() => setToast(null), 2400)}
           className={cx(
-            "animate-slide-up absolute bottom-[240px] start-1/2 z-30 -translate-x-1/2 rounded-[14px] px-4 py-2 text-[11.5px] font-bold rtl:translate-x-1/2",
-            toast.kind === "ok" ? "bg-[var(--color-brand)] text-white" : "bg-[var(--color-live)] text-white",
+            "animate-slide-up absolute bottom-[240px] start-1/2 z-30 -translate-x-1/2 rounded-[14px] px-4 py-2 text-[0.71875rem] font-bold rtl:translate-x-1/2",
+            toast.kind === "ok" ? "bg-[var(--color-brand-fill)] text-white" : "bg-[var(--color-live-fill)] text-white",
           )}
         >
           {toast.message}

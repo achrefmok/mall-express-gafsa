@@ -67,7 +67,7 @@ function OfflineBanner() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 top-0 z-[60] bg-[var(--color-ink)] px-4 py-2 text-center text-[11px] font-semibold text-white"
+      className="fixed inset-x-0 top-0 z-[60] bg-[var(--color-ink)] px-4 py-2 text-center text-[0.6875rem] font-semibold text-[var(--color-app)]"
     >
       {t.common.offline}
     </div>
@@ -131,10 +131,10 @@ function InstallPrompt() {
     <div className="pb-safe fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[520px] p-3">
       <div className="animate-slide-up flex items-center gap-3 rounded-[18px] bg-[image:var(--gradient-brand)] p-3 text-white shadow-[0_10px_30px_rgba(60,40,90,0.28)]">
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-bold">
+          <p className="text-[0.75rem] font-bold">
             {t.brand.first} {t.brand.second}
           </p>
-          <p className="text-[10.5px] opacity-85">{t.install.bannerBody}</p>
+          <p className="text-[0.65625rem] opacity-85">{t.install.bannerBody}</p>
         </div>
 
         <button
@@ -143,16 +143,22 @@ function InstallPrompt() {
             void install();
             dismiss();
           }}
-          className="flex-none rounded-[13px] bg-white px-3 py-[7px] text-[10.5px] font-bold text-[var(--color-ink)]"
+          className="flex-none rounded-[13px] bg-white px-3 py-[7px] text-[0.65625rem] font-bold text-[var(--color-on-light)]"
         >
           {t.install.action}
         </button>
 
+        {/*
+          Vingt-et-un pixels de large, collés au bouton « Installer » : manquer
+          la croix revenait à déclencher l'installation, l'action exactement
+          contraire à celle voulue — et la bannière s'affiche sur toutes les
+          pages. Trente-deux pixels, et un écart franc entre les deux commandes.
+        */}
         <button
           type="button"
           onClick={dismiss}
           aria-label={t.common.close}
-          className="flex-none p-1 text-[16px] leading-none opacity-70"
+          className="-me-1 flex h-8 w-8 flex-none items-center justify-center text-[1rem] leading-none opacity-70"
         >
           ✕
         </button>

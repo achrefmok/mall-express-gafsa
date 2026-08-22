@@ -119,9 +119,9 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
 
       {overlay && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#221c2b]/90 px-10 text-center">
-          <p className="text-[13px] font-bold text-white">{overlay.title}</p>
+          <p className="text-[0.8125rem] font-bold text-white">{overlay.title}</p>
           {overlay.body && (
-            <p className="text-[11px] leading-relaxed text-white/65">{overlay.body}</p>
+            <p className="text-[0.6875rem] leading-relaxed text-white/65">{overlay.body}</p>
           )}
         </div>
       )}
@@ -133,10 +133,10 @@ function CameraViewer({ liveId, isLive }: { liveId: string; isLive: boolean }) {
           onClick={() => void tryPlay()}
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/95 text-[22px] text-[var(--color-brand)]">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/95 text-[1.375rem] text-[var(--color-brand)]">
             ▶
           </span>
-          <span className="text-[12px] font-bold text-white">{t.live.tapToPlay}</span>
+          <span className="text-[0.75rem] font-bold text-white">{t.live.tapToPlay}</span>
         </button>
       )}
     </div>
@@ -363,7 +363,7 @@ function FacebookRelay({ url }: { url: string }) {
       */}
       {showHint && (
         <div className="pointer-events-none absolute inset-x-0 top-[58%] flex justify-center px-6">
-          <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[11px] font-semibold text-white">
+          <span className="rounded-[12px] bg-black/70 px-3 py-[6px] text-center text-[0.6875rem] font-semibold text-white">
             {onIOS ? t.live.tapFullscreenToPlay : t.live.tapToPlay}
           </span>
         </div>
@@ -379,7 +379,7 @@ function FacebookRelay({ url }: { url: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute start-1/2 top-[52px] z-30 -translate-x-1/2 rounded-[10px] bg-black/55 px-3 py-1 text-[9.5px] font-semibold text-white rtl:translate-x-1/2"
+        className="absolute start-1/2 top-[52px] z-30 -translate-x-1/2 rounded-[10px] bg-black/55 px-3 py-1 text-[0.59375rem] font-semibold text-white rtl:translate-x-1/2"
       >
         {t.live.openOnFacebook}
       </a>
@@ -413,12 +413,12 @@ function HlsPlayer({ url }: { url: string }) {
       <video ref={videoRef} playsInline autoPlay muted controls className="h-full w-full object-contain" />
       {!supported && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#221c2b]/90 px-10 text-center">
-          <p className="text-[13px] font-bold text-white">Lecture non prise en charge</p>
+          <p className="text-[0.8125rem] font-bold text-white">Lecture non prise en charge</p>
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-[12px] bg-white/15 px-3 py-2 text-[11px] font-semibold text-white"
+            className="rounded-[12px] bg-white/15 px-3 py-2 text-[0.6875rem] font-semibold text-white"
           >
             Ouvrir le flux
           </a>

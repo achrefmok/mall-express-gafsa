@@ -26,12 +26,12 @@ export default function DataDeletionPage() {
     <div className="min-h-dvh bg-[var(--color-workshop)]">
       <header className="border-b border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[820px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
-          <Link href="/" className="text-[15px] font-bold text-[var(--color-ink)]">
+          <Link href="/" className="text-[0.9375rem] font-bold text-[var(--color-ink)]">
             Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
           </Link>
           <Link
             href="/confidentialite"
-            className="text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+            className="-my-1 py-1 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
           >
             Confidentialité
           </Link>
@@ -39,11 +39,11 @@ export default function DataDeletionPage() {
       </header>
 
       <main id="contenu" className="mx-auto max-w-[820px] px-5 py-12 lg:px-8 lg:py-16">
-        <h1 className="text-[28px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+        <h1 className="text-[1.75rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
           Supprimer mes données
         </h1>
 
-        <p className="mt-4 text-[14px] leading-[1.7] text-[var(--color-muted)]">
+        <p className="mt-4 text-[0.875rem] leading-[1.7] text-[var(--color-muted)]">
           Trois demandes distinctes, selon ce que vous voulez effacer.
         </p>
 
@@ -126,8 +126,8 @@ export default function DataDeletionPage() {
           </Step>
         </div>
 
-        <div className="mt-10 rounded-[18px] border border-[var(--color-outline)] bg-white/60 p-5">
-          <p className="text-[13px] leading-[1.65] text-[var(--color-muted)]">
+        <div className="mt-10 rounded-[18px] border border-[var(--color-outline)] bg-[var(--color-field)] p-5">
+          <p className="text-[0.8125rem] leading-[1.65] text-[var(--color-muted)]">
             Une suppression est définitive : ni les données ni le compte ne peuvent
             être rétablis. {OPERATOR.name} confirme chaque suppression par écrit.
           </p>
@@ -143,7 +143,7 @@ export default function DataDeletionPage() {
               <Link
                 key={href}
                 href={href}
-                className="text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+                className="-my-1 py-1 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
               >
                 {label}
               </Link>
@@ -170,18 +170,18 @@ function Step({
   return (
     <section className="card flex flex-col gap-3 p-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
           {number}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[16px] font-bold text-[var(--color-ink)]">{title}</h2>
-          <p className="mt-[2px] text-[11px] font-semibold text-[var(--color-brand)]">
+          <h2 className="text-[1rem] font-bold text-[var(--color-ink)]">{title}</h2>
+          <p className="mt-[2px] text-[0.6875rem] font-semibold text-[var(--color-brand)]">
             {immediate ? "Immédiat, par vous-même" : "Sous 30 jours, sur demande"}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 text-[13.5px] leading-[1.7] text-[var(--color-muted)]">
+      <div className="flex flex-col gap-3 text-[0.84375rem] leading-[1.7] text-[var(--color-muted)]">
         {children}
       </div>
     </section>

@@ -65,7 +65,7 @@ export function DealVoteBar({
   return (
     <>
       {notice && (
-        <p role="status" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+        <p role="status" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
           {notice}
         </p>
       )}
@@ -76,9 +76,9 @@ export function DealVoteBar({
           onClick={() => cast(1)}
           aria-pressed={vote === 1}
           className={cx(
-            "flex items-center gap-[5px] rounded-[12px] px-3 py-2 text-[11px] font-bold transition-colors",
+            "flex items-center gap-[5px] rounded-[12px] px-3 py-2 text-[0.6875rem] font-bold transition-colors",
             vote === 1
-              ? "bg-[var(--color-brand)] text-white"
+              ? "bg-[var(--color-brand-fill)] text-white"
               : "bg-[var(--color-brand-tint)] text-[var(--color-brand)]",
           )}
         >
@@ -92,7 +92,7 @@ export function DealVoteBar({
           aria-pressed={vote === -1}
           aria-label={`${t.deals.worksLabel} — non`}
           className={cx(
-            "flex items-center gap-[5px] text-[11px]",
+            "flex items-center gap-[5px] text-[0.6875rem]",
             vote === -1 ? "font-bold text-[var(--color-live)]" : "text-[var(--color-muted)]",
           )}
         >
@@ -113,7 +113,7 @@ export function DealVoteBar({
               setReported(true);
             });
           }}
-          className="ms-auto text-[10.5px] font-bold text-[var(--color-muted)] disabled:opacity-60"
+          className="ms-auto text-[0.65625rem] font-bold text-[var(--color-muted)] disabled:opacity-60"
         >
           {reported ? t.deals.reported : t.deals.report}
         </button>

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { fullName, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Avatar, Card } from "@/components/ui/primitives";
@@ -90,12 +90,12 @@ export default async function ProfilePage() {
           src={profile.avatar_url}
           initials={monogram(profile.first_name, profile.last_name)}
           size={74}
-          className="bg-[var(--color-ink)]"
+          tone="ink"
         />
-        <p className="text-[18px] font-semibold text-[var(--color-ink)]">{fullName(profile) || "—"}</p>
-        <p className="text-[11px] text-[var(--color-muted)]">{profile.city ?? "Gafsa"}, Tunisie</p>
+        <p className="text-[1.125rem] font-semibold text-[var(--color-ink)]">{fullName(profile) || "—"}</p>
+        <p className="text-[0.6875rem] text-[var(--color-muted)]">{profile.city ?? "Gafsa"}, Tunisie</p>
 
-        <div className="mt-[6px] flex gap-6 text-[11px] text-[var(--color-muted)]">
+        <div className="mt-[6px] flex gap-6 text-[0.6875rem] text-[var(--color-muted)]">
           <span>
             <b className="text-[var(--color-ink)]">{orders.count ?? 0}</b> {t.account.purchases}
           </span>
@@ -112,13 +112,13 @@ export default async function ProfilePage() {
         {/* ─── Carte de fidélité ──────────────────────────────────────── */}
         <div className="flex flex-none flex-col gap-2 rounded-[18px] bg-[image:var(--gradient-brand)] p-3 text-white">
           <div className="flex items-baseline justify-between">
-            <p className="text-[11.5px] font-bold">{t.account.loyaltyCard}</p>
-            <p className="text-[10.5px] opacity-80">{t.account[tier.key]}</p>
+            <p className="text-[0.71875rem] font-bold">{t.account.loyaltyCard}</p>
+            <p className="text-[0.65625rem] opacity-80">{t.account[tier.key]}</p>
           </div>
           <div className="h-[5px] overflow-hidden rounded-[3px] bg-white/25">
             <div className="h-full bg-white" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-[10px] opacity-85">
+          <p className="text-[0.625rem] opacity-85">
             {nextTier
               ? format(t.account.pointsProgress, {
                   current: points,
@@ -132,12 +132,12 @@ export default async function ProfilePage() {
 
         {/* ─── Parrainage ─────────────────────────────────────────────── */}
         <Card className="flex flex-none items-center gap-[10px] p-3">
-          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
             +2
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.account.referTitle}</p>
-            <p className="text-[10.5px] text-[var(--color-muted)]">{t.account.referBody}</p>
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.account.referTitle}</p>
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.account.referBody}</p>
           </div>
           <InviteButton code={profile.referral_code ?? ""} />
         </Card>
@@ -146,18 +146,18 @@ export default async function ProfilePage() {
         {profile.role === "vendor" && (
           <Link
             href="/vendeur"
-            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-brand)] p-3 text-white"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-brand-fill)] p-3 text-white"
           >
-            <span className="flex-1 text-[12.5px] font-bold">{t.account.vendorSpace}</span>
+            <span className="flex-1 text-[0.78125rem] font-bold">{t.account.vendorSpace}</span>
             <ChevronRightIcon size={14} />
           </Link>
         )}
         {profile.role === "admin" && (
           <Link
             href="/admin"
-            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-ink)] p-3 text-white"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-ink)] p-3 text-[var(--color-app)]"
           >
-            <span className="flex-1 text-[12.5px] font-bold">{t.account.adminSpace}</span>
+            <span className="flex-1 text-[0.78125rem] font-bold">{t.account.adminSpace}</span>
             <ChevronRightIcon size={14} />
           </Link>
         )}
@@ -166,7 +166,7 @@ export default async function ProfilePage() {
             href={vendorSignUpUrl ?? "/inscription?role=vendeur"}
             className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-outline)] p-3 text-[var(--color-ink)]"
           >
-            <span className="flex-1 text-[12.5px] font-semibold">{t.account.becomeVendor}</span>
+            <span className="flex-1 text-[0.78125rem] font-semibold">{t.account.becomeVendor}</span>
             <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
           </Link>
         )}
@@ -178,10 +178,10 @@ export default async function ProfilePage() {
             href={row.href}
             className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
           >
-            <span className="w-6 flex-none text-[16px] font-semibold tracking-[0.5px] text-[var(--color-brand)]">
+            <span className="w-6 flex-none text-[1rem] font-semibold tracking-[0.03125rem] text-[var(--color-brand)]">
               {row.monogram}
             </span>
-            <span className="flex-1 text-[12.5px] font-semibold text-[var(--color-ink)]">{row.label}</span>
+            <span className="flex-1 text-[0.78125rem] font-semibold text-[var(--color-ink)]">{row.label}</span>
             <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
           </Link>
         ))}

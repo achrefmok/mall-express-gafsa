@@ -11,8 +11,8 @@ import { cx } from "@/lib/format";
 export function AccessibilityBar() {
   const { t, textScale, locale, simplified, cycleTextScale, setLocale, toggleSimplified } = useI18n();
 
-  const chip = "flex-none whitespace-nowrap rounded-[14px] px-3 py-[6px] text-[10.5px] font-bold";
-  const on = "bg-[var(--color-brand)] text-white";
+  const chip = "flex-none whitespace-nowrap rounded-[14px] px-3 py-[6px] text-[0.65625rem] font-bold";
+  const on = "bg-[var(--color-brand-fill)] text-white";
   const off = "bg-[var(--color-brand-tint)] text-[var(--color-brand)]";
 
   return (
@@ -23,7 +23,7 @@ export function AccessibilityBar() {
         aria-pressed={textScale !== "normal"}
         className={cx(chip, "flex items-center gap-[6px]", textScale !== "normal" ? on : off)}
       >
-        <span aria-hidden className="text-[13px] leading-none">
+        <span aria-hidden className="text-[0.8125rem] leading-none">
           A
         </span>
         {t.a11y.biggerText}

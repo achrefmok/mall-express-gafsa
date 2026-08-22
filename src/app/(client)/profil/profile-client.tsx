@@ -30,7 +30,7 @@ export function InviteButton({ code }: { code: string }) {
       type="button"
       onClick={onInvite}
       disabled={!code}
-      className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand)] px-[11px] py-[6px] text-[10px] font-bold text-white disabled:opacity-50"
+      className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand-fill)] px-[11px] py-[6px] text-[0.625rem] font-bold text-white disabled:opacity-50"
     >
       {copied ? t.account.inviteCopied : t.account.invite}
     </button>
@@ -44,7 +44,7 @@ export function SignOutButton() {
     <form action={signOut} className="pt-2">
       <button
         type="submit"
-        className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[12px] font-semibold text-[var(--color-live)]"
+        className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[0.75rem] font-semibold text-[var(--color-live)]"
       >
         {t.account.signOut}
       </button>

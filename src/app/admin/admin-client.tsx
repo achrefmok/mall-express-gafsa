@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { approveShop, deactivateCityAlert, publishCityAlert, rejectShop } from "@/app/actions/admin";
 import { moderateDeal } from "@/app/actions/deals";
 import { cx } from "@/lib/format";
-import { Button, Card, Divider, KeyValueRow, Placeholder, SectionTitle } from "@/components/ui/primitives";
+import { Button, Card, Divider, KeyValueRow, Placeholder, SectionTitle, fieldClass } from "@/components/ui/primitives";
 
 /* ─── Boutique en attente ──────────────────────────────────────────────── */
 
@@ -61,19 +61,19 @@ export function PendingShopRow({
     <Card className="flex flex-none flex-col gap-2 p-[11px]">
       <div className="flex items-center gap-[10px]">
         <span
-          className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold"
+          className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[0.6875rem] font-bold"
           style={{ "--hue": shop.hue } as React.CSSProperties}
         >
           {shop.monogram}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">{shop.name}</p>
-          <p className="truncate text-[10px] text-[var(--color-muted)]">
+          <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">{shop.name}</p>
+          <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
             {format(t.admin.submittedAgo, { when: shop.submittedAgo, n: shop.productCount })}
           </p>
           {shop.missingDocument && (
-            <p className="text-[10px] font-semibold text-[var(--color-live)]">
+            <p className="text-[0.625rem] font-semibold text-[var(--color-live)]">
               {format(t.vendor.missingDoc, { doc: shop.missingDocument })}
             </p>
           )}
@@ -84,14 +84,14 @@ export function PendingShopRow({
             type="button"
             onClick={onApprove}
             disabled={pending}
-            className="rounded-[12px] bg-[var(--color-brand)] px-[10px] py-[6px] text-[10px] font-bold text-white disabled:opacity-50"
+            className="rounded-[12px] bg-[var(--color-brand-fill)] px-[10px] py-[6px] text-[0.625rem] font-bold text-white disabled:opacity-50"
           >
             {t.admin.approve}
           </button>
           <button
             type="button"
             onClick={() => setAsking((v) => !v)}
-            className="rounded-[12px] border border-[var(--color-outline)] px-[9px] py-[6px] text-[10px] font-bold text-[var(--color-muted)]"
+            className="rounded-[12px] border border-[var(--color-outline)] px-[9px] py-[6px] text-[0.625rem] font-bold text-[var(--color-muted)]"
           >
             {shop.missingDocument ? t.admin.remind : t.common.see}
           </button>
@@ -105,14 +105,14 @@ export function PendingShopRow({
             onChange={(event) => setDocument(event.target.value)}
             placeholder={t.admin.askMissingDoc}
             aria-label={t.admin.askMissingDoc}
-            className="rounded-[10px] border border-[var(--color-outline)] bg-white px-2 py-[6px] text-[11px] outline-none"
+            className="rounded-[10px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-2 py-[6px] text-[0.6875rem] outline-none"
           />
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             placeholder={t.admin.rejectReason}
             aria-label={t.admin.rejectReason}
-            className="rounded-[10px] border border-[var(--color-outline)] bg-white px-2 py-[6px] text-[11px] outline-none"
+            className="rounded-[10px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-2 py-[6px] text-[0.6875rem] outline-none"
           />
           <div className="flex gap-2">
             <Button size="sm" onClick={onAskDocument} disabled={pending} className="flex-1">
@@ -120,7 +120,7 @@ export function PendingShopRow({
             </Button>
             <Link
               href={`/boutique/${shop.slug}`}
-              className="flex-1 rounded-[16px] border border-[var(--color-outline)] py-[7px] text-center text-[10.5px] font-semibold text-[var(--color-muted)]"
+              className="flex-1 rounded-[16px] border border-[var(--color-outline)] py-[7px] text-center text-[0.65625rem] font-semibold text-[var(--color-muted)]"
             >
               {t.common.see}
             </Link>
@@ -129,7 +129,7 @@ export function PendingShopRow({
       )}
 
       {error && (
-        <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
@@ -162,8 +162,8 @@ export function ReportRow({
       <Placeholder className="h-9 w-9 flex-none" rounded="thumb" />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">{report.title}</p>
-        <p className="truncate text-[10px] text-[var(--color-muted)]">{report.subtitle}</p>
+        <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">{report.title}</p>
+        <p className="truncate text-[0.625rem] text-[var(--color-muted)]">{report.subtitle}</p>
       </div>
 
       <div className="flex flex-none gap-[6px]">
@@ -171,7 +171,7 @@ export function ReportRow({
           type="button"
           onClick={() => decide("remove")}
           disabled={pending}
-          className="rounded-[12px] bg-[var(--color-live)] px-[10px] py-[6px] text-[10px] font-bold text-white disabled:opacity-50"
+          className="rounded-[12px] bg-[var(--color-live-fill)] px-[10px] py-[6px] text-[0.625rem] font-bold text-white disabled:opacity-50"
         >
           {t.admin.remove}
         </button>
@@ -179,7 +179,7 @@ export function ReportRow({
           type="button"
           onClick={() => decide("keep")}
           disabled={pending}
-          className="rounded-[12px] border border-[var(--color-outline)] px-[9px] py-[6px] text-[10px] font-bold text-[var(--color-muted)] disabled:opacity-50"
+          className="rounded-[12px] border border-[var(--color-outline)] px-[9px] py-[6px] text-[0.625rem] font-bold text-[var(--color-muted)] disabled:opacity-50"
         >
           {t.admin.keep}
         </button>
@@ -268,7 +268,7 @@ export function SteeringPanel({
   }
 
   const field =
-    "w-full rounded-[10px] border border-[var(--color-outline)] bg-white px-2 py-[7px] text-[11px] outline-none focus:border-[var(--color-brand)]";
+    fieldClass({ size: "xs", solid: true });
 
   return (
     <section className="flex flex-none flex-col gap-2">
@@ -360,7 +360,7 @@ export function SteeringPanel({
             </div>
 
             {error && (
-              <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+              <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
                 {error}
               </p>
             )}
@@ -374,7 +374,7 @@ export function SteeringPanel({
         {activeAlerts.length > 0 && (
           <div className="flex flex-col gap-1">
             {activeAlerts.map((alert) => (
-              <div key={alert.id} className="flex items-center gap-2 text-[10.5px]">
+              <div key={alert.id} className="flex items-center gap-2 text-[0.65625rem]">
                 <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">{alert.title}</span>
                 <button
                   type="button"

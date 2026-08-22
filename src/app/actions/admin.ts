@@ -174,6 +174,8 @@ export async function upsertCategory(input: {
   monogram: string;
   sortOrder?: number;
   isActive?: boolean;
+  /** Photo carrée de la catégorie. `null` retire celle en place. */
+  imageUrl?: string | null;
 }) {
   const { supabase, profile, error } = await requireAdmin();
   if (!profile) return fail(error);
@@ -191,6 +193,14 @@ export async function upsertCategory(input: {
     monogram: input.monogram.toUpperCase(),
     sort_order: input.sortOrder ?? 0,
     is_active: input.isActive ?? true,
+    /*
+      `undefined` laisse la photo en place, `null` l'efface.
+
+      Sans cette distinction, enregistrer un simple changement de teinte
+      effacerait l'image de la catégorie : le formulaire de création ne la
+      transporte pas, et un `?? null` l'aurait donc écrasée à chaque fois.
+    */
+    ...(input.imageUrl !== undefined && { image_url: input.imageUrl }),
   };
 
   const query = input.id

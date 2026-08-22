@@ -127,21 +127,21 @@ export function FacebookLink({
 
       <Card className="flex flex-col gap-3 p-3">
         {!configured ? (
-          <p className="text-[11.5px] leading-[1.55] text-[var(--color-muted)]">
+          <p className="text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]">
             Le relais Facebook n&apos;est pas encore configuré sur ce site.
             L&apos;administration doit renseigner l&apos;application Meta.
           </p>
         ) : status ? (
           <>
             <div className="flex items-start gap-[10px]">
-              <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[12px] font-bold text-[var(--color-brand)]">
+              <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.75rem] font-bold text-[var(--color-brand)]">
                 FB
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+                <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
                   {status.pageName}
                 </p>
-                <p className="text-[10.5px] text-[var(--color-muted)]">
+                <p className="text-[0.65625rem] text-[var(--color-muted)]">
                   Reliée le {formatDateTime(status.connectedAt, locale)}
                 </p>
               </div>
@@ -149,7 +149,7 @@ export function FacebookLink({
 
             <p
               className={cx(
-                "rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-2 text-[10.5px] leading-[1.5] text-[var(--color-ink)]",
+                "rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-2 text-[0.65625rem] leading-[1.5] text-[var(--color-ink)]",
               )}
             >
               {status.isSubscribed
@@ -158,13 +158,13 @@ export function FacebookLink({
             </p>
 
             {status.lastCheckedAt && (
-              <p className="text-[9.5px] text-[var(--color-muted)]">
+              <p className="text-[0.59375rem] text-[var(--color-muted)]">
                 Dernière vérification : {formatDateTime(status.lastCheckedAt, locale)}
               </p>
             )}
 
             {status.lastError && (
-              <p className="text-[10px] leading-[1.45] text-[var(--color-live)]">
+              <p className="text-[0.625rem] leading-[1.45] text-[var(--color-live)]">
                 {status.lastError}
               </p>
             )}
@@ -211,7 +211,7 @@ export function FacebookLink({
           </>
         ) : (
           <>
-            <p className="text-[11.5px] leading-[1.55] text-[var(--color-muted)]">
+            <p className="text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]">
               Reliez la page Facebook de votre boutique. Ensuite, il suffira de
               lancer votre direct depuis Facebook comme d&apos;habitude : il
               s&apos;affichera ici automatiquement, avec les commentaires, les
@@ -220,22 +220,22 @@ export function FacebookLink({
 
             <a
               href="/api/facebook/connect"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[16px] bg-[var(--color-brand)] px-4 text-[12.5px] font-bold text-white"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[16px] bg-[var(--color-brand-fill)] px-4 text-[0.78125rem] font-bold text-white"
             >
               Connecter ma page Facebook
             </a>
 
-            <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+            <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
               Nous lisons uniquement la liste de vos pages et leurs directs.
               Aucune publication n&apos;est faite en votre nom.
             </p>
 
             {noPage && (
               <div className="flex flex-col gap-3 rounded-[16px] bg-[var(--color-brand-tint)] p-3">
-                <p className="text-[11.5px] font-bold text-[var(--color-ink)]">
+                <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
                   Votre compte Facebook n&apos;administre aucune page
                 </p>
-                <p className="text-[11px] leading-[1.55] text-[var(--color-muted)]">
+                <p className="text-[0.6875rem] leading-[1.55] text-[var(--color-muted)]">
                   La reprise automatique lit les directs d&apos;une{" "}
                   <strong>page</strong> ; Facebook ne l&apos;autorise pas pour un
                   profil personnel. Deux chemins s&apos;offrent à vous.
@@ -243,10 +243,10 @@ export function FacebookLink({
 
                 <ol className="flex flex-col gap-[10px]">
                   <li className="flex gap-[10px]">
-                    <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--color-brand)]">
+                    <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-[0.6875rem] font-bold text-[var(--color-brand)]">
                       1
                     </span>
-                    <span className="text-[11px] leading-[1.55] text-[var(--color-ink)]">
+                    <span className="text-[0.6875rem] leading-[1.55] text-[var(--color-ink)]">
                       <strong>Créer une page</strong> pour votre boutique — gratuit,
                       deux minutes, et c&apos;est de toute façon ce que cherchent vos
                       clients sur Facebook. Revenez ensuite ici.
@@ -262,10 +262,10 @@ export function FacebookLink({
                   </li>
 
                   <li className="flex gap-[10px]">
-                    <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--color-brand)]">
+                    <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-[0.6875rem] font-bold text-[var(--color-brand)]">
                       2
                     </span>
-                    <span className="text-[11px] leading-[1.55] text-[var(--color-ink)]">
+                    <span className="text-[0.6875rem] leading-[1.55] text-[var(--color-ink)]">
                       <strong>Garder votre profil</strong> et coller le lien à chaque
                       direct. Cela marche dès maintenant, à condition que la vidéo
                       soit <strong>publique</strong>.
@@ -287,7 +287,7 @@ export function FacebookLink({
           <p
             role="status"
             className={cx(
-              "text-[11px] leading-[1.5] font-semibold",
+              "text-[0.6875rem] leading-[1.5] font-semibold",
               banner.kind === "ok" ? "text-[var(--color-brand)]" : "text-[var(--color-live)]",
             )}
           >

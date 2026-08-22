@@ -6,13 +6,13 @@ import { useI18n } from "@/lib/i18n/provider";
 import { createLive } from "@/app/actions/lives";
 import { cx, formatPrice } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Button, Card, Divider } from "@/components/ui/primitives";
+import { Button, Card, Divider, fieldClass } from "@/components/ui/primitives";
 import { MAX_VIEWERS } from "@/lib/live/webrtc";
 import type { LiveSource } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({});
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 /**
  * Programmation d'un direct. Le choix de la source est le point structurant :
@@ -85,7 +85,7 @@ export function NewLiveForm({
         {!shopApproved && (
           <p
             role="status"
-            className="rounded-[14px] bg-[var(--color-live-tint)] p-3 text-[11px] font-semibold text-[var(--color-live)]"
+            className="rounded-[14px] bg-[var(--color-live-tint)] p-3 text-[0.6875rem] font-semibold text-[var(--color-live)]"
           >
             {t.vendor.pendingBanner} — {t.vendor.pendingBody}
           </p>
@@ -126,14 +126,14 @@ export function NewLiveForm({
                   className={cx(
                     "flex flex-col gap-1 rounded-[14px] p-[10px] text-start transition-colors",
                     active
-                      ? "bg-[var(--color-brand)] text-white"
+                      ? "bg-[var(--color-brand-fill)] text-white"
                       : "border border-[var(--color-outline)]",
                   )}
                 >
-                  <span className="text-[11.5px] font-bold">{option.label}</span>
+                  <span className="text-[0.71875rem] font-bold">{option.label}</span>
                   <span
                     className={cx(
-                      "text-[10px] leading-[1.4]",
+                      "text-[0.625rem] leading-[1.4]",
                       active ? "opacity-85" : "text-[var(--color-muted)]",
                     )}
                   >
@@ -177,17 +177,17 @@ export function NewLiveForm({
                       // Refusé ou indisponible : le champ reste utilisable.
                     }
                   }}
-                  className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-white/70 px-3 text-[10.5px] font-bold whitespace-nowrap text-[var(--color-brand)]"
+                  className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 text-[0.65625rem] font-bold whitespace-nowrap text-[var(--color-brand)]"
                 >
                   Coller le lien
                 </button>
               </span>
 
-              <span className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+              <span className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
                 {t.vendor.facebookUrlHint}
               </span>
 
-              <span className="mt-1 rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[9.5px] leading-[1.5] text-[var(--color-ink)]">
+              <span className="mt-1 rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[0.59375rem] leading-[1.5] text-[var(--color-ink)]">
                 <strong>Plus rapide, sur Android :</strong> installez
                 l&apos;application, puis touchez « Partager » sur votre vidéo
                 Facebook et choisissez Mall Express. Le direct se met en ligne
@@ -216,7 +216,7 @@ export function NewLiveForm({
           <span className={LABEL}>{t.vendor.pinProduct}</span>
 
           {products.length === 0 ? (
-            <p className="text-[10.5px] text-[var(--color-muted)]">{t.common.empty}</p>
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.common.empty}</p>
           ) : (
             <div className="no-sb flex max-h-[160px] flex-col gap-1 overflow-y-auto">
               {products.map((product) => (
@@ -229,14 +229,14 @@ export function NewLiveForm({
                   className={cx(
                     "flex items-center gap-2 rounded-[12px] px-2 py-2 text-start",
                     pinnedProductId === product.id
-                      ? "bg-[var(--color-brand)] text-white"
+                      ? "bg-[var(--color-brand-fill)] text-white"
                       : "hover:bg-[var(--color-brand-tint)]",
                   )}
                 >
-                  <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold">
+                  <span className="min-w-0 flex-1 truncate text-[0.71875rem] font-semibold">
                     {product.name}
                   </span>
-                  <span className="flex-none text-[11px] font-bold">
+                  <span className="flex-none text-[0.6875rem] font-bold">
                     {formatPrice(product.price, locale)}
                   </span>
                 </button>
@@ -269,7 +269,7 @@ export function NewLiveForm({
         </Card>
 
         {error && (
-          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}

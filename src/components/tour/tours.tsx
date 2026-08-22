@@ -16,12 +16,12 @@ import { ProductTour, ReplayTourButton } from "./product-tour";
 
 export function ClientTour() {
   const { t } = useI18n();
-  return <ProductTour steps={t.tour.client} storageKey="meg-tour-client" />;
+  return <ProductTour steps={t.tour.client} storageKey="meg-tour-client" startOn="/accueil" />;
 }
 
 export function VendorTour() {
   const { t } = useI18n();
-  return <ProductTour steps={t.tour.vendor} storageKey="meg-tour-vendor" />;
+  return <ProductTour steps={t.tour.vendor} storageKey="meg-tour-vendor" startOn="/vendeur" />;
 }
 
 export function ReplayClientTour() {

@@ -122,14 +122,14 @@ export function NewDealForm({
         >
           <CloseIcon size={17} />
         </button>
-        <h1 className="text-[17px] font-bold tracking-[-0.2px] text-[var(--color-ink)]">
+        <h1 className="text-[1.0625rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
           {t.deals.newTitle}
         </h1>
         <button
           type="button"
           onClick={onPublish}
           disabled={!canPublish}
-          className="text-[11.5px] font-bold text-[var(--color-brand)] disabled:opacity-40"
+          className="text-[0.71875rem] font-bold text-[var(--color-brand)] disabled:opacity-40"
         >
           {pending ? t.common.loading : t.common.publish}
         </button>
@@ -145,7 +145,7 @@ export function NewDealForm({
             className="flex h-24 flex-1 flex-col items-center justify-center gap-[6px] rounded-[18px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] bg-[rgba(109,75,143,0.06)] text-[var(--color-brand)] disabled:opacity-40"
           >
             <CameraIcon size={19} />
-            <span className="text-[10.5px] font-bold">{t.common.takePhoto}</span>
+            <span className="text-[0.65625rem] font-bold">{t.common.takePhoto}</span>
           </button>
 
           <button
@@ -155,7 +155,7 @@ export function NewDealForm({
             className="flex h-24 flex-1 flex-col items-center justify-center gap-[6px] rounded-[18px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] bg-[rgba(109,75,143,0.06)] text-[var(--color-brand)] disabled:opacity-40"
           >
             <ImageIcon size={19} />
-            <span className="text-[10.5px] font-bold">{t.common.gallery}</span>
+            <span className="text-[0.65625rem] font-bold">{t.common.gallery}</span>
           </button>
         </div>
 
@@ -187,7 +187,7 @@ export function NewDealForm({
                   type="button"
                   onClick={() => setImages((current) => current.filter((u) => u !== url))}
                   aria-label={t.common.delete}
-                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[11px] leading-none text-white"
+                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[0.6875rem] leading-none text-white"
                 >
                   ✕
                 </button>
@@ -211,7 +211,7 @@ export function NewDealForm({
 
         {/* ─── Statut ───────────────────────────────────────────────── */}
         <Card className="flex flex-none flex-col gap-[9px] p-3">
-          <span className="text-[10.5px] text-[var(--color-muted)]">{t.deals.yourStatus}</span>
+          <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.yourStatus}</span>
 
           <input
             value={title}
@@ -220,7 +220,7 @@ export function NewDealForm({
             placeholder={t.deals.titlePlaceholder}
             aria-label={t.deals.titlePlaceholder}
             dir={inArabic ? "rtl" : undefined}
-            className="bg-transparent text-[12.5px] font-semibold leading-[1.45] text-[var(--color-ink)] outline-none placeholder:font-normal placeholder:text-[var(--color-faint)]"
+            className="bg-transparent text-[0.78125rem] font-semibold leading-[1.45] text-[var(--color-ink)] outline-none placeholder:font-normal placeholder:text-[var(--color-faint)]"
           />
 
           <textarea
@@ -232,36 +232,36 @@ export function NewDealForm({
             aria-label={t.deals.bodyPlaceholder}
             dir={inArabic ? "rtl" : undefined}
             lang={inArabic ? "ar" : undefined}
-            className="resize-none bg-transparent text-[11.5px] leading-[1.5] text-[var(--color-muted)] outline-none placeholder:text-[var(--color-faint)]"
+            className="resize-none bg-transparent text-[0.71875rem] leading-[1.5] text-[var(--color-muted)] outline-none placeholder:text-[var(--color-faint)]"
           />
 
           <Divider />
 
-          <KeyValueRow label={<span className="text-[10.5px] text-[var(--color-muted)]">{t.deals.writeInArabic}</span>}>
+          <KeyValueRow label={<span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.writeInArabic}</span>}>
             <Switch checked={inArabic} onChange={setInArabic} label={t.deals.writeInArabic} />
           </KeyValueRow>
         </Card>
 
         {/* ─── Boutique, catégorie, échéance ────────────────────────── */}
         <Card className="flex flex-none flex-col gap-[10px] p-3">
-          <span className="text-[10.5px] text-[var(--color-muted)]">{t.deals.shopConcerned}</span>
+          <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.shopConcerned}</span>
 
           <div className="flex items-center gap-[9px]">
             {selectedShop ? (
               <>
                 <span
-                  className="cat-surface cat-ink flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full text-[9px] font-bold"
+                  className="cat-surface cat-ink flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full text-[0.5625rem] font-bold"
                   style={{ "--hue": selectedShop.category?.hue ?? 300 } as React.CSSProperties}
                 >
                   {monogram(selectedShop.name)}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+                <span className="min-w-0 flex-1 truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                   {selectedShop.name}
                   {selectedShop.mall_level != null && ` — Niveau ${selectedShop.mall_level}`}
                 </span>
               </>
             ) : (
-              <span className="min-w-0 flex-1 text-[11.5px] text-[var(--color-faint)]">
+              <span className="min-w-0 flex-1 text-[0.71875rem] text-[var(--color-faint)]">
                 {t.common.empty}
               </span>
             )}
@@ -269,7 +269,7 @@ export function NewDealForm({
             <button
               type="button"
               onClick={() => setShopPickerOpen((v) => !v)}
-              className="flex-none text-[10.5px] font-bold text-[var(--color-brand)]"
+              className="flex-none text-[0.65625rem] font-bold text-[var(--color-brand)]"
             >
               {t.common.change}
             </button>
@@ -286,9 +286,9 @@ export function NewDealForm({
                     setShopPickerOpen(false);
                   }}
                   className={cx(
-                    "flex w-full items-center gap-2 px-3 py-2 text-start text-[11.5px]",
+                    "flex w-full items-center gap-2 px-3 py-2 text-start text-[0.71875rem]",
                     shop.id === shopId
-                      ? "bg-[var(--color-brand)] text-white"
+                      ? "bg-[var(--color-brand-fill)] text-white"
                       : "text-[var(--color-ink)] hover:bg-[var(--color-brand-tint)]",
                   )}
                 >
@@ -300,7 +300,7 @@ export function NewDealForm({
 
           <Divider />
 
-          <span className="text-[10.5px] text-[var(--color-muted)]">{t.deals.category}</span>
+          <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.category}</span>
           <div className="flex flex-wrap gap-[6px]">
             {categories.map((category) => (
               <Chip
@@ -309,7 +309,7 @@ export function NewDealForm({
                 hue={category.hue}
                 active={categoryId === category.id}
                 onClick={() => setCategoryId(category.id === categoryId ? null : category.id)}
-                className="px-[11px] py-[5px] text-[10px]"
+                className="px-[11px] py-[5px] text-[0.625rem]"
               >
                 {locale === "ar" ? category.name_ar : category.name_fr}
               </Chip>
@@ -324,21 +324,21 @@ export function NewDealForm({
               value={expiresAt}
               onChange={(event) => setExpiresAt(event.target.value)}
               aria-label={t.deals.validUntil}
-              className="rounded-[10px] bg-[var(--color-brand-tint)] px-2 py-1 text-[11px] font-bold text-[var(--color-ink)] outline-none"
+              className="rounded-[10px] bg-[var(--color-brand-tint)] px-2 py-1 text-[0.6875rem] font-bold text-[var(--color-ink)] outline-none"
             />
           </KeyValueRow>
         </Card>
 
         {/* ─── Encart pédagogique ───────────────────────────────────── */}
         <div className="flex flex-none items-center gap-[10px] rounded-[18px] bg-[var(--color-brand-tint)] p-[11px_12px]">
-          <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--color-brand)] text-[12px] font-bold text-white">
+          <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-[0.75rem] font-bold text-white">
             i
           </span>
-          <p className="text-[10.5px] leading-[1.45] text-[var(--color-ink)]">{t.deals.hint}</p>
+          <p className="text-[0.65625rem] leading-[1.45] text-[var(--color-ink)]">{t.deals.hint}</p>
         </div>
 
         {error && (
-          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}

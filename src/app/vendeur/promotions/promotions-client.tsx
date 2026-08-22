@@ -5,12 +5,12 @@ import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { upsertPromotion } from "@/app/actions/vendor";
 import { cx, formatDateTime } from "@/lib/format";
-import { Button, Card, Divider, EmptyState, KeyValueRow, Switch } from "@/components/ui/primitives";
+import { Button, Card, Divider, EmptyState, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
 import type { AppLocale, Promotion } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-[8px] text-[12px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({ size: "sm", solid: true });
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 /** Échéance par défaut : dans deux semaines. */
 function inTwoWeeks(): string {
@@ -72,7 +72,7 @@ export function PromotionsManager({
 
       {/* ─── Création ────────────────────────────────────────────────── */}
       <Card className="flex flex-none flex-col gap-2 p-3">
-        <p className="text-[11px] font-bold text-[var(--color-ink)]">{t.common.add}</p>
+        <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">{t.common.add}</p>
 
         <label className="flex flex-col gap-1">
           <span className={LABEL}>Titre</span>
@@ -117,7 +117,7 @@ export function PromotionsManager({
         </div>
 
         {error && (
-          <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}
@@ -142,14 +142,14 @@ function PromotionRow({ promotion, locale }: { promotion: Promotion; locale: App
   return (
     <Card className={cx("flex flex-none flex-col gap-2 p-3", expired && "opacity-60")}>
       <div className="flex items-center gap-[10px]">
-        <span className="flex-none rounded-[14px] bg-[var(--color-live)] px-[9px] py-[6px] text-[11px] font-bold text-white">
+        <span className="flex-none rounded-[14px] bg-[var(--color-live-fill)] px-[9px] py-[6px] text-[0.6875rem] font-bold text-white">
           −{promotion.percent_off}%
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+          <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
             {promotion.title}
           </p>
-          <p className="truncate text-[10px] text-[var(--color-muted)]">
+          <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
             {expired ? t.deals.expired : `${t.deals.validUntil} ${formatDateTime(promotion.ends_at, locale)}`}
           </p>
         </div>

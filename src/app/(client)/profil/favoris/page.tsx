@@ -71,10 +71,10 @@ export default async function FavoritesPage() {
                 <Card className="flex items-center gap-[10px] p-3">
                   <Avatar src={shop!.logo_url} initials={monogram(shop!.name)} size={36} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+                    <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
                       {shop!.name}
                     </p>
-                    <p className="truncate text-[10px] text-[var(--color-muted)]">
+                    <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                       {formatCount(shop!.followers_count)} {t.shop.followers}
                       {" · "}
                       {shop!.is_open_now ? t.shop.openUntil.replace(" · ferme à {time}", "") : t.shop.closed}

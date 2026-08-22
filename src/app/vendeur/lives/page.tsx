@@ -46,15 +46,15 @@ export default async function VendorLivesPage() {
             <Link key={live.id} href={`/vendeur/lives/${live.id}`}>
               <Card className="flex items-center gap-[10px] p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                  <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                     {live.title}
                   </p>
-                  <p className="truncate text-[10px] text-[var(--color-muted)]">
+                  <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                     {t.live[SOURCE_LABEL[live.source]]}
                     {live.scheduled_at && ` · ${formatDateTime(live.scheduled_at, locale)}`}
                   </p>
                   {live.status === "ended" && (
-                    <p className="text-[10px] text-[var(--color-muted)]">
+                    <p className="text-[0.625rem] text-[var(--color-muted)]">
                       {formatCount(live.peak_viewers)} · {live.purchases_count} achats
                     </p>
                   )}
@@ -69,7 +69,7 @@ export default async function VendorLivesPage() {
                     ajouté au vol pendant la diffusion.
                   */}
                   {live.live_products?.length > 0 && (
-                    <p className="mt-[3px] truncate text-[10px] text-[var(--color-brand)]">
+                    <p className="mt-[3px] truncate text-[0.625rem] text-[var(--color-brand)]">
                       {t.live.recap} :{" "}
                       {live.live_products
                         .map((row) => row.product)

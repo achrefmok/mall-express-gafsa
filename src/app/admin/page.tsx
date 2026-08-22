@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { formatCount, monogram, timeAgo } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, SectionTitle, Tag } from "@/components/ui/primitives";
@@ -110,13 +110,13 @@ export default async function AdminDashboard() {
           ].map((stat) => (
             <Card key={stat.label} className="p-[11px]">
               <p
-                className={`text-[19px] font-bold ${
+                className={`text-[1.1875rem] font-bold ${
                   stat.alert ? "text-[var(--color-live)]" : "text-[var(--color-brand)]"
                 }`}
               >
                 {stat.value}
               </p>
-              <p className="text-[9.5px] text-[var(--color-muted)]">{stat.label}</p>
+              <p className="text-[0.59375rem] text-[var(--color-muted)]">{stat.label}</p>
             </Card>
           ))}
         </div>
@@ -126,7 +126,7 @@ export default async function AdminDashboard() {
           <SectionTitle>{t.admin.pendingShops}</SectionTitle>
 
           {pendingShops.length === 0 ? (
-            <p className="text-[11px] text-[var(--color-muted)]">{t.common.empty}</p>
+            <p className="text-[0.6875rem] text-[var(--color-muted)]">{t.common.empty}</p>
           ) : (
             pendingShops.map((shop) => (
               <PendingShopRow
@@ -151,7 +151,7 @@ export default async function AdminDashboard() {
           <SectionTitle>{t.admin.reportsTitle}</SectionTitle>
 
           {groupedReports.length === 0 ? (
-            <p className="text-[11px] text-[var(--color-muted)]">{t.common.empty}</p>
+            <p className="text-[0.6875rem] text-[var(--color-muted)]">{t.common.empty}</p>
           ) : (
             groupedReports.map((report) => {
               const deal = dealById[report.targetId];

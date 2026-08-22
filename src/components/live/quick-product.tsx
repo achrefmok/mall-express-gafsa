@@ -8,7 +8,7 @@ import { Button, Card } from "@/components/ui/primitives";
 import { CameraIcon, PlusIcon } from "@/components/ui/icons";
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink)]";
+  "w-full rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-2 text-[0.75rem] text-[var(--color-ink)]";
 
 /**
  * Ajouter un article sans quitter la diffusion.
@@ -174,7 +174,7 @@ export function QuickProduct({
 
             {/* Le compte, pour qu'on sache qu'il y en a d'autres derrière. */}
             {photos.length > 1 && (
-              <span className="absolute end-[2px] bottom-[2px] rounded-[6px] bg-[rgba(36,31,46,0.78)] px-[5px] text-[9px] font-bold text-white">
+              <span className="absolute end-[2px] bottom-[2px] rounded-[6px] bg-[rgba(36,31,46,0.78)] px-[5px] text-[0.5625rem] font-bold text-white">
                 {photos.length}
               </span>
             )}
@@ -187,7 +187,7 @@ export function QuickProduct({
               className="flex h-[62px] w-[62px] flex-none flex-col items-center justify-center gap-1 rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-brand-tint)] text-[var(--color-brand)]"
             >
               <CameraIcon size={18} />
-              <span className="text-[8.5px] font-bold leading-none">{t.live.captureFrame}</span>
+              <span className="text-[0.53125rem] font-bold leading-none">{t.live.captureFrame}</span>
             </button>
           )}
 
@@ -228,7 +228,7 @@ export function QuickProduct({
         </div>
 
         {error && (
-          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}

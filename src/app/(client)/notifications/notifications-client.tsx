@@ -51,7 +51,7 @@ export function MarkAllRead({ count }: { count: number }) {
           router.refresh();
         })
       }
-      className="text-[11.5px] font-bold text-[var(--color-brand)] disabled:opacity-50"
+      className="text-[0.71875rem] font-bold text-[var(--color-brand)] disabled:opacity-50"
     >
       Tout marquer lu ({count})
     </button>
@@ -92,7 +92,7 @@ export function NotificationRow({
       )}
     >
       <span
-        className="cat-surface cat-ink flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[12px] font-bold"
+        className="cat-surface cat-ink flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[0.75rem] font-bold"
         style={{ "--hue": HUE[notification.kind] } as React.CSSProperties}
         aria-hidden
       >
@@ -101,19 +101,19 @@ export function NotificationRow({
 
       <button type="button" onClick={open} className="min-w-0 flex-1 text-start">
         <span className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+          <span className="min-w-0 flex-1 truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
             {notification.title}
           </span>
           {!read && (
-            <span className="h-[7px] w-[7px] flex-none rounded-full bg-[var(--color-live)]" aria-label="non lu" />
+            <span className="h-[7px] w-[7px] flex-none rounded-full bg-[var(--color-live-fill)]" aria-label="non lu" />
           )}
         </span>
         {notification.body && (
-          <span className="mt-[2px] block text-[10.5px] leading-[1.45] text-[var(--color-muted)]">
+          <span className="mt-[2px] block text-[0.65625rem] leading-[1.45] text-[var(--color-muted)]">
             {notification.body}
           </span>
         )}
-        <span className="mt-1 block text-[9.5px] text-[var(--color-faint)]">
+        <span className="mt-1 block text-[0.59375rem] text-[var(--color-faint)]">
           {timeAgo(notification.created_at, locale)}
         </span>
       </button>
@@ -129,7 +129,7 @@ export function NotificationRow({
             if (!result.ok) setRemoved(false);
           });
         }}
-        className="flex-none p-1 text-[12px] text-[var(--color-faint)]"
+        className="flex-none p-1 text-[0.75rem] text-[var(--color-faint)]"
       >
         ✕
       </button>

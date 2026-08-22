@@ -77,7 +77,7 @@ export function WelcomeScreen() {
       }}
     >
       <span
-        className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] bg-white/15 text-[30px] font-bold text-white backdrop-blur-sm"
+        className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] bg-white/15 text-[1.875rem] font-bold text-white backdrop-blur-sm"
         style={{
           animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
         }}
@@ -87,13 +87,13 @@ export function WelcomeScreen() {
 
       <div className="flex flex-col items-center gap-1 px-8 text-center">
         <p
-          className="text-[20px] font-bold tracking-[-0.3px] text-white"
+          className="text-[1.25rem] font-bold tracking-[-0.01875rem] text-white"
           style={{ animation: "enter-up 520ms cubic-bezier(0.22,0.61,0.36,1) 220ms both" }}
         >
           {t.brand.first} {t.brand.second}
         </p>
         <p
-          className="text-[12px] leading-[1.5] text-white/80"
+          className="text-[0.75rem] leading-[1.5] text-white/80"
           style={{ animation: "enter-up 520ms cubic-bezier(0.22,0.61,0.36,1) 340ms both" }}
         >
           {t.welcome.tagline}
@@ -109,7 +109,7 @@ export function WelcomeScreen() {
         {[t.nav.marketplace, t.nav.lives, t.nav.deals, t.nav.services].map((mot, i) => (
           <span
             key={mot}
-            className="rounded-[10px] bg-white/12 px-[10px] py-[5px] text-[10px] font-semibold text-white/90"
+            className="rounded-[10px] bg-white/12 px-[10px] py-[5px] text-[0.625rem] font-semibold text-white/90"
             style={{
               animation: `enter-up 420ms cubic-bezier(0.22,0.61,0.36,1) ${480 + i * 70}ms both`,
             }}

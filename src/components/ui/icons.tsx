@@ -219,7 +219,7 @@ export const FlagIcon = (p: IconProps) => (
 /** Point plein « en direct », animé. */
 export const LiveDot = ({ size = 10 }: { size?: number }) => (
   <span
-    className="animate-live-dot inline-block flex-none rounded-full bg-[var(--color-live)]"
+    className="animate-live-dot inline-block flex-none rounded-full bg-[var(--color-live-fill)]"
     style={{ width: size, height: size }}
     aria-hidden
   />

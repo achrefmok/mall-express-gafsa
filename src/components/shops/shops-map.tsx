@@ -88,7 +88,7 @@ export function ShopsMap({ shops }: { shops: ShopPin[] }) {
         </div>
       ) : (
         <Card className="flex-none p-3">
-          <p className="text-[11px] leading-[1.5] text-[var(--color-muted)]">{t.shops.noPosition}</p>
+          <p className="text-[0.6875rem] leading-[1.5] text-[var(--color-muted)]">{t.shops.noPosition}</p>
         </Card>
       )}
 
@@ -97,10 +97,10 @@ export function ShopsMap({ shops }: { shops: ShopPin[] }) {
           <Link key={shop.id} href={`/boutique/${shop.slug}`}>
             <Card className="flex items-center gap-[10px] p-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                   {shop.name}
                 </p>
-                <p className="truncate text-[10px] text-[var(--color-muted)]">
+                <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                   {shop.mall_unit
                     ? `Niveau ${shop.mall_level ?? "?"} · ${shop.mall_unit}`
                     : shop.latitude !== null
@@ -109,7 +109,7 @@ export function ShopsMap({ shops }: { shops: ShopPin[] }) {
                 </p>
               </div>
 
-              <span className="flex-none rounded-[10px] bg-[var(--color-brand-tint)] px-2 py-[3px] text-[9.5px] font-bold text-[var(--color-brand)]">
+              <span className="flex-none rounded-[10px] bg-[var(--color-brand-tint)] px-2 py-[3px] text-[0.59375rem] font-bold text-[var(--color-brand)]">
                 {t.shops.verified}
               </span>
             </Card>

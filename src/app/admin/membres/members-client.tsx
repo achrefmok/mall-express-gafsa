@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { grantAdminByEmail, setMemberRole, setUserBanned } from "@/app/actions/admin";
 import { cx, formatDate, fullName, monogram } from "@/lib/format";
-import { Avatar, Button, Card, Tag } from "@/components/ui/primitives";
+import { Avatar, Button, Card, Tag, fieldClass } from "@/components/ui/primitives";
 import type { AdminMember, AppLocale, UserRole } from "@/types/database";
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -14,7 +14,7 @@ const ROLES: { value: UserRole; label: string }[] = [
 ];
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)] placeholder:font-normal placeholder:text-[var(--color-faint)]";
+  fieldClass({ strong: true });
 
 /* ─── Nommer un administrateur ──────────────────────────────────────────── */
 
@@ -50,19 +50,19 @@ export function AddAdminForm({ adminCount }: { adminCount: number }) {
         aria-expanded={open}
         className="flex items-center gap-[10px] text-start"
       >
-        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
           +
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[11.5px] font-bold text-[var(--color-ink)]">
+          <span className="block text-[0.71875rem] font-bold text-[var(--color-ink)]">
             Ajouter un administrateur
           </span>
-          <span className="block text-[10.5px] text-[var(--color-muted)]">
+          <span className="block text-[0.65625rem] text-[var(--color-muted)]">
             {adminCount} administrateur{adminCount > 1 ? "s" : ""} · partagez la gestion de la
             plateforme
           </span>
         </span>
-        <span aria-hidden className="flex-none text-[11px] text-[var(--color-faint)]">
+        <span aria-hidden className="flex-none text-[0.6875rem] text-[var(--color-faint)]">
           {open ? "▲" : "▼"}
         </span>
       </button>
@@ -83,7 +83,7 @@ export function AddAdminForm({ adminCount }: { adminCount: number }) {
             {pending ? "…" : "Nommer administrateur"}
           </Button>
 
-          <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+          <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
             La personne doit déjà avoir un compte sur l&apos;application. Elle retrouvera l&apos;espace
             d&apos;administration à sa prochaine connexion.
           </p>
@@ -92,7 +92,7 @@ export function AddAdminForm({ adminCount }: { adminCount: number }) {
             <p
               role="status"
               className={cx(
-                "text-[11px] font-semibold",
+                "text-[0.6875rem] font-semibold",
                 feedback.kind === "ok" ? "text-[var(--color-brand)]" : "text-[var(--color-live)]",
               )}
             >
@@ -196,17 +196,17 @@ export function MemberCard({
         />
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+          <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
             {fullName(member) || "—"}
             {isMe && <span className="ms-1 font-semibold text-[var(--color-muted)]">(vous)</span>}
           </p>
-          <p className="truncate text-[10px] text-[var(--color-muted)]">{member.email}</p>
+          <p className="truncate text-[0.625rem] text-[var(--color-muted)]">{member.email}</p>
         </div>
 
         {banned && <Tag tone="live">Suspendu</Tag>}
       </div>
 
-      <p className="text-[9.5px] text-[var(--color-muted)]">
+      <p className="text-[0.59375rem] text-[var(--color-muted)]">
         {member.city ?? "Gafsa"} · {member.loyalty_points} pts · inscrit le{" "}
         {formatDate(member.created_at, locale)}
         {member.last_sign_in_at
@@ -229,9 +229,9 @@ export function MemberCard({
               aria-pressed={role === option.value}
               onClick={() => onRole(option.value)}
               className={cx(
-                "min-h-[28px] flex-1 rounded-[11px] text-[10px] font-bold transition-colors disabled:opacity-60",
+                "min-h-[28px] flex-1 rounded-[11px] text-[0.625rem] font-bold transition-colors disabled:opacity-60",
                 role === option.value
-                  ? "bg-[var(--color-brand)] text-white"
+                  ? "bg-[var(--color-brand-fill)] text-white"
                   : "text-[var(--color-brand)]",
               )}
             >
@@ -246,10 +246,10 @@ export function MemberCard({
             disabled={pending}
             onClick={onBan}
             className={cx(
-              "min-h-[28px] flex-none rounded-[12px] px-[9px] text-[10px] font-bold disabled:opacity-50",
+              "min-h-[28px] flex-none rounded-[12px] px-[9px] text-[0.625rem] font-bold disabled:opacity-50",
               banned
                 ? "border border-[var(--color-outline)] text-[var(--color-muted)]"
-                : "bg-[var(--color-live)] text-white",
+                : "bg-[var(--color-live-fill)] text-white",
             )}
           >
             {banned ? "Réactiver" : "Suspendre"}
@@ -258,7 +258,7 @@ export function MemberCard({
       </div>
 
       {error && (
-        <p role="status" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+        <p role="status" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}

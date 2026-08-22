@@ -23,7 +23,7 @@ export function NotifyLiveButton({ liveId }: { liveId: string }) {
           if (result.ok) setDone(true);
         })
       }
-      className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-[5px] text-[10px] font-bold text-[var(--color-brand)] disabled:opacity-70"
+      className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--color-brand)] disabled:opacity-70"
     >
       {done ? t.home.notified : t.home.notifyMe}
     </button>

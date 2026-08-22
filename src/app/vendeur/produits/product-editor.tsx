@@ -6,14 +6,15 @@ import { useI18n } from "@/lib/i18n/provider";
 import { upsertProduct } from "@/app/actions/vendor";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
-import { Button, Card, Chip, Divider, KeyValueRow, Switch } from "@/components/ui/primitives";
+import { Button, Card, Chip, Divider, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
 import { ImageIcon, PlusIcon } from "@/components/ui/icons";
 import { TopBar } from "@/components/shell/top-bar";
+import { VariantImageEditor } from "./variant-images";
 import type { AppLocale, Category, Product } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({});
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 /** Création et édition d'un produit. */
 export function ProductEditor({
@@ -111,7 +112,7 @@ export function ProductEditor({
             type="button"
             onClick={onSave}
             disabled={pending || uploading || !name.trim()}
-            className="text-[11.5px] font-bold text-[var(--color-brand)] disabled:opacity-40"
+            className="text-[0.71875rem] font-bold text-[var(--color-brand)] disabled:opacity-40"
           >
             {pending ? t.common.saving : t.common.save}
           </button>
@@ -128,7 +129,7 @@ export function ProductEditor({
                 {/* eslint-disable-next-line @next/next/no-img-element -- miniature locale 80px */}
                 <img src={url} alt="" className="h-full w-full rounded-[14px] object-cover" />
                 {index === 0 && (
-                  <span className="absolute bottom-1 start-1 rounded-[4px] bg-[var(--color-brand)] px-[4px] text-[7px] font-bold text-white">
+                  <span className="absolute bottom-1 start-1 rounded-[4px] bg-[var(--color-brand-fill)] px-[4px] text-[0.4375rem] font-bold text-white">
                     1
                   </span>
                 )}
@@ -136,7 +137,7 @@ export function ProductEditor({
                   type="button"
                   onClick={() => setImages((c) => c.filter((u) => u !== url))}
                   aria-label={t.common.delete}
-                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[11px] leading-none text-white"
+                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[0.6875rem] leading-none text-white"
                 >
                   ✕
                 </button>
@@ -153,7 +154,7 @@ export function ProductEditor({
                 className="flex h-20 w-20 flex-none flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] text-[var(--color-brand)]"
               >
                 <ImageIcon size={16} />
-                <span className="text-[9px] font-bold">{t.common.add}</span>
+                <span className="text-[0.5625rem] font-bold">{t.common.add}</span>
               </button>
             )}
           </div>
@@ -265,7 +266,7 @@ export function ProductEditor({
                 hue={category.hue}
                 active={categoryId === category.id}
                 onClick={() => setCategoryId(category.id === categoryId ? null : category.id)}
-                className="px-[11px] py-[5px] text-[10px]"
+                className="px-[11px] py-[5px] text-[0.625rem]"
               >
                 {locale === "ar" ? category.name_ar : category.name_fr}
               </Chip>
@@ -300,6 +301,25 @@ export function ProductEditor({
             </label>
           </div>
 
+          {/*
+            Le rattachement photo/couleur n'existe qu'une fois l'article
+            enregistré : il écrit directement en base sur un identifiant de
+            produit, alors que le reste du formulaire n'est envoyé qu'à la
+            validation. Sur une création, la section apparaît au second passage.
+
+            Il lit `colors` — l'état vivant du formulaire — et non la valeur
+            enregistrée : une couleur ajoutée à l'instant peut recevoir sa photo
+            sans qu'on ait à enregistrer d'abord.
+          */}
+          {product && (
+            <VariantImageEditor
+              productId={product.id}
+              colors={colors}
+              images={images}
+              initial={product.variant_images ?? {}}
+            />
+          )}
+
           <Divider />
 
           <span className={LABEL}>{t.product.sizes}</span>
@@ -309,7 +329,7 @@ export function ProductEditor({
                 key={value}
                 type="button"
                 onClick={() => setSizes((s) => s.filter((v) => v !== value))}
-                className="rounded-[12px] bg-[var(--color-brand-tint)] px-3 py-1 text-[10.5px] font-semibold text-[var(--color-brand)]"
+                className="rounded-[12px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.65625rem] font-semibold text-[var(--color-brand)]"
               >
                 {value} ✕
               </button>
@@ -325,7 +345,7 @@ export function ProductEditor({
                 setSizeDraft("");
               }}
               placeholder="S, M, 42…"
-              className="w-24 rounded-[12px] border border-dashed border-[rgba(109,75,143,0.4)] px-3 py-1 text-[10.5px] outline-none"
+              className="w-24 rounded-[12px] border border-dashed border-[rgba(109,75,143,0.4)] px-3 py-1 text-[0.65625rem] outline-none"
             />
           </div>
         </Card>
@@ -346,7 +366,7 @@ export function ProductEditor({
         </Card>
 
         {error && (
-          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}

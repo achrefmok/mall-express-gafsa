@@ -5,7 +5,8 @@ import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { EmptyState, ButtonLink } from "@/components/ui/primitives";
-import { CartShopGroup } from "./cart-client";
+import { CartIcon } from "@/components/ui/icons";
+import { CartGroups } from "./cart-client";
 
 export const metadata: Metadata = {
   title: "Panier",
@@ -65,6 +66,7 @@ export default async function CartPage() {
           <EmptyState
             title={t.cart.empty}
             body={t.cart.emptyBody}
+            icon={<CartIcon size={20} />}
             action={
               <ButtonLink href="/marketplace" size="sm" className="mt-1">
                 {t.nav.marketplace}
@@ -74,13 +76,14 @@ export default async function CartPage() {
         ) : (
           <>
             {groups.length > 1 && (
-              <p className="text-[10.5px] text-[var(--color-muted)]">{t.cart.perShop}</p>
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.cart.perShop}</p>
             )}
-            {groups.map((group) => (
-              <CartShopGroup
-                key={group.shop.id}
-                shop={group.shop}
-                items={group.items.map((row) => ({
+            <CartGroups
+              locale={locale}
+              defaultPhone={profile.phone ?? ""}
+              groups={groups.map((group) => ({
+                shop: group.shop,
+                items: group.items.map((row) => ({
                   id: row.id,
                   quantity: row.quantity,
                   color: row.color,
@@ -92,11 +95,9 @@ export default async function CartPage() {
                     images: row.product!.images ?? [],
                     stock: row.product!.stock,
                   },
-                }))}
-                locale={locale}
-                defaultPhone={profile.phone ?? ""}
-              />
-            ))}
+                })),
+              }))}
+            />
           </>
         )}
       </div>

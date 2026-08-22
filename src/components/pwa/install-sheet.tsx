@@ -50,7 +50,7 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[12px] font-semibold text-[var(--color-brand)]"
+        className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[0.75rem] font-semibold text-[var(--color-brand)]"
       >
         {state.kind === "installed" ? t.install.openSheet : t.install.action}
       </button>
@@ -75,14 +75,14 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
       <div className="animate-slide-up pb-safe relative w-full max-w-[520px] rounded-t-[24px] bg-[var(--color-surface)] p-4 shadow-[0_-10px_40px_rgba(40,25,60,0.28)]">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--color-hairline)]" aria-hidden />
 
-        <h2 className="text-[15px] font-bold text-[var(--color-ink)]">{t.install.title}</h2>
-        <p className="mt-1 text-[11.5px] leading-[1.5] text-[var(--color-muted)]">
+        <h2 className="text-[0.9375rem] font-bold text-[var(--color-ink)]">{t.install.title}</h2>
+        <p className="mt-1 text-[0.71875rem] leading-[1.5] text-[var(--color-muted)]">
           {t.install.body}
         </p>
 
         <div className="mt-4 flex flex-col gap-2">
           {state.kind === "installed" && (
-            <p className="rounded-[14px] bg-[var(--color-brand-tint)] p-3 text-[11.5px] font-semibold text-[var(--color-ink)]">
+            <p className="rounded-[14px] bg-[var(--color-brand-tint)] p-3 text-[0.71875rem] font-semibold text-[var(--color-ink)]">
               {t.install.already}
             </p>
           )}
@@ -92,7 +92,7 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
             <button
               type="button"
               onClick={() => void install().then(() => setOpen(false))}
-              className="w-full rounded-[16px] bg-[var(--color-brand)] py-3 text-[12.5px] font-bold text-white"
+              className="w-full rounded-[16px] bg-[var(--color-brand-fill)] py-3 text-[0.78125rem] font-bold text-white"
             >
               {t.install.oneTap}
             </button>
@@ -103,10 +103,10 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
             <ol className="flex flex-col gap-2 rounded-[16px] bg-[var(--color-app)] p-3">
               {[t.install.iosStep1, t.install.iosStep2, t.install.iosStep3].map((step, index) => (
                 <li key={step} className="flex items-start gap-2">
-                  <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[var(--color-brand)] text-[10px] font-bold text-white">
+                  <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-[0.625rem] font-bold text-white">
                     {index + 1}
                   </span>
-                  <span className="text-[11.5px] leading-[1.45] text-[var(--color-ink)]">
+                  <span className="text-[0.71875rem] leading-[1.45] text-[var(--color-ink)]">
                     {step}
                   </span>
                 </li>
@@ -116,7 +116,7 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
 
           {/* ── Autres navigateurs sans invite disponible ────────────── */}
           {state.kind === "manual" && !isIOS && (
-            <p className="rounded-[16px] bg-[var(--color-app)] p-3 text-[11.5px] leading-[1.5] text-[var(--color-ink)]">
+            <p className="rounded-[16px] bg-[var(--color-app)] p-3 text-[0.71875rem] leading-[1.5] text-[var(--color-ink)]">
               {t.install.otherHint}
             </p>
           )}
@@ -130,7 +130,7 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
           {vendorSignUpUrl && (
             <a
               href={vendorSignUpUrl}
-              className="mt-1 w-full rounded-[16px] border border-[var(--color-outline)] py-3 text-center text-[12px] font-semibold text-[var(--color-brand)]"
+              className="mt-1 w-full rounded-[16px] border border-[var(--color-outline)] py-3 text-center text-[0.75rem] font-semibold text-[var(--color-brand)]"
             >
               {t.auth.switchToVendorSignUp}
             </a>
@@ -139,7 +139,7 @@ export function InstallSheet({ vendorSignUpUrl }: { vendorSignUpUrl?: string | n
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="py-2 text-[11.5px] font-semibold text-[var(--color-muted)]"
+            className="py-2 text-[0.71875rem] font-semibold text-[var(--color-muted)]"
           >
             {t.common.close}
           </button>

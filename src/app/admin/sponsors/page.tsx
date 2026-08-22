@@ -18,7 +18,10 @@ export default async function AdminSponsorsPage() {
   const [slots, shops] = await Promise.all([
     supabase
       .from("sponsored_slots")
-      .select("*")
+      /* La boutique est jointe pour son `slug` : `/boutique/[slug]` n'accepte
+         pas un identifiant, et l'administrateur doit pouvoir vérifier d'un
+         toucher où mène l'emplacement qu'il vient de créer. */
+      .select("*, shop:shops(slug, name, status)")
       .order("is_active", { ascending: false })
       .order("position")
       .limit(50),

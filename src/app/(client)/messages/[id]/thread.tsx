@@ -117,7 +117,7 @@ export function MessageThread({
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-2 overflow-y-auto px-4 pt-2 pb-3">
         {messages.length === 0 && (
-          <p className="py-10 text-center text-[11.5px] text-[var(--color-muted)]">
+          <p className="py-10 text-center text-[0.71875rem] text-[var(--color-muted)]">
             {t.common.empty}
           </p>
         )}
@@ -128,9 +128,9 @@ export function MessageThread({
             <div
               key={message.id}
               className={cx(
-                "max-w-[78%] rounded-[16px] px-3 py-2 text-[12px] leading-[1.45]",
+                "max-w-[78%] rounded-[16px] px-3 py-2 text-[0.75rem] leading-[1.45]",
                 mine
-                  ? "self-end bg-[var(--color-brand)] text-white"
+                  ? "self-end bg-[var(--color-brand-fill)] text-white"
                   : "self-start border border-[var(--color-surface-edge)] bg-[var(--color-surface)] text-[var(--color-ink)]",
               )}
             >
@@ -143,7 +143,7 @@ export function MessageThread({
       </div>
 
       {error && (
-        <p role="alert" className="px-4 pb-1 text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="px-4 pb-1 text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
@@ -158,12 +158,12 @@ export function MessageThread({
           maxLength={2000}
           placeholder={t.live.writeComment}
           aria-label={t.live.writeComment}
-          className="min-w-0 flex-1 rounded-[16px] border border-[var(--color-outline)] bg-white px-3 py-[10px] text-[12px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]"
+          className="min-w-0 flex-1 rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-[10px] text-[0.75rem] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]"
         />
         <button
           type="submit"
           disabled={pending || !draft.trim()}
-          className="flex-none rounded-[16px] bg-[var(--color-brand)] px-4 py-[10px] text-[11px] font-bold text-white disabled:opacity-40"
+          className="flex-none rounded-[16px] bg-[var(--color-brand-fill)] px-4 py-[10px] text-[0.6875rem] font-bold text-white disabled:opacity-40"
         >
           {t.live.send}
         </button>

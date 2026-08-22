@@ -84,10 +84,10 @@ export default async function MyRequestsPage() {
               <Card key={request.id} className="flex flex-none flex-col gap-2 p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+                    <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
                       {request.title}
                     </p>
-                    <p className="text-[10px] text-[var(--color-muted)]">
+                    <p className="text-[0.625rem] text-[var(--color-muted)]">
                       {request.kind === "bill_payment" ? "Facture" : "Réclamation"} ·{" "}
                       {formatDateTime(request.created_at, locale)}
                     </p>
@@ -96,13 +96,13 @@ export default async function MyRequestsPage() {
                 </div>
 
                 {request.body && (
-                  <p className="text-[11px] leading-[1.5] text-[var(--color-muted)]">
+                  <p className="text-[0.6875rem] leading-[1.5] text-[var(--color-muted)]">
                     {request.body}
                   </p>
                 )}
 
                 {request.response && (
-                  <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[11px] leading-[1.5] text-[var(--color-ink)]">
+                  <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[0.6875rem] leading-[1.5] text-[var(--color-ink)]">
                     <b>Réponse : </b>
                     {request.response}
                   </p>

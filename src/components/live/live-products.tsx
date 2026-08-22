@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { createClient } from "@/lib/supabase/client";
 import { addToCart } from "@/app/actions/cart";
 import { cx, formatPrice } from "@/lib/format";
@@ -126,12 +126,12 @@ export function LiveProducts({
         <span className="relative">
           <CartIcon size={21} />
           {cartCount > 0 && (
-            <span className="absolute -end-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-live)] px-1 text-[9px] font-bold text-white">
+            <span className="absolute -end-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-live-fill)] px-1 text-[0.5625rem] font-bold text-white">
               {cartCount}
             </span>
           )}
         </span>
-        <span className="text-[9px]">
+        <span className="text-[0.5625rem]">
           {t.live.products} · {products.length}
         </span>
       </button>
@@ -139,13 +139,13 @@ export function LiveProducts({
       {open && (
         <div className="pb-safe absolute inset-x-0 bottom-0 z-40 flex max-h-[52%] flex-col rounded-t-[18px] bg-[var(--color-app)] [@media(max-height:520px)]:max-h-[80%]">
           <div className="flex flex-none items-center justify-between px-4 pt-3 pb-2">
-            <p className="text-[12.5px] font-bold text-[var(--color-ink)]">
+            <p className="text-[0.78125rem] font-bold text-[var(--color-ink)]">
               {t.live.products} · {products.length}
             </p>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-[10px] px-2 py-1 text-[11px] font-semibold text-[var(--color-muted)]"
+              className="rounded-[10px] px-2 py-1 text-[0.6875rem] font-semibold text-[var(--color-muted)]"
             >
               {t.common.close}
             </button>
@@ -159,7 +159,7 @@ export function LiveProducts({
               return (
                 <div
                   key={product.id}
-                  className="flex items-center gap-[10px] rounded-[14px] bg-white p-[10px]"
+                  className="flex items-center gap-[10px] rounded-[14px] bg-[var(--color-surface-solid)] p-[10px]"
                 >
                   {product.images?.[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element -- miniature 44px, hors flux Next/Image pour ne pas retarder la vidéo
@@ -173,18 +173,18 @@ export function LiveProducts({
                   )}
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+                    <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                       {product.name}
                     </p>
-                    <p className="text-[12px] font-bold text-[var(--color-brand)]">
+                    <p className="text-[0.75rem] font-bold text-[var(--color-brand)]">
                       {formatPrice(price, locale)}
                       {percentOff ? (
-                        <span className="ms-[6px] text-[10px] font-normal text-[var(--color-faint)] line-through">
+                        <span className="ms-[6px] text-[0.625rem] font-normal text-[var(--color-faint)] line-through">
                           {formatPrice(product.price, locale)}
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-[9.5px] text-[var(--color-muted)]">
+                    <p className="text-[0.59375rem] text-[var(--color-muted)]">
                       {soldOut ? t.product.outOfStock : format(t.live.inStock, { n: product.stock })}
                     </p>
                   </div>
@@ -194,8 +194,8 @@ export function LiveProducts({
                     onClick={() => onAdd(product.id)}
                     disabled={!canBuy || soldOut || pending}
                     className={cx(
-                      "flex-none rounded-[14px] px-3 py-[7px] text-[10px] font-semibold text-white disabled:opacity-55",
-                      added === product.id ? "bg-[var(--color-ok,#2f7d5d)]" : "bg-[var(--color-brand)]",
+                      "flex-none rounded-[14px] px-3 py-[7px] text-[0.625rem] font-semibold text-white disabled:opacity-55",
+                      added === product.id ? "bg-[var(--color-ok,#2f7d5d)]" : "bg-[var(--color-brand-fill)]",
                     )}
                   >
                     {soldOut

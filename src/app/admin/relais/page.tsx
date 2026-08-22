@@ -66,14 +66,14 @@ export default async function AdminRelaysPage() {
           <>
             <section className="flex flex-none flex-col gap-2">
               <SectionTitle>À contrôler — {toReview.length}</SectionTitle>
-              <p className="text-[10.5px] leading-relaxed text-[var(--color-muted)]">
+              <p className="text-[0.65625rem] leading-relaxed text-[var(--color-muted)]">
                 Adresses collées à la main. La propriété de la vidéo n&apos;est pas prouvée : ouvrez
                 le lien et vérifiez qu&apos;il s&apos;agit bien de la page ou du profil du
                 commerçant.
               </p>
 
               {toReview.length === 0 ? (
-                <p className="text-[11px] text-[var(--color-muted)]">
+                <p className="text-[0.6875rem] text-[var(--color-muted)]">
                   Rien à contrôler : tous les relais viennent d&apos;une page connectée.
                 </p>
               ) : (
@@ -86,7 +86,7 @@ export default async function AdminRelaysPage() {
             <section className="flex flex-none flex-col gap-2">
               <SectionTitle>Vérifiés par la page connectée — {verified.length}</SectionTitle>
               {verified.length === 0 ? (
-                <p className="text-[11px] text-[var(--color-muted)]">
+                <p className="text-[0.6875rem] text-[var(--color-muted)]">
                   Aucune boutique n&apos;a encore connecté sa page Facebook.
                 </p>
               ) : (
@@ -121,10 +121,10 @@ function RelayRow({
     <Card className="flex flex-col gap-[6px] p-3">
       <div className="flex items-start gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-          <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+          <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
             {live.shop?.name ?? "Boutique inconnue"}
           </p>
-          <p className="truncate text-[10.5px] text-[var(--color-muted)]">
+          <p className="truncate text-[0.65625rem] text-[var(--color-muted)]">
             « {live.title} » · {live.status} · {timeAgo(live.created_at, locale)}
           </p>
         </div>
@@ -140,7 +140,7 @@ function RelayRow({
           href={live.facebook_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="truncate text-[10px] text-[var(--color-brand)] underline"
+          className="truncate text-[0.625rem] text-[var(--color-brand)] underline"
         >
           {live.facebook_url}
         </a>

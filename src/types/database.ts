@@ -33,6 +33,25 @@ export type PracticalServiceKind = "taxi" | "louage" | "prayer" | "pharmacy";
 export type ServiceRequestKind = "bill_payment" | "complaint";
 export type ServiceRequestStatus = "submitted" | "in_review" | "resolved" | "rejected";
 export type AppLocale = "fr" | "ar";
+
+/**
+ * Photo rattachée à une couleur de produit.
+ *
+ * `generated` sépare une vraie photo du vendeur d'une teinte fabriquée à
+ * partir d'une autre. Le client doit pouvoir faire la différence, et une
+ * fabriquée doit toujours céder la place à une vraie.
+ */
+export interface VariantImage {
+  url: string;
+  generated: boolean;
+  /** Couleur dont la teinte a été dérivée. Absent sur une vraie photo. */
+  from?: string;
+  /** Date de fabrication, pour repérer les teintes devenues obsolètes. */
+  at?: string;
+}
+
+/** Clé : la couleur telle qu'elle figure dans `products.colors`. */
+export type VariantImages = Record<string, VariantImage>;
 export type NotificationKind =
   | "order_update"
   | "live_starting"
@@ -91,6 +110,7 @@ export interface Database {
           name_ar: string;
           hue: number;
           monogram: string;
+          image_url: string | null;
           parent_id: string | null;
           sort_order: number;
           is_active: boolean;
@@ -103,6 +123,7 @@ export interface Database {
           name_ar: string;
           hue: number;
           monogram: string;
+          image_url?: string | null;
           parent_id?: string | null;
           sort_order?: number;
           is_active?: boolean;
@@ -219,6 +240,7 @@ export interface Database {
           stock: number;
           low_stock_threshold: number;
           images: string[];
+          variant_images: VariantImages;
           colors: string[];
           sizes: string[];
           is_online: boolean;
@@ -840,6 +862,7 @@ export interface Database {
           info: string | null;
           hue: number;
           monogram: string;
+          image_url: string | null;
           is_active: boolean;
           sort_order: number;
         };

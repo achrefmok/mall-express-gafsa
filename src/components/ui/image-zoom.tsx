@@ -23,12 +23,19 @@ export function ImageZoom({
   images,
   alt,
   className,
+  startIndex = 0,
   children,
 }: {
   /** Toutes les photos de l'article. La première est celle de la vignette. */
   images: string[];
   alt: string;
   className?: string;
+  /**
+   * Photo sur laquelle s'ouvrir. Une galerie passe le rang de la vignette
+   * touchée : s'agrandir sur la première alors qu'on en regardait la troisième
+   * donne l'impression d'avoir touché à côté.
+   */
+  startIndex?: number;
   /** La vignette elle-même, rendue par l'appelant. */
   children: React.ReactNode;
 }) {
@@ -92,7 +99,7 @@ export function ImageZoom({
           */
           event.preventDefault();
           event.stopPropagation();
-          setIndex(0);
+          setIndex(startIndex);
           setOpen(true);
         }}
         className={className}
@@ -146,7 +153,7 @@ export function ImageZoom({
                     event.stopPropagation();
                     setIndex((i) => (i - 1 + images.length) % images.length);
                   }}
-                  className="absolute start-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[20px] leading-none text-white"
+                  className="absolute start-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
                 >
                   ‹
                 </button>
@@ -159,13 +166,13 @@ export function ImageZoom({
                     event.stopPropagation();
                     setIndex((i) => (i + 1) % images.length);
                   }}
-                  className="absolute end-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[20px] leading-none text-white"
+                  className="absolute end-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
                 >
                   ›
                 </button>
 
                 {/* Le rang, pour savoir combien de photos restent à voir. */}
-                <span className="pb-safe absolute bottom-4 text-[11px] font-semibold text-white/70">
+                <span className="pb-safe absolute bottom-4 text-[0.6875rem] font-semibold text-white/70">
                   {index + 1} / {images.length}
                 </span>
               </>

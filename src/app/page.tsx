@@ -167,7 +167,7 @@ export default async function PresentationPage() {
       {/* ═══ En-tête ═══════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-40 border-b border-[var(--color-hairline)] bg-[var(--color-workshop)]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
-          <p className="text-[17px] font-bold tracking-[-0.3px] text-[var(--color-ink)]">
+          <p className="text-[1.0625rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
             Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
           </p>
 
@@ -181,7 +181,7 @@ export default async function PresentationPage() {
               <a
                 key={href}
                 href={href}
-                className="text-[13px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+                className="text-[0.8125rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
               >
                 {label}
               </a>
@@ -190,7 +190,7 @@ export default async function PresentationPage() {
 
           <Link
             href="/accueil"
-            className="rounded-[14px] bg-[var(--color-brand)] px-4 py-[9px] text-[12.5px] font-bold whitespace-nowrap text-white"
+            className="rounded-[14px] bg-[var(--color-brand-fill)] px-4 py-[9px] text-[0.78125rem] font-bold whitespace-nowrap text-white"
           >
             Parcourir
           </Link>
@@ -213,17 +213,17 @@ export default async function PresentationPage() {
           <div className="relative mx-auto grid max-w-[1140px] items-center gap-12 px-5 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8 lg:py-24">
             <div>
               <Reveal>
-                <p className="inline-flex items-center gap-2 rounded-full border border-[var(--color-outline)] bg-white/70 px-3 py-[6px] text-[11.5px] font-bold text-[var(--color-brand)]">
+                <p className="inline-flex items-center gap-2 rounded-full border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 py-[6px] text-[0.71875rem] font-bold text-[var(--color-brand)]">
                   <span
                     aria-hidden
-                    className="animate-live-dot h-[7px] w-[7px] rounded-full bg-[var(--color-live)]"
+                    className="animate-live-dot h-[7px] w-[7px] rounded-full bg-[var(--color-live-fill)]"
                   />
                   Gafsa · Tunisie
                 </p>
               </Reveal>
 
               <Reveal delay={80}>
-                <h1 className="mt-5 text-[34px] leading-[1.1] font-bold tracking-[-0.8px] text-[var(--color-ink)] sm:text-[44px] lg:text-[52px]">
+                <h1 className="mt-5 text-[2.125rem] leading-[1.1] font-bold tracking-[-0.05rem] text-[var(--color-ink)] sm:text-[2.75rem] lg:text-[3.25rem]">
                   Le commerce de Gafsa,
                   <br />
                   <span className="text-[var(--color-brand)]">à portée de pouce.</span>
@@ -231,7 +231,7 @@ export default async function PresentationPage() {
               </Reveal>
 
               <Reveal delay={160}>
-                <p className="mt-5 max-w-[54ch] text-[15px] leading-[1.65] text-[var(--color-muted)] sm:text-[16px]">
+                <p className="mt-5 max-w-[54ch] text-[0.9375rem] leading-[1.65] text-[var(--color-muted)] sm:text-[1rem]">
                   Une seule application pour le stock réel des boutiques du mall,
                   les ventes en direct, les bons plans confirmés par les habitants
                   et les services de la ville. Pensée pour un téléphone d&apos;entrée
@@ -247,18 +247,18 @@ export default async function PresentationPage() {
             {/* Aperçu : la vraie coque de l'application, à sa largeur réelle. */}
             <Reveal delay={200} className="justify-self-center lg:justify-self-end">
               <div className="relative w-[280px] rounded-[34px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] p-3 shadow-[0_30px_70px_rgba(60,40,90,0.20)] sm:w-[320px]">
-                <div className="flex flex-col gap-3 rounded-[26px] bg-white/60 p-4">
+                <div className="flex flex-col gap-3 rounded-[26px] bg-[var(--color-field)] p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[13px] font-bold text-[var(--color-ink)]">
+                    <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
                       Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
                     </p>
-                    <span className="flex h-2 w-2 rounded-full bg-[var(--color-live)]" />
+                    <span className="flex h-2 w-2 rounded-full bg-[var(--color-live-fill)]" />
                   </div>
 
                   <div className="rounded-[18px] bg-[image:var(--gradient-brand)] p-4 text-white">
-                    <p className="text-[10.5px] opacity-80">En direct maintenant</p>
-                    <p className="mt-1 text-[14px] font-bold">Collection automne</p>
-                    <p className="mt-2 text-[10px] opacity-80">128 spectateurs · 3 produits épinglés</p>
+                    <p className="text-[0.65625rem] opacity-80">En direct maintenant</p>
+                    <p className="mt-1 text-[0.875rem] font-bold">Collection automne</p>
+                    <p className="mt-2 text-[0.625rem] opacity-80">128 spectateurs · 3 produits épinglés</p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
@@ -268,24 +268,24 @@ export default async function PresentationPage() {
                         className="cat-surface cat-ring flex h-[58px] flex-col items-center justify-center gap-1 rounded-[16px]"
                         style={{ "--hue": hue } as React.CSSProperties}
                       >
-                        <span className="cat-ink text-[13px] font-bold">
+                        <span className="cat-ink text-[0.8125rem] font-bold">
                           {["MD", "AL", "SA"][index]}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-white/70 p-2">
+                  <div className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-[var(--color-veil)] p-2">
                     <span className="ph-stripe h-9 w-9 flex-none rounded-[12px]" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-bold text-[var(--color-ink)]">
+                      <p className="truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
                         Retrait au mall en 30 min
                       </p>
-                      <p className="text-[9.5px] text-[var(--color-muted)]">
+                      <p className="text-[0.59375rem] text-[var(--color-muted)]">
                         Niveau 1 — Local B12
                       </p>
                     </div>
-                    <span className="flex-none rounded-[10px] bg-[var(--color-brand)] px-2 py-1 text-[9.5px] font-bold text-white">
+                    <span className="flex-none rounded-[10px] bg-[var(--color-brand-fill)] px-2 py-1 text-[0.59375rem] font-bold text-white">
                       Voir
                     </span>
                   </div>
@@ -300,10 +300,10 @@ export default async function PresentationPage() {
           <div className="mx-auto grid max-w-[1140px] grid-cols-2 gap-6 px-5 py-10 md:grid-cols-4 lg:px-8">
             {figures.map((figure, index) => (
               <Reveal key={figure.label} delay={index * 70} className="text-center">
-                <p className="text-[30px] leading-none font-bold text-[var(--color-brand)] lg:text-[38px]">
+                <p className="text-[1.875rem] leading-none font-bold text-[var(--color-brand)] lg:text-[2.375rem]">
                   {figure.value}
                 </p>
-                <p className="mt-2 text-[12px] text-[var(--color-muted)]">{figure.label}</p>
+                <p className="mt-2 text-[0.75rem] text-[var(--color-muted)]">{figure.label}</p>
               </Reveal>
             ))}
           </div>
@@ -312,14 +312,14 @@ export default async function PresentationPage() {
         {/* ═══ Le projet ═══════════════════════════════════════════════ */}
         <section id="projet" className="mx-auto max-w-[1140px] scroll-mt-24 px-5 py-16 lg:px-8 lg:py-24">
           <Reveal>
-            <p className="text-[12px] font-bold tracking-[1.4px] text-[var(--color-brand)] uppercase">
+            <p className="text-[0.75rem] font-bold tracking-[0.0875rem] text-[var(--color-brand)] uppercase">
               Le projet
             </p>
-            <h2 className="mt-3 max-w-[26ch] text-[27px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+            <h2 className="mt-3 max-w-[26ch] text-[1.6875rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
               Un commerce de quartier qui garde ses habitudes, avec les outils
               d&apos;aujourd&apos;hui.
             </h2>
-            <p className="mt-4 max-w-[68ch] text-[14.5px] leading-[1.7] text-[var(--color-muted)]">
+            <p className="mt-4 max-w-[68ch] text-[0.90625rem] leading-[1.7] text-[var(--color-muted)]">
               À Gafsa, on achète parce qu&apos;on connaît le vendeur. Nous
               n&apos;avons pas voulu remplacer cette relation par un catalogue
               anonyme : le paiement à la livraison reste la norme, l&apos;appel
@@ -337,13 +337,13 @@ export default async function PresentationPage() {
                 className="card flex flex-col gap-3 p-6 transition-transform hover:-translate-y-1"
               >
                 <span
-                  className="cat-surface cat-ink cat-ring flex h-11 w-11 items-center justify-center rounded-[16px] text-[14px] font-bold"
+                  className="cat-surface cat-ink cat-ring flex h-11 w-11 items-center justify-center rounded-[16px] text-[0.875rem] font-bold"
                   style={{ "--hue": feature.hue } as React.CSSProperties}
                 >
                   {feature.tag}
                 </span>
-                <h3 className="text-[16px] font-bold text-[var(--color-ink)]">{feature.title}</h3>
-                <p className="text-[13.5px] leading-[1.6] text-[var(--color-muted)]">
+                <h3 className="text-[1rem] font-bold text-[var(--color-ink)]">{feature.title}</h3>
+                <p className="text-[0.84375rem] leading-[1.6] text-[var(--color-muted)]">
                   {feature.body}
                 </p>
               </Reveal>
@@ -358,10 +358,10 @@ export default async function PresentationPage() {
         >
           <div className="mx-auto max-w-[1140px] px-5 py-16 lg:px-8 lg:py-24">
             <Reveal>
-              <p className="text-[12px] font-bold tracking-[1.4px] text-[var(--color-brand)] uppercase">
+              <p className="text-[0.75rem] font-bold tracking-[0.0875rem] text-[var(--color-brand)] uppercase">
                 Fonctionnement
               </p>
-              <h2 className="mt-3 text-[27px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+              <h2 className="mt-3 text-[1.6875rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
                 Trois étapes, de chaque côté.
               </h2>
             </Reveal>
@@ -378,15 +378,15 @@ export default async function PresentationPage() {
                 ] as const
               ).map((column, columnIndex) => (
                 <Reveal key={column.title} delay={columnIndex * 120}>
-                  <h3 className="text-[18px] font-bold text-[var(--color-ink)]">{column.title}</h3>
+                  <h3 className="text-[1.125rem] font-bold text-[var(--color-ink)]">{column.title}</h3>
 
                   <ol className="mt-5 flex flex-col gap-5">
                     {column.steps.map((step, index) => (
                       <li key={step} className="flex gap-4">
-                        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+                        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
                           {index + 1}
                         </span>
-                        <p className="pt-[6px] text-[13.5px] leading-[1.6] text-[var(--color-muted)]">
+                        <p className="pt-[6px] text-[0.84375rem] leading-[1.6] text-[var(--color-muted)]">
                           {step}
                         </p>
                       </li>
@@ -396,7 +396,7 @@ export default async function PresentationPage() {
                   {column.cta && (
                     <Link
                       href={column.cta.href}
-                      className="mt-6 inline-flex min-h-[46px] items-center rounded-[16px] bg-[var(--color-ink)] px-6 text-[13.5px] font-bold text-white transition-transform hover:-translate-y-0.5"
+                      className="mt-6 inline-flex min-h-[46px] items-center rounded-[16px] bg-[var(--color-ink)] px-6 text-[0.84375rem] font-bold text-[var(--color-app)] transition-transform hover:-translate-y-0.5"
                     >
                       {column.cta.label}
                     </Link>
@@ -410,13 +410,13 @@ export default async function PresentationPage() {
         {/* ═══ Équipe ══════════════════════════════════════════════════ */}
         <section id="equipe" className="mx-auto max-w-[1140px] scroll-mt-24 px-5 py-16 lg:px-8 lg:py-24">
           <Reveal>
-            <p className="text-[12px] font-bold tracking-[1.4px] text-[var(--color-brand)] uppercase">
+            <p className="text-[0.75rem] font-bold tracking-[0.0875rem] text-[var(--color-brand)] uppercase">
               L&apos;équipe
             </p>
-            <h2 className="mt-3 text-[27px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+            <h2 className="mt-3 text-[1.6875rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
               Qui tient la plateforme.
             </h2>
-            <p className="mt-4 max-w-[62ch] text-[14.5px] leading-[1.7] text-[var(--color-muted)]">
+            <p className="mt-4 max-w-[62ch] text-[0.90625rem] leading-[1.7] text-[var(--color-muted)]">
               Une petite équipe, sur place. Chaque dossier de boutique est vérifié
               à la main avant sa mise en ligne — c&apos;est plus lent, et c&apos;est
               ce qui fait que le catalogue reste fiable.
@@ -431,13 +431,13 @@ export default async function PresentationPage() {
                 className="card flex flex-col items-start gap-3 p-6 transition-transform hover:-translate-y-1"
               >
                 <span
-                  className="cat-surface cat-ink cat-ring flex h-14 w-14 items-center justify-center rounded-full text-[16px] font-bold"
+                  className="cat-surface cat-ink cat-ring flex h-14 w-14 items-center justify-center rounded-full text-[1rem] font-bold"
                   style={{ "--hue": member.hue } as React.CSSProperties}
                 >
                   {member.initials}
                 </span>
-                <h3 className="text-[14.5px] font-bold text-[var(--color-ink)]">{member.role}</h3>
-                <p className="text-[12.5px] leading-[1.6] text-[var(--color-muted)]">
+                <h3 className="text-[0.90625rem] font-bold text-[var(--color-ink)]">{member.role}</h3>
+                <p className="text-[0.78125rem] leading-[1.6] text-[var(--color-muted)]">
                   {member.focus}
                 </p>
               </Reveal>
@@ -452,13 +452,13 @@ export default async function PresentationPage() {
         >
           <div className="mx-auto grid max-w-[1140px] gap-12 px-5 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-24">
             <Reveal>
-              <p className="text-[12px] font-bold tracking-[1.4px] text-[var(--color-brand)] uppercase">
+              <p className="text-[0.75rem] font-bold tracking-[0.0875rem] text-[var(--color-brand)] uppercase">
                 Contact
               </p>
-              <h2 className="mt-3 text-[27px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+              <h2 className="mt-3 text-[1.6875rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
                 Une question, un dossier, un litige ?
               </h2>
-              <p className="mt-4 text-[14.5px] leading-[1.7] text-[var(--color-muted)]">
+              <p className="mt-4 text-[0.90625rem] leading-[1.7] text-[var(--color-muted)]">
                 Les commerçants et les acheteuses passent par la messagerie de
                 l&apos;application : la conversation reste attachée à la commande,
                 ce qui évite de tout réexpliquer.
@@ -487,10 +487,10 @@ export default async function PresentationPage() {
         {/* ═══ Dernier appel ═══════════════════════════════════════════ */}
         <section className="mx-auto max-w-[1140px] px-5 py-16 lg:px-8 lg:py-24">
           <Reveal className="flex flex-col items-center gap-7 rounded-[28px] bg-[image:var(--gradient-brand)] px-6 py-14 text-center text-white lg:px-16">
-            <h2 className="max-w-[24ch] text-[26px] leading-[1.2] font-bold tracking-[-0.5px] lg:text-[34px]">
+            <h2 className="max-w-[24ch] text-[1.625rem] leading-[1.2] font-bold tracking-[-0.03125rem] lg:text-[2.125rem]">
               Commencez par regarder. Le compte peut attendre.
             </h2>
-            <p className="max-w-[54ch] text-[14px] leading-[1.65] opacity-85">
+            <p className="max-w-[54ch] text-[0.875rem] leading-[1.65] opacity-85">
               Le catalogue, les directs et les bons plans sont consultables sans
               inscription. Le compte ne sert qu&apos;à commander, commenter et
               suivre vos boutiques.
@@ -499,13 +499,13 @@ export default async function PresentationPage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/accueil"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white px-7 text-[15px] font-bold text-[var(--color-ink)] transition-transform hover:-translate-y-0.5"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white px-7 text-[0.9375rem] font-bold text-[var(--color-on-light)] transition-transform hover:-translate-y-0.5"
               >
                 Parcourir le site
               </Link>
               <Link
                 href="/inscription"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] border border-white/40 px-7 text-[15px] font-bold text-white transition-transform hover:-translate-y-0.5"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] border border-white/40 px-7 text-[0.9375rem] font-bold text-white transition-transform hover:-translate-y-0.5"
               >
                 Créer mon compte
               </Link>
@@ -517,7 +517,7 @@ export default async function PresentationPage() {
       {/* ═══ Pied de page ══════════════════════════════════════════════ */}
       <footer className="border-t border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[1140px] flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <p className="text-[12px] text-[var(--color-muted)]">
+          <p className="text-[0.75rem] text-[var(--color-muted)]">
             Mall Express Gafsa — Gafsa, Tunisie
           </p>
           <nav aria-label="Liens" className="flex flex-wrap gap-x-6 gap-y-2">
@@ -532,7 +532,7 @@ export default async function PresentationPage() {
               <Link
                 key={href}
                 href={href}
-                className="text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+                className="-my-1 py-1 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
               >
                 {label}
               </Link>
@@ -557,15 +557,15 @@ function ContactRow({
 }) {
   const content = (
     <>
-      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-[var(--color-brand-tint)] text-[12.5px] font-bold text-[var(--color-brand)]">
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-[var(--color-brand-tint)] text-[0.78125rem] font-bold text-[var(--color-brand)]">
         {tag}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-bold text-[var(--color-ink)]">{label}</span>
-        <span className="block truncate text-[12.5px] text-[var(--color-muted)]">{value}</span>
+        <span className="block text-[0.8125rem] font-bold text-[var(--color-ink)]">{label}</span>
+        <span className="block truncate text-[0.78125rem] text-[var(--color-muted)]">{value}</span>
       </span>
       {href && (
-        <span aria-hidden className="flex-none text-[13px] text-[var(--color-faint)]">
+        <span aria-hidden className="flex-none text-[0.8125rem] text-[var(--color-faint)]">
           →
         </span>
       )}

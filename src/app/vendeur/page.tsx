@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { formatCount, formatPrice, timeAgo } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, Placeholder, SectionTitle, Tag } from "@/components/ui/primitives";
@@ -97,7 +97,7 @@ export default async function VendorDashboard() {
           )}
           <Link
             href="/vendeur/reglages#identite"
-            className="absolute bottom-2 end-2 rounded-[14px] bg-[rgba(36,31,28,0.75)] px-[10px] py-[5px] text-[10px] font-semibold text-white"
+            className="absolute bottom-2 end-2 rounded-[14px] bg-[rgba(36,31,28,0.75)] px-[10px] py-[5px] text-[0.625rem] font-semibold text-white"
           >
             {t.vendor.editBanner}
           </Link>
@@ -111,8 +111,8 @@ export default async function VendorDashboard() {
             { value: formatCount(shop.views_count), label: t.vendor.visits },
           ].map((stat) => (
             <Card key={stat.label} className="p-[10px]">
-              <p className="text-[19px] font-semibold text-[var(--color-brand)]">{stat.value}</p>
-              <p className="text-[9.5px] text-[var(--color-muted)]">{stat.label}</p>
+              <p className="text-[1.1875rem] font-semibold text-[var(--color-brand)]">{stat.value}</p>
+              <p className="text-[0.59375rem] text-[var(--color-muted)]">{stat.label}</p>
             </Card>
           ))}
         </div>
@@ -127,13 +127,13 @@ export default async function VendorDashboard() {
             href={`/boutique/${shop.slug}`}
             className="flex flex-none items-center gap-[10px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
           >
-            <span className="w-6 flex-none text-[16px] font-semibold tracking-[0.5px] text-[var(--color-brand)]">
+            <span className="w-6 flex-none text-[1rem] font-semibold tracking-[0.03125rem] text-[var(--color-brand)]">
               VU
             </span>
-            <span className="flex-1 text-[12px] font-semibold text-[var(--color-ink)]">
+            <span className="flex-1 text-[0.75rem] font-semibold text-[var(--color-ink)]">
               {t.account.viewMyShop}
             </span>
-            <span aria-hidden className="flex-none text-[11px] text-[var(--color-faint)]">
+            <span aria-hidden className="flex-none text-[0.6875rem] text-[var(--color-faint)]">
               ›
             </span>
           </Link>
@@ -150,13 +150,13 @@ export default async function VendorDashboard() {
                 className="flex flex-col items-center gap-[6px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[12px_8px] shadow-[var(--shadow-card)]"
               >
                 <span
-                  className={`text-[17px] font-semibold ${
+                  className={`text-[1.0625rem] font-semibold ${
                     tile.accent ? "text-[var(--color-live)]" : "text-[var(--color-brand)]"
                   }`}
                 >
                   {tile.monogram}
                 </span>
-                <span className="min-h-[25px] text-center text-[9.5px] leading-[1.3] text-[var(--color-ink)]">
+                <span className="min-h-[25px] text-center text-[0.59375rem] leading-[1.3] text-[var(--color-ink)]">
                   {tile.label}
                 </span>
               </Link>
@@ -168,14 +168,14 @@ export default async function VendorDashboard() {
         {(lowStock.count ?? 0) > 0 && (
           <Link href="/vendeur/produits?filtre=stock-faible">
             <Card className="flex flex-none items-center gap-[10px] p-3">
-              <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-live-tint)] text-[13px] font-bold text-[var(--color-live)]">
+              <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-live-tint)] text-[0.8125rem] font-bold text-[var(--color-live)]">
                 !
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[11.5px] font-bold text-[var(--color-ink)]">
+                <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
                   {format(t.vendor.tabsLowStock, { n: lowStock.count ?? 0 })}
                 </p>
-                <p className="text-[10.5px] text-[var(--color-muted)]">{t.vendor.quickRestock}</p>
+                <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.quickRestock}</p>
               </div>
             </Card>
           </Link>
@@ -183,20 +183,20 @@ export default async function VendorDashboard() {
 
         {/* ─── Conseil live ─────────────────────────────────────────── */}
         <Card className="flex flex-none items-center gap-[10px] p-3">
-          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
             LV
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
               {format(t.vendor.liveTipTitle, { slot: "jeudi 19h" })}
             </p>
-            <p className="text-[10.5px] text-[var(--color-muted)]">
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">
               {format(t.vendor.liveTipBody, { pct: 68 })}
             </p>
           </div>
           <Link
             href="/vendeur/lives/nouveau"
-            className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand)] px-[11px] py-[6px] text-[10px] font-bold text-white"
+            className="flex-none whitespace-nowrap rounded-[12px] bg-[var(--color-brand-fill)] px-[11px] py-[6px] text-[0.625rem] font-bold text-white"
           >
             {t.vendor.schedule}
           </Link>
@@ -207,7 +207,7 @@ export default async function VendorDashboard() {
           <SectionTitle>{t.vendor.recentOrders}</SectionTitle>
 
           {(recentOrders.data ?? []).length === 0 ? (
-            <p className="text-[11px] text-[var(--color-muted)]">{t.orders.empty}</p>
+            <p className="text-[0.6875rem] text-[var(--color-muted)]">{t.orders.empty}</p>
           ) : (
             recentOrders.data!.map((order) => {
               const first = order.items?.[0];
@@ -226,10 +226,10 @@ export default async function VendorDashboard() {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+                      <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                         {first ? `${first.product_name} × ${first.quantity}` : order.order_number}
                       </p>
-                      <p className="truncate text-[10px] text-[var(--color-muted)]">
+                      <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                         {order.buyer?.first_name} {order.buyer?.last_name?.[0]}. ·{" "}
                         {timeAgo(order.created_at, locale)}
                       </p>

@@ -6,7 +6,7 @@ import { ImageZoom } from "@/components/ui/image-zoom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { reportDeal, voteDeal } from "@/app/actions/deals";
 import { cx, monogram, shortName, timeAgo } from "@/lib/format";
 import { Avatar, Chip, Rail, Tag } from "@/components/ui/primitives";
@@ -153,10 +153,10 @@ export function DealCard({
           hue={deal.category?.hue ?? 300}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+          <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
             {shortName(deal.author) || "—"}
           </p>
-          <p className="truncate text-[10px] text-[var(--color-muted)]">
+          <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
             {timeAgo(deal.created_at, locale)}
             {deal.location_label && ` · ${deal.location_label}`}
             {!deal.location_label && deal.shop && ` · ${deal.shop.name}`}
@@ -192,20 +192,20 @@ export function DealCard({
       )}
 
       <div className="flex flex-col gap-2 p-[11px_12px]">
-        <h3 className="text-[12.5px] font-bold leading-[1.4] text-[var(--color-ink)]">{deal.title}</h3>
+        <h3 className="text-[0.78125rem] font-bold leading-[1.4] text-[var(--color-ink)]">{deal.title}</h3>
 
         {body && (
           <p
             lang={locale === "ar" && deal.body_ar ? "ar" : undefined}
             dir={locale === "ar" && deal.body_ar ? "rtl" : undefined}
-            className="text-[11px] leading-[1.5] text-[var(--color-muted)]"
+            className="text-[0.6875rem] leading-[1.5] text-[var(--color-muted)]"
           >
             {body}
           </p>
         )}
 
         {notice && (
-          <p role="status" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+          <p role="status" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
             {notice}
           </p>
         )}
@@ -216,7 +216,7 @@ export function DealCard({
             onClick={() => cast(1)}
             aria-pressed={vote === 1}
             className={cx(
-              "flex items-center gap-[5px] text-[10.5px] font-bold",
+              "flex items-center gap-[5px] text-[0.65625rem] font-bold",
               vote === 1 ? "text-[var(--color-brand)]" : "text-[var(--color-muted)]",
             )}
           >
@@ -230,7 +230,7 @@ export function DealCard({
             aria-pressed={vote === -1}
             aria-label={`${t.deals.worksLabel} — non`}
             className={cx(
-              "flex items-center gap-[5px] text-[10.5px]",
+              "flex items-center gap-[5px] text-[0.65625rem]",
               vote === -1 ? "font-bold text-[var(--color-live)]" : "text-[var(--color-muted)]",
             )}
           >
@@ -238,7 +238,7 @@ export function DealCard({
             {down}
           </button>
 
-          <Link href={`/bons-plans/${deal.id}`} className="text-[10.5px] text-[var(--color-muted)]">
+          <Link href={`/bons-plans/${deal.id}`} className="text-[0.65625rem] text-[var(--color-muted)]">
             {format(t.deals.commentsCount, { n: deal.comments_count })}
           </Link>
 
@@ -246,7 +246,7 @@ export function DealCard({
             type="button"
             onClick={onReport}
             disabled={reported}
-            className="ms-auto text-[10.5px] font-bold text-[var(--color-muted)] disabled:opacity-60"
+            className="ms-auto text-[0.65625rem] font-bold text-[var(--color-muted)] disabled:opacity-60"
           >
             {reported ? t.deals.reported : t.deals.report}
           </button>

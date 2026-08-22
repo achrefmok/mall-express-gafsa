@@ -99,13 +99,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <a
           href="#contenu"
-          className="sr-only focus:not-sr-only focus:absolute focus:start-3 focus:top-3 focus:z-50 focus:rounded-[12px] focus:bg-[var(--color-brand)] focus:px-4 focus:py-2 focus:text-[12px] focus:font-bold focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-3 focus:top-3 focus:z-50 focus:rounded-[12px] focus:bg-[var(--color-brand-fill)] focus:px-4 focus:py-2 focus:text-[0.75rem] focus:font-bold focus:text-white"
         >
           {t.a11y.skipToContent}
         </a>
         {/* ServiceWorkerBridge lit le dictionnaire (bandeau hors ligne,
             invitation à l'installation) : il doit vivre sous le fournisseur. */}
-        <I18nProvider initial={prefs}>
+        <I18nProvider initial={prefs} dictionary={t}>
           {children}
           <NavDepthTracker />
         <ServiceWorkerBridge />

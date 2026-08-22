@@ -3,7 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { formatCount, formatDateTime, formatPrice, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, EmptyState, Placeholder, SectionTitle, Tag } from "@/components/ui/primitives";
@@ -71,18 +71,18 @@ export default async function LivesPage() {
                   <Placeholder label="flux vidéo en direct" className="h-[180px] w-full bg-[#221c2b]" />
                 )}
 
-                <span className="absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
+                <span className="absolute start-3 top-3 rounded-[4px] bg-[var(--color-live-fill)] px-[9px] py-1 text-[0.625rem] font-bold tracking-[0.03125rem] text-white">
                   {t.live.onAir}
                 </span>
-                <span className="absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px] text-white">
+                <span className="absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[0.625rem] text-white">
                   {format(t.live.viewers, { n: formatCount(live.viewers_count) })}
                 </span>
 
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                  <p className="text-[13px] font-bold text-white">
+                  <p className="text-[0.8125rem] font-bold text-white">
                     {locale === "ar" && live.title_ar ? live.title_ar : live.title}
                   </p>
-                  <p className="text-[10.5px] text-white/80">{live.shop?.name}</p>
+                  <p className="text-[0.65625rem] text-white/80">{live.shop?.name}</p>
                 </div>
               </Link>
             ))}
@@ -94,14 +94,14 @@ export default async function LivesPage() {
             <SectionTitle className="lg:col-span-full">{t.live.upcoming}</SectionTitle>
             {upcoming.map((live) => (
               <Card key={live.id} className="flex items-center gap-[10px] p-[11px]">
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[11px] font-bold text-[var(--color-brand)]">
+                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.6875rem] font-bold text-[var(--color-brand)]">
                   {monogram(live.shop?.name)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+                  <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                     {locale === "ar" && live.title_ar ? live.title_ar : live.title}
                   </p>
-                  <p className="truncate text-[10px] text-[var(--color-muted)]">
+                  <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                     {live.shop?.name}
                     {live.scheduled_at && ` · ${formatDateTime(live.scheduled_at, locale)}`}
                   </p>
@@ -134,14 +134,14 @@ export default async function LivesPage() {
               return (
                 <Card key={live.id} className="flex flex-col gap-[9px] p-[11px]">
                   <div className="flex items-center gap-[10px]">
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-track)] text-[11px] font-bold text-[var(--color-muted)]">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-track)] text-[0.6875rem] font-bold text-[var(--color-muted)]">
                       {monogram(live.shop?.name)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+                      <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                         {live.title}
                       </p>
-                      <p className="truncate text-[10px] text-[var(--color-muted)]">
+                      <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                         {live.shop?.name}
                       </p>
                     </div>
@@ -165,10 +165,10 @@ export default async function LivesPage() {
                           ) : (
                             <Placeholder className="h-[92px] w-[92px]" rounded="tile" />
                           )}
-                          <p className="truncate text-[10px] font-semibold text-[var(--color-ink)]">
+                          <p className="truncate text-[0.625rem] font-semibold text-[var(--color-ink)]">
                             {product!.name}
                           </p>
-                          <p className="text-[10.5px] font-bold text-[var(--color-brand)]">
+                          <p className="text-[0.65625rem] font-bold text-[var(--color-brand)]">
                             {formatPrice(product!.price, locale)}
                           </p>
                         </Link>

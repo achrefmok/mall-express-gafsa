@@ -35,30 +35,37 @@ export const getTopBarCounts = cache(async () => {
 
   const supabase = await createClient();
 
-  const [notifications, cart, conversations] = await Promise.all([
+  const [notifications, cart, messages] = await Promise.all([
     supabase
       .from("notifications")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .is("read_at", null),
     supabase.from("cart_items").select("quantity").eq("user_id", user.id),
-    supabase.from("conversations").select("id").eq("user_id", user.id),
+
+    /*
+      Les messages non lus, en une requête au lieu de deux.
+
+      Il fallait auparavant lire d'abord toutes les conversations de la personne
+      pour en extraire les identifiants, puis compter les messages avec un
+      `in(...)` — un aller-retour séquentiel, après les trois autres, sur chaque
+      page du site.
+
+      La jointure interne fait le même travail côté base : `conversations!inner`
+      restreint aux messages dont la conversation appartient à la personne, et
+      le filtre pointé traverse la relation. Le `head: true` ne rapatrie que le
+      compte, jamais les lignes.
+    */
+    supabase
+      .from("messages")
+      .select("id, conversation:conversations!inner(user_id)", { count: "exact", head: true })
+      .eq("conversation.user_id", user.id)
+      .neq("sender_id", user.id)
+      .is("read_at", null),
   ]);
 
-  let unreadMessages = 0;
-  const conversationIds = (conversations.data ?? []).map((c) => c.id);
-  if (conversationIds.length > 0) {
-    const { count } = await supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .in("conversation_id", conversationIds)
-      .neq("sender_id", user.id)
-      .is("read_at", null);
-    unreadMessages = count ?? 0;
-  }
-
   return {
-    messages: unreadMessages,
+    messages: messages.count ?? 0,
     notifications: notifications.count ?? 0,
     cart: (cart.data ?? []).reduce((sum, row) => sum + row.quantity, 0),
   };

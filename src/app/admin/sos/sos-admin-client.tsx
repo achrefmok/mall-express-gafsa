@@ -8,7 +8,7 @@ import {
   setProviderApproval,
 } from "@/app/actions/sos";
 import { SOS_TRADES, type SosTrade } from "@/lib/sos";
-import { Button, Card, Tag } from "@/components/ui/primitives";
+import { Button, Card, Tag, fieldClass } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
 
 /*
@@ -54,10 +54,10 @@ export function ProviderRow({ provider }: { provider: AdminProvider }) {
   return (
     <Card className="flex items-center gap-[10px] p-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+        <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
           {provider.display_name}
         </p>
-        <p className="truncate text-[10px] text-[var(--color-muted)]">
+        <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
           {TRADE_LABELS[provider.trade]} · {provider.phone}
           {provider.description && ` · ${provider.description}`}
         </p>
@@ -94,7 +94,7 @@ export function ProviderRow({ provider }: { provider: AdminProvider }) {
 }
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink)]";
+  fieldClass({ size: "sm", solid: true });
 
 interface Member {
   id: string;
@@ -178,14 +178,14 @@ export function GrantProvider() {
       </div>
 
       {error && (
-        <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
 
       {members.map((member) => (
         <div key={member.id} className="flex flex-col gap-2 border-t border-[var(--color-hairline)] pt-2">
-          <span className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+          <span className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
             {[member.first_name, member.last_name].filter(Boolean).join(" ") || "Sans nom"}
           </span>
 

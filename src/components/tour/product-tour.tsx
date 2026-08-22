@@ -88,10 +88,22 @@ function measure(target: string): Spot | null {
 export function ProductTour({
   steps,
   storageKey,
+  startOn,
 }: {
   steps: TourStep[];
   /** Une clé par public : le vendeur voit son guide même s'il a vu celui du client. */
   storageKey: string;
+  /**
+   * Chemin depuis lequel le guide a le droit de démarrer seul.
+   *
+   * Il s'ouvrait sur n'importe quelle page d'entrée, et annonçait « Votre
+   * accueil » à quelqu'un venu d'un lien partagé vers les directs. La première
+   * étape décrit un écran : le guide doit commencer sur cet écran.
+   *
+   * La relance depuis les réglages n'est pas concernée — elle est demandée
+   * explicitement, elle part d'où on la déclenche.
+   */
+  startOn?: string;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -108,6 +120,7 @@ export function ProductTour({
   */
   useEffect(() => {
     if (localStorage.getItem(storageKey)) return;
+    if (startOn && window.location.pathname !== startOn) return;
 
     const timer = setTimeout(() => {
       const present = steps.filter((step) => measure(step.target) !== null);
@@ -118,7 +131,7 @@ export function ProductTour({
     }, 900);
 
     return () => clearTimeout(timer);
-  }, [steps, storageKey]);
+  }, [steps, storageKey, startOn]);
 
   /* Relance depuis les réglages, sans rechargement. */
   useEffect(() => {
@@ -231,18 +244,18 @@ export function ProductTour({
           transform: "translateX(-50%)",
         }}
       >
-        <p className="text-[10px] font-bold tracking-[0.08em] text-[var(--color-brand)] uppercase">
+        <p className="text-[0.625rem] font-bold tracking-[0.08em] text-[var(--color-brand)] uppercase">
           {t.tour.step.replace("{n}", String(index + 1)).replace("{total}", String(usable.length))}
         </p>
 
-        <h2 className="mt-1 text-[14px] font-bold text-[var(--color-ink)]">{step.title}</h2>
-        <p className="mt-1 text-[11.5px] leading-[1.5] text-[var(--color-muted)]">{step.body}</p>
+        <h2 className="mt-1 text-[0.875rem] font-bold text-[var(--color-ink)]">{step.title}</h2>
+        <p className="mt-1 text-[0.71875rem] leading-[1.5] text-[var(--color-muted)]">{step.body}</p>
 
         <div className="mt-3 flex items-center gap-2">
           <button
             type="button"
             onClick={finish}
-            className="flex-1 rounded-[13px] border border-[var(--color-outline)] py-[9px] text-[11.5px] font-semibold text-[var(--color-muted)]"
+            className="flex-1 rounded-[13px] border border-[var(--color-outline)] py-[9px] text-[0.71875rem] font-semibold text-[var(--color-muted)]"
           >
             {last ? t.common.close : t.tour.skip}
           </button>
@@ -251,7 +264,7 @@ export function ProductTour({
             <button
               type="button"
               onClick={() => setIndex((i) => i + 1)}
-              className="flex-1 rounded-[13px] bg-[var(--color-brand)] py-[9px] text-[11.5px] font-bold text-white"
+              className="flex-1 rounded-[13px] bg-[var(--color-brand-fill)] py-[9px] text-[0.71875rem] font-bold text-white"
             >
               {t.tour.next}
             </button>
@@ -261,7 +274,7 @@ export function ProductTour({
             <button
               type="button"
               onClick={finish}
-              className="flex-1 rounded-[13px] bg-[var(--color-brand)] py-[9px] text-[11.5px] font-bold text-white"
+              className="flex-1 rounded-[13px] bg-[var(--color-brand-fill)] py-[9px] text-[0.71875rem] font-bold text-white"
             >
               {t.tour.done}
             </button>
@@ -278,7 +291,7 @@ export function ReplayTourButton({ label }: { label: string }) {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event("meg:tour"))}
-      className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[12px] font-semibold text-[var(--color-brand)]"
+      className="w-full rounded-[18px] border border-[var(--color-outline)] py-3 text-[0.75rem] font-semibold text-[var(--color-brand)]"
     >
       {label}
     </button>

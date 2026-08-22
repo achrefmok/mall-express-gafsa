@@ -7,13 +7,13 @@ import { updatePassword } from "@/app/actions/auth";
 import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Avatar, Button, Card, Divider, KeyValueRow, SectionTitle, Switch } from "@/components/ui/primitives";
+import { Avatar, Button, Card, Divider, KeyValueRow, SectionTitle, Switch, fieldClass } from "@/components/ui/primitives";
 import type { Profile } from "@/types/database";
 import { ReplayClientTour } from "@/components/tour/tours";
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({ strong: true });
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 export function AccountSettingsForm({ profile }: { profile: Profile }) {
   const { t, locale, textScale, simplified, setLocale, cycleTextScale, toggleSimplified } = useI18n();
@@ -84,7 +84,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
             type="button"
             onClick={onSave}
             disabled={pending || !firstName.trim()}
-            className="text-[11.5px] font-bold text-[var(--color-brand)] disabled:opacity-40"
+            className="text-[0.71875rem] font-bold text-[var(--color-brand)] disabled:opacity-40"
           >
             {pending ? t.common.saving : t.common.save}
           </button>
@@ -101,16 +101,16 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
               src={avatarUrl}
               initials={monogram(firstName, lastName)}
               size={52}
-              className="bg-[var(--color-ink)]"
+              tone="ink"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-[11.5px] font-semibold text-[var(--color-ink)]">Photo de profil</p>
-              <p className="text-[10.5px] text-[var(--color-muted)]">JPG ou PNG, 2 Mo maximum</p>
+              <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">Photo de profil</p>
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">JPG ou PNG, 2 Mo maximum</p>
             </div>
             <button
               type="button"
               onClick={() => avatarInput.current?.click()}
-              className="flex-none text-[10.5px] font-semibold text-[var(--color-brand)]"
+              className="flex-none text-[0.65625rem] font-semibold text-[var(--color-brand)]"
             >
               {t.common.change}
             </button>
@@ -160,7 +160,12 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
 
             <label className="flex flex-col gap-1">
               <span className={LABEL}>Ville</span>
-              <input value={city} onChange={(e) => setCity(e.target.value)} className={FIELD} />
+              <input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                autoComplete="address-level2"
+                className={FIELD}
+              />
             </label>
           </Card>
         </section>
@@ -174,7 +179,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
               <button
                 type="button"
                 onClick={() => setLocale(locale === "ar" ? "fr" : "ar")}
-                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[11px] font-bold text-[var(--color-brand)]"
+                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.6875rem] font-bold text-[var(--color-brand)]"
               >
                 {locale === "ar" ? "العربية" : "Français"}
               </button>
@@ -186,7 +191,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
               <button
                 type="button"
                 onClick={cycleTextScale}
-                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[11px] font-bold text-[var(--color-brand)]"
+                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.6875rem] font-bold text-[var(--color-brand)]"
               >
                 {scaleLabel}
               </button>
@@ -199,7 +204,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
             </KeyValueRow>
           </Card>
 
-          <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+          <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
             Ces réglages sont enregistrés sur votre compte : vous les retrouverez sur un autre
             appareil.
           </p>
@@ -241,7 +246,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
           </KeyValueRow>
           <Divider />
           <KeyValueRow label="Code de parrainage">
-            <span className="font-mono text-[11px] font-bold text-[var(--color-ink)]">
+            <span className="font-mono text-[0.6875rem] font-bold text-[var(--color-ink)]">
               {profile.referral_code ?? "—"}
             </span>
           </KeyValueRow>
@@ -255,7 +260,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
           <p
             role="status"
             className={cx(
-              "text-[11px] font-semibold",
+              "text-[0.6875rem] font-semibold",
               feedback.kind === "ok" ? "text-[var(--color-brand)]" : "text-[var(--color-live)]",
             )}
           >

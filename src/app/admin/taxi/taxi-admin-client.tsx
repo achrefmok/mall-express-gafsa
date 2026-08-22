@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { grantDriverAccess, revokeDriverAccess, setDriverApproval } from "@/app/actions/taxi";
-import { Button, Card, Tag } from "@/components/ui/primitives";
+import { Button, Card, Tag, fieldClass } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
 
 export interface AdminDriver {
@@ -31,10 +31,10 @@ export function DriverRow({ driver }: { driver: AdminDriver }) {
   return (
     <Card className="flex items-center gap-[10px] p-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+        <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
           {driver.display_name}
         </p>
-        <p className="truncate text-[10px] text-[var(--color-muted)]">
+        <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
           {driver.phone}
           {driver.vehicle && ` · ${driver.vehicle}`}
           {driver.plate && ` · ${driver.plate}`}
@@ -72,7 +72,7 @@ export function DriverRow({ driver }: { driver: AdminDriver }) {
 }
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink)]";
+  fieldClass({ size: "sm", solid: true });
 
 interface Member {
   id: string;
@@ -155,14 +155,14 @@ export function GrantDriver() {
       </div>
 
       {error && (
-        <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
 
       {members.map((member) => (
         <div key={member.id} className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--color-ink)]">
+          <span className="min-w-0 flex-1 truncate text-[0.71875rem] text-[var(--color-ink)]">
             {[member.first_name, member.last_name].filter(Boolean).join(" ") || "Sans nom"}
           </span>
 

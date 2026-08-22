@@ -76,10 +76,10 @@ export function VendorOrderCard({ order, locale }: { order: OrderData; locale: A
     <Card className="flex flex-none flex-col gap-2 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+          <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
             {fullName(order.buyer) || "—"}
           </p>
-          <p className="text-[10px] text-[var(--color-muted)]">
+          <p className="text-[0.625rem] text-[var(--color-muted)]">
             {order.order_number} · {formatDateTime(order.created_at, locale)}
           </p>
         </div>
@@ -104,16 +104,16 @@ export function VendorOrderCard({ order, locale }: { order: OrderData; locale: A
           ) : (
             <Placeholder className="h-[34px] w-[34px] flex-none" rounded="thumb" />
           )}
-          <p className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--color-ink)]">
+          <p className="min-w-0 flex-1 truncate text-[0.71875rem] text-[var(--color-ink)]">
             {item.product_name} × {item.quantity}
           </p>
-          <p className="flex-none text-[11px] font-semibold text-[var(--color-muted)]">
+          <p className="flex-none text-[0.6875rem] font-semibold text-[var(--color-muted)]">
             {formatPrice(item.unit_price * item.quantity, locale)}
           </p>
         </div>
       ))}
 
-      <div className="flex flex-col gap-1 border-t border-[var(--color-hairline)] pt-2 text-[10.5px] text-[var(--color-muted)]">
+      <div className="flex flex-col gap-1 border-t border-[var(--color-hairline)] pt-2 text-[0.65625rem] text-[var(--color-muted)]">
         <p>
           {order.delivery_method === "pickup" ? t.cart.pickup : t.cart.delivery} ·{" "}
           {order.payment_method === "cod" ? t.cart.paymentCod : t.cart.paymentCall}
@@ -126,13 +126,13 @@ export function VendorOrderCard({ order, locale }: { order: OrderData; locale: A
       </div>
 
       {error && (
-        <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[14px] font-bold text-[var(--color-brand)]">
+        <span className="text-[0.875rem] font-bold text-[var(--color-brand)]">
           {formatPrice(order.total, locale)}
         </span>
 

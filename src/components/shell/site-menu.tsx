@@ -95,7 +95,13 @@ export function SiteMenu() {
         onClick={() => setOpen(true)}
         aria-label={t.a11y.openMenu}
         aria-expanded={open}
-        className="flex h-9 w-9 flex-none items-center justify-center rounded-[18px] bg-[var(--color-brand)] text-white"
+        /*
+          Blanc et non violet : le bouton de dictée, juste à côté, porte déjà la
+          couleur de marque. Deux pastilles pleines côte à côte se disputaient le
+          regard sans que l'une soit plus importante que l'autre — or c'est la
+          recherche vocale qu'on veut voir, pas le menu.
+        */
+        className="press flex h-11 w-11 flex-none items-center justify-center rounded-[22px] bg-[var(--color-surface-solid)] text-[var(--color-ink)] shadow-[0_8px_20px_rgba(60,40,90,0.08)]"
       >
         <MenuIcon size={14} />
       </button>
@@ -125,7 +131,7 @@ export function SiteMenu() {
               <div className="flex flex-col gap-4">
                 {groups.map((group) => (
                   <section key={group.title} className="flex flex-col gap-2">
-                    <h2 className="text-[10px] font-bold tracking-[0.08em] text-[var(--color-muted)] uppercase">
+                    <h2 className="text-[0.625rem] font-bold tracking-[0.08em] text-[var(--color-muted)] uppercase">
                       {group.title}
                     </h2>
                     <div className="grid grid-cols-2 gap-2">
@@ -134,7 +140,7 @@ export function SiteMenu() {
                           key={entry.href}
                           href={entry.href}
                           onClick={() => setOpen(false)}
-                          className="rounded-[14px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] px-3 py-[11px] text-[12px] font-semibold text-[var(--color-ink)]"
+                          className="rounded-[14px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] px-3 py-[11px] text-[0.75rem] font-semibold text-[var(--color-ink)]"
                         >
                           {entry.label}
                         </Link>
@@ -147,7 +153,7 @@ export function SiteMenu() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="mt-4 w-full py-2 text-[11.5px] font-semibold text-[var(--color-muted)]"
+                className="mt-4 w-full py-2 text-[0.71875rem] font-semibold text-[var(--color-muted)]"
               >
                 {t.common.close}
               </button>

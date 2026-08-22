@@ -63,9 +63,9 @@ export function SpaceSwitcher({ role, hasShop = false }: { role: UserRole; hasSh
             href={space.href}
             aria-current={active ? "page" : undefined}
             className={cx(
-              "rounded-[10px] px-[10px] py-[4px] text-[10px] font-bold whitespace-nowrap",
+              "rounded-[10px] px-[10px] py-[4px] text-[0.625rem] font-bold whitespace-nowrap",
               active
-                ? "bg-[var(--color-brand)] text-white"
+                ? "bg-[var(--color-brand-fill)] text-white"
                 : "text-[var(--color-muted)] hover:text-[var(--color-brand)]",
             )}
           >

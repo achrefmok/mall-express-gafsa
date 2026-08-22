@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { shortName, timeAgo } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { EmptyState } from "@/components/ui/primitives";

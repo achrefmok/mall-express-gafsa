@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { AppShell } from "@/components/shell/app-shell";
 import { PageTransition } from "@/components/shell/page-transition";
 import { BottomNav } from "@/components/shell/bottom-nav";
@@ -32,12 +32,12 @@ export default async function VendorLayout({ children }: { children: React.React
           role="status"
           className="flex-none border-b border-[rgba(122,31,43,0.15)] bg-[var(--color-brand-tint)] px-4 py-[10px]"
         >
-          <p className="text-[11px] font-bold text-[var(--color-ink)]">
+          <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">
             {shop.missing_document
               ? format(t.vendor.missingDoc, { doc: shop.missing_document })
               : t.vendor.pendingBanner}
           </p>
-          <p className="text-[10px] leading-[1.4] text-[var(--color-muted)]">
+          <p className="text-[0.625rem] leading-[1.4] text-[var(--color-muted)]">
             {shop.rejection_reason ?? t.vendor.pendingBody}
           </p>
         </div>

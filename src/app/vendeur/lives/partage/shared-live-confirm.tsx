@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { relayFacebookLive } from "@/app/actions/lives";
 import { cx } from "@/lib/format";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 /**
  * Confirmation d'un direct arrivé par partage.
@@ -48,23 +48,23 @@ export function SharedLiveConfirm({
   return (
     <>
       <Card className="flex flex-col gap-3 p-4">
-        <p className="text-[13px] font-bold text-[var(--color-ink)]">
+        <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
           Direct Facebook reconnu
         </p>
 
-        <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[10.5px] break-all text-[var(--color-muted)]">
+        <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[0.65625rem] break-all text-[var(--color-muted)]">
           {url}
         </p>
 
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] text-[var(--color-muted)]">
+          <span className="text-[0.625rem] text-[var(--color-muted)]">
             Titre affiché aux clients
           </span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={`Direct de ${shopName}`}
-            className="w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)] placeholder:font-normal placeholder:text-[var(--color-faint)]"
+            className={fieldClass({ strong: true })}
           />
         </label>
 
@@ -73,19 +73,19 @@ export function SharedLiveConfirm({
             {pending ? "Mise en ligne…" : "Passer en direct maintenant"}
           </Button>
         ) : (
-          <p className="rounded-[12px] bg-[var(--color-live-tint)] p-3 text-[11.5px] leading-[1.55] text-[var(--color-ink)]">
+          <p className="rounded-[12px] bg-[var(--color-live-tint)] p-3 text-[0.71875rem] leading-[1.55] text-[var(--color-ink)]">
             Votre boutique attend encore la validation de l&apos;administration.
             Vous pourrez diffuser dès qu&apos;elle sera approuvée.
           </p>
         )}
 
         {error && (
-          <p role="alert" className={cx("text-[11.5px] font-semibold text-[var(--color-live)]")}>
+          <p role="alert" className={cx("text-[0.71875rem] font-semibold text-[var(--color-live)]")}>
             {error}
           </p>
         )}
 
-        <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+        <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
           Le produit épinglé et la remise de votre direct précédent sont reportés.
           Vous les changerez depuis la console, en cours de diffusion.
         </p>
@@ -93,7 +93,7 @@ export function SharedLiveConfirm({
 
       <Link
         href="/vendeur/lives/nouveau"
-        className="text-center text-[11.5px] font-semibold text-[var(--color-brand)]"
+        className="text-center text-[0.71875rem] font-semibold text-[var(--color-brand)]"
       >
         Régler le direct en détail plutôt
       </Link>

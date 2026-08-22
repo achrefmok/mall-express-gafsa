@@ -136,9 +136,9 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
                 aria-selected={active}
                 onClick={() => setTrade(key)}
                 className={cx(
-                  "flex-none rounded-[12px] px-[11px] py-[6px] text-[10.5px] font-bold whitespace-nowrap",
+                  "flex-none rounded-[12px] px-[11px] py-[6px] text-[0.65625rem] font-bold whitespace-nowrap",
                   active
-                    ? "bg-[var(--color-brand)] text-white"
+                    ? "bg-[var(--color-brand-fill)] text-white"
                     : "border border-[var(--color-outline)] text-[var(--color-muted)]",
                 )}
               >
@@ -154,7 +154,7 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
         </div>
       )}
 
-      <p className="flex-none text-[11px] font-bold text-[var(--color-ink)]">
+      <p className="flex-none text-[0.6875rem] font-bold text-[var(--color-ink)]">
         {free.length > 0
           ? t.sos.availableNow.replace("{n}", String(free.length))
           : t.sos.noneFree}
@@ -162,7 +162,7 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
 
       <div className="no-sb flex flex-1 flex-col gap-2 overflow-y-auto pb-4">
         {shown.length === 0 && (
-          <p className="py-6 text-center text-[11px] text-[var(--color-muted)]">
+          <p className="py-6 text-center text-[0.6875rem] text-[var(--color-muted)]">
             {t.sos.noneForTrade}
           </p>
         )}
@@ -178,10 +178,10 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
             />
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                 {provider.display_name}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                 {[
                   t.sos.trades[provider.trade],
                   provider.travels ? t.sos.travels : t.sos.inShop,
@@ -200,7 +200,7 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
             {/* Un appel direct : sur une panne, personne n'ouvre une messagerie. */}
             <a
               href={`tel:${provider.phone}`}
-              className="flex-none rounded-[14px] bg-[var(--color-brand)] px-3 py-[7px] text-[10px] font-semibold text-white"
+              className="flex-none rounded-[14px] bg-[var(--color-brand-fill)] px-3 py-[7px] text-[0.625rem] font-semibold text-white"
             >
               {t.sos.call}
             </a>

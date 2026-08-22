@@ -33,12 +33,13 @@ export function CategoryFilters({
 
   return (
     <Rail className="flex-none px-4 py-[10px]" gap={8}>
-      <Chip active={!activeSlug} onClick={() => select(null)}>
+      <Chip size="md" tone="surface" active={!activeSlug} onClick={() => select(null)}>
         {t.common.all}
       </Chip>
       {categories.map((category) => (
         <Chip
           key={category.id}
+          size="md"
           tone="category"
           hue={category.hue}
           active={activeSlug === category.slug}

@@ -33,7 +33,7 @@ const ECRANS = [
 ] as const;
 
 const CHAMP =
-  "rounded-[10px] border border-[var(--color-outline)] bg-white px-2 py-[6px] text-[12px] text-[var(--color-ink)]";
+  "rounded-[10px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-2 py-[6px] text-[0.75rem] text-[var(--color-ink)]";
 
 export function PreviewFrame() {
   const [appareil, setAppareil] = useState<Appareil>(APPAREILS[3]);
@@ -48,7 +48,7 @@ export function PreviewFrame() {
   return (
     <div className="flex min-h-dvh flex-col gap-4 bg-[var(--color-app)] p-4">
       <header className="flex flex-wrap items-center gap-2">
-        <h1 className="me-2 text-[14px] font-bold text-[var(--color-ink)]">Aperçu mobile</h1>
+        <h1 className="me-2 text-[0.875rem] font-bold text-[var(--color-ink)]">Aperçu mobile</h1>
 
         <select
           value={appareil.nom}
@@ -106,12 +106,12 @@ export function PreviewFrame() {
             key={`${cle}-${chemin}-${largeur}`}
             src={chemin}
             title={`Aperçu ${chemin}`}
-            className="h-full w-full border-0 bg-white"
+            className="h-full w-full border-0 bg-[var(--color-app)]"
           />
         </div>
       </div>
 
-      <p className="text-center text-[11px] text-[var(--color-muted)]">
+      <p className="text-center text-[0.6875rem] text-[var(--color-muted)]">
         {largeur} × {hauteur} px · même origine, donc aucun assouplissement de sécurité nécessaire
       </p>
     </div>

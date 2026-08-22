@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { signInWithProvider, signUp } from "@/app/actions/auth";
 import { cx } from "@/lib/format";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 /**
  * Écran 13 — inscription client et vendeur en un seul écran.
@@ -59,35 +59,45 @@ export function SignUpScreen({
   if (sentTo) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[20px] font-bold text-[var(--color-brand)]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[1.25rem] font-bold text-[var(--color-brand)]">
           ✓
         </div>
-        <h1 className="text-[18px] font-bold text-[var(--color-ink)]">{t.auth.checkEmail}</h1>
-        <p className="text-[12px] leading-relaxed text-[var(--color-muted)]">
+        <h1 className="text-[1.125rem] font-bold text-[var(--color-ink)]">{t.auth.checkEmail}</h1>
+        <p className="text-[0.75rem] leading-relaxed text-[var(--color-muted)]">
           {format(t.auth.checkEmailBody, { email: sentTo })}
         </p>
-        <Link href="/connexion" className="mt-2 text-[12px] font-bold text-[var(--color-brand)]">
+        <Link href="/connexion" className="mt-2 text-[0.75rem] font-bold text-[var(--color-brand)]">
           {t.auth.signIn}
         </Link>
       </div>
     );
   }
 
-  const fieldLabel = "text-[10px] text-[var(--color-muted)]";
-  const fieldInput =
-    "rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[11px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
+  const fieldLabel = "text-[0.625rem] text-[var(--color-muted)]";
+  const fieldInput = fieldClass({ strong: true });
+
+  /*
+    Les deux champs de la boutique sont posés sur une carte teintée : leur fond
+    doit être opaque pour rester lisible.
+
+    Ils ajoutaient auparavant `bg-white` par-dessus le style de base, qui pose
+    déjà un fond. Deux utilitaires qui règlent la même propriété ne se
+    départagent pas par leur ordre dans l'attribut mais par leur ordre dans la
+    feuille de style : le résultat tenait du hasard. L'option `solid` le décide.
+  */
+  const fieldSolid = fieldClass({ strong: true, solid: true });
 
   return (
     <>
       <header className="flex flex-none items-center justify-between px-[18px] pt-4 pb-2">
-        <h1 className="text-[19px] font-bold tracking-[-0.2px] text-[var(--color-ink)]">
+        <h1 className="text-[1.1875rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
           {t.auth.createAccount}
         </h1>
         <button
           type="button"
           onClick={() => setLocale(locale === "ar" ? "fr" : "ar")}
           lang={locale === "ar" ? "fr" : "ar"}
-          className="text-[11.5px] font-bold text-[var(--color-brand)]"
+          className="-m-2 p-2 text-[0.71875rem] font-bold text-[var(--color-brand)]"
         >
           {locale === "ar" ? t.a11y.french : t.a11y.arabic}
         </button>
@@ -114,14 +124,14 @@ export function SignUpScreen({
                 className={cx(
                   "flex flex-1 flex-col gap-1 rounded-[18px] p-3 text-start transition-colors",
                   active
-                    ? "bg-[var(--color-brand)] text-white"
+                    ? "bg-[var(--color-brand-fill)] text-white"
                     : "border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]",
                 )}
               >
-                <span className="text-[12.5px] font-bold">{option.title}</span>
+                <span className="text-[0.78125rem] font-bold">{option.title}</span>
                 <span
                   className={cx(
-                    "text-[10px] leading-[1.4]",
+                    "text-[0.625rem] leading-[1.4]",
                     active ? "opacity-85" : "text-[var(--color-muted)]",
                   )}
                 >
@@ -161,19 +171,19 @@ export function SignUpScreen({
 
             <label className="flex flex-col gap-[5px]">
               <span className={fieldLabel}>{t.auth.password}</span>
-              <span className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[11px] focus-within:border-[var(--color-brand)]">
+              <span className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-[var(--color-field)] px-3 py-[11px] focus-within:border-[var(--color-brand)]">
                 <input
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="min-w-0 flex-1 bg-transparent text-[12.5px] font-semibold text-[var(--color-ink)] outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-[0.78125rem] font-semibold text-[var(--color-ink)] outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="flex-none text-[10px] font-bold text-[var(--color-brand)]"
+                  className="-me-1 flex-none px-2 py-2 text-[0.625rem] font-bold text-[var(--color-brand)]"
                 >
                   {showPassword ? t.auth.hide : t.auth.show}
                 </button>
@@ -185,7 +195,12 @@ export function SignUpScreen({
               <div className="flex animate-slide-up flex-col gap-[10px] rounded-[14px] bg-[var(--color-brand-tint)] p-3">
                 <label className="flex flex-col gap-[5px]">
                   <span className={fieldLabel}>{t.auth.vendorStep1}</span>
-                  <input name="shopName" required className={cx(fieldInput, "bg-white")} />
+                  <input
+                    name="shopName"
+                    required
+                    autoComplete="organization"
+                    className={fieldSolid}
+                  />
                 </label>
                 <label className="flex flex-col gap-[5px]">
                   <span className={fieldLabel}>{t.auth.vendorStep2}</span>
@@ -193,14 +208,14 @@ export function SignUpScreen({
                     name="shopLocation"
                     required
                     placeholder="Niveau 1 — Local B12"
-                    className={cx(fieldInput, "bg-white placeholder:font-normal placeholder:text-[var(--color-faint)]")}
+                    className={fieldSolid}
                   />
                 </label>
               </div>
             )}
 
             {error && (
-              <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+              <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
                 {error}
               </p>
             )}
@@ -209,7 +224,7 @@ export function SignUpScreen({
               {pending ? t.common.loading : t.auth.createAccount}
             </Button>
 
-            <p className="text-center text-[10px] leading-[1.5] text-[var(--color-muted)]">
+            <p className="text-center text-[0.625rem] leading-[1.5] text-[var(--color-muted)]">
               {role === "client" ? t.auth.clientInstant : t.auth.vendorNote}
             </p>
           </form>
@@ -219,7 +234,7 @@ export function SignUpScreen({
         {providers.length > 0 && (
           <div className="flex flex-none items-center gap-[10px]">
             <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-            <span className="text-[10px] text-[var(--color-muted)]">{t.common.or}</span>
+            <span className="text-[0.625rem] text-[var(--color-muted)]">{t.common.or}</span>
             <span className="h-px flex-1 bg-[var(--color-hairline)]" />
           </div>
         )}
@@ -236,7 +251,7 @@ export function SignUpScreen({
             <form key={provider} action={signInWithProvider.bind(null, provider)}>
               <button
                 type="submit"
-                className="w-full rounded-[16px] border border-[var(--color-outline)] bg-white/70 px-3 py-3 text-[12px] font-semibold text-[var(--color-ink)]"
+                className="w-full rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 py-3 text-[0.75rem] font-semibold text-[var(--color-ink)]"
               >
                 {label}
               </button>
@@ -244,7 +259,7 @@ export function SignUpScreen({
           ))}
           <Link
             href="/accueil"
-            className="rounded-[16px] px-3 py-3 text-center text-[12px] font-semibold text-[var(--color-brand)]"
+            className="rounded-[16px] px-3 py-3 text-center text-[0.75rem] font-semibold text-[var(--color-brand)]"
           >
             {t.auth.asGuest}
           </Link>
@@ -261,27 +276,27 @@ export function SignUpScreen({
         */}
         {!lockedRole && role === "client" && (
           <div className="flex flex-none flex-col gap-2 rounded-[18px] bg-[var(--color-brand-tint)] p-3">
-            <p className="text-[10.5px] font-bold text-[var(--color-ink)]">{t.auth.vendorExtra}</p>
+            <p className="text-[0.65625rem] font-bold text-[var(--color-ink)]">{t.auth.vendorExtra}</p>
             <div className="flex gap-2">
               {[t.auth.vendorStep1, t.auth.vendorStep2].map((step, index) => (
                 <div key={step} className="flex flex-1 flex-col gap-1">
-                  <span className="text-[11px] font-bold text-[var(--color-brand)]">{index + 1}</span>
-                  <span className="text-[9.5px] leading-[1.35] text-[var(--color-ink)]">{step}</span>
+                  <span className="text-[0.6875rem] font-bold text-[var(--color-brand)]">{index + 1}</span>
+                  <span className="text-[0.59375rem] leading-[1.35] text-[var(--color-ink)]">{step}</span>
                 </div>
               ))}
             </div>
-            <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">{t.auth.vendorNote}</p>
+            <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">{t.auth.vendorNote}</p>
           </div>
         )}
 
-        <p className="text-center text-[11px] text-[var(--color-muted)]">
+        <p className="text-center text-[0.6875rem] text-[var(--color-muted)]">
           {t.auth.haveAccount}{" "}
           <Link href="/connexion" className="font-bold text-[var(--color-brand)]">
             {t.auth.signIn}
           </Link>
         </p>
 
-        <p className="text-center text-[9.5px] leading-[1.5] text-[var(--color-muted)]">
+        <p className="text-center text-[0.59375rem] leading-[1.5] text-[var(--color-muted)]">
           {t.auth.legal}
         </p>
       </div>

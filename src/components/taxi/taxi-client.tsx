@@ -114,7 +114,7 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
         <DriverMap drivers={pins} labels={labels} />
       </div>
 
-      <p className="flex-none text-[11px] font-bold text-[var(--color-ink)]">
+      <p className="flex-none text-[0.6875rem] font-bold text-[var(--color-ink)]">
         {free.length > 0 ? t.taxi.availableNow.replace("{n}", String(free.length)) : t.taxi.noneFree}
       </p>
 
@@ -128,10 +128,10 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
             />
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                 {driver.display_name}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                 {[
                   [driver.vehicle, driver.plate].filter(Boolean).join(" · ") || t.taxi.taxi,
                   isPositionFresh(driver.position_updated_at) ? null : t.taxi.positionStale,
@@ -151,7 +151,7 @@ export function TaxiClient({ initialDrivers }: { initialDrivers: Driver[] }) {
             */}
             <a
               href={`tel:${driver.phone}`}
-              className="flex-none rounded-[14px] bg-[var(--color-brand)] px-3 py-[7px] text-[10px] font-semibold text-white"
+              className="flex-none rounded-[14px] bg-[var(--color-brand-fill)] px-3 py-[7px] text-[0.625rem] font-semibold text-white"
             >
               {t.taxi.call}
             </a>

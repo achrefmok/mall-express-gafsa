@@ -52,7 +52,7 @@ export function SideNav({
 
   return (
     <div className="hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:border-e lg:border-[var(--color-hairline)] lg:px-5 lg:py-7">
-      <Link href="/accueil" className="flex-none text-[18px] font-bold tracking-[-0.3px] text-[var(--color-ink)]">
+      <Link href="/accueil" className="flex-none text-[1.125rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
         Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
       </Link>
 
@@ -67,9 +67,9 @@ export function SideNav({
               data-tour={item.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "flex min-h-[42px] items-center gap-3 rounded-[14px] px-3 text-[13.5px] font-semibold transition-colors",
+                "flex min-h-[42px] items-center gap-3 rounded-[14px] px-3 text-[0.84375rem] font-semibold transition-colors",
                 active
-                  ? "bg-[var(--color-brand)] text-white"
+                  ? "bg-[var(--color-brand-fill)] text-white"
                   : "text-[var(--color-muted)] hover:bg-[var(--color-brand-tint)] hover:text-[var(--color-brand)]",
               )}
             >
@@ -84,7 +84,7 @@ export function SideNav({
 
       {spaces.length > 1 && (
         <div className="flex flex-none flex-col gap-1 border-t border-[var(--color-hairline)] pt-5">
-          <p className="px-3 pb-1 text-[10px] font-bold tracking-[1px] text-[var(--color-faint)] uppercase">
+          <p className="px-3 pb-1 text-[0.625rem] font-bold tracking-[0.0625rem] text-[var(--color-faint)] uppercase">
             {t.account.switchLabel}
           </p>
           {spaces.map((space) => (
@@ -93,7 +93,7 @@ export function SideNav({
               href={space.href}
               aria-current={space.variant === variant ? "page" : undefined}
               className={cx(
-                "flex min-h-[38px] items-center rounded-[14px] px-3 text-[12.5px] font-semibold transition-colors",
+                "flex min-h-[38px] items-center rounded-[14px] px-3 text-[0.78125rem] font-semibold transition-colors",
                 space.variant === variant
                   ? "text-[var(--color-brand)]"
                   : "text-[var(--color-muted)] hover:text-[var(--color-brand)]",
@@ -108,13 +108,13 @@ export function SideNav({
       <div className="mt-auto flex flex-none flex-col gap-1 border-t border-[var(--color-hairline)] pt-5">
         <Link
           href="/"
-          className="rounded-[14px] px-3 py-2 text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+          className="rounded-[14px] px-3 py-2 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
         >
           Le projet
         </Link>
         <Link
           href="/#contact"
-          className="rounded-[14px] px-3 py-2 text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+          className="rounded-[14px] px-3 py-2 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
         >
           Contact
         </Link>

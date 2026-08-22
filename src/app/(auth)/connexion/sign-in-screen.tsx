@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { requestPasswordReset, signIn, signInWithProvider } from "@/app/actions/auth";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 export function SignInScreen({
   next,
@@ -23,9 +23,9 @@ export function SignInScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const fieldLabel = "text-[10px] text-[var(--color-muted)]";
+  const fieldLabel = "text-[0.625rem] text-[var(--color-muted)]";
   const fieldInput =
-    "rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[11px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
+    fieldClass({ strong: true });
 
   function onSubmit(formData: FormData) {
     setError(null);
@@ -59,14 +59,14 @@ export function SignInScreen({
   return (
     <>
       <header className="flex flex-none items-center justify-between px-[18px] pt-4 pb-2">
-        <h1 className="text-[19px] font-bold tracking-[-0.2px] text-[var(--color-ink)]">
+        <h1 className="text-[1.1875rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
           {t.auth.signInTitle}
         </h1>
         <button
           type="button"
           onClick={() => setLocale(locale === "ar" ? "fr" : "ar")}
           lang={locale === "ar" ? "fr" : "ar"}
-          className="text-[11.5px] font-bold text-[var(--color-brand)]"
+          className="-m-2 p-2 text-[0.71875rem] font-bold text-[var(--color-brand)]"
         >
           {locale === "ar" ? t.a11y.french : t.a11y.arabic}
         </button>
@@ -89,18 +89,18 @@ export function SignInScreen({
 
             <label className="flex flex-col gap-[5px]">
               <span className={fieldLabel}>{t.auth.password}</span>
-              <span className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[11px] focus-within:border-[var(--color-brand)]">
+              <span className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-[var(--color-field)] px-3 py-[11px] focus-within:border-[var(--color-brand)]">
                 <input
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
-                  className="min-w-0 flex-1 bg-transparent text-[12.5px] font-semibold text-[var(--color-ink)] outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-[0.78125rem] font-semibold text-[var(--color-ink)] outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="flex-none text-[10px] font-bold text-[var(--color-brand)]"
+                  className="-me-1 flex-none px-2 py-2 text-[0.625rem] font-bold text-[var(--color-brand)]"
                 >
                   {showPassword ? t.auth.hide : t.auth.show}
                 </button>
@@ -108,12 +108,12 @@ export function SignInScreen({
             </label>
 
             {error && (
-              <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+              <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
                 {error}
               </p>
             )}
             {notice && (
-              <p role="status" className="text-[11px] font-semibold text-[var(--color-brand)]">
+              <p role="status" className="text-[0.6875rem] font-semibold text-[var(--color-brand)]">
                 {notice}
               </p>
             )}
@@ -126,7 +126,7 @@ export function SignInScreen({
               type="submit"
               formAction={onForgot}
               formNoValidate
-              className="text-center text-[10.5px] font-semibold text-[var(--color-muted)]"
+              className="py-2 text-center text-[0.65625rem] font-semibold text-[var(--color-muted)]"
             >
               {t.auth.forgotPassword}
             </button>
@@ -136,7 +136,7 @@ export function SignInScreen({
         {providers.length > 0 && (
           <div className="flex flex-none items-center gap-[10px]">
             <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-            <span className="text-[10px] text-[var(--color-muted)]">{t.common.or}</span>
+            <span className="text-[0.625rem] text-[var(--color-muted)]">{t.common.or}</span>
             <span className="h-px flex-1 bg-[var(--color-hairline)]" />
           </div>
         )}
@@ -154,7 +154,7 @@ export function SignInScreen({
               <input type="hidden" name="suite" value={next ?? ""} />
               <button
                 type="submit"
-                className="w-full rounded-[16px] border border-[var(--color-outline)] bg-white/70 px-3 py-3 text-[12px] font-semibold text-[var(--color-ink)]"
+                className="w-full rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 py-3 text-[0.75rem] font-semibold text-[var(--color-ink)]"
               >
                 {label}
               </button>
@@ -162,13 +162,13 @@ export function SignInScreen({
           ))}
           <Link
             href="/accueil"
-            className="rounded-[16px] px-3 py-3 text-center text-[12px] font-semibold text-[var(--color-brand)]"
+            className="rounded-[16px] px-3 py-3 text-center text-[0.75rem] font-semibold text-[var(--color-brand)]"
           >
             {t.auth.asGuest}
           </Link>
         </div>
 
-        <p className="text-center text-[11px] text-[var(--color-muted)]">
+        <p className="text-center text-[0.6875rem] text-[var(--color-muted)]">
           {t.auth.noAccount}{" "}
           <Link href="/inscription" className="font-bold text-[var(--color-brand)]">
             {t.auth.createAccount}

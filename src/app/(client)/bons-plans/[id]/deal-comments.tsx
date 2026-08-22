@@ -60,7 +60,7 @@ export function DealComments({
   return (
     <div className="flex flex-col gap-3">
       {initialComments.length === 0 && (
-        <p className="text-[11px] text-[var(--color-muted)]">{t.common.empty}</p>
+        <p className="text-[0.6875rem] text-[var(--color-muted)]">{t.common.empty}</p>
       )}
 
       {initialComments.map((comment) => (
@@ -71,13 +71,13 @@ export function DealComments({
             size={28}
           />
           <div className="min-w-0 flex-1 rounded-[14px] bg-[var(--color-surface)] px-3 py-2">
-            <p className="text-[11px] font-bold text-[var(--color-ink)]">
+            <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">
               {shortName(comment.author) || "—"}
               <span className="ms-2 font-normal text-[var(--color-faint)]">
                 {timeAgo(comment.created_at, locale)}
               </span>
             </p>
-            <p className="mt-[2px] text-[11.5px] leading-[1.5] text-[var(--color-muted)]">
+            <p className="mt-[2px] text-[0.71875rem] leading-[1.5] text-[var(--color-muted)]">
               {comment.body}
             </p>
           </div>
@@ -85,7 +85,7 @@ export function DealComments({
       ))}
 
       {error && (
-        <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
@@ -97,12 +97,12 @@ export function DealComments({
           maxLength={1000}
           placeholder={t.live.writeComment}
           aria-label={t.live.writeComment}
-          className="min-w-0 flex-1 rounded-[16px] border border-[var(--color-outline)] bg-white px-3 py-[10px] text-[12px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]"
+          className="min-w-0 flex-1 rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-[10px] text-[0.75rem] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]"
         />
         <button
           type="submit"
           disabled={pending || !draft.trim()}
-          className="flex-none rounded-[16px] bg-[var(--color-brand)] px-4 py-[10px] text-[11px] font-bold text-white disabled:opacity-40"
+          className="flex-none rounded-[16px] bg-[var(--color-brand-fill)] px-4 py-[10px] text-[0.6875rem] font-bold text-white disabled:opacity-40"
         >
           {t.live.send}
         </button>

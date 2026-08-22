@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { endLive, startLive, updatePinnedProduct } from "@/app/actions/lives";
 import { createClient } from "@/lib/supabase/client";
 import { cx, formatCount, formatPrice, shortName } from "@/lib/format";
@@ -276,10 +276,10 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
-            <p className="text-[13px] font-bold text-white">
+            <p className="text-[0.8125rem] font-bold text-white">
               {live.source === "facebook" ? t.live.sourceFacebook : t.live.sourceHls}
             </p>
-            <p className="text-[11px] leading-relaxed text-white/65">
+            <p className="text-[0.6875rem] leading-relaxed text-white/65">
               {live.source === "facebook"
                 ? "Lancez le direct depuis l'application Facebook. Les spectateurs le verront ici avec vos produits épinglés."
                 : "Le flux externe est diffusé par votre prestataire."}
@@ -296,11 +296,11 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
                 « EN DIRECT » au même endroit : garder le nôtre superposait deux
                 étiquettes illisibles. Même choix que sur l'écran spectateur. */}
             {live.source !== "facebook" && (
-              <span className="pointer-events-none absolute start-3 top-3 rounded-[4px] bg-[var(--color-live)] px-[9px] py-1 text-[10px] font-bold tracking-[0.5px] text-white">
+              <span className="pointer-events-none absolute start-3 top-3 rounded-[4px] bg-[var(--color-live-fill)] px-[9px] py-1 text-[0.625rem] font-bold tracking-[0.03125rem] text-white">
                 {t.live.onAir}
               </span>
             )}
-            <span className="pointer-events-none absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[10px] text-white">
+            <span className="pointer-events-none absolute end-3 top-3 rounded-[12px] bg-black/50 px-[9px] py-1 text-[0.625rem] text-white">
               {formatCount(viewers)}
               {isCamera && ` / ${MAX_VIEWERS}`}
             </span>
@@ -328,7 +328,7 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
               aria-pressed={!micOn}
               className={cx(
                 "rounded-full p-3 text-white",
-                micOn ? "bg-black/55" : "bg-[var(--color-live)]",
+                micOn ? "bg-black/55" : "bg-[var(--color-live-fill)]",
               )}
             >
               <MicIcon size={16} />
@@ -338,7 +338,7 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
       </div>
 
       {isCamera && (
-        <p className="text-[10px] leading-relaxed text-[var(--color-muted)]">
+        <p className="text-[0.625rem] leading-relaxed text-[var(--color-muted)]">
           {format(
             "Diffusion directe depuis votre appareil, jusqu'à {n} spectateurs simultanés. Au-delà, préférez un direct Facebook.",
             { n: MAX_VIEWERS },
@@ -347,7 +347,7 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
       )}
 
       {error && (
-        <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}
@@ -373,7 +373,7 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
 
       {/* ─── Produit épinglé ───────────────────────────────────────────── */}
       <Card className="flex flex-col gap-2 p-3">
-        <p className="text-[11px] font-bold text-[var(--color-ink)]">{t.live.pinnedProduct}</p>
+        <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">{t.live.pinnedProduct}</p>
         <div className="no-sb flex max-h-[180px] flex-col gap-1 overflow-y-auto">
           {products.map((product) => (
             <button
@@ -383,12 +383,12 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
               className={cx(
                 "flex items-center gap-2 rounded-[12px] px-2 py-2 text-start",
                 live.pinned_product_id === product.id
-                  ? "bg-[var(--color-brand)] text-white"
+                  ? "bg-[var(--color-brand-fill)] text-white"
                   : "hover:bg-[var(--color-brand-tint)]",
               )}
             >
-              <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold">{product.name}</span>
-              <span className="flex-none text-[11px] font-bold">
+              <span className="min-w-0 flex-1 truncate text-[0.71875rem] font-semibold">{product.name}</span>
+              <span className="flex-none text-[0.6875rem] font-bold">
                 {formatPrice(product.price, locale)}
               </span>
             </button>
@@ -399,13 +399,13 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
       {/* ─── Commentaires en direct ────────────────────────────────────── */}
       {onAir && (
         <Card className="flex flex-col gap-2 p-3">
-          <p className="text-[11px] font-bold text-[var(--color-ink)]">{t.live.comments}</p>
+          <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">{t.live.comments}</p>
           <div className="no-sb flex max-h-[160px] flex-col gap-1 overflow-y-auto">
             {comments.length === 0 ? (
-              <p className="text-[10.5px] text-[var(--color-muted)]">{t.common.empty}</p>
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.common.empty}</p>
             ) : (
               comments.map((comment) => (
-                <p key={comment.id} className="text-[11px] text-[var(--color-ink)]">
+                <p key={comment.id} className="text-[0.6875rem] text-[var(--color-ink)]">
                   <b>{shortName(comment.author) || "…"}:</b> {comment.body}
                 </p>
               ))

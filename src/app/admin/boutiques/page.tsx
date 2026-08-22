@@ -37,15 +37,15 @@ export default async function AdminShopsPage() {
           shops!.map((shop) => (
             <Card key={shop.id} className="flex flex-none items-center gap-[10px] p-[11px]">
               <span
-                className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold"
+                className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[0.6875rem] font-bold"
                 style={{ "--hue": shop.category?.hue ?? 300 } as React.CSSProperties}
               >
                 {monogram(shop.name)}
               </span>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">{shop.name}</p>
-                <p className="truncate text-[10px] text-[var(--color-muted)]">
+                <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">{shop.name}</p>
+                <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                   {shop.category?.name_fr} · {formatCount(shop.followers_count)} {t.shop.followers} ·{" "}
                   {formatRating(shop.rating_sum, shop.rating_count)} ★
                 </p>

@@ -6,12 +6,12 @@ import { createMyShop } from "@/app/actions/vendor";
 import { useI18n } from "@/lib/i18n/provider";
 import { cx } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Button, Card, SectionTitle } from "@/components/ui/primitives";
+import { Button, Card, SectionTitle, fieldClass } from "@/components/ui/primitives";
 import type { Category } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)] placeholder:font-normal placeholder:text-[var(--color-faint)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({ strong: true });
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 export function CreateShopForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
@@ -48,7 +48,7 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
         onSubmit={onSubmit}
         className="col-reading no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-[14px] pb-6"
       >
-        <p className="flex-none text-[11.5px] leading-[1.5] text-[var(--color-muted)]">
+        <p className="flex-none text-[0.71875rem] leading-[1.5] text-[var(--color-muted)]">
           Votre compte est vendeur, mais aucune boutique ne lui est encore
           rattachée. Renseignez l&apos;essentiel : vous pourrez tout compléter
           ensuite, et votre dossier partira en validation.
@@ -66,6 +66,7 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
                 required
                 minLength={2}
                 autoFocus
+                autoComplete="organization"
                 placeholder="Ex. Épicerie Ennour"
                 className={FIELD}
               />
@@ -92,6 +93,7 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
               <input
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
+                autoComplete="street-address"
                 placeholder="Ex. Niveau 1, unité 24"
                 className={FIELD}
               />
@@ -117,12 +119,12 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
         </Button>
 
         {error && (
-          <p role="status" className={cx("text-[11px] font-semibold text-[var(--color-live)]")}>
+          <p role="status" className={cx("text-[0.6875rem] font-semibold text-[var(--color-live)]")}>
             {error}
           </p>
         )}
 
-        <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+        <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
           La boutique est créée « en attente ». Vous pouvez préparer jusqu&apos;à
           cinq produits avant sa validation par l&apos;administration.
         </p>

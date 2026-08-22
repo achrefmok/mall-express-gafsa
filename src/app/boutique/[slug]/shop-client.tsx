@@ -43,10 +43,10 @@ export function FollowButton({
       disabled={pending}
       aria-pressed={following}
       className={cx(
-        "flex-none rounded-[16px] px-4 py-2 text-[11px] font-semibold transition-colors",
+        "flex-none rounded-[16px] px-4 py-2 text-[0.6875rem] font-semibold transition-colors",
         following
           ? "border border-[var(--color-outline)] text-[var(--color-muted)]"
-          : "bg-[var(--color-brand)] text-white",
+          : "bg-[var(--color-brand-fill)] text-white",
       )}
     >
       {following ? t.shop.following : t.shop.follow}
@@ -83,7 +83,7 @@ export function ShopTabs({
             scroll={false}
             aria-current={current ? "page" : undefined}
             className={cx(
-              "flex-1 py-[10px] text-center text-[11.5px]",
+              "flex-1 py-[10px] text-center text-[0.71875rem]",
               current
                 ? "border-b-2 border-[var(--color-brand)] font-semibold text-[var(--color-brand)]"
                 : "text-[var(--color-muted)]",
@@ -98,7 +98,7 @@ export function ShopTabs({
 }
 
 const PILL =
-  "rounded-[12px] border border-[var(--color-outline)] px-[10px] py-[5px] text-[10px] font-semibold";
+  "rounded-[12px] border border-[var(--color-outline)] px-[10px] py-[5px] text-[0.625rem] font-semibold";
 
 /**
  * Joindre le vendeur, par le canal que le client choisit.

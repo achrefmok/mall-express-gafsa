@@ -188,13 +188,27 @@ export function DriverMap({
           icônes par défaut sur un chemin relatif qui n'existe pas dans un paquet
           Next, et la couleur doit distinguer libre et occupé d'un coup d'œil.
         */
+        /*
+          La pastille garde ses seize pixels ; la cible en fait vingt-huit.
+
+          Seize pixels, c'était la plus petite cible de l'application — sur une
+          carte, où l'on vise déjà de mémoire, avec le pouce, parfois en
+          marchant. Le repère reste dessiné à la même taille pour ne pas
+          encombrer la vue quand plusieurs boutiques sont voisines ; c'est la
+          zone transparente autour de lui qui grandit.
+
+          L'ancrage suit : au centre de la zone, soit quatorze pixels, sans quoi
+          le point se décalerait de sa position réelle.
+        */
         const icon = L.divIcon({
           className: "",
-          html: `<span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
-            driver.available ? "#2f7d5d" : "#948da6"
-          }"></span>`,
-          iconSize: [16, 16],
-          iconAnchor: [8, 8],
+          html: `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px">
+            <span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
+              driver.available ? "#2f7d5d" : "#948da6"
+            }"></span>
+          </span>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         });
 
         const marker = L.marker([driver.lat, driver.lng], { icon })

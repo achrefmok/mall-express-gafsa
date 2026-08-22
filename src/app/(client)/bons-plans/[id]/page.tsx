@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { formatDateTime, monogram, shortName, timeAgo } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Avatar, Card, Divider, Tag } from "@/components/ui/primitives";
@@ -90,10 +90,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               hue={deal.category?.hue ?? 300}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">
                 {shortName(deal.author) || "—"}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                 {timeAgo(deal.created_at, locale)}
                 {deal.location_label && ` · ${deal.location_label}`}
               </p>
@@ -117,7 +117,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           )}
 
           <div className="flex flex-col gap-2 p-[12px]">
-            <h1 className="text-[15px] font-bold leading-[1.35] text-[var(--color-ink)]">
+            <h1 className="text-[0.9375rem] font-bold leading-[1.35] text-[var(--color-ink)]">
               {deal.title}
             </h1>
 
@@ -125,7 +125,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               <p
                 lang={locale === "ar" && deal.body_ar ? "ar" : undefined}
                 dir={locale === "ar" && deal.body_ar ? "rtl" : undefined}
-                className="text-[12px] leading-[1.55] text-[var(--color-muted)]"
+                className="text-[0.75rem] leading-[1.55] text-[var(--color-muted)]"
               >
                 {body}
               </p>
@@ -134,7 +134,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             {deal.shop && (
               <Link
                 href={`/boutique/${deal.shop.slug}`}
-                className="text-[11.5px] font-semibold text-[var(--color-brand)]"
+                className="text-[0.71875rem] font-semibold text-[var(--color-brand)]"
               >
                 {deal.shop.name} →
               </Link>
@@ -142,7 +142,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
             <Divider />
 
-            <p className="text-[10.5px] text-[var(--color-muted)]">
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">
               {t.deals.validUntil} {formatDateTime(deal.expires_at, locale)}
             </p>
 
@@ -159,14 +159,14 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
         {!deal.is_verified && !expired && (
           <div className="flex flex-none items-center gap-[10px] rounded-[18px] bg-[var(--color-brand-tint)] p-[11px_12px]">
-            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--color-brand)] text-[12px] font-bold text-white">
+            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-[0.75rem] font-bold text-white">
               i
             </span>
-            <p className="text-[10.5px] leading-[1.45] text-[var(--color-ink)]">{t.deals.hint}</p>
+            <p className="text-[0.65625rem] leading-[1.45] text-[var(--color-ink)]">{t.deals.hint}</p>
           </div>
         )}
 
-        <h2 className="text-[11px] font-bold tracking-[0.2px] text-[var(--color-ink)]">
+        <h2 className="text-[0.6875rem] font-bold tracking-[0.0125rem] text-[var(--color-ink)]">
           {format(t.deals.commentsCount, { n: deal.comments_count })}
         </h2>
 

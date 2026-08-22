@@ -29,12 +29,12 @@ export default function PrivacyPage() {
     <div className="min-h-dvh bg-[var(--color-workshop)]">
       <header className="border-b border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[820px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
-          <Link href="/" className="text-[15px] font-bold text-[var(--color-ink)]">
+          <Link href="/" className="-my-1 py-1 text-[0.9375rem] font-bold text-[var(--color-ink)]">
             Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
           </Link>
           <Link
             href="/accueil"
-            className="rounded-[13px] bg-[var(--color-brand)] px-4 py-[8px] text-[12px] font-bold text-white"
+            className="rounded-[13px] bg-[var(--color-brand-fill)] px-4 py-[8px] text-[0.75rem] font-bold text-white"
           >
             Parcourir
           </Link>
@@ -42,10 +42,10 @@ export default function PrivacyPage() {
       </header>
 
       <main id="contenu" className="mx-auto max-w-[820px] px-5 py-12 lg:px-8 lg:py-16">
-        <h1 className="text-[28px] leading-[1.2] font-bold tracking-[-0.5px] text-[var(--color-ink)] lg:text-[34px]">
+        <h1 className="text-[1.75rem] leading-[1.2] font-bold tracking-[-0.03125rem] text-[var(--color-ink)] lg:text-[2.125rem]">
           Politique de confidentialité
         </h1>
-        <p className="mt-3 text-[12.5px] text-[var(--color-muted)]">
+        <p className="mt-3 text-[0.78125rem] text-[var(--color-muted)]">
           Dernière mise à jour : {UPDATED} · Responsable : {OPERATOR.name}, {OPERATOR.address}
           {OPERATOR.email && (
             <>
@@ -108,11 +108,11 @@ export default function PrivacyPage() {
             </p>
             <ul className="flex list-disc flex-col gap-2 ps-5">
               <li>
-                <code className="rounded bg-[var(--color-brand-tint)] px-1 text-[12px]">pages_show_list</code>{" "}
+                <code className="rounded bg-[var(--color-brand-tint)] px-1 text-[0.75rem]">pages_show_list</code>{" "}
                 — connaître la liste de ses pages, pour savoir laquelle relier ;
               </li>
               <li>
-                <code className="rounded bg-[var(--color-brand-tint)] px-1 text-[12px]">pages_read_engagement</code>{" "}
+                <code className="rounded bg-[var(--color-brand-tint)] px-1 text-[0.75rem]">pages_read_engagement</code>{" "}
                 — lire les vidéos en direct de cette page : identifiant, titre, lien
                 public, et état de diffusion.
               </li>
@@ -220,7 +220,7 @@ export default function PrivacyPage() {
               <Link
                 key={href}
                 href={href}
-                className="text-[12px] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
+                className="-my-1 py-1 text-[0.75rem] font-semibold text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand)]"
               >
                 {label}
               </Link>
@@ -235,10 +235,10 @@ export default function PrivacyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-[18px] font-bold tracking-[-0.2px] text-[var(--color-ink)] lg:text-[21px]">
+      <h2 className="text-[1.125rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)] lg:text-[1.3125rem]">
         {title}
       </h2>
-      <div className="flex flex-col gap-3 text-[14px] leading-[1.7] text-[var(--color-muted)]">
+      <div className="flex flex-col gap-3 text-[0.875rem] leading-[1.7] text-[var(--color-muted)]">
         {children}
       </div>
     </section>
@@ -248,7 +248,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   return (
     <div className="-mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0">
-      <table className="w-full min-w-[520px] border-collapse text-start text-[13px]">
+      <table className="w-full min-w-[520px] border-collapse text-start text-[0.8125rem]">
         <thead>
           <tr>
             {head.map((cell) => (

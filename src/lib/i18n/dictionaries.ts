@@ -104,6 +104,11 @@ const fr = {
   },
 
   home: {
+    greeting: "Bonjour {name}",
+    shopCount: "{n} boutiques",
+    partners: "Nos partenaires",
+    greetingAnon: "Bonjour",
+    activeShops: "{n} boutiques actives aujourd'hui",
     contextOpen: "Ouvert jusqu'à 22h · {n} boutiques actives",
     contextClosed: "Fermé · {n} boutiques référencées",
     nextLive: "Prochain live : {shop} dans {min} min",
@@ -127,15 +132,39 @@ const fr = {
 
   marketplace: {
     title: "Marketplace",
+    eyebrow: "MALL GAFSA",
+    headingTop: "Découvrir",
+    headingBottom: "vos boutiques",
+    openShops: "{n} boutiques ouvertes",
+    allShops: "{n} boutiques référencées",
     pickupTitle: "Retrait au mall en 30 min",
     pickupBody: "N'afficher que le stock disponible sur place",
     noResults: "Aucun produit ne correspond",
     noResultsBody: "Essayez une autre catégorie ou désactivez le filtre retrait.",
   },
 
+  search: {
+    hint: "Tapez au moins deux lettres : un article, une marque ou une boutique.",
+    noResults: "Rien pour « {q} »",
+    noResultsBody: "Essayez un mot plus court, ou parcourez la marketplace.",
+    shops: "Boutiques",
+    productCount: "{n} article(s)",
+  },
+
   product: {
     addToCart: "Ajouter au panier",
     added: "Ajouté au panier",
+    goToCart: "Voir le panier",
+    photoOf: "Photo {i} sur {n}",
+    stockLabel: "En rayon",
+    generatedImage: "Teinte générée",
+    variantImages: "Photo par couleur",
+    realPhoto: "Photo réelle",
+    noImage: "Aucune image",
+    pickVariantPhoto: "Choisir une photo pour cette couleur",
+    generateTints: "Fabriquer les {n} teintes manquantes",
+    generatedCount: "{n} teinte(s) fabriquée(s)",
+    generatedNotice: "Cette couleur est une teinte générée à partir d'une autre photo. La matière et les finitions sont celles du modèle photographié.",
     seeShop: "Voir la boutique",
     reserve: "Réserver l'essayage",
     reserved: "Essayage demandé",
@@ -411,6 +440,8 @@ const fr = {
 
   shop: {
     follow: "Suivre",
+    guideMe: "Me guider",
+    findUs: "Nous trouver",
     following: "Abonné",
     posts: "posts",
     followers: "abonnés",
@@ -466,11 +497,15 @@ const fr = {
     contactPhone: "Téléphone",
     note: "Note pour le vendeur",
     perShop: "Une commande par boutique",
+    decrease: "Retirer un {name}",
+    increase: "Ajouter un {name}",
+    yourDetails: "Vos coordonnées",
   },
 
   orders: {
     title: "Mes commandes",
     empty: "Aucune commande",
+    justPlacedBody: "Le vendeur vient de la recevoir. Vous suivez son avancement ici.",
     status: {
       pending: "En attente",
       to_prepare: "À préparer",
@@ -595,6 +630,9 @@ const fr = {
     featureShop: "Mettre une boutique à la une",
     choose: "Choisir",
     sponsoredSlots: "Emplacements sponsorisés",
+    seeShop: "Voir",
+    shopSuspended: "boutique suspendue",
+    noDestination: "Aucune destination",
     activeCount: "{n} actifs",
     publishAlert: "Publier une alerte ville",
     write: "Rédiger",
@@ -699,6 +737,11 @@ const ar: Dictionary = {
   },
 
   home: {
+    greeting: "أهلاً {name}",
+    shopCount: "{n} متجر",
+    partners: "شركاؤنا",
+    greetingAnon: "أهلاً بك",
+    activeShops: "{n} متجرًا نشِطًا اليوم",
     contextOpen: "مفتوح إلى 22:00 · {n} متجرًا نشطًا",
     contextClosed: "مغلق · {n} متجرًا مسجّلاً",
     nextLive: "البث القادم: {shop} بعد {min} دقيقة",
@@ -722,15 +765,39 @@ const ar: Dictionary = {
 
   marketplace: {
     title: "السوق",
+    eyebrow: "مول ڨفصة",
+    headingTop: "اكتشف",
+    headingBottom: "متاجرك",
+    openShops: "{n} متجر مفتوح",
+    allShops: "{n} متجرًا في الدليل",
     pickupTitle: "الاستلام من المول في 30 دقيقة",
     pickupBody: "عرض المتوفر في المحل فقط",
     noResults: "لا يوجد منتج مطابق",
     noResultsBody: "جرّب فئة أخرى أو ألغِ عامل تصفية الاستلام.",
   },
 
+  search: {
+    hint: "اكتب حرفين على الأقل: منتج أو علامة أو متجر.",
+    noResults: "لا شيء لـ «{q}»",
+    noResultsBody: "جرّب كلمة أقصر، أو تصفّح السوق.",
+    shops: "المتاجر",
+    productCount: "{n} منتج",
+  },
+
   product: {
     addToCart: "أضف إلى السلة",
     added: "أُضيف إلى السلة",
+    goToCart: "عرض السلة",
+    photoOf: "صورة {i} من {n}",
+    stockLabel: "في الرفوف",
+    generatedImage: "لون مُولَّد",
+    variantImages: "صورة لكل لون",
+    realPhoto: "صورة حقيقية",
+    noImage: "بدون صورة",
+    pickVariantPhoto: "اختر صورة لهذا اللون",
+    generateTints: "توليد {n} لون ناقص",
+    generatedCount: "تم توليد {n} لون",
+    generatedNotice: "هذا اللون مُولَّد من صورة أخرى. الخامة والتشطيبات هي تلك الخاصة بالنموذج المصوَّر.",
     seeShop: "زيارة المتجر",
     reserve: "حجز القياس",
     reserved: "تم طلب القياس",
@@ -1002,6 +1069,8 @@ const ar: Dictionary = {
 
   shop: {
     follow: "متابعة",
+    guideMe: "دلّني",
+    findUs: "موقعنا",
     following: "متابَع",
     posts: "منشورًا",
     followers: "متابعًا",
@@ -1057,11 +1126,15 @@ const ar: Dictionary = {
     contactPhone: "الهاتف",
     note: "ملاحظة للبائع",
     perShop: "طلب لكل متجر",
+    decrease: "إنقاص {name}",
+    increase: "إضافة {name}",
+    yourDetails: "بياناتك",
   },
 
   orders: {
     title: "طلباتي",
     empty: "لا توجد طلبات",
+    justPlacedBody: "استلمها التاجر للتوّ. يمكنك متابعة تقدّمها من هنا.",
     status: {
       pending: "في الانتظار",
       to_prepare: "قيد التحضير",
@@ -1184,6 +1257,9 @@ const ar: Dictionary = {
     featureShop: "إبراز متجر في الواجهة",
     choose: "اختيار",
     sponsoredSlots: "المساحات الإعلانية",
+    seeShop: "عرض",
+    shopSuspended: "متجر موقوف",
+    noDestination: "بدون وجهة",
     activeCount: "{n} نشطة",
     publishAlert: "نشر تنبيه للمدينة",
     write: "تحرير",
@@ -1204,8 +1280,11 @@ export function getDictionary(locale: AppLocale): Dictionary {
 }
 
 /** Interpolation minimale : `format(d.home.nextLive, { shop, min })`. */
-export function format(template: string, values: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    key in values ? String(values[key]) : match,
-  );
-}
+/*
+  `format()` a déménagé dans `./format`.
+
+  Une vingtaine de composants client l'importaient d'ici, et ce module exporte
+  les deux dictionnaires : chaque visiteur téléchargeait le français *et*
+  l'arabe. Le module ne doit plus être atteint que par du code serveur — et par
+  le type `Dictionary`, qui ne coûte rien puisqu'il disparaît à la compilation.
+*/

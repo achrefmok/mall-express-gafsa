@@ -12,7 +12,7 @@ import { shouldPublishPosition } from "@/lib/geo";
 import { Button, Card } from "@/components/ui/primitives";
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink)]";
+  "w-full rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-2 text-[0.75rem] text-[var(--color-ink)]";
 
 export interface ProviderProfile {
   trade: SosTrade;
@@ -138,7 +138,7 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
     <div className="flex flex-col gap-3">
       {!provider.is_approved && (
         <Card className="p-3">
-          <p className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {t.sos.pendingApproval}
           </p>
         </Card>
@@ -146,8 +146,8 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
 
       <Card className="flex items-center gap-3 p-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.sos.availability}</p>
-          <p className="text-[10px] text-[var(--color-muted)]">
+          <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.sos.availability}</p>
+          <p className="text-[0.625rem] text-[var(--color-muted)]">
             {provider.is_available ? t.sos.free : t.sos.busy}
           </p>
         </div>
@@ -177,7 +177,7 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
       <Card className="p-3">
         <form onSubmit={onSave} className="flex flex-col gap-[10px]">
           <label className="flex flex-col gap-[5px]">
-            <span className="text-[10px] text-[var(--color-muted)]">{t.sos.trade}</span>
+            <span className="text-[0.625rem] text-[var(--color-muted)]">{t.sos.trade}</span>
             <select
               value={trade}
               onChange={(e) => setTrade(e.target.value as SosTrade)}
@@ -220,11 +220,11 @@ export function ProviderConsole({ initial }: { initial: ProviderProfile }) {
               onChange={(e) => setTravels(e.target.checked)}
               className="h-4 w-4 accent-[var(--color-brand)]"
             />
-            <span className="text-[11px] text-[var(--color-ink)]">{t.sos.proTravels}</span>
+            <span className="text-[0.6875rem] text-[var(--color-ink)]">{t.sos.proTravels}</span>
           </label>
 
           {error && (
-            <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+            <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
               {error}
             </p>
           )}

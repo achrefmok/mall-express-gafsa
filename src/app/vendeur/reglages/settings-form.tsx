@@ -11,7 +11,7 @@ import {
 import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Button, Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch } from "@/components/ui/primitives";
+import { Button, Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch, fieldClass } from "@/components/ui/primitives";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
 import { ReplayVendorTour } from "@/components/tour/tours";
@@ -24,7 +24,7 @@ interface DayHours {
 }
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white/60 px-3 py-[8px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
+  fieldClass({ size: "sm", strong: true });
 
 /** Écran 10 — réglages boutique. */
 export function ShopSettingsForm({
@@ -144,7 +144,7 @@ export function ShopSettingsForm({
             type="button"
             onClick={onSave}
             disabled={pending}
-            className="text-[11.5px] font-semibold text-[var(--color-brand)] disabled:opacity-40"
+            className="text-[0.71875rem] font-semibold text-[var(--color-brand)] disabled:opacity-40"
           >
             {pending ? t.common.saving : t.common.save}
           </button>
@@ -164,12 +164,12 @@ export function ShopSettingsForm({
 
         {/* ─── Aperçu client ─────────────────────────────────────────── */}
         <Card className="flex flex-none items-center gap-[10px] p-3">
-          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[13px] font-bold text-[var(--color-brand)]">
+          <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
             AP
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.vendor.clientPreview}</p>
-            <p className="text-[10.5px] text-[var(--color-muted)]">{t.vendor.clientPreviewBody}</p>
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.vendor.clientPreview}</p>
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.clientPreviewBody}</p>
           </div>
           <Switch checked={preview} onChange={setPreview} label={t.vendor.clientPreview} />
         </Card>
@@ -177,7 +177,7 @@ export function ShopSettingsForm({
         {preview && shop.status === "approved" && (
           <Link
             href={`/boutique/${shop.slug}`}
-            className="-mt-2 flex-none rounded-[14px] bg-[var(--color-brand)] px-3 py-2 text-center text-[11.5px] font-bold text-white"
+            className="-mt-2 flex-none rounded-[14px] bg-[var(--color-brand-fill)] px-3 py-2 text-center text-[0.71875rem] font-bold text-white"
           >
             {t.product.seeShop}
           </Link>
@@ -188,7 +188,7 @@ export function ShopSettingsForm({
           <SectionTitle>{t.vendor.identity}</SectionTitle>
 
           <Card className="flex items-center gap-3 p-3">
-            <span className="flex h-[52px] w-[52px] flex-none items-center justify-center overflow-hidden rounded-full bg-[var(--color-brand)] text-[15px] font-bold text-white">
+            <span className="flex h-[52px] w-[52px] flex-none items-center justify-center overflow-hidden rounded-full bg-[var(--color-brand-fill)] text-[0.9375rem] font-bold text-white">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- logo fixe 52px
                 <img src={logoUrl} alt="" className="h-full w-full object-cover" />
@@ -197,13 +197,13 @@ export function ShopSettingsForm({
               )}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11.5px] font-semibold text-[var(--color-ink)]">{t.vendor.shopLogo}</p>
-              <p className="text-[10.5px] text-[var(--color-muted)]">{t.vendor.logoSpec}</p>
+              <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">{t.vendor.shopLogo}</p>
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.logoSpec}</p>
             </div>
             <button
               type="button"
               onClick={() => logoInput.current?.click()}
-              className="flex-none whitespace-nowrap text-[10.5px] font-semibold text-[var(--color-brand)]"
+              className="flex-none whitespace-nowrap text-[0.65625rem] font-semibold text-[var(--color-brand)]"
             >
               {t.common.change}
             </button>
@@ -226,7 +226,7 @@ export function ShopSettingsForm({
             <button
               type="button"
               onClick={() => bannerInput.current?.click()}
-              className="w-full py-2 text-[10.5px] font-semibold text-[var(--color-brand)]"
+              className="w-full py-2 text-[0.65625rem] font-semibold text-[var(--color-brand)]"
             >
               {t.vendor.editBanner}
             </button>
@@ -241,12 +241,12 @@ export function ShopSettingsForm({
 
           <Card className="flex flex-col gap-2 p-3">
             <label className="flex flex-col gap-1">
-              <span className="text-[10.5px] text-[var(--color-muted)]">{t.vendor.shopName}</span>
+              <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.shopName}</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={FIELD} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[10.5px] text-[var(--color-muted)]">{t.cart.contactPhone}</span>
+              <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.cart.contactPhone}</span>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -258,7 +258,7 @@ export function ShopSettingsForm({
 
             <Divider />
 
-            <span className="text-[10.5px] text-[var(--color-muted)]">{t.vendor.soldCategories}</span>
+            <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.soldCategories}</span>
             <div className="flex flex-wrap gap-[6px]">
               {categories.map((category) => (
                 <Chip
@@ -272,7 +272,7 @@ export function ShopSettingsForm({
                         : [...current, category.id],
                     )
                   }
-                  className="px-[11px] py-[5px] text-[10px]"
+                  className="px-[11px] py-[5px] text-[0.625rem]"
                 >
                   {locale === "ar" ? category.name_ar : category.name_fr}
                 </Chip>
@@ -292,7 +292,7 @@ export function ShopSettingsForm({
                   <button
                     type="button"
                     onClick={() => setDay(day.weekday, { isClosed: false })}
-                    className="text-[11.5px] font-semibold text-[var(--color-live)]"
+                    className="text-[0.71875rem] font-semibold text-[var(--color-live)]"
                   >
                     {t.vendor.closedDay}
                   </button>
@@ -303,7 +303,7 @@ export function ShopSettingsForm({
                       value={day.opensAt}
                       onChange={(e) => setDay(day.weekday, { opensAt: e.target.value })}
                       aria-label={`${t.vendor.weekdays[day.weekday]} — ouverture`}
-                      className="rounded-[8px] bg-[var(--color-brand-tint)] px-1 py-[2px] text-[11px] font-semibold outline-none"
+                      className="rounded-[8px] bg-[var(--color-brand-tint)] px-1 py-[2px] text-[0.6875rem] font-semibold outline-none"
                     />
                     <span aria-hidden className="text-[var(--color-faint)]">
                       —
@@ -313,13 +313,13 @@ export function ShopSettingsForm({
                       value={day.closesAt}
                       onChange={(e) => setDay(day.weekday, { closesAt: e.target.value })}
                       aria-label={`${t.vendor.weekdays[day.weekday]} — fermeture`}
-                      className="rounded-[8px] bg-[var(--color-brand-tint)] px-1 py-[2px] text-[11px] font-semibold outline-none"
+                      className="rounded-[8px] bg-[var(--color-brand-tint)] px-1 py-[2px] text-[0.6875rem] font-semibold outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setDay(day.weekday, { isClosed: true })}
                       aria-label={`${t.vendor.weekdays[day.weekday]} — ${t.vendor.closedDay}`}
-                      className="ms-1 text-[10px] text-[var(--color-faint)]"
+                      className="ms-1 text-[0.625rem] text-[var(--color-faint)]"
                     >
                       ✕
                     </button>
@@ -349,7 +349,7 @@ export function ShopSettingsForm({
             <div className="flex flex-col gap-2 p-3">
               <div className="flex gap-2">
                 <label className="flex flex-1 flex-col gap-1">
-                  <span className="text-[10.5px] text-[var(--color-muted)]">Niveau</span>
+                  <span className="text-[0.65625rem] text-[var(--color-muted)]">Niveau</span>
                   <input
                     value={mallLevel}
                     onChange={(e) => setMallLevel(e.target.value)}
@@ -359,7 +359,7 @@ export function ShopSettingsForm({
                   />
                 </label>
                 <label className="flex flex-1 flex-col gap-1">
-                  <span className="text-[10.5px] text-[var(--color-muted)]">Local</span>
+                  <span className="text-[0.65625rem] text-[var(--color-muted)]">Local</span>
                   <input
                     value={mallUnit}
                     onChange={(e) => setMallUnit(e.target.value)}
@@ -370,7 +370,7 @@ export function ShopSettingsForm({
               </div>
 
               <label className="flex flex-col gap-1">
-                <span className="text-[10.5px] text-[var(--color-muted)]">Adresse</span>
+                <span className="text-[0.65625rem] text-[var(--color-muted)]">Adresse</span>
                 <input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -386,7 +386,7 @@ export function ShopSettingsForm({
                 fois, debout dans la boutique, et la position est prise.
               */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10.5px] text-[var(--color-muted)]">
+                <span className="text-[0.65625rem] text-[var(--color-muted)]">
                   Position sur la carte
                 </span>
                 <div className="flex items-center gap-2">
@@ -421,12 +421,12 @@ export function ShopSettingsForm({
                   </Button>
 
                   {position && (
-                    <span className="text-[10px] text-[var(--color-muted)]">
+                    <span className="text-[0.625rem] text-[var(--color-muted)]">
                       {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
                     </span>
                   )}
                 </div>
-                <p className="text-[9.5px] leading-[1.45] text-[var(--color-faint)]">
+                <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-faint)]">
                   À relever depuis la boutique elle-même : c’est ce point qui guidera les clients
                   jusqu’à vous.
                 </p>
@@ -452,7 +452,7 @@ export function ShopSettingsForm({
           <p
             role="status"
             className={cx(
-              "text-[11px] font-semibold",
+              "text-[0.6875rem] font-semibold",
               feedback.kind === "ok" ? "text-[var(--color-brand)]" : "text-[var(--color-live)]",
             )}
           >

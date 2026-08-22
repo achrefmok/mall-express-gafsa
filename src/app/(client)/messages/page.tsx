@@ -86,18 +86,18 @@ export default async function MessagesPage() {
                   <Avatar src={avatar} initials={monogram(label)} size={38} />
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-bold text-[var(--color-ink)]">{label}</p>
-                    <p className="truncate text-[10.5px] text-[var(--color-muted)]">
+                    <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">{label}</p>
+                    <p className="truncate text-[0.65625rem] text-[var(--color-muted)]">
                       {last?.body ?? "—"}
                     </p>
                   </div>
 
                   <div className="flex flex-none flex-col items-end gap-1">
-                    <span className="text-[9.5px] text-[var(--color-faint)]">
+                    <span className="text-[0.59375rem] text-[var(--color-faint)]">
                       {timeAgo(conversation.last_message_at, locale)}
                     </span>
                     {unread > 0 && (
-                      <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--color-live)] px-[5px] text-[9px] font-bold text-white">
+                      <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--color-live-fill)] px-[5px] text-[0.5625rem] font-bold text-white">
                         {unread}
                       </span>
                     )}

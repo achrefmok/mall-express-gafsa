@@ -61,7 +61,7 @@ export default async function SosPage() {
         {mine && (
           <Link
             href="/sos/pro"
-            className="flex-none pb-3 text-center text-[11px] font-semibold text-[var(--color-brand)]"
+            className="flex-none pb-3 text-center text-[0.6875rem] font-semibold text-[var(--color-brand)]"
           >
             {t.sos.proSpace}
           </Link>

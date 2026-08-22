@@ -10,13 +10,30 @@
   /* ─── Couleurs ─────────────────────────────────────────────────────── */
   --color-app: #f4f1fa;          /* fond application */
   --color-workshop: #eae5f2;     /* fond page/atelier */
-  --color-brand: #6d4b8f;        /* marque (violet) */
+  --color-brand: #6d4b8f;        /* marque (violet) — texte, icônes, bordures */
+  /* Remplissage de marque : le fond des boutons pleins, sous du texte blanc.
+
+     Séparé de `--color-brand` parce que les deux ne peuvent pas suivre la même
+     règle en thème sombre. La couleur de *texte* doit s'y éclaircir pour rester
+     lisible sur un fond sombre ; la couleur de *fond*, elle, doit rester assez
+     foncée pour porter du texte blanc. Un seul jeton pour les deux faisait
+     tomber le contraste des boutons à 2,4 — sous le minimum de 4,5. */
+  --color-brand-fill: #6d4b8f;
   --color-brand-tint: rgba(109, 75, 143, 0.1);
   --color-brand-strong: #5a3a78;
   --color-ink: #241f2e;          /* texte principal */
-  --color-muted: #6f6880;        /* texte secondaire */
-  --color-faint: #a79fb5;        /* texte tertiaire / placeholder */
+  /* Assombri de #6f6880 : ce gris tombait à 4,28 de contraste sur le fond de
+     l'application, sous le minimum de 4,5 exigé pour du texte courant. Il porte
+     la moitié des textes secondaires du site. */
+  --color-muted: #635c74;        /* texte secondaire */
+  /* Assombri de #a79fb5 puis de #8b8398 : ce gris porte le prix barré, qui dit
+     de combien on économise. À 3,56 de contraste il n'était pas lisible au
+     soleil, sur un téléphone d'entrée de gamme. */
+  --color-faint: #767085;        /* texte tertiaire / placeholder */
   --color-live: oklch(0.52 0.17 10);       /* accent live / alerte ≈ #d0455f */
+  /* Même partage que la marque : le fond des pastilles « direct » et des
+     boutons d'alerte, sous du texte blanc. */
+  --color-live-fill: oklch(0.52 0.17 10);
   --color-live-tint: oklch(0.52 0.17 10 / 0.12);
   --color-success: #2e8b57;
   --color-hairline: rgba(60, 40, 90, 0.09);   /* séparateur */
@@ -60,7 +77,9 @@
 }
 
 @utility cat-surface {
-  background: color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 14%, #f4f1fa);
+  /* Mélangé au fond de l'application, jamais à une valeur écrite en dur :
+     c'est ce qui permet au thème sombre de ne redéfinir qu'un jeton. */
+  background: color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 14%, var(--color-app));
 }
 
 @utility cat-ring {
@@ -104,9 +123,113 @@
 
 :root {
   /* Échelle typographique — « A Texte plus grand ». Pilotée par
-     data-text-scale sur <html>, appliquée avant hydratation. */
+     data-text-scale sur <html>, appliquée avant hydratation.
+
+     Toutes les tailles de texte du projet sont désormais en `rem` : elles
+     suivent donc cette échelle. Elles étaient auparavant en pixels — sept cent
+     trente-cinq occurrences —, ce qui rendait ce réglage strictement sans
+     effet. */
   --text-scale: 1;
+
+  /* Surfaces opaques, distinctes de `--color-surface` qui est translucide.
+     Un champ de saisie et une carte n'ont pas le même fond : l'un doit rester
+     lisible par-dessus n'importe quoi, l'autre laisse voir le fond. */
+  --color-surface-solid: #ffffff;
+  --color-field: rgba(255, 255, 255, 0.6);
+  /* Voile posé sur le fond : barre d'onglets, encarts, cartes translucides. */
+  --color-veil: rgba(255, 255, 255, 0.72);
+
+  /* Encre posée sur une surface blanche *littérale* — un bouton blanc sur le
+     dégradé de marque, une pastille sur une photo. Volontairement absente du
+     bloc sombre : la surface reste blanche dans les deux thèmes, le texte doit
+     donc rester foncé. Utiliser `--color-ink` à cet endroit rendait le texte
+     blanc sur blanc dès que le système passait en sombre. */
+  --color-on-light: #241f2e;
+
+  /* Hauteur réservée à la barre d'onglets, zone sûre comprise. Le bouton
+     flottant s'y adosse : les deux étaient calés séparément en dur, et rien
+     n'aurait signalé qu'ils s'étaient désolidarisés. */
+  --nav-space: 84px;
+
   color-scheme: light;
+}
+
+@media (width >= 64rem) {
+  :root {
+    /* La barre d'onglets disparaît sur grand écran : le bouton redescend. */
+    --nav-space: 32px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Thème sombre — suit le réglage du système, sans bascule dans l'interface.
+
+   Seuls les jetons changent ; aucun composant n'est modifié. C'est la raison
+   d'être d'une couche de jetons, et cela garantit qu'un écran écrit demain
+   suivra sans qu'on y pense.
+
+   Les valeurs ne sont pas une inversion : un violet de marque à 30 % de clarté
+   disparaît sur un fond sombre. La marque est donc éclaircie jusqu'à tenir le
+   contraste sur les deux fonds, et les gris sont biaisés violet comme en clair,
+   pour que la parenté se voie.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-app: #17131f;
+    --color-workshop: #100d16;
+    /* Texte et icônes : éclaircis pour se détacher du fond. */
+    --color-brand: #bd9ade;
+    /* Fond des boutons pleins : assez foncé pour porter du texte blanc.
+       Contraste mesuré avec le blanc : 5,4. */
+    --color-brand-fill: #7a54a0;
+    --color-brand-tint: rgba(189, 154, 222, 0.16);
+    --color-brand-strong: #8d64b6;
+    --color-ink: #ece8f2;
+    --color-muted: #b3abc0;
+    --color-faint: #9c94a9;
+    --color-live: oklch(0.75 0.14 12);
+    --color-live-fill: oklch(0.55 0.18 12);
+    --color-live-tint: oklch(0.75 0.14 12 / 0.18);
+    --color-success: #5cbd8b;
+    --color-hairline: rgba(200, 180, 230, 0.12);
+    --color-outline: rgba(200, 180, 230, 0.2);
+    --color-surface: rgba(44, 36, 58, 0.82);
+    --color-surface-edge: rgba(200, 180, 230, 0.1);
+    --color-track: rgba(200, 180, 230, 0.18);
+
+    --color-surface-solid: #241d30;
+    --color-field: rgba(255, 255, 255, 0.06);
+    --color-veil: rgba(36, 29, 48, 0.78);
+
+    --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.4);
+    --shadow-search: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.55);
+
+    --gradient-brand: linear-gradient(135deg, #5a3a78, #17131f);
+  }
+
+  /* Les pastilles de catégorie sont un mélange avec le fond de l'application :
+     en sombre, elles doivent s'éclaircir au lieu de s'assombrir, sinon elles
+     disparaissent. */
+  .cat-ink {
+    color: oklch(0.78 0.11 var(--hue, 300));
+  }
+
+  .cat-surface {
+    background: color-mix(in srgb, oklch(0.78 0.11 var(--hue, 300)) 16%, var(--color-app));
+  }
+
+  .cat-rule {
+    background: oklch(0.72 0.13 var(--hue, 300));
+  }
+
+  /* Les photos supportent mal un fond sombre : une nuance de moins suffit à
+     éviter qu'elles ne paraissent flotter. */
+  img {
+    filter: brightness(0.94);
+  }
 }
 
 html {

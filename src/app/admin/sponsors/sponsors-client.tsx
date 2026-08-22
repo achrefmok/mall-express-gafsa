@@ -6,13 +6,19 @@ import { useI18n } from "@/lib/i18n/provider";
 import { createSponsoredSlot, toggleSponsoredSlot } from "@/app/actions/admin";
 import { uploadImage } from "@/lib/upload";
 import { cx, formatDateTime } from "@/lib/format";
-import { Button, Card, Divider, EmptyState, KeyValueRow, Placeholder, Switch } from "@/components/ui/primitives";
+import { Button, Card, Divider, EmptyState, KeyValueRow, Placeholder, Switch, fieldClass } from "@/components/ui/primitives";
 import { ImageIcon } from "@/components/ui/icons";
+import Link from "next/link";
 import type { AppLocale, SponsoredSlot } from "@/types/database";
 
+/** Emplacement, avec la boutique jointe quand il en vise une. */
+type SlotWithShop = SponsoredSlot & {
+  shop: { slug: string; name: string; status: string } | null;
+};
+
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-[8px] text-[12px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({ size: "sm", solid: true });
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 function inThirtyDays(): string {
   const date = new Date(Date.now() + 30 * 86_400_000);
@@ -25,7 +31,7 @@ export function SponsorsManager({
   shops,
   locale,
 }: {
-  slots: SponsoredSlot[];
+  slots: SlotWithShop[];
   shops: Array<{ id: string; name: string }>;
   locale: AppLocale;
 }) {
@@ -100,7 +106,7 @@ export function SponsorsManager({
       )}
 
       <Card className="flex flex-none flex-col gap-2 p-3">
-        <p className="text-[11px] font-bold text-[var(--color-ink)]">{t.common.add}</p>
+        <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">{t.common.add}</p>
 
         <label className="flex flex-col gap-1">
           <span className={LABEL}>Annonceur</span>
@@ -171,7 +177,7 @@ export function SponsorsManager({
               type="button"
               onClick={() => setImageUrl(null)}
               aria-label={t.common.delete}
-              className="absolute end-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(36,31,46,0.7)] text-[10px] text-white"
+              className="absolute end-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(36,31,46,0.7)] text-[0.625rem] text-white"
             >
               ✕
             </button>
@@ -184,7 +190,7 @@ export function SponsorsManager({
             className="flex h-24 w-full flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] text-[var(--color-brand)]"
           >
             <ImageIcon size={17} />
-            <span className="text-[10px] font-bold">
+            <span className="text-[0.625rem] font-bold">
               {uploading ? t.common.loading : t.common.add}
             </span>
           </button>
@@ -198,7 +204,7 @@ export function SponsorsManager({
         />
 
         {error && (
-          <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}
@@ -216,7 +222,7 @@ export function SponsorsManager({
   );
 }
 
-function SlotRow({ slot, locale }: { slot: SponsoredSlot; locale: AppLocale }) {
+function SlotRow({ slot, locale }: { slot: SlotWithShop; locale: AppLocale }) {
   const { t } = useI18n();
   const router = useRouter();
 
@@ -236,8 +242,8 @@ function SlotRow({ slot, locale }: { slot: SponsoredSlot; locale: AppLocale }) {
 
       <div className="flex flex-col gap-2 p-3 pt-0">
         <div>
-          <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{slot.title}</p>
-          <p className="text-[10px] text-[var(--color-muted)]">
+          <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{slot.title}</p>
+          <p className="text-[0.625rem] text-[var(--color-muted)]">
             {slot.advertiser} · {expired ? t.deals.expired : formatDateTime(slot.ends_at, locale)}
           </p>
         </div>
@@ -260,7 +266,46 @@ function SlotRow({ slot, locale }: { slot: SponsoredSlot; locale: AppLocale }) {
           />
         </KeyValueRow>
 
-        <p className="text-[9.5px] text-[var(--color-faint)]">
+        {/*
+          Où mène réellement cet emplacement — et le vérifier d'un toucher.
+
+          L'écran listait le titre, l'annonceur et les compteurs, mais jamais la
+          destination. Un emplacement rattaché à une boutique suspendue, ou dont
+          l'adresse pointe ailleurs, ne se distinguait pas d'un emplacement sain :
+          il fallait ouvrir l'accueil et chercher la bannière pour le savoir.
+
+          Trois cas, trois affichages. Une boutique approuvée : son nom et un lien
+          vers sa vitrine. Une boutique suspendue : on le dit, et le lien
+          disparaît — sa page ne s'ouvrirait pas. Une adresse libre — affiche
+          d'événement, site d'annonceur : on montre l'adresse telle quelle.
+        */}
+        <Divider />
+
+        <div className="flex items-center gap-2">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[0.59375rem] text-[var(--color-faint)]">Destination</span>
+            <span className="block truncate text-[0.65625rem] font-semibold text-[var(--color-ink)]">
+              {slot.shop
+                ? slot.shop.status === "approved"
+                  ? slot.shop.name
+                  : `${slot.shop.name} — ${t.admin.shopSuspended}`
+                : slot.link_url || t.admin.noDestination}
+            </span>
+          </span>
+
+          {slot.shop?.status === "approved" && (
+            <Link
+              href={`/boutique/${slot.shop.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="press flex-none rounded-[12px] border border-[var(--color-brand)] px-3 py-[7px] text-[0.625rem] font-bold whitespace-nowrap text-[var(--color-brand)]"
+            >
+              {t.admin.seeShop}
+            </Link>
+          )}
+        </div>
+
+        <p className="text-[0.59375rem] text-[var(--color-faint)]">
           {slot.impressions} affichages · {slot.clicks} clics
         </p>
       </div>

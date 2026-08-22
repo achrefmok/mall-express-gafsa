@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { formatCount, fullName } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, Divider, KeyValueRow, SectionTitle } from "@/components/ui/primitives";
@@ -111,8 +111,8 @@ export default async function AdminSettingsPage() {
               <div key={link.href}>
                 {index > 0 && <Divider className="mb-[10px]" />}
                 <Link href={link.href} className="flex items-center gap-2">
-                  <span className="flex-1 text-[11.5px] text-[var(--color-ink)]">{link.label}</span>
-                  <span className="text-[11.5px] font-bold text-[var(--color-brand)]">
+                  <span className="flex-1 text-[0.71875rem] text-[var(--color-ink)]">{link.label}</span>
+                  <span className="text-[0.71875rem] font-bold text-[var(--color-brand)]">
                     {link.value}
                   </span>
                   <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />
@@ -128,13 +128,13 @@ export default async function AdminSettingsPage() {
             {stats.map((stat) => (
               <Card key={stat.label} className="p-[11px]">
                 <p
-                  className={`text-[17px] font-bold ${
+                  className={`text-[1.0625rem] font-bold ${
                     stat.alert ? "text-[var(--color-live)]" : "text-[var(--color-brand)]"
                   }`}
                 >
                   {stat.value}
                 </p>
-                <p className="text-[9px] leading-[1.3] text-[var(--color-muted)]">{stat.label}</p>
+                <p className="text-[0.5625rem] leading-[1.3] text-[var(--color-muted)]">{stat.label}</p>
               </Card>
             ))}
           </div>
@@ -152,7 +152,7 @@ export default async function AdminSettingsPage() {
             </KeyValueRow>
             <Divider />
             <Link href="/profil/reglages" className="flex items-center gap-2">
-              <span className="flex-1 text-[11.5px] text-[var(--color-ink)]">
+              <span className="flex-1 text-[0.71875rem] text-[var(--color-ink)]">
                 Réglages personnels
               </span>
               <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />

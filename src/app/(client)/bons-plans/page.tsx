@@ -106,16 +106,16 @@ export default async function DealsPage({
             src={profile?.avatar_url}
             initials={monogram(profile?.first_name, profile?.last_name) || "··"}
             size={32}
-            className="bg-[var(--color-ink)]"
+            tone="ink"
           />
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--color-muted)]">
+          <span className="min-w-0 flex-1 truncate text-[0.71875rem] text-[var(--color-muted)]">
             {t.deals.composer}
           </span>
           <Rail className="flex-none" gap={6}>
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[11px] font-bold text-[var(--color-brand)]">
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.6875rem] font-bold text-[var(--color-brand)]">
               PH
             </span>
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[11px] font-bold text-[var(--color-brand)]">
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.6875rem] font-bold text-[var(--color-brand)]">
               ST
             </span>
           </Rail>

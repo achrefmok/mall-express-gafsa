@@ -7,7 +7,7 @@ import { shouldPublishPosition } from "@/lib/geo";
 import { Button, Card } from "@/components/ui/primitives";
 
 const FIELD =
-  "w-full rounded-[12px] border border-[var(--color-outline)] bg-white px-3 py-2 text-[12px] text-[var(--color-ink)]";
+  "w-full rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-2 text-[0.75rem] text-[var(--color-ink)]";
 
 export interface DriverProfile {
   display_name: string;
@@ -141,7 +141,7 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
     <div className="flex flex-col gap-3">
       {driver && !driver.is_approved && (
         <Card className="p-3">
-          <p className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {t.taxi.pendingApproval}
           </p>
         </Card>
@@ -150,8 +150,8 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
       {driver && (
         <Card className="flex items-center gap-3 p-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.taxi.availability}</p>
-            <p className="text-[10px] text-[var(--color-muted)]">
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.taxi.availability}</p>
+            <p className="text-[0.625rem] text-[var(--color-muted)]">
               {driver.is_available ? t.taxi.free : t.taxi.busy}
             </p>
           </div>
@@ -210,7 +210,7 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
           />
 
           {error && (
-            <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+            <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
               {error}
             </p>
           )}

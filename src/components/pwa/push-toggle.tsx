@@ -296,8 +296,8 @@ export function PushToggle() {
     <Card className="flex flex-col gap-2 p-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.push.title}</p>
-          <p className="mt-[2px] text-[10px] leading-[1.45] text-[var(--color-muted)]">{body}</p>
+          <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.push.title}</p>
+          <p className="mt-[2px] text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">{body}</p>
         </div>
 
         {(state.kind === "on" || state.kind === "off") && (
@@ -322,7 +322,7 @@ export function PushToggle() {
       </div>
 
       {error && (
-        <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+        <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
           {error}
         </p>
       )}

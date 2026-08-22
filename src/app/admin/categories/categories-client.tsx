@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { upsertCategory } from "@/app/actions/admin";
-import { Button, Card, Divider, Switch } from "@/components/ui/primitives";
+import { uploadImage } from "@/lib/upload";
+import { cx } from "@/lib/format";
+import { Button, Card, Divider, Switch, fieldClass } from "@/components/ui/primitives";
 import type { Category } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[10px] border border-[var(--color-outline)] bg-white px-2 py-[7px] text-[11px] outline-none focus:border-[var(--color-brand)]";
+  fieldClass({ size: "xs", solid: true });
 
 /**
  * Ajouter une catégorie revient à choisir une teinte : le reste du système
@@ -57,19 +59,14 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
       <Card className="flex flex-col gap-2 p-3">
         {categories.map((category) => (
           <div key={category.id} className="flex items-center gap-[10px]">
-            <span
-              className="cat-surface cat-ring cat-ink flex h-9 w-9 flex-none items-center justify-center rounded-[14px] text-[13px] font-semibold"
-              style={{ "--hue": category.hue } as React.CSSProperties}
-            >
-              {category.monogram}
-            </span>
+            <CategoryImage category={category} />
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                 {category.parent_id && <span className="text-[var(--color-faint)]">— </span>}
                 {category.name_fr}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                 {category.name_ar} · teinte {category.hue}
               </p>
             </div>
@@ -81,7 +78,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
 
       {/* ─── Création ──────────────────────────────────────────────── */}
       <Card className="flex flex-col gap-2 p-3">
-        <p className="text-[11px] font-bold text-[var(--color-ink)]">{t.common.add}</p>
+        <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">{t.common.add}</p>
 
         <div className="flex gap-2">
           <input
@@ -134,7 +131,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
         <Divider />
 
         <label className="flex flex-col gap-2">
-          <span className="text-[10px] text-[var(--color-muted)]">Teinte · {hue}</span>
+          <span className="text-[0.625rem] text-[var(--color-muted)]">Teinte · {hue}</span>
           <input
             type="range"
             min={0}
@@ -149,13 +146,13 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
             apparaîtront réellement dans l'application. */}
         <div className="flex items-center gap-3 rounded-[12px] bg-[var(--color-app)] p-2">
           <span
-            className="cat-surface cat-ring cat-ink flex h-12 w-12 flex-none items-center justify-center rounded-[16px] text-[17px] font-semibold"
+            className="cat-surface cat-ring cat-ink flex h-12 w-12 flex-none items-center justify-center rounded-[16px] text-[1.0625rem] font-semibold"
             style={{ "--hue": hue } as React.CSSProperties}
           >
             {mono || nameFr.slice(0, 2).toUpperCase() || "??"}
           </span>
           <span
-            className="cat-surface cat-ink rounded-[14px] px-[13px] py-[6px] text-[10.5px] font-semibold"
+            className="cat-surface cat-ink rounded-[14px] px-[13px] py-[6px] text-[0.65625rem] font-semibold"
             style={{ "--hue": hue } as React.CSSProperties}
           >
             {nameFr || "Catégorie"}
@@ -167,7 +164,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
         </div>
 
         {error && (
-          <p role="alert" className="text-[10.5px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.65625rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}
@@ -208,5 +205,92 @@ function ActiveToggle({ category }: { category: Category }) {
         });
       }}
     />
+  );
+}
+
+/**
+ * La photo de la catégorie, changée en un toucher.
+ *
+ * La pastille de couleur *est* le bouton : pas de champ d'adresse à remplir, pas
+ * de ligne supplémentaire dans une liste déjà dense. On touche la catégorie, on
+ * choisit une image, elle apparaît. Toucher une catégorie qui en a déjà une la
+ * remplace ; le bouton « × » la retire et rend la main au dessin.
+ *
+ * La colonne reste facultative : tant qu'aucune image n'est choisie, l'accueil
+ * affiche l'icône dessinée. Rien ne casse, chaque photo ajoutée améliore l'écran.
+ */
+function CategoryImage({ category }: { category: Category }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function save(imageUrl: string | null) {
+    startTransition(async () => {
+      const result = await upsertCategory({
+        id: category.id,
+        slug: category.slug,
+        nameFr: category.name_fr,
+        nameAr: category.name_ar,
+        hue: category.hue,
+        monogram: category.monogram,
+        sortOrder: category.sort_order,
+        isActive: category.is_active,
+        imageUrl,
+      });
+      if (result.ok) router.refresh();
+      else setError(result.error);
+    });
+  }
+
+  async function onPick(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+
+    try {
+      const { publicUrl } = await uploadImage("shop-assets", file);
+      save(publicUrl);
+    } catch {
+      setError("Envoi impossible");
+    }
+  }
+
+  return (
+    <span className="relative flex-none">
+      <label
+        title={error ?? "Changer la photo"}
+        className={cx(
+          "press flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-[14px] text-[0.8125rem] font-semibold",
+          category.image_url ? "bg-[var(--color-track)]" : "cat-surface cat-ring cat-ink",
+          pending && "opacity-50",
+        )}
+        style={{ "--hue": category.hue } as React.CSSProperties}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          disabled={pending}
+          onChange={(event) => void onPick(event.target.files?.[0])}
+        />
+        {category.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- vignette de 36 px dans une liste d'administration
+          <img src={category.image_url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          category.monogram
+        )}
+      </label>
+
+      {category.image_url && (
+        <button
+          type="button"
+          onClick={() => save(null)}
+          disabled={pending}
+          aria-label={`Retirer la photo de ${category.name_fr}`}
+          className="absolute -end-[6px] -top-[6px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.78)] text-[0.6875rem] leading-none text-white"
+        >
+          ×
+        </button>
+      )}
+    </span>
   );
 }

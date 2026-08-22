@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { relayFacebookLive } from "@/app/actions/lives";
 import { cx } from "@/lib/format";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 type Platform = "android" | "ios" | "desktop";
 
@@ -75,7 +75,7 @@ export function QuickRelay({
     <>
       {/* ─── La marche à suivre, selon l'appareil ────────────────────── */}
       <Card className="flex flex-col gap-3 p-4">
-        <p className="text-[13px] font-bold text-[var(--color-ink)]">
+        <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
           Vous diffusez déjà sur Facebook ?
         </p>
 
@@ -126,7 +126,7 @@ export function QuickRelay({
       {/* ─── Le champ, identique partout ─────────────────────────────── */}
       <Card className="flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] text-[var(--color-muted)]">Lien de la vidéo Facebook</span>
+          <span className="text-[0.625rem] text-[var(--color-muted)]">Lien de la vidéo Facebook</span>
 
           <span className="flex gap-2">
             <input
@@ -135,12 +135,12 @@ export function QuickRelay({
               type="url"
               inputMode="url"
               placeholder="https://www.facebook.com/…/videos/…"
-              className="min-w-0 flex-1 rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] font-semibold text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)] placeholder:font-normal placeholder:text-[var(--color-faint)]"
+              className={fieldClass({ strong: true, className: "min-w-0 flex-1" })}
             />
             <button
               type="button"
               onClick={pasteFromClipboard}
-              className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-white/70 px-3 text-[10.5px] font-bold whitespace-nowrap text-[var(--color-brand)]"
+              className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 text-[0.65625rem] font-bold whitespace-nowrap text-[var(--color-brand)]"
             >
               Coller le lien
             </button>
@@ -152,19 +152,19 @@ export function QuickRelay({
             {pending ? "Mise en ligne…" : "Passer en direct maintenant"}
           </Button>
         ) : (
-          <p className="rounded-[12px] bg-[var(--color-live-tint)] p-3 text-[11.5px] leading-[1.55] text-[var(--color-ink)]">
+          <p className="rounded-[12px] bg-[var(--color-live-tint)] p-3 text-[0.71875rem] leading-[1.55] text-[var(--color-ink)]">
             Votre boutique attend la validation de l&apos;administration. Vous
             pourrez diffuser dès qu&apos;elle sera approuvée.
           </p>
         )}
 
         {error && (
-          <p role="alert" className={cx("text-[11.5px] leading-[1.5] font-semibold text-[var(--color-live)]")}>
+          <p role="alert" className={cx("text-[0.71875rem] leading-[1.5] font-semibold text-[var(--color-live)]")}>
             {error}
           </p>
         )}
 
-        <p className="text-[9.5px] leading-[1.45] text-[var(--color-muted)]">
+        <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
           La vidéo doit être <strong>publique</strong>. Le titre, le produit
           épinglé et la remise de votre direct précédent sont repris — tout se
           règle ensuite depuis la console, en cours de diffusion.
@@ -174,11 +174,11 @@ export function QuickRelay({
       <div className="flex flex-col gap-1 text-center">
         <Link
           href="/vendeur/lives/nouveau"
-          className="text-[11.5px] font-semibold text-[var(--color-brand)]"
+          className="text-[0.71875rem] font-semibold text-[var(--color-brand)]"
         >
           Programmer un direct à l&apos;avance
         </Link>
-        <Link href="/vendeur/reglages" className="text-[11px] text-[var(--color-muted)]">
+        <Link href="/vendeur/reglages" className="text-[0.6875rem] text-[var(--color-muted)]">
           Relier ma page Facebook pour ne plus rien faire du tout
         </Link>
       </div>
@@ -194,16 +194,16 @@ function Guide({ steps, note }: { steps: string[]; note: string }) {
       <ol className="flex flex-col gap-2">
         {steps.map((step, index) => (
           <li key={step} className="flex gap-[10px]">
-            <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[10.5px] font-bold text-[var(--color-brand)]">
+            <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.65625rem] font-bold text-[var(--color-brand)]">
               {index + 1}
             </span>
-            <span className="pt-[2px] text-[12px] leading-[1.5] text-[var(--color-ink)]">
+            <span className="pt-[2px] text-[0.75rem] leading-[1.5] text-[var(--color-ink)]">
               {step}
             </span>
           </li>
         ))}
       </ol>
-      <p className="text-[10.5px] leading-[1.5] text-[var(--color-muted)]">{note}</p>
+      <p className="text-[0.65625rem] leading-[1.5] text-[var(--color-muted)]">{note}</p>
     </>
   );
 }

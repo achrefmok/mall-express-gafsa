@@ -44,6 +44,57 @@ export function MapSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
+/**
+ * Un tableau de bord : bandeau chiffré, puis rangées.
+ *
+ * Sans elle, l'espace vendeur et l'administration retombaient sur le squelette
+ * racine — une grille de quatre vignettes produit — avant d'afficher un tableau.
+ * Un squelette de la mauvaise forme désoriente plus qu'un simple délai : l'écran
+ * annonce quelque chose, puis livre autre chose.
+ */
+export function DashboardSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <Enveloppe>
+      <div className="skeleton h-[72px] rounded-[18px]" />
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="skeleton h-[58px] rounded-[16px]" />
+        ))}
+      </div>
+      <div className="skeleton h-4 w-1/3 rounded-[8px]" />
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="skeleton h-[54px] rounded-[16px]" />
+      ))}
+    </Enveloppe>
+  );
+}
+
+/**
+ * L'accueil : recherche, catégories, bannière, grille.
+ *
+ * C'est l'écran d'atterrissage — celui qu'on ouvre depuis l'icône installée —
+ * et c'était l'un des rares onglets principaux sans forme d'attente propre.
+ */
+export function HomeSkeleton() {
+  return (
+    <Enveloppe>
+      <div className="skeleton h-[38px] rounded-[18px]" />
+      <div className="flex gap-3">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="skeleton h-[48px] w-[48px] flex-none rounded-[16px]" />
+        ))}
+      </div>
+      <div className="skeleton aspect-[2/1] w-full rounded-[20px]" />
+      <div className="skeleton h-4 w-2/5 rounded-[8px]" />
+      <div className="grid grid-cols-2 gap-3">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="skeleton h-[186px] rounded-[16px]" />
+        ))}
+      </div>
+    </Enveloppe>
+  );
+}
+
 /** Des tuiles de service, deux par ligne. */
 export function TileSkeleton({ rows = 5 }: { rows?: number }) {
   return (

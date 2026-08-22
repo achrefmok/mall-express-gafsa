@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { formatPrice, percentOff } from "@/lib/format";
+import { useState, useTransition } from "react";
+import { useI18n } from "@/lib/i18n/provider";
+import { toggleFavorite } from "@/app/actions/cart";
+import { cx, formatPrice, percentOff } from "@/lib/format";
 import { Placeholder } from "@/components/ui/primitives";
+import { CartIcon, HeartIcon } from "@/components/ui/icons";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import type { AppLocale } from "@/types/database";
 
@@ -19,100 +23,169 @@ export interface ProductCardData {
 }
 
 /**
- * Vignette produit de la grille marketplace.
- * Le filet de 2 px sous l'image porte la couleur de la catégorie : c'est le
- * seul repère chromatique de la grille, il doit rester lisible.
+ * Vignette produit — carte flottante du thème « Halo ».
+ *
+ * La photo occupe presque toute la carte, sur un fond blanc à gros rayon ; le
+ * nom et le prix vivent *sous* la carte, centrés. C'est ce qui permet à
+ * l'image de respirer sur une grille à deux colonnes de trois cent
+ * soixante-quinze pixels : le texte ne lui prend plus de hauteur.
+ *
+ * Trois repères se posent sur la photo plutôt qu'en dessous — la boutique, la
+ * remise, le favori. Ils y sont lisibles parce qu'ils portent leur propre fond,
+ * et ils libèrent la ligne de texte pour ce qui décide vraiment de l'achat.
+ *
+ * La carte n'est plus un lien unique. Elle en contenait un qui enveloppait
+ * tout, ce qui interdisait d'y placer le moindre bouton — un contrôle
+ * interactif ne peut pas vivre dans un lien. Les zones sont donc distinctes :
+ * la photo s'agrandit, le nom ouvre la fiche, le cœur bascule le favori.
  */
 export function ProductCard({
   product,
   locale = "fr",
   showShop = true,
-  imageHeight = 110,
+  imageHeight = 132,
+  isFavorite,
 }: {
   product: ProductCardData;
   locale?: AppLocale;
   showShop?: boolean;
   imageHeight?: number;
+  /**
+   * Absent = pas de cœur du tout.
+   *
+   * L'afficher vide alors que l'article est déjà en favori serait pire que de
+   * ne rien afficher : la personne le toucherait pour l'ajouter et le
+   * retirerait. Les écrans qui n'interrogent pas les favoris n'en montrent
+   * donc pas.
+   */
+  isFavorite?: boolean;
 }) {
+  const { t } = useI18n();
   const discount = percentOff(product.price, product.compare_at_price);
   const cover = product.images?.[0];
-  const hue = product.category?.hue ?? 300;
+  const soldOut = product.stock === 0;
+
+  const [favorite, setFavorite] = useState(Boolean(isFavorite));
+  const [, startTransition] = useTransition();
+
+  function onFavorite() {
+    // Bascule optimiste : le cœur répond au doigt sans attendre le serveur, et
+    // revient en arrière si l'écriture échoue.
+    const previous = favorite;
+    setFavorite(!previous);
+
+    startTransition(async () => {
+      const result = await toggleFavorite(product.id, previous);
+      if (!result.ok) setFavorite(previous);
+    });
+  }
 
   return (
-    <Link
-      href={`/produit/${product.id}`}
-      className="relative overflow-hidden rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] press"
-    >
-      {discount !== null && (
-        <span className="absolute start-2 top-2 z-10 rounded-[3px] bg-[var(--color-live)] px-[6px] py-[2px] text-[8px] font-bold text-white">
-          −{discount}%
-        </span>
-      )}
-
-      {product.stock === 0 && (
-        <span className="absolute end-2 top-2 z-10 rounded-[3px] bg-[rgba(36,31,46,0.72)] px-[6px] py-[2px] text-[8px] font-bold text-white">
-          0
-        </span>
-      )}
-
-      {cover ? (
-        /*
-          Toucher la photo l'agrandit ; toucher le nom ou le prix ouvre la
-          fiche. Une vignette de cent pixels ne permet pas de juger une matière
-          ou une couleur, et le client qui ouvrait la fiche pour cela perdait sa
-          place dans la liste. Le reste de la carte reste cliquable : le chemin
-          vers l'achat n'est pas retiré, il est simplement déplacé de deux
-          centimètres.
-        */
-        <ImageZoom
-          images={product.images}
-          alt={product.name}
-          className="block w-full cursor-zoom-in"
-        >
-          {/*
-            Un cadre de hauteur fixe, et l'image le remplit.
-
-            La vignette recadre : elle occupe toute la largeur de la colonne,
-            sur une hauteur imposée, quel que soit le format de la photo
-            d'origine. L'écrire en `width` et `height` revenait à annoncer un
-            rapport de 200 × 110 que le rendu ne tenait jamais — la largeur
-            était étirée par la grille, la hauteur non —, et Next le signalait à
-            chaque image chargée. `fill` dit ce qui se passe réellement : le
-            cadre décide, l'image s'y ajuste.
-
-            Le `<span>` en bloc plutôt qu'un `<div>` : ce cadre vit dans le
-            bouton d'agrandissement, qui n'accepte pas de contenu de flux.
-          */}
-          <span className="relative block w-full" style={{ height: imageHeight }}>
-            <Image
-              src={cover}
-              alt={product.name}
-              fill
-              sizes="(max-width: 520px) 50vw, 240px"
-              className="fade-in-img object-cover"
-            />
-          </span>
-        </ImageZoom>
-      ) : (
-        <Placeholder label="produit" className="w-full" style={{ height: imageHeight }} />
-      )}
-
-      <div className="h-[2px] cat-rule" style={{ "--hue": hue } as React.CSSProperties} />
-
-      <div className="p-[9px]">
-        <p className="line-clamp-2 text-[11px] font-semibold text-[var(--color-ink)]">{product.name}</p>
-        {showShop && product.shop && (
-          <p className="truncate text-[10px] text-[var(--color-muted)]">{product.shop.name}</p>
+    <div className="flex flex-col">
+      <div className="relative rounded-[24px] bg-[var(--color-surface-solid)] p-[7px] shadow-[0_10px_24px_rgba(60,40,90,0.09)]">
+        {cover ? (
+          /*
+            Toucher la photo l'agrandit ; toucher le nom ouvre la fiche. Une
+            vignette de cent trente pixels ne permet pas de juger une matière ou
+            une couleur, et le client qui ouvrait la fiche pour cela perdait sa
+            place dans la liste.
+          */
+          <ImageZoom
+            images={product.images}
+            alt={product.name}
+            className="block w-full cursor-zoom-in"
+          >
+            <span className="relative block w-full overflow-hidden rounded-[19px]" style={{ height: imageHeight }}>
+              <Image
+                src={cover}
+                alt={product.name}
+                fill
+                sizes="(max-width: 520px) 50vw, 240px"
+                className="fade-in-img object-cover"
+              />
+            </span>
+          </ImageZoom>
+        ) : (
+          <Placeholder
+            label="produit"
+            className="w-full rounded-[19px]"
+            style={{ height: imageHeight }}
+          />
         )}
-        <p className="mt-1 text-[12px] font-bold text-[var(--color-brand)]">
+
+        {showShop && product.shop && (
+          <span className="absolute start-[14px] top-[14px] max-w-[62%] truncate rounded-[10px] bg-[var(--color-surface-solid)]/96 px-2 py-1 text-[0.5625rem] font-bold text-[var(--color-ink)] shadow-[0_4px_10px_rgba(60,40,90,0.14)]">
+            {product.shop.name}
+          </span>
+        )}
+
+        {discount !== null && (
+          <span className="absolute start-[14px] bottom-[14px] rounded-[10px] bg-[var(--color-brand-fill)] px-2 py-[3px] text-[0.53125rem] font-bold text-white">
+            −{discount}%
+          </span>
+        )}
+
+        {isFavorite !== undefined && (
+          <button
+            type="button"
+            onClick={onFavorite}
+            aria-pressed={favorite}
+            aria-label={favorite ? t.product.unfavorite : t.product.favorite}
+            className={cx(
+              "press absolute end-[10px] top-[10px] flex h-[34px] w-[34px] items-center justify-center rounded-full",
+              favorite ? "text-[var(--color-live)]" : "text-[var(--color-ink)]",
+            )}
+          >
+            <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--color-surface-solid)]/96 shadow-[0_4px_10px_rgba(60,40,90,0.16)]">
+              <HeartIcon filled={favorite} size={13} />
+            </span>
+          </button>
+        )}
+
+        {/*
+          La pastille d'achat, à cheval sur le bord de la carte.
+
+          Elle mène à la fiche plutôt que d'ajouter au panier directement : un
+          vêtement se commande dans une taille, et une ligne de panier sans
+          taille est un problème pour le commerçant, pas pour le client. Le
+          choix se fait donc là où les tailles s'affichent.
+
+          La bordure reprend le fond de l'écran : c'est ce qui détache la
+          pastille de la carte sans dessiner de contour.
+        */}
+        {!soldOut && (
+          <Link
+            href={`/produit/${product.id}`}
+            aria-label={`${t.product.addToCart} — ${product.name}`}
+            className="press absolute bottom-[-15px] start-1/2 flex h-[34px] w-[34px] -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-[var(--color-app)] bg-[var(--color-brand-fill)] text-white shadow-[0_10px_20px_rgba(109,75,143,0.36)] rtl:translate-x-1/2"
+          >
+            <CartIcon size={14} />
+          </Link>
+        )}
+
+        {soldOut && (
+          <span className="absolute end-[14px] bottom-[14px] rounded-[10px] bg-[rgba(36,31,46,0.72)] px-2 py-[3px] text-[0.53125rem] font-bold text-white">
+            {t.product.outOfStock}
+          </span>
+        )}
+      </div>
+
+      <Link
+        href={`/produit/${product.id}`}
+        className={cx("block text-center", soldOut ? "pt-[10px]" : "pt-[22px]")}
+      >
+        <span className="line-clamp-2 block text-[0.71875rem] font-semibold text-[var(--color-ink)]">
+          {product.name}
+        </span>
+        <span className="mt-[2px] block text-[0.8125rem] font-extrabold text-[var(--color-brand)]">
           {formatPrice(product.price, locale)}
           {product.compare_at_price && (
-            <span className="ms-[6px] text-[10px] font-normal text-[var(--color-faint)] line-through">
+            <span className="ms-[6px] text-[0.625rem] font-normal text-[var(--color-faint)] line-through">
               {formatPrice(product.compare_at_price, locale)}
             </span>
           )}
-        </p>
-      </div>
-    </Link>
+        </span>
+      </Link>
+    </div>
   );
 }

@@ -64,35 +64,56 @@ export function TopBar({
           ))}
 
         {brand ? (
-          <p className="truncate text-[19px] font-bold tracking-[-0.2px] text-[var(--color-ink)]">
+          <p className="truncate text-[1.1875rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
             {t.brand.first} <span className="text-[var(--color-brand)]">{t.brand.second}</span>
           </p>
         ) : (
           title && (
-            <h1 className="truncate text-[17px] font-bold tracking-[-0.2px] text-[var(--color-ink)]">
+            <h1 className="truncate text-[1.0625rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
               {title}
             </h1>
           )
         )}
       </div>
 
+      {/*
+        Les trois icônes mesuraient dix-sept pixels de côté — la taille exacte du
+        dessin, sans un pixel de marge. C'étaient les plus petites cibles de
+        l'application, et le panier est le raccourci le plus utilisé d'un écran
+        d'achat.
+
+        `p-2 -m-2` porte la zone tactile à trente-trois pixels sans rien déplacer
+        à l'écran : le rembourrage agrandit la cible, la marge négative reprend
+        exactement la place qu'il a prise. L'espacement visuel des icônes reste
+        celui du dessin d'origine.
+
+        La pastille de compteur se pose sur un `<span>` intérieur : accrochée au
+        lien, elle se serait décalée avec le rembourrage et aurait flotté loin de
+        son icône.
+      */}
       <div className="flex flex-none items-center gap-4 text-[var(--color-ink)]">
         {icons?.includes("messages") && (
-          <Link href="/messages" aria-label={t.account.messages} className="relative">
-            <MailIcon />
-            <CountBadge count={counts?.messages ?? 0} />
+          <Link href="/messages" aria-label={t.account.messages} className="-m-2 p-2">
+            <span className="relative block">
+              <MailIcon />
+              <CountBadge count={counts?.messages ?? 0} />
+            </span>
           </Link>
         )}
         {icons?.includes("notifications") && (
-          <Link href="/notifications" aria-label="Notifications" className="relative">
-            <BellIcon />
-            <CountBadge count={counts?.notifications ?? 0} />
+          <Link href="/notifications" aria-label="Notifications" className="-m-2 p-2">
+            <span className="relative block">
+              <BellIcon />
+              <CountBadge count={counts?.notifications ?? 0} />
+            </span>
           </Link>
         )}
         {icons?.includes("cart") && (
-          <Link href="/panier" aria-label={t.cart.title} className="relative">
-            <CartIcon />
-            <CountBadge count={counts?.cart ?? 0} tone="brand" />
+          <Link href="/panier" aria-label={t.cart.title} className="-m-2 p-2">
+            <span className="relative block">
+              <CartIcon />
+              <CountBadge count={counts?.cart ?? 0} tone="brand" />
+            </span>
           </Link>
         )}
         {action}

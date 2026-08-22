@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Planche de contrôle — vignettes catégories & services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#f4f1fa;color:#241f2e;font-family:'Cairo',system-ui,sans-serif;padding:28px}
+  h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin:0 0 4px}
+  .sub{font-size:12.5px;color:#635c74;margin:0 0 26px;max-width:70ch;line-height:1.55}
+  h2{font-size:11px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:#635c74;margin:26px 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(4,86px);gap:18px 14px}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .tile{width:66px;height:66px;border-radius:22px;overflow:hidden;background:#e9e3f4;box-shadow:0 8px 18px rgba(60,40,90,.10)}
+  .round{width:58px;height:58px;border-radius:50%;overflow:hidden;background:#e9e3f4;box-shadow:0 8px 18px rgba(60,40,90,.10)}
+  .tile img,.round img{width:100%;height:100%;object-fit:cover;display:block}
+  .name{font-size:10.5px;font-weight:700;line-height:1.15}
+  .note{font-size:8.5px;color:#767085;font-weight:600}
+  /* Le test du brief : les mêmes vignettes réduites à 58 px, alignées.
+     Si le sujet ne se reconnaît pas ici, l'image est à refaire. */
+  .test{display:flex;flex-wrap:wrap;gap:10px;padding:16px;border-radius:18px;background:#fff;box-shadow:0 8px 22px rgba(60,40,90,.07)}
+  .t58{width:58px;height:58px;border-radius:50%;overflow:hidden;flex:none;background:#e9e3f4}
+  .t58 img{width:100%;height:100%;object-fit:cover;display:block}
+  .manquant{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#6d4b8f;background:repeating-linear-gradient(45deg,rgba(109,75,143,.10) 0 6px,transparent 6px 14px);border:1.5px dashed rgba(109,75,143,.45);box-sizing:border-box;text-align:center;line-height:1.2;padding:4px}
+</style>
+</head>
+<body>
+
+<h1>Vignettes — catégories &amp; services</h1>
+<p class="sub">
+  480 × 480, WebP qualité 82 avec un JPG de secours. Recadrage carré sur la zone la plus
+  contrastée plutôt que sur le centre géométrique. Servies depuis <code>/images/</code> :
+  la politique de sécurité du site n'autorise les images que depuis son propre domaine,
+  Supabase et les tuiles de carte — une adresse externe serait bloquée.
+</p>
+
+<h2>Catégories · 66 px, rayon 22</h2>
+<div class="grid">
+  <div class="cell"><div class="tile"><img src="../public/images/cat-mode.webp" alt="Mode"></div><span class="name">Mode</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-beaute.webp" alt="Beauté"></div><span class="name">Beauté</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-maison.webp" alt="Maison"></div><span class="name">Maison</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-sport.webp" alt="Sport"></div><span class="name">Sport</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-alim.webp" alt="Alimentation"></div><span class="name">Alimentation</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-electro.webp" alt="Électro"></div><span class="name">Électro</span></div>
+  <div class="cell"><div class="tile"><img src="../public/images/cat-cafes.webp" alt="Cafés"></div><span class="name">Cafés</span></div>
+</div>
+
+<h2>Services · 58 px, cercle</h2>
+<div class="grid">
+  <div class="cell"><div class="round"><img src="../public/images/svc-priere.webp" alt="Prière"></div><span class="name">Prière</span></div>
+  <div class="cell"><div class="round"><img src="../public/images/svc-pharmacie.webp" alt="Pharmacie"></div><span class="name">Pharmacie</span></div>
+  <div class="cell"><div class="round manquant">photo à fournir</div><span class="name">Taxi</span><span class="note">local requis</span></div>
+  <div class="cell"><div class="round manquant">photo à fournir</div><span class="name">Louage</span><span class="note">local requis</span></div>
+</div>
+
+<h2>Test de lisibilité à 58 px</h2>
+<div class="test">
+  <div class="t58"><img src="../public/images/cat-mode.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-beaute.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-maison.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-sport.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-alim.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-electro.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/cat-cafes.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/svc-priere.webp" alt=""></div>
+  <div class="t58"><img src="../public/images/svc-pharmacie.webp" alt=""></div>
+</div>
+
+</body>
+</html>

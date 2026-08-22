@@ -169,7 +169,7 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
                 dire telle. Posée sur l'image plutôt que sous elle, pour ne pas
                 ajouter une ligne de texte à une section qui doit rester visuelle.
               */}
-              <span className="absolute end-[10px] top-[10px] rounded-[4px] bg-[rgba(20,14,26,0.55)] px-[6px] py-[2px] text-[8px] tracking-[0.4px] text-white backdrop-blur-[2px]">
+              <span className="absolute end-[10px] top-[10px] rounded-[4px] bg-[rgba(20,14,26,0.55)] px-[6px] py-[2px] text-[0.5rem] tracking-[0.025rem] text-white backdrop-blur-[2px]">
                 {t.home.sponsoredBadge}
               </span>
             </div>
@@ -215,9 +215,9 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
               */}
               {!href && (slot.title || slot.subtitle) && (
                 <div className="px-1 pt-[6px]">
-                  <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{slot.title}</p>
+                  <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{slot.title}</p>
                   {slot.subtitle && (
-                    <p className="text-[10.5px] leading-[1.45] text-[var(--color-muted)]">
+                    <p className="text-[0.65625rem] leading-[1.45] text-[var(--color-muted)]">
                       {slot.subtitle}
                     </p>
                   )}
@@ -250,7 +250,7 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
               setPaused((p) => !p);
             }}
             aria-label={paused ? t.home.adsResume : t.home.adsPause}
-            className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] leading-none text-[var(--color-muted)]"
+            className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[0.625rem] leading-none text-[var(--color-muted)]"
           >
             {paused ? "▶" : "❚❚"}
           </button>

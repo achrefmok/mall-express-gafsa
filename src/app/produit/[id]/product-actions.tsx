@@ -7,8 +7,9 @@ import { useI18n } from "@/lib/i18n/provider";
 import { addToCart, toggleFavorite } from "@/app/actions/cart";
 import { cx } from "@/lib/format";
 import { Button } from "@/components/ui/primitives";
-import { HeartIcon, ShareIcon } from "@/components/ui/icons";
+import { CartIcon, HeartIcon, ShareIcon, StoreIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
+import { useVariant } from "@/components/products/variant-context";
 
 /** Barre supérieure de la fiche : retour, favori, partage. */
 export function ProductTopBar({
@@ -50,8 +51,19 @@ export function ProductTopBar({
     await navigator.clipboard?.writeText(url);
   }
 
+  /*
+    Trois pastilles posées sur la photo, plutôt qu'une barre au-dessus.
+
+    La barre occupait cinquante pixels de haut sur l'écran où l'image *est*
+    l'argument de vente. En pastilles blanches à trente-quatre pixels, les
+    commandes restent visibles sur n'importe quelle photo — c'est leur fond qui
+    les détache, pas un bandeau — et la photo récupère toute la hauteur.
+  */
+  const pastille =
+    "press flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-surface-solid)]/94 shadow-[0_6px_14px_rgba(60,40,90,0.14)] backdrop-blur-[2px]";
+
   return (
-    <header className="flex flex-none items-center justify-between px-[18px] pt-4 pb-3">
+    <header className="absolute inset-x-[14px] top-3 z-10 flex items-center justify-between">
       {/*
         Repli sur la marketplace quand rien ne précède dans l'application.
 
@@ -60,25 +72,28 @@ export function ProductTopBar({
         présentation se retrouvait renvoyé là, alors que la flèche signifiait pour
         lui « revenir à la liste des produits ».
       */}
-      <BackButton fallback="/marketplace" />
+      <BackButton fallback="/marketplace" className={cx(pastille, "text-[var(--color-ink)]")} />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onFavorite}
           aria-pressed={favorite}
           aria-label={favorite ? t.product.unfavorite : t.product.favorite}
-          className={cx("p-1", favorite ? "text-[var(--color-live)]" : "text-[var(--color-ink)]")}
+          className={cx(
+            pastille,
+            favorite ? "text-[var(--color-live)]" : "text-[var(--color-ink)]",
+          )}
         >
-          <HeartIcon filled={favorite} size={18} />
+          <HeartIcon filled={favorite} size={15} />
         </button>
         <button
           type="button"
           onClick={onShare}
           aria-label={t.common.share}
-          className="p-1 text-[var(--color-ink)]"
+          className={cx(pastille, "text-[var(--color-ink)]")}
         >
-          <ShareIcon size={18} />
+          <ShareIcon size={15} />
         </button>
       </div>
     </header>
@@ -101,9 +116,18 @@ export function ProductActions({
   const { t } = useI18n();
   const router = useRouter();
 
-  const [color, setColor] = useState<string | null>(product.colors[0] ?? null);
+  /*
+    La couleur vient du contexte, pas d'un état local.
+
+    La galerie en haut de la fiche et les pastilles juste au-dessus du bouton
+    d'achat décrivent le même article : deux états séparés se seraient
+    contredits dès le premier toucher — la photo montrant une couleur, le panier
+    en enregistrant une autre.
+  */
+  const { color, setColor } = useVariant();
   const [size, setSize] = useState<string | null>(product.sizes[0] ?? null);
   const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; message: string } | null>(null);
+  const [added, setAdded] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const soldOut = product.stock <= 0;
@@ -116,6 +140,7 @@ export function ProductActions({
 
       if (result.ok) {
         setFeedback({ kind: "ok", message: t.product.added });
+        setAdded(true);
         router.refresh();
       } else {
         setFeedback({
@@ -156,7 +181,7 @@ export function ProductActions({
 
       {product.sizes.length > 0 && (
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-[10px] text-[var(--color-muted)]">{t.product.sizes}</legend>
+          <legend className="text-[0.625rem] text-[var(--color-muted)]">{t.product.sizes}</legend>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map((value) => (
               <button
@@ -165,9 +190,9 @@ export function ProductActions({
                 onClick={() => setSize(value)}
                 aria-pressed={size === value}
                 className={cx(
-                  "min-w-[44px] rounded-[12px] px-3 py-2 text-[11px] font-semibold",
+                  "min-w-[44px] rounded-[12px] px-3 py-2 text-[0.6875rem] font-semibold",
                   size === value
-                    ? "bg-[var(--color-brand)] text-white"
+                    ? "bg-[var(--color-brand-fill)] text-white"
                     : "border border-[var(--color-outline)] text-[var(--color-ink)]",
                 )}
               >
@@ -182,7 +207,7 @@ export function ProductActions({
         <p
           role="status"
           className={cx(
-            "text-[11px] font-semibold",
+            "text-[0.6875rem] font-semibold",
             feedback.kind === "ok" ? "text-[var(--color-brand)]" : "text-[var(--color-live)]",
           )}
         >
@@ -190,15 +215,37 @@ export function ProductActions({
         </p>
       )}
 
-      {/* Barre d'action fixe, au-dessus de la zone sûre. */}
-      <div className="pb-safe sticky bottom-0 -mx-4 mt-2 flex gap-[10px] border-t border-[var(--color-hairline)] bg-[var(--color-app)]/95 px-4 py-[14px] backdrop-blur">
+      {/*
+        Barre d'action fixe, au-dessus de la zone sûre.
+
+        Le second bouton change après un ajout réussi : « Voir la boutique »
+        laisse la place à « Voir le panier ». Rien ne menait à la caisse
+        auparavant — un texte « Ajouté » s'affichait, puis plus rien, et il
+        fallait retrouver seul la petite icône en haut de l'écran.
+
+        Le bouton est remplacé plutôt qu'ajouté : une fois l'article dans le
+        panier, poursuivre vers la caisse importe davantage que visiter la
+        boutique, et une barre à trois commandes sur un téléphone n'aide
+        personne. La boutique reste accessible par son nom, en haut de la fiche.
+      */}
+      <div className="pb-safe sticky bottom-0 -mx-4 mt-2 flex items-center gap-[10px] border-t border-[var(--color-hairline)] bg-[var(--color-app)]/95 px-4 py-[14px] backdrop-blur">
+        {/*
+          L'action secondaire devient une pastille ronde : le bouton d'achat
+          récupère toute la largeur restante.
+
+          Deux boutons de même taille se disputaient le regard, alors qu'un seul
+          des deux fait vendre. La pastille garde l'accès à la boutique sans le
+          revendiquer — et ses quarante pixels restent au-dessus du minimum
+          tactile.
+        */}
         <Link
-          href={`/boutique/${product.shopSlug}`}
-          className="flex-1 rounded-[16px] border-[1.5px] border-[var(--color-brand)] py-3 text-center text-[13px] font-semibold text-[var(--color-brand)]"
+          href={added ? "/panier" : `/boutique/${product.shopSlug}`}
+          aria-label={added ? t.product.goToCart : t.product.seeShop}
+          className="press flex h-10 w-10 flex-none items-center justify-center rounded-full border border-[var(--color-brand)] text-[var(--color-brand)]"
         >
-          {t.product.seeShop}
+          {added ? <CartIcon size={17} /> : <StoreIcon size={17} />}
         </Link>
-        <Button onClick={onAdd} disabled={pending || soldOut} className="flex-1">
+        <Button onClick={onAdd} disabled={pending || soldOut} className="flex-1 rounded-[22px]">
           {soldOut ? t.product.outOfStock : pending ? t.common.loading : t.product.addToCart}
         </Button>
       </div>

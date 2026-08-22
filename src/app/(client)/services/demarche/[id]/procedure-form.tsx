@@ -7,13 +7,13 @@ import { submitServiceRequest } from "@/app/actions/account";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Button, Card } from "@/components/ui/primitives";
+import { Button, Card, fieldClass } from "@/components/ui/primitives";
 import { ImageIcon, PlusIcon } from "@/components/ui/icons";
 import type { ServiceRequestKind } from "@/types/database";
 
 const FIELD =
-  "w-full rounded-[14px] border border-[var(--color-outline)] bg-white/60 px-3 py-[10px] text-[12.5px] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)]";
-const LABEL = "text-[10px] text-[var(--color-muted)]";
+  fieldClass({});
+const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
 export function ProcedureForm({
   procedure,
@@ -86,11 +86,11 @@ export function ProcedureForm({
       <>
         <TopBar title={procedure.title} back="/services" />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[20px] font-bold text-[var(--color-brand)]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[1.25rem] font-bold text-[var(--color-brand)]">
             ✓
           </span>
-          <p className="text-[15px] font-bold text-[var(--color-ink)]">{t.services.submitted}</p>
-          <p className="max-w-[34ch] text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+          <p className="text-[0.9375rem] font-bold text-[var(--color-ink)]">{t.services.submitted}</p>
+          <p className="max-w-[34ch] text-[0.71875rem] leading-relaxed text-[var(--color-muted)]">
             Votre démarche est enregistrée. Vous suivrez son avancement dans « {t.services.myRequests} ».
           </p>
           <Button size="sm" onClick={() => router.push("/profil/demarches")} className="mt-1">
@@ -108,21 +108,21 @@ export function ProcedureForm({
       <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-3 pb-6">
         <Card className="flex flex-none items-center gap-[10px] p-3">
           <span
-            className="cat-surface cat-ink flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[14px] font-semibold"
+            className="cat-surface cat-ink flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold"
             style={{ "--hue": procedure.hue } as React.CSSProperties}
           >
             {procedure.monogram}
           </span>
           <div className="min-w-0">
-            <p className="text-[12px] font-bold text-[var(--color-ink)]">{procedure.title}</p>
+            <p className="text-[0.75rem] font-bold text-[var(--color-ink)]">{procedure.title}</p>
             {procedure.subtitle && (
-              <p className="text-[10.5px] text-[var(--color-muted)]">{procedure.subtitle}</p>
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">{procedure.subtitle}</p>
             )}
           </div>
         </Card>
 
         {procedure.body && (
-          <p className="text-[11.5px] leading-[1.55] text-[var(--color-muted)]">{procedure.body}</p>
+          <p className="text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]">{procedure.body}</p>
         )}
 
         <Card className="flex flex-none flex-col gap-[10px] p-3">
@@ -156,7 +156,7 @@ export function ProcedureForm({
                   type="button"
                   onClick={() => setAttachments((c) => c.filter((u) => u !== url))}
                   aria-label={t.common.delete}
-                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[11px] leading-none text-white"
+                  className="absolute end-[2px] top-[2px] flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(36,31,46,0.72)] text-[0.6875rem] leading-none text-white"
                 >
                   ✕
                 </button>
@@ -189,7 +189,7 @@ export function ProcedureForm({
         </Card>
 
         {error && (
-          <p role="alert" className="text-[11px] font-semibold text-[var(--color-live)]">
+          <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">
             {error}
           </p>
         )}

@@ -71,7 +71,7 @@ export default async function ServicesPage() {
       <TopBar
         title={t.services.title}
         action={
-          <Link href="/marketplace" aria-label={t.common.search} className="text-[var(--color-ink)]">
+          <Link href="/marketplace" aria-label={t.common.search} className="-m-2 p-2 text-[var(--color-ink)]">
             <SearchIcon />
           </Link>
         }
@@ -81,8 +81,8 @@ export default async function ServicesPage() {
         {/* ─── Aujourd'hui à Gafsa ────────────────────────────────────── */}
         <Card className="flex flex-none flex-col gap-[9px] p-3 lg:col-span-full">
           <div className="flex items-baseline justify-between">
-            <p className="text-[11.5px] font-bold text-[var(--color-ink)]">{t.services.todayIn}</p>
-            <p className="text-[10.5px] text-[var(--color-muted)]">
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.services.todayIn}</p>
+            <p className="text-[0.65625rem] text-[var(--color-muted)]">
               {formatDate(new Date().toISOString(), locale)}
             </p>
           </div>
@@ -92,8 +92,8 @@ export default async function ServicesPage() {
               id="prayer"
               className="flex-1 rounded-[14px] bg-[var(--color-brand-tint)] p-2 text-center"
             >
-              <p className="text-[9.5px] text-[var(--color-muted)]">{t.services.nextPrayer}</p>
-              <p className="text-[12px] font-bold text-[var(--color-brand)]">
+              <p className="text-[0.59375rem] text-[var(--color-muted)]">{t.services.nextPrayer}</p>
+              <p className="text-[0.75rem] font-bold text-[var(--color-brand)]">
                 {prayerNow ? `${prayerNow.label} · ${prayerNow.time}` : "—"}
               </p>
             </div>
@@ -102,8 +102,8 @@ export default async function ServicesPage() {
               id="pharmacy"
               className="flex-1 rounded-[14px] bg-[var(--color-brand-tint)] p-2 text-center"
             >
-              <p className="text-[9.5px] text-[var(--color-muted)]">{t.services.pharmacyOnDuty}</p>
-              <p className="truncate text-[12px] font-bold text-[var(--color-brand)]">
+              <p className="text-[0.59375rem] text-[var(--color-muted)]">{t.services.pharmacyOnDuty}</p>
+              <p className="truncate text-[0.75rem] font-bold text-[var(--color-brand)]">
                 {pharmacy.data?.name ?? "—"}
               </p>
             </div>
@@ -118,14 +118,14 @@ export default async function ServicesPage() {
         */}
         <Link href="/taxi" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
-            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
+            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold">
               T
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                 {t.taxi.title}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">{t.taxi.noneFree}</p>
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">{t.taxi.noneFree}</p>
             </div>
             <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />
           </Card>
@@ -139,14 +139,14 @@ export default async function ServicesPage() {
         */}
         <Link href="/boutiques" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
-            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
+            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold">
               B
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                 {t.shops.title}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
                 {t.shops.onMap}
               </p>
             </div>
@@ -163,14 +163,14 @@ export default async function ServicesPage() {
         */}
         <Link href="/sos" className="lg:col-span-full">
           <Card className="flex items-center gap-[10px] p-3">
-            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold">
+            <span className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold">
               S
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-bold text-[var(--color-ink)]">
+              <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
                 {t.sos.title}
               </p>
-              <p className="truncate text-[10px] text-[var(--color-muted)]">{t.sos.tagline}</p>
+              <p className="truncate text-[0.625rem] text-[var(--color-muted)]">{t.sos.tagline}</p>
             </div>
             <ChevronRightIcon size={13} className="text-[var(--color-faint)]" />
           </Card>
@@ -183,17 +183,17 @@ export default async function ServicesPage() {
             {municipal.map((info) => (
               <Card key={info.id} className="flex items-center gap-[10px] p-3">
                 <span
-                  className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold tracking-[0.5px]"
+                  className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold tracking-[0.03125rem]"
                   style={{ "--hue": info.hue } as React.CSSProperties}
                 >
                   {info.monogram}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-semibold text-[var(--color-ink)]">
+                  <p className="text-[0.78125rem] font-semibold text-[var(--color-ink)]">
                     {locale === "ar" && info.title_ar ? info.title_ar : info.title}
                   </p>
                   {info.subtitle && (
-                    <p className="text-[11px] text-[var(--color-muted)]">
+                    <p className="text-[0.6875rem] text-[var(--color-muted)]">
                       {locale === "ar" && info.subtitle_ar ? info.subtitle_ar : info.subtitle}
                     </p>
                   )}
@@ -214,17 +214,17 @@ export default async function ServicesPage() {
                 className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
               >
                 <span
-                  className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[14px] font-semibold tracking-[0.5px]"
+                  className="cat-surface cat-ink flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[0.875rem] font-semibold tracking-[0.03125rem]"
                   style={{ "--hue": info.hue } as React.CSSProperties}
                 >
                   {info.monogram}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12.5px] font-semibold text-[var(--color-ink)]">
+                  <p className="text-[0.78125rem] font-semibold text-[var(--color-ink)]">
                     {locale === "ar" && info.title_ar ? info.title_ar : info.title}
                   </p>
                   {info.subtitle && (
-                    <p className="truncate text-[11px] text-[var(--color-muted)]">
+                    <p className="truncate text-[0.6875rem] text-[var(--color-muted)]">
                       {locale === "ar" && info.subtitle_ar ? info.subtitle_ar : info.subtitle}
                     </p>
                   )}
@@ -245,10 +245,10 @@ export default async function ServicesPage() {
                 role="status"
                 className="flex items-center gap-[10px] rounded-[18px] border border-[rgba(122,31,43,0.15)] bg-[var(--color-brand-tint)] p-3"
               >
-                <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[var(--color-live)] text-[13px] font-bold text-white">
+                <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[var(--color-live-fill)] text-[0.8125rem] font-bold text-white">
                   !
                 </span>
-                <p className="text-[12px] text-[var(--color-ink)]">
+                <p className="text-[0.75rem] text-[var(--color-ink)]">
                   {locale === "ar" && alert.title_ar ? alert.title_ar : alert.title}
                   {alert.body && ` — ${alert.body}`}
                 </p>

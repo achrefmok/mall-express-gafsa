@@ -39,7 +39,7 @@ export default async function AdminSosPage() {
       <div className="col-reading no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-3 pb-4">
         <section className="flex flex-none flex-col gap-2">
           <SectionTitle>Ouvrir l&apos;espace dépanneur</SectionTitle>
-          <p className="text-[10.5px] leading-relaxed text-[var(--color-muted)]">
+          <p className="text-[0.65625rem] leading-relaxed text-[var(--color-muted)]">
             Un artisan vous contacte ; vous lui ouvrez l&apos;espace ici, pour un métier précis. Il
             ne peut pas se l&apos;ouvrir lui-même, et le service n&apos;apparaît pas chez les autres
             membres.
@@ -56,12 +56,12 @@ export default async function AdminSosPage() {
           <>
             <section className="flex flex-none flex-col gap-2">
               <SectionTitle>À vérifier — {pending.length}</SectionTitle>
-              <p className="text-[10.5px] leading-relaxed text-[var(--color-muted)]">
+              <p className="text-[0.65625rem] leading-relaxed text-[var(--color-muted)]">
                 Contrôlez identité et qualification avant d&apos;approuver. Une fiche approuvée
                 apparaît auprès des clients avec son numéro de téléphone.
               </p>
               {pending.length === 0 ? (
-                <p className="text-[11px] text-[var(--color-muted)]">Rien en attente.</p>
+                <p className="text-[0.6875rem] text-[var(--color-muted)]">Rien en attente.</p>
               ) : (
                 pending.map((provider) => <ProviderRow key={provider.id} provider={provider} />)
               )}
@@ -70,7 +70,7 @@ export default async function AdminSosPage() {
             <section className="flex flex-none flex-col gap-2">
               <SectionTitle>Approuvés — {approved.length}</SectionTitle>
               {approved.length === 0 ? (
-                <p className="text-[11px] text-[var(--color-muted)]">Aucun pour l&apos;instant.</p>
+                <p className="text-[0.6875rem] text-[var(--color-muted)]">Aucun pour l&apos;instant.</p>
               ) : (
                 approved.map((provider) => <ProviderRow key={provider.id} provider={provider} />)
               )}

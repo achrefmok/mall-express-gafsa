@@ -1,13 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/dictionaries";
-import { formatPrice, monogram } from "@/lib/format";
-import { Avatar, Card, Placeholder, Tag } from "@/components/ui/primitives";
+import { format } from "@/lib/i18n/format";
+import { formatPrice, formatRating, monogram, percentOff } from "@/lib/format";
+import { Avatar, Card, Tag } from "@/components/ui/primitives";
+import { ProductGallery } from "@/components/products/product-gallery";
+import { VariantProvider } from "@/components/products/variant-context";
 import { ProductActions, ProductTopBar } from "./product-actions";
 
 /**
@@ -16,7 +17,17 @@ import { ProductActions, ProductTopBar } from "./product-actions";
  * un habitant qui cherche un article précis à Gafsa.
  */
 
-export const revalidate = 300;
+/*
+  `revalidate = 300` figurait ici et n'a jamais rien mis en cache : la page lit
+  la langue et la session en cookie, ce qui force le rendu dynamique. La
+  construction la marquait `ƒ`, comme les autres.
+
+  On le déclare donc franchement. La fiche produit reste la porte d'entrée
+  depuis Google et mériterait d'être servie depuis le cache : cela suppose de
+  sortir la langue du cookie et le favori du rendu initial — un chantier
+  d'architecture, laissé de côté ici.
+*/
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -58,10 +69,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const { data: product } = await supabase
     .from("products")
+    /*
+      `*` plutôt qu'une liste de colonnes, et ce n'est pas de la paresse.
+
+      Nommer `variant_images` dans le `select` rend la page tributaire d'une
+      migration : tant que la colonne n'existe pas, PostgREST refuse la requête
+      entière, `product` vaut `null`, et la fiche répond « introuvable ». Toute
+      la boutique tombe pour une colonne facultative — ce qui s'est produit
+      exactement, avant que ce commentaire ne soit écrit.
+
+      Avec `*`, la colonne remonte quand elle existe et manque simplement
+      sinon. Le code la lit avec un repli, et la fonctionnalité s'active d'elle-
+      même une fois la migration passée. Le surcoût est d'une seule ligne lue.
+    */
     .select(
-      `id, name, name_ar, description, description_ar, price, compare_at_price, stock,
-       images, colors, sizes, mall_pickup_available, category_id,
-       shop:shops!inner(id, name, slug, logo_url, phone, mall_level, mall_unit, status, pickup_in_store),
+      `*,
+       shop:shops!inner(id, name, slug, logo_url, phone, mall_level, mall_unit, status, pickup_in_store, rating_sum, rating_count),
        category:categories(hue, name_fr, name_ar)`,
     )
     .eq("id", id)
@@ -80,6 +103,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       .maybeSingle();
     isFavorite = Boolean(data);
   }
+
+  const discount = percentOff(product.price, product.compare_at_price);
 
   const name = locale === "ar" && product.name_ar ? product.name_ar : product.name;
   const description =
@@ -110,83 +135,136 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <ProductTopBar productId={product.id} productName={product.name} isFavorite={isFavorite} />
+      {/*
+        Le fournisseur enveloppe la fiche entière, pas seulement la galerie.
 
+        La couleur choisie sert à deux endroits éloignés — la galerie en haut,
+        les pastilles au-dessus du bouton d'achat. Tout le contenu textuel
+        traverse ce fournisseur en `children` et reste rendu côté serveur : le
+        titre, le prix et la description sont ce que Google lit sur la page qui
+        amène ici, ils ne doivent pas devenir du JavaScript.
+      */}
+      <VariantProvider
+        colors={product.colors ?? []}
+        images={product.images ?? []}
+        variantImages={product.variant_images ?? {}}
+      >
       <main
         id="contenu"
         className="no-sb flex flex-1 flex-col overflow-y-auto lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:content-start lg:gap-8"
       >
-        {product.images?.[0] ? (
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            width={520}
-            height={228}
-            priority
-            className="h-[228px] w-full flex-none object-cover lg:h-[420px] lg:rounded-[18px]"
+        {/*
+          Les commandes flottent sur la photo au lieu de s'aligner au-dessus.
+
+          Une barre pleine largeur volait cinquante pixels de haut à l'image, sur
+          l'écran où l'image *est* l'argument de vente. Posées en pastilles
+          blanches sur la photo, elles restent visibles sans rien lui prendre.
+        */}
+        <div className="relative flex-none">
+          <ProductGallery alt={product.name} />
+          <ProductTopBar
+            productId={product.id}
+            productName={product.name}
+            isFavorite={isFavorite}
           />
-        ) : (
-          <Placeholder
-            label="photo produit — pleine largeur"
-            className="h-[228px] w-full flex-none lg:h-[420px] lg:rounded-[18px]"
-          />
-        )}
+          {discount !== null && (
+            <span className="absolute start-[14px] top-[56px] rounded-[10px] bg-[var(--color-brand-fill)] px-[9px] py-1 text-[0.59375rem] font-bold text-white">
+              −{discount}%
+            </span>
+          )}
+        </div>
 
-        <div className="flex flex-col gap-[10px] p-4 lg:p-0">
-          <Link
-            href={`/boutique/${product.shop.slug}`}
-            className="flex items-center gap-[6px] text-[11px] font-semibold text-[var(--color-brand)]"
-          >
-            <Avatar src={product.shop.logo_url} initials={monogram(product.shop.name)} size={16} />
-            {product.shop.name}
-          </Link>
+        <div className="flex flex-col gap-[13px] p-4 lg:p-0">
+          {/* La boutique et sa note, sur une seule ligne : qui vend, et ce que
+              les autres en ont pensé. */}
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/boutique/${product.shop.slug}`}
+              className="press flex min-w-0 flex-1 items-center gap-[7px]"
+            >
+              <Avatar
+                src={product.shop.logo_url}
+                initials={monogram(product.shop.name)}
+                size={26}
+              />
+              <span className="min-w-0">
+                <span className="block truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
+                  {product.shop.name}
+                </span>
+                {product.shop.mall_unit && (
+                  <span className="block text-[0.59375rem] text-[var(--color-muted)]">
+                    {format(t.product.walkTime, {
+                      level: product.shop.mall_level ?? 0,
+                      unit: product.shop.mall_unit,
+                      min: 3,
+                    })}
+                  </span>
+                )}
+              </span>
+            </Link>
 
-          <h1 className="text-[20px] font-semibold text-[var(--color-ink)]">{name}</h1>
-
-          <p className="text-[18px] font-bold text-[var(--color-brand)]">
-            {formatPrice(product.price, locale)}
-            {product.compare_at_price && (
-              <span className="ms-[6px] text-[13px] font-normal text-[var(--color-faint)] line-through">
-                {formatPrice(product.compare_at_price, locale)}
+            {product.shop.rating_count > 0 && (
+              <span className="flex flex-none items-center gap-1 rounded-[11px] bg-[var(--color-brand-tint)] px-[9px] py-[5px] text-[0.625rem] font-bold text-[var(--color-brand)]">
+                {formatRating(product.shop.rating_sum, product.shop.rating_count)} ★
+                <span className="font-semibold text-[var(--color-muted)]">
+                  ({product.shop.rating_count})
+                </span>
               </span>
             )}
-          </p>
+          </div>
+
+          {/* Le nom prend la largeur, le prix reste calé à droite : l'œil trouve
+              le montant au même endroit quelle que soit la longueur du titre. */}
+          <div className="flex items-start gap-[10px]">
+            <h1 className="min-w-0 flex-1 text-[1.1875rem] leading-[1.25] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
+              {name}
+            </h1>
+            <div className="flex-none text-end">
+              <p className="text-[1.1875rem] font-extrabold whitespace-nowrap text-[var(--color-brand)]">
+                {formatPrice(product.price, locale)}
+              </p>
+              {product.compare_at_price && (
+                <p className="text-[0.65625rem] whitespace-nowrap text-[var(--color-faint)] line-through">
+                  {formatPrice(product.compare_at_price, locale)}
+                </p>
+              )}
+            </div>
+          </div>
 
           {description && (
-            <p className="text-[12px] leading-[1.6] text-[var(--color-muted)]">{description}</p>
+            <p className="text-[0.71875rem] leading-[1.6] text-[var(--color-muted)]">
+              {description}
+            </p>
           )}
 
-          {/* ─── Encart d'emplacement ────────────────────────────────── */}
-          {product.shop.mall_unit && (
-            <Card className="flex items-center gap-[10px] p-[10px_12px]">
-              <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[12px] font-bold text-[var(--color-brand)]">
-                {product.shop.mall_unit}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11.5px] font-bold text-[var(--color-ink)]">
-                  {format(t.product.walkTime, {
-                    level: product.shop.mall_level ?? 0,
-                    unit: product.shop.mall_unit,
-                    min: 3,
-                  })}
+          {/* ─── Retrait et stock, côte à côte ───────────────────────── */}
+          <div className="flex gap-2">
+            {product.shop.mall_unit && (
+              <Card className="flex-1 p-[10px_11px]">
+                <p className="text-[0.625rem] text-[var(--color-muted)]">{t.cart.pickup}</p>
+                <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
+                  {product.shop.mall_unit}
                 </p>
-                <p className="text-[10.5px] text-[var(--color-muted)]">
-                  {product.stock > 0
-                    ? format(t.product.inStock, { n: product.stock })
-                    : t.product.outOfStock}
-                </p>
-              </div>
+              </Card>
+            )}
+            <Card className="flex-1 p-[10px_11px]">
+              <p className="text-[0.625rem] text-[var(--color-muted)]">{t.product.stockLabel}</p>
+              <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
+                {product.stock > 0
+                  ? format(t.product.inStock, { n: product.stock })
+                  : t.product.outOfStock}
+              </p>
             </Card>
-          )}
+          </div>
 
           <div className="flex flex-wrap gap-2">
-            <Tag tone="tinted" className="px-[11px] py-[6px] text-[10.5px]">
+            <Tag tone="tinted" className="px-[11px] py-[6px] text-[0.65625rem]">
               {t.product.cod}
             </Tag>
             {product.shop.phone && (
               <a
                 href={`tel:${product.shop.phone}`}
-                className="rounded-[13px] border border-[var(--color-outline)] px-[11px] py-[6px] text-[10.5px] font-semibold text-[var(--color-ink)]"
+                className="press rounded-[13px] border border-[var(--color-outline)] px-[11px] py-[6px] text-[0.65625rem] font-semibold text-[var(--color-ink)]"
               >
                 {t.product.callToOrder}
               </a>
@@ -205,6 +283,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           />
         </div>
       </main>
+      </VariantProvider>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/dictionaries";
+import { format } from "@/lib/i18n/format";
 import { adjustStock, deleteProduct, setProductOnline } from "@/app/actions/vendor";
 import { cx, formatPrice } from "@/lib/format";
 import { Card, Chip, Placeholder, Rail, Switch } from "@/components/ui/primitives";
@@ -53,7 +53,7 @@ export function ProductFilters({
   return (
     <>
       <div className="flex-none border-b border-[var(--color-hairline)] px-4 pt-[6px] pb-3">
-        <div className="flex items-center gap-2 rounded-[18px] border border-[var(--color-surface-edge)] bg-white px-[14px] py-[9px] shadow-[var(--shadow-search)]">
+        <div className="flex items-center gap-2 rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface-solid)] px-[14px] py-[9px] shadow-[var(--shadow-search)]">
           <SearchIcon size={14} className="flex-none text-[var(--color-muted)]" />
           <input
             type="search"
@@ -61,7 +61,7 @@ export function ProductFilters({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t.vendor.searchMyProducts}
             aria-label={t.vendor.searchMyProducts}
-            className="min-w-0 flex-1 bg-transparent text-[12px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)]"
+            className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)]"
           />
         </div>
       </div>
@@ -151,20 +151,20 @@ export function ProductRow({
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11.5px] font-semibold text-[var(--color-ink)]">
+        <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
           {product.name}
           {product.is_draft && (
-            <span className="ms-2 text-[9.5px] font-normal text-[var(--color-faint)]">
+            <span className="ms-2 text-[0.59375rem] font-normal text-[var(--color-faint)]">
               {t.vendor.tabsDrafts}
             </span>
           )}
         </p>
-        <p className="text-[11px] font-bold text-[var(--color-brand)]">
+        <p className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
           {formatPrice(product.price, locale)}
         </p>
         <p
           className={cx(
-            "text-[10px]",
+            "text-[0.625rem]",
             isLow ? "font-semibold text-[var(--color-live)]" : "text-[var(--color-muted)]",
           )}
         >
@@ -174,7 +174,7 @@ export function ProductRow({
         {/* Réappro rapide, uniquement là où c'est utile. */}
         {isLow && (
           <div className="mt-[5px] flex items-center gap-[6px]">
-            <span className="text-[9.5px] text-[var(--color-muted)]">{t.vendor.quickRestock}</span>
+            <span className="text-[0.59375rem] text-[var(--color-muted)]">{t.vendor.quickRestock}</span>
             <span className="flex items-center gap-2 rounded-[10px] bg-[var(--color-brand-tint)] px-2 py-[2px]">
               <button
                 type="button"
@@ -188,7 +188,7 @@ export function ProductRow({
                 type="button"
                 onClick={onRestock}
                 disabled={pending}
-                className="text-[10.5px] font-bold tabular-nums text-[var(--color-ink)]"
+                className="text-[0.65625rem] font-bold tabular-nums text-[var(--color-ink)]"
               >
                 +{restockBy}
               </button>
@@ -209,7 +209,7 @@ export function ProductRow({
         <Switch checked={online} onChange={onToggleOnline} label={t.vendor.tabsOnline} disabled={pending} />
 
         {confirming ? (
-          <span className="flex items-center gap-2 text-[10px]">
+          <span className="flex items-center gap-2 text-[0.625rem]">
             <button
               type="button"
               onClick={onDelete}
@@ -227,7 +227,7 @@ export function ProductRow({
             </button>
           </span>
         ) : (
-          <span className="flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
+          <span className="flex items-center gap-1 text-[0.625rem] text-[var(--color-muted)]">
             <Link href={`/vendeur/produits/${product.id}`} className="hover:text-[var(--color-brand)]">
               {t.common.edit}
             </Link>

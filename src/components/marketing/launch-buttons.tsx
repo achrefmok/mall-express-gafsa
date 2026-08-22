@@ -72,7 +72,7 @@ export function LaunchButtons({ browseHref = "/accueil" }: { browseHref?: string
       <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
         <Link
           href={browseHref}
-          className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] bg-[var(--color-brand)] px-7 text-[15px] font-bold text-white shadow-[0_10px_28px_rgba(109,75,143,0.32)] transition-transform hover:-translate-y-0.5 focus-visible:-translate-y-0.5"
+          className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] bg-[var(--color-brand-fill)] px-7 text-[0.9375rem] font-bold text-white shadow-[0_10px_28px_rgba(109,75,143,0.32)] transition-transform hover:-translate-y-0.5 focus-visible:-translate-y-0.5"
         >
           Parcourir le site
           <span aria-hidden>→</span>
@@ -82,13 +82,13 @@ export function LaunchButtons({ browseHref = "/accueil" }: { browseHref?: string
           type="button"
           onClick={onInstall}
           disabled={install.kind === "installed"}
-          className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border border-[var(--color-outline)] bg-white/70 px-7 text-[15px] font-bold text-[var(--color-ink)] backdrop-blur-sm transition-transform hover:-translate-y-0.5 focus-visible:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+          className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-7 text-[0.9375rem] font-bold text-[var(--color-ink)] backdrop-blur-sm transition-transform hover:-translate-y-0.5 focus-visible:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
         >
           {install.kind === "installed" ? "Application installée" : "Installer l'application"}
         </button>
       </div>
 
-      <p className="max-w-[46ch] text-center text-[12px] leading-[1.5] text-[var(--color-muted)] sm:text-start">
+      <p className="max-w-[46ch] text-center text-[0.75rem] leading-[1.5] text-[var(--color-muted)] sm:text-start">
         Aucun téléchargement depuis un magasin d&apos;applications : le site
         s&apos;installe directement depuis le navigateur, occupe moins de 2 Mo et
         fonctionne hors réseau.
@@ -97,12 +97,12 @@ export function LaunchButtons({ browseHref = "/accueil" }: { browseHref?: string
       {showHelp && install.kind !== "ready" && (
         <div
           role="status"
-          className="max-w-[52ch] rounded-[16px] border border-[var(--color-outline)] bg-white/80 p-4 text-start"
+          className="max-w-[52ch] rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-veil)] p-4 text-start"
         >
-          <p className="text-[12.5px] font-bold text-[var(--color-ink)]">
+          <p className="text-[0.78125rem] font-bold text-[var(--color-ink)]">
             Installation à la main
           </p>
-          <p className="mt-1 text-[12px] leading-[1.6] text-[var(--color-muted)]">
+          <p className="mt-1 text-[0.75rem] leading-[1.6] text-[var(--color-muted)]">
             {platform === "ios" ? (
               <>
                 Sur iPhone, ouvrez ce site dans <b>Safari</b>, touchez le bouton

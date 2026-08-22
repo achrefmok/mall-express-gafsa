@@ -18,35 +18,54 @@ export function BottomNav({ variant }: { variant: NavVariant }) {
   const pathname = usePathname();
   const items = useNavItems(variant);
 
-  return (
-    <nav
-      aria-label={t.nav.home}
-      className="pb-safe sticky bottom-0 z-40 flex flex-none justify-around border-t border-white/90 bg-white/72 px-1 pt-3 pb-3 backdrop-blur-[12px] lg:hidden"
-    >
-      {items.map((item) => {
-        const active = isActive(pathname, item);
+  /*
+    Une pilule flottante plutôt qu'un bandeau collé au bord.
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            /* Repère du guide d'utilisation. La colonne latérale porte le même :
-               l'un des deux est masqué selon la largeur, et le guide garde
-               celui qui est visible. */
-            data-tour={item.href}
-            aria-current={active ? "page" : undefined}
-            className={cx(
-              "flex min-h-[44px] flex-1 flex-col items-center justify-start gap-[3px] text-center text-[9px] leading-[1.2]",
-              active ? "text-[var(--color-brand)]" : "text-[var(--color-muted)]",
-            )}
-          >
-            <span aria-hidden className="flex h-[17px] items-center">
-              {item.icon}
-            </span>
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
+    Elle occupait toute la largeur, séparée du contenu par un simple filet : la
+    barre et la page se confondaient, et l'onglet actif se lisait mal. Détachée
+    des bords, posée sur son ombre, elle se distingue de ce qui défile derrière
+    — et le flou laisse deviner le contenu qui passe dessous, ce qui aide à
+    comprendre qu'on n'a pas quitté la page.
+
+    L'écart du bas reste en dehors de la pilule : la zone sûre des téléphones à
+    encoche doit rester vide, pas colorée.
+  */
+  return (
+    <div
+      className="sticky bottom-0 z-40 flex-none px-3 lg:hidden"
+      /* L'écart voulu *plus* la zone sûre, jamais l'un à la place de l'autre :
+         deux classes de rembourrage bas se seraient annulées. */
+      style={{ paddingBottom: "calc(14px + env(safe-area-inset-bottom))" }}
+    >
+      <nav
+        aria-label={t.nav.home}
+        className="flex justify-around rounded-[26px] border border-[var(--color-surface-edge)] bg-[var(--color-veil)] px-[6px] py-[11px] shadow-[0_12px_30px_rgba(60,40,90,0.14)] backdrop-blur-[16px]"
+      >
+        {items.map((item) => {
+          const active = isActive(pathname, item);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              /* Repère du guide d'utilisation. La colonne latérale porte le même :
+                 l'un des deux est masqué selon la largeur, et le guide garde
+                 celui qui est visible. */
+              data-tour={item.href}
+              aria-current={active ? "page" : undefined}
+              className={cx(
+                "flex min-h-[40px] flex-1 flex-col items-center justify-center gap-[3px] text-center text-[0.5625rem] leading-[1.2]",
+                active ? "text-[var(--color-brand)]" : "text-[var(--color-muted)]",
+              )}
+            >
+              <span aria-hidden className="flex h-[17px] items-center">
+                {item.icon}
+              </span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
