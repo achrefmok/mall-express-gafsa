@@ -42,11 +42,29 @@ export type AppLocale = "fr" | "ar";
  * fabriquée doit toujours céder la place à une vraie.
  */
 export interface VariantImage {
+  /** Vue principale de la couleur. Toujours la première de `images`. */
   url: string;
   generated: boolean;
-  /** Couleur dont la teinte a été dérivée. Absent sur une vraie photo. */
+  /**
+   * Les autres vues de cette couleur — dos, côté, porté.
+   *
+   * Absent sur les variantes d'origine, qui n'en portaient qu'une. Le champ est
+   * facultatif : `url` reste la source de vérité pour la vue principale, et
+   * rien ne casse sur les enregistrements écrits avant son apparition. Le
+   * document est en JSONB, la forme n'a donc pas de migration à subir.
+   */
+  images?: string[];
+  /**
+   * Adresse de la photo dont l'image a été fabriquée. Absent sur une vraie
+   * photo du vendeur.
+   *
+   * C'est bien l'adresse et non le coloris d'origine : elle sert à savoir si
+   * l'image dérivée est encore d'actualité. Le vendeur qui remplace la photo du
+   * produit périme ainsi toutes les dérivées d'un coup, sans qu'on ait à les
+   * effacer une à une.
+   */
   from?: string;
-  /** Date de fabrication, pour repérer les teintes devenues obsolètes. */
+  /** Date de fabrication, pour repérer les images devenues obsolètes. */
   at?: string;
 }
 
@@ -532,6 +550,23 @@ export interface Database {
           lng: number | null;
           position_updated_at: string | null;
           is_approved: boolean;
+
+          /*
+            Places, course en cours, retour à la disponibilité.
+
+            Toutes facultatives, et nulles par défaut : un chauffeur qui ne
+            renseigne rien fonctionne comme avant — libre ou occupé, et son
+            numéro. C'est aussi ce qui permet à l'écran de ne jamais inventer
+            un chiffre : `null` s'affiche comme « non renseigné », pas comme
+            zéro.
+          */
+          seats_total: number | null;
+          seats_free: number | null;
+          free_at: string | null;
+          heading_lat: number | null;
+          heading_lng: number | null;
+          takes_along: boolean;
+
           created_at: string;
           updated_at: string;
         };
@@ -540,6 +575,33 @@ export interface Database {
         >;
         Update: Partial<Database["public"]["Tables"]["taxi_drivers"]["Row"]>;
         Relationships: [FK<"taxi_drivers_id_fkey", ["id"], "profiles">];
+      };
+
+      /* ─── taxi_messages ──────────────────────────────────────────────
+         La négociation d'une course, par écrit. Un fil par couple
+         client-chauffeur : `from_driver` dit seulement de quel côté aligner
+         la bulle, les deux extrémités étant déjà connues par les clés. */
+      taxi_messages: {
+        Row: {
+          id: string;
+          driver_id: string;
+          client_id: string;
+          from_driver: boolean;
+          body: string;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: {
+          driver_id: string;
+          client_id: string;
+          from_driver: boolean;
+          body: string;
+        } & Partial<Database["public"]["Tables"]["taxi_messages"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["taxi_messages"]["Row"]>;
+        Relationships: [
+          FK<"taxi_messages_driver_id_fkey", ["driver_id"], "taxi_drivers">,
+          FK<"taxi_messages_client_id_fkey", ["client_id"], "profiles">,
+        ];
       };
 
       /* ─── sos_providers ──────────────────────────────────────────────

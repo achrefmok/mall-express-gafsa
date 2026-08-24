@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { format } from "@/lib/i18n/format";
+import { colorName } from "@/lib/color-names";
 import { addToCart, toggleFavorite } from "@/app/actions/cart";
 import { cx } from "@/lib/format";
 import { Button } from "@/components/ui/primitives";
@@ -119,12 +121,11 @@ export function ProductActions({
   /*
     La couleur vient du contexte, pas d'un état local.
 
-    La galerie en haut de la fiche et les pastilles juste au-dessus du bouton
-    d'achat décrivent le même article : deux états séparés se seraient
-    contredits dès le premier toucher — la photo montrant une couleur, le panier
-    en enregistrant une autre.
+    Le choix se fait dans la galerie, en haut de la fiche ; c'est ici qu'il part
+    au panier. Un état local aurait laissé les deux se contredire dès le premier
+    toucher — la photo montrant une couleur, le panier en enregistrant une autre.
   */
-  const { color, setColor } = useVariant();
+  const { color } = useVariant();
   const [size, setSize] = useState<string | null>(product.sizes[0] ?? null);
   const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; message: string } | null>(null);
   const [added, setAdded] = useState(false);
@@ -157,26 +158,32 @@ export function ProductActions({
 
   return (
     <>
-      {product.colors.length > 0 && (
-        <fieldset className="mt-1 flex flex-col gap-2">
-          <legend className="sr-only">{t.product.colors}</legend>
-          <div className="flex gap-2">
-            {product.colors.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setColor(value)}
-                aria-label={value}
-                aria-pressed={color === value}
-                className={cx(
-                  "h-[30px] w-[30px] rounded-full",
-                  color === value && "border-2 border-[var(--color-ink)]",
-                )}
-                style={{ background: value }}
-              />
-            ))}
-          </div>
-        </fieldset>
+      {/*
+        Plus de rangée de pastilles ici.
+
+        Le choix se fait sur la photo, en arc autour du produit, là où le
+        changement se voit. Répéter les mêmes pastilles juste avant le bouton
+        d'achat en faisait un formulaire à remplir, et donnait deux endroits pour
+        décider d'une même chose — celui du haut montrant le résultat, celui du
+        bas ne montrant rien.
+
+        Ne reste que la confirmation de ce qui partira au panier : à cet endroit
+        de la fiche, la question n'est plus « quelle couleur ? » mais « laquelle
+        ai-je prise ? ».
+      */}
+      {color && product.colors.length > 1 && (
+        <p className="mt-1 flex items-center gap-2 text-[0.6875rem] font-semibold text-[var(--color-ink)]">
+          <span
+            aria-hidden
+            className="h-[15px] w-[15px] flex-none rounded-full ring-1 ring-[var(--color-outline)]"
+            style={{ background: color }}
+          />
+          {colorName(color, t) ??
+            format(t.product.colorOf, {
+              i: product.colors.indexOf(color) + 1,
+              n: product.colors.length,
+            })}
+        </p>
       )}
 
       {product.sizes.length > 0 && (

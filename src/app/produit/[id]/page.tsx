@@ -145,6 +145,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         amène ici, ils ne doivent pas devenir du JavaScript.
       */}
       <VariantProvider
+        productId={product.id}
         colors={product.colors ?? []}
         images={product.images ?? []}
         variantImages={product.variant_images ?? {}}

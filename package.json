@@ -19,7 +19,10 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --linked > src/types/database.ts",
     "fb:debug": "node scripts/facebook-debug.mjs",
-    "prod:check": "node scripts/check-production.mjs"
+    "prod:check": "node scripts/check-production.mjs",
+    "check:variants": "node scripts/check-variants.mjs",
+    "check:recolor": "node scripts/check-recolor.mjs",
+    "check:taxi": "node scripts/check-taxi.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -30,6 +33,7 @@
     "next": "^15.5.23",
     "react": "19.1.1",
     "react-dom": "19.1.1",
+    "sharp": "^0.34.5",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

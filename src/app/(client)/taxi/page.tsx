@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import Link from "next/link";
-import { TopBar } from "@/components/shell/top-bar";
 import { TaxiClient } from "@/components/taxi/taxi-client";
 
 export const metadata: Metadata = {
@@ -29,7 +27,16 @@ export default async function TaxiPage() {
   const [{ data: drivers }, mine] = await Promise.all([
     supabase
       .from("taxi_drivers")
-      .select("id, display_name, phone, vehicle, plate, is_available, lat, lng, position_updated_at")
+      /*
+        `select("*")` plutôt que la liste des colonnes.
+
+        Les places, l'heure de libération et l'accord de prendre quelqu'un en
+        route n'existent qu'après la migration. Nommer une colonne absente fait
+        échouer *toute* la requête — donc l'écran entier, pas seulement les
+        places. L'étoile ramène ce qui existe, et l'affichage s'accommode du
+        reste.
+      */
+      .select("*")
       .eq("is_approved", true)
       .order("is_available", { ascending: false }),
 
@@ -51,23 +58,51 @@ export default async function TaxiPage() {
       : Promise.resolve(false),
   ]);
 
+  const libres = (drivers ?? []).filter((d) => d.is_available).length;
+
   return (
     <>
-      <TopBar title={t.taxi.title} />
+      {/*
+        L'écran taxi respire plus large que le reste de l'application.
 
-      <div className="col-reading flex flex-1 flex-col gap-3 overflow-hidden px-4 pt-2">
-        <TaxiClient initialDrivers={drivers ?? []} />
+        `col-reading` borne la lecture à une colonne de texte confortable, ce qui
+        est juste pour un article et faux pour une carte : à quatre cent
+        cinquante pixels, on ne situe rien. La largeur maximale double donc ici,
+        et c'est le seul écran client dans ce cas.
+      */}
+      <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-3 overflow-y-auto px-4 pt-1">
+        {/*
+          Un en-tête compact : la famille de service, le nom, et l'essentiel —
+          combien de chauffeurs sont libres à cette seconde.
+        */}
+        <header className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-[0.53125rem] font-bold tracking-[0.1em] text-[var(--color-faint)] uppercase">
+              {t.taxi.services}
+            </p>
+            <h1 className="flex items-baseline gap-[7px] text-[1.375rem] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
+              {t.taxi.title}
+              <span className="text-[0.6875rem] font-semibold text-[var(--color-faint)]">
+                · تاكسي قفصة
+              </span>
+            </h1>
+          </div>
 
-        {/* Un chauffeur arrive par cet écran comme n'importe quel client :
-            c'est le seul endroit où il pense à chercher. */}
-        {mine && (
-          <Link
-            href="/taxi/chauffeur"
-            className="flex-none pb-3 text-center text-[0.6875rem] font-semibold text-[var(--color-brand)]"
-          >
-            {t.taxi.driverSpace}
-          </Link>
-        )}
+          <span className="flex items-center gap-[7px] rounded-full bg-[var(--color-surface-solid)] px-[11px] py-[6px] text-[0.59375rem] font-bold text-[var(--color-ink)] shadow-[0_3px_10px_rgba(60,40,90,0.08)]">
+            <span
+              aria-hidden
+              className="h-[6px] w-[6px] rounded-full"
+              style={{ background: libres > 0 ? "var(--color-ok, #2f7d5d)" : "var(--color-faint)" }}
+            />
+            {t.taxi.freeCount.replace("{n}", String(libres))}
+          </span>
+        </header>
+
+        <TaxiClient
+          initialDrivers={drivers ?? []}
+          clientId={profile?.id ?? null}
+          espaceChauffeur={mine}
+        />
       </div>
     </>
   );

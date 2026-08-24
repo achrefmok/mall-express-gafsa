@@ -140,7 +140,7 @@ export default async function HomePage() {
     supabase
       .from("products")
       .select(
-        "id, name, price, compare_at_price, images, stock, category:categories(hue), shop:shops!inner(name, slug, status, is_featured)",
+        "id, name, price, compare_at_price, images, colors, variant_images, stock, category:categories(hue), shop:shops!inner(name, slug, status, is_featured)",
       )
       .eq("is_online", true)
       .eq("is_draft", false)

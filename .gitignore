@@ -1,5 +1,7 @@
 node_modules/
 .next/
+# Sortie des constructions de vérification (NEXT_DIST_DIR)
+.next-*/
 out/
 build/
 dist/

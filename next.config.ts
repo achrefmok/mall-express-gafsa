@@ -130,6 +130,24 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  /*
+    Le dossier de sortie peut être déplacé le temps d'une vérification.
+
+    Une construction lancée pendant qu'un serveur tourne sur ce même dossier
+    réécrit « .next » sous ses pieds : les feuilles de style repartent en
+    « text/plain », la page s'affiche nue, et l'on croit à une régression qui
+    n'existe pas. La mésaventure a déjà invalidé une campagne de mesures
+    entière.
+
+    `NEXT_DIST_DIR=.next-verif npm run build` construit donc à côté, sans
+    toucher à ce qui est servi. Vercel ne définit pas la variable et retrouve le
+    comportement par défaut.
+
+    Un détail à connaître : Next réécrit `tsconfig.json` au passage pour y
+    déclarer les types du dossier de sortie. C'est sans conséquence, mais cela
+    salit l'état Git — il faut le remettre en place après la vérification.
+  */
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,

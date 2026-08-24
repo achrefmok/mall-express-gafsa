@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { VariantImages } from "@/types/database";
 
 /**
@@ -19,21 +19,26 @@ import type { VariantImages } from "@/types/database";
  */
 
 interface VariantValue {
+  productId: string;
   colors: string[];
   images: string[];
   variantImages: VariantImages;
   color: string | null;
   setColor: (color: string | null) => void;
+  /** Enregistre une image fabriquée à l'instant, pour ne plus la redemander. */
+  noterFabriquee: (color: string, url: string) => void;
 }
 
 const VariantContext = createContext<VariantValue | null>(null);
 
 export function VariantProvider({
+  productId,
   colors,
   images,
   variantImages,
   children,
 }: {
+  productId: string;
   colors: string[];
   images: string[];
   variantImages: VariantImages;
@@ -47,12 +52,41 @@ export function VariantProvider({
     Un client qui n'avait pas regardé les pastilles commandait donc la première
     de la liste. Tant que rien n'est touché, la galerie montre l'article dans
     son ensemble et le panier ne retient pas de couleur.
+
+    Une seule couleur déclarée fait exception : il n'y a rien à choisir, c'est
+    la couleur de l'article. La retenir d'emblée évite un panier qui prétend
+    l'ignorer alors que la fiche n'en propose pas d'autre.
   */
-  const [color, setColor] = useState<string | null>(null);
+  const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
+
+  /*
+    Les images fabriquées pendant la visite.
+
+    Le serveur les enregistre en base, mais la page a déjà été rendue : sans ce
+    relevé local, revenir sur un coloris qu'on vient de faire fabriquer
+    relancerait un appel pour s'entendre répondre la même adresse. On les
+    superpose donc à ce que le serveur avait envoyé, et la fiche apprend au fur
+    et à mesure de ce que le client regarde.
+  */
+  const [fabriquees, setFabriquees] = useState<VariantImages>({});
+
+  const noterFabriquee = useCallback((couleur: string, url: string) => {
+    setFabriquees((f) => (f[couleur]?.url === url ? f : { ...f, [couleur]: { url, generated: true } }));
+  }, []);
 
   const value = useMemo<VariantValue>(
-    () => ({ colors, images, variantImages, color, setColor }),
-    [colors, images, variantImages, color],
+    () => ({
+      productId,
+      colors,
+      images,
+      // Ce que le vendeur a déposé l'emporte : une vraie photo arrivée entre-temps
+      // ne doit pas être recouverte par une fabrication de cette visite.
+      variantImages: { ...fabriquees, ...variantImages },
+      color,
+      setColor,
+      noterFabriquee,
+    }),
+    [productId, colors, images, variantImages, fabriquees, color, noterFabriquee],
   );
 
   return <VariantContext.Provider value={value}>{children}</VariantContext.Provider>;

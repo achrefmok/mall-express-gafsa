@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 
 /**
@@ -13,12 +13,16 @@ import { useI18n } from "@/lib/i18n/provider";
  * le client ouvrait la fiche pour regarder, revenait, et perdait sa place dans
  * la liste.
  *
- * Aucun bouton, et c'est délibéré. Une première version portait « Voir
- * l'article » et « Fermer » ; deux commandes de trop pour un geste qui n'en
- * demande aucune. On touche l'image, elle grandit. On touche encore, elle se
- * referme. Le seul cas qui justifie un contrôle est le passage d'une photo à la
- * suivante, et il ne se produit que si l'article en a plusieurs.
+ * En plein écran, trois gestes : pincer pour agrandir, double-toucher pour
+ * basculer entre la vue d'ensemble et le détail, glisser pour se déplacer une
+ * fois agrandi. Un toucher simple referme — mais seulement à l'échelle 1, sinon
+ * on refermerait la visionneuse en voulant relâcher un déplacement.
  */
+
+/** Échelle atteinte au double-toucher, et plafond du pincement. */
+const ZOOM_DOUBLE = 2.5;
+const ZOOM_MAX = 4;
+
 export function ImageZoom({
   images,
   alt,
@@ -41,7 +45,7 @@ export function ImageZoom({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(startIndex);
 
   /*
     Rendue dans le corps du document, jamais sur place.
@@ -110,76 +114,208 @@ export function ImageZoom({
       {open &&
         mounted &&
         createPortal(
-          /*
-            Toute la surface ferme.
-
-            Un seul geste à connaître, et il n'y a rien à viser : où que le doigt
-            tombe, la visionneuse se referme. Les deux flèches sont les seules
-            exceptions, et elles arrêtent la propagation pour cela.
-
-            L'arrêt de propagation sur la racine n'est pas une précaution
-            superflue : un portail déplace le nœud dans le document, mais pas
-            dans l'arbre React, et les événements de React remontent le long de
-            l'arbre des composants. Sans lui, le clic ressortait dans le lien de
-            la carte et ouvrait la fiche produit au lieu de fermer.
-          */
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={alt}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              close();
-            }}
-            className="fixed inset-0 z-[90] flex cursor-zoom-out items-center justify-center bg-[rgba(14,10,20,0.94)] p-4"
-          >
-            <Image
-              src={images[index]}
-              alt={alt}
-              width={1200}
-              height={1200}
-              className="max-h-full w-auto max-w-full object-contain"
-              sizes="100vw"
-            />
-
-            {images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  aria-label={t.common.back}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setIndex((i) => (i - 1 + images.length) % images.length);
-                  }}
-                  className="absolute start-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  aria-label={t.common.see}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setIndex((i) => (i + 1) % images.length);
-                  }}
-                  className="absolute end-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
-                >
-                  ›
-                </button>
-
-                {/* Le rang, pour savoir combien de photos restent à voir. */}
-                <span className="pb-safe absolute bottom-4 text-[0.6875rem] font-semibold text-white/70">
-                  {index + 1} / {images.length}
-                </span>
-              </>
-            )}
-          </div>,
+          <Visionneuse
+            images={images}
+            alt={alt}
+            index={index}
+            setIndex={setIndex}
+            close={close}
+            labels={{ back: t.common.back, next: t.common.see }}
+          />,
           document.body,
         )}
     </>
+  );
+}
+
+function Visionneuse({
+  images,
+  alt,
+  index,
+  setIndex,
+  close,
+  labels,
+}: {
+  images: string[];
+  alt: string;
+  index: number;
+  setIndex: (fn: (i: number) => number) => void;
+  close: () => void;
+  labels: { back: string; next: string };
+}) {
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  /*
+    Les pointeurs actifs, et l'état du geste en cours.
+
+    Des `ref` plutôt que des `state` : ces valeurs changent à chaque événement de
+    déplacement, et déclencher un rendu à chaque fois rendrait le pincement
+    saccadé sur un téléphone d'entrée de gamme. Seuls l'échelle et le décalage —
+    ce qui se voit — passent par l'état.
+  */
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef<{ distance: number; scale: number } | null>(null);
+  const pan = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const lastTap = useRef(0);
+  const moved = useRef(false);
+
+  const reset = useCallback(() => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
+
+  // Changer de photo repart de la vue d'ensemble : rester agrandi sur une zone
+  // choisie pour l'image précédente n'a aucun sens.
+  useEffect(reset, [index, reset]);
+
+  const distance = () => {
+    const [a, b] = [...pointers.current.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  function onPointerDown(event: React.PointerEvent) {
+    (event.target as Element).setPointerCapture?.(event.pointerId);
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    moved.current = false;
+
+    if (pointers.current.size === 2) {
+      gesture.current = { distance: distance(), scale };
+      pan.current = null;
+    } else if (scale > 1) {
+      pan.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y };
+    }
+  }
+
+  function onPointerMove(event: React.PointerEvent) {
+    if (!pointers.current.has(event.pointerId)) return;
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointers.current.size === 2 && gesture.current) {
+      moved.current = true;
+      const facteur = distance() / (gesture.current.distance || 1);
+      setScale(Math.min(ZOOM_MAX, Math.max(1, gesture.current.scale * facteur)));
+      return;
+    }
+
+    if (pan.current && scale > 1) {
+      const dx = event.clientX - pan.current.x;
+      const dy = event.clientY - pan.current.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved.current = true;
+      setOffset({ x: pan.current.ox + dx, y: pan.current.oy + dy });
+    }
+  }
+
+  function onPointerUp(event: React.PointerEvent) {
+    pointers.current.delete(event.pointerId);
+    if (pointers.current.size < 2) gesture.current = null;
+    if (pointers.current.size === 0) pan.current = null;
+
+    // Revenu sous l'échelle 1 : on recentre plutôt que de laisser l'image
+    // flotter hors de son cadre.
+    if (scale <= 1.02) reset();
+
+    if (moved.current) return;
+
+    const maintenant = Date.now();
+    if (maintenant - lastTap.current < 280) {
+      lastTap.current = 0;
+      setScale((s) => (s > 1.05 ? 1 : ZOOM_DOUBLE));
+      setOffset({ x: 0, y: 0 });
+      return;
+    }
+    lastTap.current = maintenant;
+
+    /*
+      Le toucher simple ne referme qu'à l'échelle 1.
+
+      Agrandi, on relâche constamment le doigt en déplaçant l'image : refermer à
+      ce moment-là ferait perdre la vue qu'on venait de cadrer.
+    */
+    if (scale <= 1.02) {
+      window.setTimeout(() => {
+        if (lastTap.current !== 0) close();
+      }, 280);
+    }
+  }
+
+  return (
+    /*
+      Toute la surface ferme.
+
+      L'arrêt de propagation n'est pas une précaution superflue : un portail
+      déplace le nœud dans le document, mais pas dans l'arbre React, et les
+      événements de React remontent le long de l'arbre des composants. Sans lui,
+      le clic ressortait dans le lien de la carte et ouvrait la fiche produit au
+      lieu de fermer.
+    */
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      className="fixed inset-0 z-[90] flex touch-none items-center justify-center overflow-hidden bg-[rgba(14,10,20,0.94)] p-4"
+      style={{ cursor: scale > 1 ? "grab" : "zoom-out" }}
+    >
+      <div
+        className="relative flex h-full w-full items-center justify-center"
+        style={{
+          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
+          transition: pan.current || gesture.current ? "none" : "transform 220ms ease-out",
+        }}
+      >
+        <Image
+          src={images[index]}
+          alt={alt}
+          width={1200}
+          height={1200}
+          className="max-h-full w-auto max-w-full object-contain"
+          sizes="100vw"
+          draggable={false}
+        />
+      </div>
+
+      {images.length > 1 && scale <= 1.02 && (
+        <>
+          <button
+            type="button"
+            aria-label={labels.back}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIndex((i) => (i - 1 + images.length) % images.length);
+            }}
+            className="absolute start-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
+          >
+            ‹
+          </button>
+
+          <button
+            type="button"
+            aria-label={labels.next}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIndex((i) => (i + 1) % images.length);
+            }}
+            className="absolute end-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-[1.25rem] leading-none text-white"
+          >
+            ›
+          </button>
+
+          {/* Le rang, pour savoir combien de photos restent à voir. */}
+          <span className="pb-safe absolute bottom-4 text-[0.6875rem] font-semibold text-white/70">
+            {index + 1} / {images.length}
+          </span>
+        </>
+      )}
+    </div>
   );
 }

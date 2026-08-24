@@ -101,7 +101,7 @@ export default async function ShopPage({
   const [products, promo, hoursToday, subCategories, following, lives, counts] = await Promise.all([
     supabase
       .from("products")
-      .select("id, name, price, compare_at_price, images, stock, category:categories(hue)")
+      .select("id, name, price, compare_at_price, images, colors, variant_images, stock, category:categories(hue)")
       .eq("shop_id", shop.id)
       .eq("is_online", true)
       .eq("is_draft", false)

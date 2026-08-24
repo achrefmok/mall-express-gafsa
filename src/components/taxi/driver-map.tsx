@@ -19,6 +19,27 @@ import "leaflet/dist/leaflet.css";
 
 import { telHref, whatsAppHref } from "@/lib/contact";
 
+/**
+ * La silhouette d'un taxi, dessinée une fois.
+ *
+ * Un rond de couleur dit « quelqu'un est là » ; il ne dit pas quoi. Sur une
+ * carte qui porte déjà des repères de boutiques et de dépanneurs, la voiture
+ * lève l'ambiguïté avant même qu'on lise l'étiquette — et c'est ce qu'on
+ * regarde en premier quand on cherche un taxi.
+ *
+ * Un tracé inline plutôt qu'un fichier : Leaflet insère du HTML brut dans ses
+ * repères, l'icône pèse trois cents octets, et une requête réseau de plus pour
+ * cela n'aurait aucun sens.
+ */
+function taxiSvg(couleur: string, taille = 15): string {
+  return `<svg viewBox="0 0 24 24" width="${taille}" height="${taille}" aria-hidden="true" style="display:block;flex:none">
+    <path fill="${couleur}" d="M9.7 2.4h4.6c.6 0 1 .4 1 1v1.3H8.7V3.4c0-.6.4-1 1-1Z"/>
+    <path fill="${couleur}" d="M7.6 5.9h8.8c.9 0 1.7.5 2 1.4l1.3 3.2c.7.3 1.1 1 1.1 1.7v3.3c0 .6-.5 1-1 1h-.8a2.3 2.3 0 0 1-4.5 0H9.5a2.3 2.3 0 0 1-4.5 0h-.8c-.6 0-1-.5-1-1v-3.3c0-.8.4-1.4 1.1-1.7l1.3-3.2c.3-.9 1.1-1.4 2-1.4Zm.2 2-.9 2.3h10.2l-.9-2.3H7.8Z"/>
+    <circle fill="${couleur}" cx="7.3" cy="16.4" r="1.7"/>
+    <circle fill="${couleur}" cx="16.7" cy="16.4" r="1.7"/>
+  </svg>`;
+}
+
 /** Centre de Gafsa : le repli quand aucun chauffeur n'a encore publié sa position. */
 const GAFSA: [number, number] = [34.425, 8.784];
 
@@ -41,6 +62,28 @@ export interface DriverPin {
     les deux usages sans se dédoubler.
   */
   link?: { href: string; label: string } | null;
+  /**
+   * Deux ou trois lettres dessinées dans le repère.
+   *
+   * Sur une carte qui porte cinq taxis, des pastilles identiques obligent à
+   * ouvrir chaque bulle pour savoir qui est qui. Les initiales font le lien
+   * immédiat avec la ligne du tableau, en dessous — c'est le même chauffeur, et
+   * l'œil le retrouve sans cliquer.
+   */
+  initials?: string | null;
+  /** Le repère choisi : plus grand, cerné, au-dessus des autres. */
+  selected?: boolean;
+  /** Un mot sous le repère : « libre », « place libre »… */
+  caption?: string | null;
+}
+
+/** Un point remarquable qui n'est pas un chauffeur : vous, ou votre arrivée. */
+export interface MapPoint {
+  lat: number;
+  lng: number;
+  label: string;
+  /** `depart` en vert, `arrivee` en violet — les deux bouts du trajet. */
+  kind: "depart" | "arrivee";
 }
 
 /** Libellés de la bulle. La carte est réemployée par le taxi et par le SOS. */
@@ -130,13 +173,42 @@ function popupHtml(pin: DriverPin, labels: MapLabels): string {
 export function DriverMap({
   drivers,
   labels,
+  points,
+  route,
+  onPick,
 }: {
   drivers: DriverPin[];
   labels: MapLabels;
+  /** Départ et arrivée, quand l'écran en a. Facultatif : le SOS n'en a pas. */
+  points?: MapPoint[];
+  /** Le trait entre les deux, s'il y a lieu de le montrer. */
+  route?: Array<{ lat: number; lng: number }> | null;
+  /**
+   * Toucher la carte pour désigner une arrivée.
+   *
+   * Plus rapide qu'écrire, et plus précis qu'un nom de quartier — surtout pour
+   * une destination qui n'a pas de nom sur une liste.
+   */
+  onPick?: (point: { lat: number; lng: number }) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const calquesRef = useRef<Array<{ remove: () => void }>>([]);
+
+  /*
+    Le rappel de sélection passe par une référence.
+
+    Il change à chaque rendu du parent — c'est une fonction fléchée — et le
+    mettre dans les dépendances de l'effet reconstruirait la carte à chaque
+    battement du temps réel : tuiles rechargées, zoom perdu, position du client
+    ramenée au centre toutes les trente secondes.
+  */
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+
+  /** La dernière disposition sur laquelle on a cadré, pour ne pas y revenir. */
+  const cadrageRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,12 +247,63 @@ export function DriverMap({
         });
 
         tiles.addTo(mapRef.current);
+
+        // Toucher la carte désigne l'arrivée. L'écouteur est posé une seule
+        // fois, à la création, et lit le rappel courant par la référence.
+        mapRef.current.on("click", (event: { latlng: { lat: number; lng: number } }) => {
+          onPickRef.current?.({ lat: event.latlng.lat, lng: event.latlng.lng });
+        });
       }
 
       const map = mapRef.current;
 
       for (const marker of markersRef.current) marker.remove();
       markersRef.current = [];
+      for (const calque of calquesRef.current) calque.remove();
+      calquesRef.current = [];
+
+      /*
+        Le trajet d'abord, sous les repères.
+
+        Deux traits superposés : un large et pâle en dessous, un fin et net
+        au-dessus. C'est ce qui rend la ligne lisible aussi bien sur une avenue
+        claire que sur un parc sombre, sans avoir à assombrir la carte entière.
+      */
+      if (route && route.length >= 2) {
+        const chemin = route.map((p) => [p.lat, p.lng] as [number, number]);
+        for (const trait of [
+          { color: "#6d4b8f", weight: 9, opacity: 0.22 },
+          { color: "#6d4b8f", weight: 3.5, opacity: 0.95 },
+        ]) {
+          calquesRef.current.push(L.polyline(chemin, { ...trait, lineCap: "round" }).addTo(map));
+        }
+      }
+
+      /*
+        Vous, et votre arrivée.
+
+        Un anneau plutôt qu'une pastille pleine : le point de départ est une
+        zone — « quelque part par ici » — et non une adresse au mètre près. Le
+        dessin dit ce que la donnée vaut.
+      */
+      for (const point of points ?? []) {
+        const teinte = point.kind === "depart" ? "#2f7d5d" : "#6d4b8f";
+        const icon = L.divIcon({
+          className: "",
+          html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px">
+              <span style="display:block;width:14px;height:14px;border-radius:50%;background:${teinte};
+                border:3px solid #fff;box-shadow:0 0 0 3px ${teinte}33,0 2px 6px rgba(20,14,26,.35)"></span>
+            </span>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+
+        markersRef.current.push(
+          L.marker([point.lat, point.lng], { icon, zIndexOffset: 500 })
+            .addTo(map)
+            .bindPopup(`<div style="font:700 12px/1.4 inherit;color:#1b1420">${esc(point.label)}</div>`),
+        );
+      }
 
       for (const driver of drivers) {
         /*
@@ -200,18 +323,57 @@ export function DriverMap({
           L'ancrage suit : au centre de la zone, soit quatorze pixels, sans quoi
           le point se décalerait de sa position réelle.
         */
+        const teinte = driver.available ? "#2f7d5d" : "#b8791f";
+        const choisi = driver.selected === true;
+
+        /*
+          Deux dessins pour un même repère.
+
+          Sans initiales, la pastille de seize pixels d'origine : c'est ce dont
+          le SOS et la carte des boutiques ont besoin, et rien ne change pour
+          eux. Avec initiales, une gélule blanche qui porte les lettres et, sous
+          elle, un mot d'état — de quoi identifier le chauffeur sans ouvrir sa
+          bulle.
+
+          Le choisi passe en couleur pleine et gagne un halo : sur une carte qui
+          en compte cinq, il faut retrouver le sien d'un coup d'œil.
+        */
+        const html = driver.initials
+          ? `<span style="display:flex;flex-direction:column;align-items:center;gap:2px">
+               <span style="display:flex;align-items:center;justify-content:center;gap:4px;min-width:30px;height:26px;padding:0 8px;border-radius:13px;
+                 font:700 11px/1 system-ui,sans-serif;letter-spacing:.02em;
+                 background:${choisi ? teinte : "#fff"};color:${choisi ? "#fff" : "#1b1420"};
+                 border:2px solid ${choisi ? "#fff" : teinte};
+                 box-shadow:0 2px ${choisi ? "10px" : "6px"} rgba(20,14,26,${choisi ? ".45" : ".25"})">
+                 ${taxiSvg(choisi ? "#fff" : teinte)}
+                 ${esc(driver.initials)}
+               </span>
+               ${
+                 driver.caption
+                   ? `<span style="padding:1px 6px;border-radius:8px;font:700 8.5px/1.5 system-ui,sans-serif;white-space:nowrap;
+                        background:${teinte};color:#fff;box-shadow:0 1px 4px rgba(20,14,26,.3)">${esc(driver.caption)}</span>`
+                   : ""
+               }
+             </span>`
+          : `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px">
+               <span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
+                 driver.available ? "#2f7d5d" : "#948da6"
+               }"></span>
+             </span>`;
+
         const icon = L.divIcon({
           className: "",
-          html: `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px">
-            <span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
-              driver.available ? "#2f7d5d" : "#948da6"
-            }"></span>
-          </span>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          html,
+          iconSize: driver.initials ? [86, 46] : [28, 28],
+          iconAnchor: driver.initials ? [43, 23] : [14, 14],
         });
 
-        const marker = L.marker([driver.lat, driver.lng], { icon })
+        const marker = L.marker([driver.lat, driver.lng], {
+          icon,
+          // Le repère choisi passe devant les autres : sur une carte dense, il
+          // se retrouvait caché derrière un voisin.
+          zIndexOffset: choisi ? 1000 : 0,
+        })
           .addTo(map)
           .bindPopup(popupHtml(driver, labels));
 
@@ -230,9 +392,27 @@ export function DriverMap({
 
       // Cadrer sur les chauffeurs présents, sans dézoomer à l'excès s'il n'y en
       // a qu'un seul.
-      if (drivers.length > 0) {
-        const bounds = L.latLngBounds(drivers.map((d) => [d.lat, d.lng] as [number, number]));
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      /*
+        Le cadrage tient compte du trajet, pas seulement des chauffeurs.
+
+        Cadrer sur les seuls taxis sortait l'aéroport de l'écran dès qu'on le
+        choisissait comme destination : le client voyait ses chauffeurs mais
+        plus où il allait.
+
+        Il ne se rejoue qu'à l'arrivée ou au départ d'un point, jamais à chaque
+        rafraîchissement de position : une carte qui se recadre toutes les
+        trente secondes est inutilisable dès qu'on veut regarder un détail.
+      */
+      const tous = [
+        ...drivers.map((d) => [d.lat, d.lng] as [number, number]),
+        ...(points ?? []).map((p) => [p.lat, p.lng] as [number, number]),
+      ];
+
+      const signature = (points ?? []).map((p) => `${p.kind}:${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join("|");
+
+      if (tous.length > 0 && signature !== cadrageRef.current) {
+        cadrageRef.current = signature;
+        map.fitBounds(L.latLngBounds(tous), { padding: [48, 48], maxZoom: 15 });
       }
     }
 
@@ -240,7 +420,7 @@ export function DriverMap({
     return () => {
       cancelled = true;
     };
-  }, [drivers, labels]);
+  }, [drivers, labels, points, route]);
 
   // La carte est démontée avec l'écran : Leaflet garde sinon des écouteurs sur
   // un nœud qui n'existe plus.

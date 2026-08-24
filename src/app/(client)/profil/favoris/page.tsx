@@ -28,7 +28,7 @@ export default async function FavoritesPage() {
     supabase
       .from("favorites")
       .select(
-        `product:products(id, name, price, compare_at_price, images, stock,
+        `product:products(id, name, price, compare_at_price, images, colors, variant_images, stock,
          shop:shops(name, slug), category:categories(hue))`,
       )
       .eq("user_id", profile.id)
