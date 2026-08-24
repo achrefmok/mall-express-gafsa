@@ -176,6 +176,7 @@ export function DriverMap({
   points,
   route,
   onPick,
+  recentrer,
 }: {
   drivers: DriverPin[];
   labels: MapLabels;
@@ -190,10 +191,27 @@ export function DriverMap({
    * une destination qui n'a pas de nom sur une liste.
    */
   onPick?: (point: { lat: number; lng: number }) => void;
+  /** Libellé du bouton de recentrage. Absent : pas de bouton. */
+  recentrer?: string;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
-  const markersRef = useRef<Marker[]>([]);
+
+  /*
+    Les repères des chauffeurs, gardés par identifiant.
+
+    Ils étaient tous retirés puis recréés à chaque relecture. Sur une carte qui
+    se rafraîchit toutes les trente secondes, cela veut dire : bulle ouverte qui
+    se referme d'elle-même, repère qui clignote, et surtout chauffeur qui se
+    téléporte d'un point à l'autre sans qu'on puisse suivre son déplacement.
+
+    En les conservant, on ne fait plus que déplacer ceux qui ont bougé — et on
+    peut le faire progressivement.
+  */
+  const taxisRef = useRef(new Map<string, Marker>());
+  const animationsRef = useRef(new Map<string, number>());
+
+  const pointsRef = useRef<Marker[]>([]);
   const calquesRef = useRef<Array<{ remove: () => void }>>([]);
 
   /*
@@ -209,6 +227,9 @@ export function DriverMap({
 
   /** La dernière disposition sur laquelle on a cadré, pour ne pas y revenir. */
   const cadrageRef = useRef<string | null>(null);
+
+  /** Comment recadrer, tel que le dernier rendu l'a défini. */
+  const cadrerRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,8 +278,8 @@ export function DriverMap({
 
       const map = mapRef.current;
 
-      for (const marker of markersRef.current) marker.remove();
-      markersRef.current = [];
+      for (const marker of pointsRef.current) marker.remove();
+      pointsRef.current = [];
       for (const calque of calquesRef.current) calque.remove();
       calquesRef.current = [];
 
@@ -298,12 +319,14 @@ export function DriverMap({
           iconAnchor: [15, 15],
         });
 
-        markersRef.current.push(
+        pointsRef.current.push(
           L.marker([point.lat, point.lng], { icon, zIndexOffset: 500 })
             .addTo(map)
             .bindPopup(`<div style="font:700 12px/1.4 inherit;color:#1b1420">${esc(point.label)}</div>`),
         );
       }
+
+      const vus = new Set<string>();
 
       for (const driver of drivers) {
         /*
@@ -368,6 +391,69 @@ export function DriverMap({
           iconAnchor: driver.initials ? [43, 23] : [14, 14],
         });
 
+        /*
+          Le repère est réutilisé s'il existe déjà, et il glisse jusqu'à sa
+          nouvelle position.
+
+          Un taxi qui roule change de coordonnées toutes les trente secondes,
+          soit deux à trois cents mètres. Reposer le repère d'un coup à
+          l'arrivée donne une téléportation : on voit un saut, on ne voit pas un
+          déplacement, et l'on ne devine ni la direction ni la vitesse.
+
+          Une seconde d'interpolation suffit à rendre le mouvement lisible sans
+          jamais laisser le repère en retard sur la donnée — la relecture
+          suivante est trente fois plus tard.
+        */
+        const existant = taxisRef.current.get(driver.id);
+
+        if (existant) {
+          existant.setIcon(icon);
+          existant.setZIndexOffset(choisi ? 1000 : 0);
+          existant.setPopupContent(popupHtml(driver, labels));
+
+          const depuis = existant.getLatLng();
+          const versLat = driver.lat;
+          const versLng = driver.lng;
+
+          // Sous une dizaine de mètres, ce n'est pas un déplacement mais le
+          // tremblement du capteur : on repose sans animer.
+          const bouge =
+            Math.abs(depuis.lat - versLat) > 1e-4 || Math.abs(depuis.lng - versLng) > 1e-4;
+
+          const enCours = animationsRef.current.get(driver.id);
+          if (enCours) cancelAnimationFrame(enCours);
+
+          if (!bouge) {
+            existant.setLatLng([versLat, versLng]);
+          } else {
+            const depart = performance.now();
+            const DUREE = 1000;
+
+            const avancer = (maintenant: number) => {
+              const t = Math.min(1, (maintenant - depart) / DUREE);
+              // Départ et arrivée adoucis : un mouvement linéaire se lit comme
+              // un objet tiré à la ficelle.
+              const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+
+              existant.setLatLng([
+                depuis.lat + (versLat - depuis.lat) * e,
+                depuis.lng + (versLng - depuis.lng) * e,
+              ]);
+
+              if (t < 1) {
+                animationsRef.current.set(driver.id, requestAnimationFrame(avancer));
+              } else {
+                animationsRef.current.delete(driver.id);
+              }
+            };
+
+            animationsRef.current.set(driver.id, requestAnimationFrame(avancer));
+          }
+
+          vus.add(driver.id);
+          continue;
+        }
+
         const marker = L.marker([driver.lat, driver.lng], {
           icon,
           // Le repère choisi passe devant les autres : sur une carte dense, il
@@ -377,7 +463,19 @@ export function DriverMap({
           .addTo(map)
           .bindPopup(popupHtml(driver, labels));
 
-        markersRef.current.push(marker);
+        taxisRef.current.set(driver.id, marker);
+        vus.add(driver.id);
+      }
+
+      // Un chauffeur qui a disparu de la liste — déconnecté, position périmée —
+      // voit son repère retiré. Sans cela, la carte accumulerait des fantômes.
+      for (const [id, marker] of taxisRef.current) {
+        if (vus.has(id)) continue;
+        const anim = animationsRef.current.get(id);
+        if (anim) cancelAnimationFrame(anim);
+        animationsRef.current.delete(id);
+        marker.remove();
+        taxisRef.current.delete(id);
       }
 
       /*
@@ -410,9 +508,37 @@ export function DriverMap({
 
       const signature = (points ?? []).map((p) => `${p.kind}:${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join("|");
 
-      if (tous.length > 0 && signature !== cadrageRef.current) {
+      /*
+        Le cadrage se joue sur le trajet quand il y en a un, sur tout le monde
+        sinon.
+
+        Avec un départ et une arrivée, ce sont eux qu'il faut voir en entier —
+        un chauffeur égaré à l'autre bout de la ville ferait dézoomer au point
+        de rendre le trajet illisible. La marge est généreuse pour que les
+        repères, qui débordent de leur point d'ancrage, ne touchent pas le bord.
+      */
+      const aTrajet = (points ?? []).length >= 2;
+      const cadre = aTrajet
+        ? [
+            ...(points ?? []).map((p) => [p.lat, p.lng] as [number, number]),
+            ...(route ?? []).map((p) => [p.lat, p.lng] as [number, number]),
+          ]
+        : tous;
+
+      cadrerRef.current = () => {
+        if (cadre.length === 0) return;
+        map.fitBounds(L.latLngBounds(cadre), {
+          padding: [56, 56],
+          // Ni trop près — on perdrait le contexte de la rue — ni trop loin :
+          // sur une ville de dix kilomètres, en dessous de treize on ne
+          // distingue plus les quartiers.
+          maxZoom: 16,
+        });
+      };
+
+      if (cadre.length > 0 && signature !== cadrageRef.current) {
         cadrageRef.current = signature;
-        map.fitBounds(L.latLngBounds(tous), { padding: [48, 48], maxZoom: 15 });
+        cadrerRef.current();
       }
     }
 
@@ -432,13 +558,45 @@ export function DriverMap({
   }, []);
 
   return (
-    <>
+    <div className="relative h-full w-full">
       {/* Le fond reprend nos jetons ; le reste vient de la feuille de Leaflet. */}
       <style>{`
         .leaflet-container { height: 100%; width: 100%; background: var(--color-track); }
         .leaflet-control-attribution { font-size: 9px; }
+        /* Les commandes de zoom sont trop petites au doigt dans leur taille
+           d'origine : vingt-six pixels, c'est la limite du visable en marchant. */
+        .leaflet-touch .leaflet-bar a { width: 32px; height: 32px; line-height: 32px; }
       `}</style>
       <div ref={boxRef} className="h-full w-full rounded-[18px]" />
-    </>
+
+      {/*
+        Recadrer, sans jamais reprendre la main de force.
+
+        La carte se cale une fois sur le trajet, puis se tait : quelqu'un qui a
+        zoomé sur une rue pour repérer un porche ne doit pas voir sa vue reprise
+        au prochain relevé de position. Le bouton rend ce geste à celui qui le
+        veut, quand il le veut.
+      */}
+      {recentrer && (
+        <button
+          type="button"
+          onClick={() => cadrerRef.current?.()}
+          aria-label={recentrer}
+          className="press absolute end-3 bottom-[26px] z-[500] flex items-center gap-[6px] rounded-full bg-[var(--color-surface-solid)] px-[11px] py-[7px] text-[0.59375rem] font-bold text-[var(--color-ink)] shadow-[0_4px_14px_rgba(20,14,26,0.22)]"
+        >
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" style={{ display: "block" }}>
+            <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+            <circle cx="12" cy="12" r="7.4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path
+              d="M12 1.6v3.2M12 19.2v3.2M1.6 12h3.2M19.2 12h3.2"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
+          {recentrer}
+        </button>
+      )}
+    </div>
   );
 }

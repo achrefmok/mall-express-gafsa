@@ -37,6 +37,7 @@ for (const module of ["geo", "taxi-match"]) {
 const { compatibilite, distanceAuTrajet, dureeMinutes, formatDistance, LIEUX_GAFSA } = await import(
   pathToFileURL(path.join(cache, "taxi-match.mjs")).href
 );
+const { positionPlausible } = await import(pathToFileURL(path.join(cache, "geo.mjs")).href);
 
 let ko = 0;
 const check = (nom, reel, attendu) => {
@@ -127,6 +128,60 @@ console.log("\n[5] Ce qui s affiche");
   check("au-delà, en kilomètres", formatDistance(1240), "1,2 km");
   check("jamais moins d une minute", dureeMinutes(10), 1);
   check("huit kilomètres font une vingtaine de minutes", dureeMinutes(8200), 20);
+}
+
+console.log("\n" + "[6] Le filtrage des relevés GPS");
+{
+  const base = { lat: 34.4265, lng: 8.7845, at: 1_000_000 };
+
+  check("le premier relevé est toujours accepté", positionPlausible(null, { ...base, precision: 12 }), true);
+  check(
+    "un relevé imprécis est écarté",
+    positionPlausible(base, { ...base, at: base.at + 5000, precision: 900 }),
+    false,
+  );
+  check(
+    "marcher cinquante mètres en dix secondes passe",
+    positionPlausible(base, { lat: 34.4270, lng: 8.7845, at: base.at + 10_000, precision: 15 }),
+    true,
+  );
+  check(
+    "sauter trois kilomètres en deux secondes est refusé",
+    positionPlausible(base, { lat: 34.4530, lng: 8.7845, at: base.at + 2000, precision: 15 }),
+    false,
+  );
+  check(
+    "le meme saut sur dix minutes redevient credible",
+    positionPlausible(base, { lat: 34.4530, lng: 8.7845, at: base.at + 600_000, precision: 15 }),
+    true,
+  );
+}
+
+console.log("\n" + "[7] Le calcul d itineraire, en conditions reelles");
+{
+  const cheminModule = ts.transpileModule(fs.readFileSync("src/lib/routing.ts", "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  fs.writeFileSync(path.join(cache, "routing.mjs"), cheminModule.replace('from "./taxi-match"', 'from "./taxi-match.mjs"'));
+  const { itineraire } = await import(pathToFileURL(path.join(cache, "routing.mjs")).href);
+
+  const r = await itineraire(CENTRE, { lat: AEROPORT.lat, lng: AEROPORT.lng });
+  const droite = Math.round(distanceAuTrajet(CENTRE, CENTRE, CENTRE) + 0);
+
+  if (!r.routier) {
+    console.log("  -- service de routage injoignable, controle reporte --");
+  } else {
+    check("le trace suit la route, pas la ligne droite", r.points.length > 20, true);
+    check("la distance routiere depasse le vol d oiseau", r.metres > 4000, true);
+    check("la duree est plausible", r.minutes >= 5 && r.minutes <= 25, true);
+    check("le premier point est le depart", Math.abs(r.points[0].lat - CENTRE.lat) < 0.01, true);
+    check(
+      "le dernier point est l arrivee",
+      Math.abs(r.points[r.points.length - 1].lat - AEROPORT.lat) < 0.01,
+      true,
+    );
+  }
+  void droite;
 }
 
 fs.rmSync(cache, { recursive: true, force: true });

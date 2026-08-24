@@ -80,3 +80,49 @@ export function shouldPublishPosition(
 
   return distanceMeters(last, next) >= MIN_MOVE_METERS;
 }
+
+/**
+ * Vitesse au-delà de laquelle un déplacement n'est plus crédible, en km/h.
+ *
+ * Cent quatre-vingts : bien au-dessus de ce qu'on atteint à Gafsa, et bien en
+ * dessous de ce qu'un saut GPS produit. Un relevé qui déplace de trois
+ * kilomètres en deux secondes donne cinq mille quatre cents kilomètres à
+ * l'heure — il n'y a pas de doute à avoir.
+ */
+const VITESSE_ABSURDE_KMH = 180;
+
+/**
+ * Ce relevé est-il croyable, sachant le précédent ?
+ *
+ * Le GPS d'un téléphone saute. En ville, entre deux immeubles, il se croit
+ * régulièrement à plusieurs centaines de mètres — parfois à plusieurs
+ * kilomètres — de sa position réelle, pendant une ou deux secondes, puis
+ * revient. Suivi sans filtre, le marqueur du client part à l'autre bout de la
+ * carte, la carte se recadre, et l'écran devient inutilisable au moment précis
+ * où l'on marche vers son taxi.
+ *
+ * Deux garde-fous, et le second n'a de sens qu'avec le premier :
+ *
+ *   · un relevé dont la **précision annoncée** dépasse le seuil est écarté —
+ *     le téléphone dit lui-même qu'il ne sait pas où il est ;
+ *   · un déplacement qui suppose une **vitesse absurde** est écarté, parce
+ *     qu'un saut d'antenne ressemble à s'y méprendre à un vrai déplacement,
+ *     avec une bonne précision annoncée.
+ *
+ * Le premier relevé est toujours accepté : sans point de comparaison, il n'y a
+ * rien à réfuter, et refuser laisserait l'écran sans position.
+ */
+export function positionPlausible(
+  precedente: { lat: number; lng: number; at: number } | null,
+  nouvelle: { lat: number; lng: number; at: number; precision?: number | null },
+  precisionMax = 200,
+): boolean {
+  if (nouvelle.precision != null && nouvelle.precision > precisionMax) return false;
+  if (!precedente) return true;
+
+  const secondes = Math.max(1, (nouvelle.at - precedente.at) / 1000);
+  const metres = distanceMeters(precedente, nouvelle);
+  const kmh = (metres / secondes) * 3.6;
+
+  return kmh <= VITESSE_ABSURDE_KMH;
+}

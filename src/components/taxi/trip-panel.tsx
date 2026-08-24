@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { format } from "@/lib/i18n/format";
 import { cx } from "@/lib/format";
 import { distanceMeters } from "@/lib/geo";
+import type { Itineraire } from "@/lib/routing";
 import { dureeMinutes, formatDistance, LIEUX_GAFSA, type Lieu, type Point } from "@/lib/taxi-match";
 
 export type Champ = "depart" | "destination";
@@ -32,6 +33,8 @@ export type LieuChoisi = Point & { nom: string };
 export function TripPanel({
   depart,
   departNom,
+  precision,
+  chemin,
   destination,
   etatPosition,
   champActif,
@@ -42,6 +45,10 @@ export function TripPanel({
   depart: Point | null;
   /** Nom donné au départ quand il ne vient pas du GPS. */
   departNom: string | null;
+  /** Précision annoncée par le téléphone, en mètres. */
+  precision: number | null;
+  /** L'itinéraire routier, quand il a pu être calculé. */
+  chemin: Itineraire | null;
   destination: LieuChoisi | null;
   etatPosition: "attente" | "trouvee" | "refusee";
   champActif: Champ;
@@ -51,7 +58,25 @@ export function TripPanel({
 }) {
   const { t, locale } = useI18n();
 
-  const metres = depart && destination ? distanceMeters(depart, destination) : null;
+  /*
+    La distance annoncée est celle de la route, pas celle du vol d'oiseau.
+
+    À Gafsa, l'oued et la voie ferrée coupent la ville : deux points distants de
+    trois kilomètres et demi à vol d'oiseau en demandent cinq par la route.
+    Annoncer le premier chiffre, c'est faire passer le chauffeur pour un voleur
+    quand il facture le second.
+
+    Tant que le calcul n'est pas revenu — ou s'il a échoué —, on montre la ligne
+    droite en le disant.
+  */
+  const routier = chemin?.routier === true;
+  const metres = routier
+    ? chemin!.metres
+    : depart && destination
+      ? distanceMeters(depart, destination)
+      : null;
+  const minutes = routier ? chemin!.minutes : metres !== null ? dureeMinutes(metres) : null;
+
   const nomLieu = (lieu: Lieu) => (locale === "ar" ? lieu.nomAr : lieu.nom);
 
   return (
@@ -77,7 +102,11 @@ export function TripPanel({
           valeur={
             departNom ??
             (etatPosition === "trouvee" && depart
-              ? t.taxi.myPosition
+              ? precision != null && precision > 60
+                // Le téléphone annonce lui-même qu'il ne sait pas bien où il
+                // est : le taire enverrait le chauffeur au mauvais coin de rue.
+                ? `${t.taxi.myPosition} · ${format(t.taxi.approximate, { m: Math.round(precision) })}`
+                : t.taxi.myPosition
               : etatPosition === "attente"
                 ? t.taxi.locating
                 : t.taxi.locationRefused)
@@ -128,8 +157,13 @@ export function TripPanel({
           <span className="text-[0.65625rem] font-semibold text-[var(--color-muted)]">
             {format(t.taxi.tripSummary, {
               distance: formatDistance(metres),
-              min: dureeMinutes(metres),
+              min: minutes ?? 0,
             })}
+            {!routier && (
+              // Le calcul routier n'a pas abouti : le chiffre est un ordre de
+              // grandeur, et le client doit le savoir avant de discuter un prix.
+              <span className="text-[var(--color-faint)]"> · {t.taxi.straightLine}</span>
+            )}
           </span>
           <span className="text-[0.65625rem] font-bold text-[var(--color-brand)]">
             {t.taxi.priceToAgree}

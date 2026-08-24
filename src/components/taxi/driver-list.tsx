@@ -285,19 +285,34 @@ function Vehicule({ ligne }: { ligne: LigneChauffeur }) {
 function Etat({ ligne }: { ligne: LigneChauffeur }) {
   const { t } = useI18n();
 
-  const texte = ligne.libre
-    ? t.taxi.freeNowState
-    : ligne.libreDans !== null
-      ? format(t.taxi.busyUntil, { n: ligne.libreDans })
-      : t.taxi.busyUnknown;
+  /*
+    Trois états, et non deux.
+
+    « Libre » et « en course » décrivent ce que fait le chauffeur ; ils ne disent
+    rien de la question préalable — est-il seulement joignable. Un compte marqué
+    disponible dont le téléphone n'a rien publié depuis trois jours s'affichait
+    en vert : le client appelait dans le vide. Sans position fraîche, l'état
+    honnête est « hors ligne », et c'est celui-là qui prime.
+  */
+  const horsLigne = !ligne.positionConnue;
+
+  const texte = horsLigne
+    ? t.taxi.offline
+    : ligne.libre
+      ? t.taxi.freeNowState
+      : ligne.libreDans !== null
+        ? format(t.taxi.busyUntil, { n: ligne.libreDans })
+        : t.taxi.busyUnknown;
 
   return (
     <span
       className={cx(
         "flex items-center gap-[6px] rounded-[10px] px-[9px] py-[6px] text-[0.59375rem] font-semibold",
-        ligne.libre
-          ? "bg-[rgba(47,125,93,0.1)] text-[var(--color-ok,#2f7d5d)]"
-          : "bg-[rgba(184,121,31,0.12)] text-[#8a5a12]",
+        horsLigne
+          ? "bg-[var(--color-field)] text-[var(--color-faint)]"
+          : ligne.libre
+            ? "bg-[rgba(47,125,93,0.1)] text-[var(--color-ok,#2f7d5d)]"
+            : "bg-[rgba(184,121,31,0.12)] text-[#8a5a12]",
       )}
     >
       <span

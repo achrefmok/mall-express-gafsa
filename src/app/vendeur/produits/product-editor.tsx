@@ -49,6 +49,7 @@ export function ProductEditor({
   const [pickup, setPickup] = useState(product?.mall_pickup_available ?? true);
 
   const [uploading, setUploading] = useState(false);
+  const [definitionFaible, setDefinitionFaible] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -67,6 +68,18 @@ export function ProductEditor({
           .map((file) => uploadImage("products", file)),
       );
       setImages((current) => [...current, ...uploaded.map((u) => u.publicUrl)]);
+
+      /*
+        L'avertissement de définition va au vendeur, jamais au client.
+
+        Une photo de six cents pixels restera molle une fois agrandie, quoi que
+        fasse l'affichage — et rien ne le rattrape après coup : agrandir invente
+        des pixels, cela ne les retrouve pas. Le seul moment où l'information
+        sert est celui-ci, où reprendre la photo ne coûte qu'un geste. Le dire
+        au client, lui, ne lui donnerait aucun moyen d'agir.
+      */
+      const molles = uploaded.filter((u) => u.basseDefinition).length;
+      setDefinitionFaible(molles > 0 ? molles : null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.common.error);
     } finally {
@@ -364,6 +377,12 @@ export function ProductEditor({
             <Switch checked={pickup} onChange={setPickup} label={t.marketplace.pickupTitle} />
           </KeyValueRow>
         </Card>
+
+        {definitionFaible !== null && (
+          <p className="rounded-[12px] bg-[var(--color-field)] px-3 py-[10px] text-[0.625rem] leading-[1.5] text-[var(--color-muted)]">
+            {t.vendor.lowResolution.replace("{n}", String(definitionFaible))}
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="text-[0.6875rem] font-semibold text-[var(--color-live)]">

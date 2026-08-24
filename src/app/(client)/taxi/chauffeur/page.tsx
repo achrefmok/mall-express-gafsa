@@ -5,6 +5,7 @@ import { getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { DriverConsole } from "@/components/taxi/driver-console";
+import { DriverInbox } from "@/components/taxi/driver-inbox";
 
 export const metadata: Metadata = {
   title: "Espace chauffeur",
@@ -47,6 +48,15 @@ export default async function DriverPage() {
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
         <DriverConsole initial={driver} />
+
+        {/*
+          Les messages viennent après la fiche, mais avant tout le reste.
+
+          Un chauffeur ouvre cet écran pour deux choses : se déclarer libre, et
+          voir qui le cherche. La seconde n'existait pas — les clients écrivaient
+          dans le vide.
+        */}
+        <DriverInbox driverId={profile.id} />
       </div>
     </>
   );

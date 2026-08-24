@@ -4,6 +4,7 @@ import { AnimatePresence, m } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
+import { envoyerMessageTaxi } from "@/app/actions/taxi-chat";
 import { usePoll } from "@/lib/use-poll";
 import { cx, monogram } from "@/lib/format";
 import { Avatar } from "@/components/ui/primitives";
@@ -29,6 +30,7 @@ interface Message {
   from_driver: boolean;
   body: string;
   created_at: string;
+  read_at?: string | null;
 }
 
 /** Ce que PostgREST répond quand la table n'est pas encore là. */
@@ -67,7 +69,7 @@ export function DriverChat({
     const supabase = createClient();
     const { data, error } = await supabase
       .from("taxi_messages")
-      .select("id, from_driver, body, created_at")
+      .select("id, from_driver, body, created_at, read_at")
       .eq("driver_id", driverId)
       .eq("client_id", clientId)
       .order("created_at")
@@ -83,6 +85,25 @@ export function DriverChat({
 
     setMessages(data ?? []);
     setEtat("pret");
+
+    /*
+      Lire un fil ouvert, c'est l'avoir lu.
+
+      Sans ce marquage, le compteur de la liste des conversations resterait
+      allumé après qu'on a tout lu — et un compteur qui ne s'éteint jamais
+      apprend à être ignoré. Ce sont les messages du chauffeur qu'on marque : les
+      siens ne se comptent pas.
+    */
+    const aMarquer = (data ?? [])
+      .filter((m) => m.from_driver && m.read_at === null)
+      .map((m) => m.id);
+
+    if (aMarquer.length > 0) {
+      await supabase
+        .from("taxi_messages")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", aMarquer);
+    }
   }, [driverId, clientId]);
 
   useEffect(() => {
@@ -129,20 +150,21 @@ export function DriverChat({
     };
     setMessages((m) => [...m, provisoire]);
 
-    const supabase = createClient();
-    const { error } = await supabase.from("taxi_messages").insert({
-      driver_id: driverId,
-      client_id: clientId,
-      from_driver: false,
-      body: corps,
-    });
+    /*
+      L'envoi passe par une action serveur, et non par une écriture directe.
 
-    if (error) {
+      C'est ce qui permet de prévenir le chauffeur : la table des notifications
+      n'accepte aucune écriture venue d'un navigateur, et c'est très bien ainsi.
+      Sans cette étape, le message arrivait bien en base et n'était jamais lu —
+      le chauffeur n'avait aucune raison d'ouvrir l'application.
+    */
+    const result = await envoyerMessageTaxi({ driverId, clientId, body: corps });
+
+    if (!result.ok) {
       // L'envoi a échoué : on retire la ligne provisoire plutôt que de laisser
       // croire que le chauffeur a reçu le message.
       setMessages((m) => m.filter((x) => x.id !== provisoire.id));
       setBrouillon(corps);
-      if (TABLE_ABSENTE.includes(error.code)) setEtat("indisponible");
     } else {
       await relire();
     }

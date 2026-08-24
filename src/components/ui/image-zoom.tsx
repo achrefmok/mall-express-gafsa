@@ -271,13 +271,32 @@ function Visionneuse({
           transition: pan.current || gesture.current ? "none" : "transform 220ms ease-out",
         }}
       >
+        {/*
+          La définition suit l'agrandissement, et seulement lui.
+
+          Au repos, l'image occupe la largeur de l'écran : cent pour cent de la
+          fenêtre suffisent, et c'est ce qu'on charge. Dès que le doigt écarte,
+          l'élément est étiré par une transformation — les pixels, eux, ne se
+          multiplient pas, et l'on voit la trame.
+
+          On annonce donc au navigateur une largeur proportionnelle au
+          grossissement : il va rechercher une définition supérieure, une seule
+          fois, au moment précis où elle sert. Ouvrir la visionneuse ne coûte
+          rien de plus qu'avant ; c'est le pincement qui paie ce qu'il demande.
+
+          `width` et `height` ne servent qu'à réserver un rapport de forme le
+          temps du chargement : `object-contain` rend ensuite les proportions
+          réelles du fichier, quelles qu'elles soient.
+        */}
         <Image
           src={images[index]}
           alt={alt}
-          width={1200}
-          height={1200}
+          width={1600}
+          height={1600}
           className="max-h-full w-auto max-w-full object-contain"
-          sizes="100vw"
+          sizes={`${Math.round(Math.min(scale, ZOOM_MAX) * 100)}vw`}
+          quality={92}
+          priority
           draggable={false}
         />
       </div>

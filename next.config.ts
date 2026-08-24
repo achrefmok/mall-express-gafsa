@@ -95,7 +95,7 @@ const securityHeaders = [
         Le principe vaut pour tout hôte d'images tierces que le worker mettra en
         cache : les deux directives vont par paire.
       */
-      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org`,
+      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://accounts.google.com https://www.facebook.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org`,
       "media-src 'self' blob: https:",
       /*
         Le greffon vidéo change d'hôte selon l'appareil, et il faut le suivre.

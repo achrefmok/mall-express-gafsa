@@ -58,7 +58,7 @@ export default async function SearchPage({
       ? supabase
           .from("products")
           .select(
-            "id, name, price, compare_at_price, images, colors, variant_images, stock, shop:shops!inner(name, slug, status), category:categories(hue)",
+            "id, name, price, compare_at_price, images, stock, shop:shops!inner(name, slug, status), category:categories(hue)",
           )
           .eq("is_online", true)
           .eq("is_draft", false)

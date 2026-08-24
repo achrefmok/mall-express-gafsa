@@ -2,16 +2,18 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { usePoll } from "@/lib/use-poll";
-import { distanceMeters, isPositionFresh } from "@/lib/geo";
+import { distanceMeters, isPositionFresh, positionPlausible } from "@/lib/geo";
+import { itineraire, type Itineraire } from "@/lib/routing";
 import { compatibilite, type Point } from "@/lib/taxi-match";
 import { monogram } from "@/lib/format";
 import { EmptyState } from "@/components/ui/primitives";
 import { TripPanel, type Champ, type LieuChoisi } from "./trip-panel";
 import { DriverChat } from "./driver-chat";
+import { ClientThreads } from "./client-threads";
 import { DriverList, type Filtre, type LigneChauffeur } from "./driver-list";
 import type { DriverPin, MapLabels, MapPoint } from "./driver-map";
 
@@ -90,6 +92,12 @@ export function TaxiClient({
   */
   const [champActif, setChampActif] = useState<Champ>("destination");
 
+  /** Précision annoncée par le téléphone, en mètres. */
+  const [precision, setPrecision] = useState<number | null>(null);
+
+  /** L'itinéraire routier, quand les deux bouts sont connus. */
+  const [chemin, setChemin] = useState<Itineraire | null>(null);
+
   const [filtre, setFiltre] = useState<Filtre>("tous");
   const [selection, setSelection] = useState<string | null>(null);
 
@@ -132,6 +140,9 @@ export function TaxiClient({
     refus n'est donc pas une panne : c'est une fonctionnalité en moins, et le
     panneau de trajet propose de réessayer.
   */
+  /** Le dernier relevé retenu, pour juger le suivant. */
+  const dernierReleve = useRef<{ lat: number; lng: number; at: number } | null>(null);
+
   const localiser = useCallback(() => {
     if (!("geolocation" in navigator)) {
       setEtatPosition("refusee");
@@ -141,16 +152,72 @@ export function TaxiClient({
     setEtatPosition("attente");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setDepart({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const releve = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          at: pos.timestamp || Date.now(),
+        };
+        dernierReleve.current = releve;
+        setDepart({ lat: releve.lat, lng: releve.lng });
         setDepartNom(null);
+        setPrecision(pos.coords.accuracy ?? null);
         setEtatPosition("trouvee");
       },
       () => setEtatPosition("refusee"),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 15_000 },
     );
   }, []);
 
   useEffect(localiser, [localiser]);
+
+  /*
+    Le suivi continu, filtré.
+
+    Une position figée au premier relevé vieillit vite : le client marche vers
+    son taxi, et la carte le laisse là où il était. Un suivi brut, à l'inverse,
+    le fait sauter d'un bout à l'autre de la ville chaque fois que le GPS perd
+    les satellites entre deux immeubles.
+
+    On garde donc le suivi, mais chaque relevé doit être crédible — précision
+    annoncée raisonnable, et déplacement compatible avec une vitesse humaine.
+    Le suivi s'arrête dès que le départ a été saisi à la main : quelqu'un qui a
+    corrigé son point de départ ne veut pas que le GPS le lui reprenne.
+  */
+  useEffect(() => {
+    if (departNom !== null) return;
+    if (!("geolocation" in navigator)) return;
+
+    const veille = navigator.geolocation.watchPosition(
+      (pos) => {
+        const releve = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          at: pos.timestamp || Date.now(),
+          precision: pos.coords.accuracy ?? null,
+        };
+
+        if (!positionPlausible(dernierReleve.current, releve)) return;
+
+        dernierReleve.current = { lat: releve.lat, lng: releve.lng, at: releve.at };
+        setPrecision(releve.precision);
+        setDepart((actuel) => {
+          // Sous vingt mètres, on ne bouge pas : c'est le tremblement du
+          // capteur, et déplacer le marqueur pour cela donne l'impression que
+          // la carte vibre.
+          if (actuel && distanceMeters(actuel, releve) < 20) return actuel;
+          return { lat: releve.lat, lng: releve.lng };
+        });
+        setEtatPosition("trouvee");
+      },
+      () => {
+        // Une erreur en cours de suivi ne remet pas en cause la position déjà
+        // obtenue : on garde la dernière fiable.
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(veille);
+  }, [departNom]);
 
   /**
    * Poser un lieu sur l'un des deux bouts du trajet.
@@ -181,6 +248,36 @@ export function TaxiClient({
     () => (depart ? { depart, destination } : null),
     [depart, destination],
   );
+
+  /*
+    L'itinéraire se recalcule quand le trajet change, pas quand la carte bouge.
+
+    Les coordonnées sont arrondies dans la clé de l'effet : un GPS qui tremble
+    de quelques mètres ne change pas d'itinéraire, et relancer le calcul à
+    chaque battement épuiserait un service public gratuit pour rien.
+  */
+  const cleTrajet =
+    depart && destination
+      ? `${depart.lat.toFixed(4)},${depart.lng.toFixed(4)}>${destination.lat.toFixed(4)},${destination.lng.toFixed(4)}`
+      : null;
+
+  useEffect(() => {
+    if (!depart || !destination) {
+      setChemin(null);
+      return;
+    }
+
+    let annule = false;
+    void itineraire(depart, destination).then((resultat) => {
+      if (!annule) setChemin(resultat);
+    });
+
+    return () => {
+      annule = true;
+    };
+    // `cleTrajet` suffit : c'est lui qui dit si le trajet a réellement changé.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleTrajet]);
 
   /*
     Une ligne par chauffeur, calculée une fois pour la carte et pour le tableau.
@@ -262,7 +359,9 @@ export function TaxiClient({
     return liste;
   }, [depart, destination, t]);
 
-  const route = depart && destination ? [depart, destination] : null;
+  // Le tracé routier s'il a pu être obtenu ; la ligne droite en attendant,
+  // pour que la carte ne reste pas muette pendant le calcul.
+  const route = chemin?.points ?? (depart && destination ? [depart, destination] : null);
 
   const labels: MapLabels = {
     free: t.taxi.free,
@@ -296,6 +395,7 @@ export function TaxiClient({
               points={points}
               route={route}
               onPick={(point) => poserLieu(champActif, { ...point, nom: t.taxi.pointOnMap })}
+              recentrer={t.taxi.recenter}
             />
 
             {/*
@@ -325,6 +425,8 @@ export function TaxiClient({
             <TripPanel
               depart={depart}
               departNom={departNom}
+              precision={precision}
+              chemin={chemin}
               destination={destination}
               etatPosition={etatPosition}
               champActif={champActif}
@@ -332,6 +434,15 @@ export function TaxiClient({
               onLieu={poserLieu}
               onRelocaliser={localiser}
             />
+
+            {/*
+              Les conversations en cours, avant le fil ouvert.
+
+              C'est ce qui manquait : un client qui revenait sur la page ne
+              retrouvait pas la réponse de son chauffeur — il fallait deviner
+              lequel rouvrir. Le bloc disparaît de lui-même quand il n'y a rien.
+            */}
+            <ClientThreads clientId={clientId} selection={selection} onOuvrir={setSelection} />
 
             <AnimatePresence>
               {choisi && (

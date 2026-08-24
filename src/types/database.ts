@@ -804,8 +804,22 @@ export interface Database {
           read_at: string | null;
           created_at: string;
         };
-        /** Écrites exclusivement par des fonctions SECURITY DEFINER. */
-        Insert: never;
+        /**
+         * Écrites par des fonctions `security definer` — et, depuis la
+         * messagerie taxi, par une action serveur qui emploie le client
+         * d'administration.
+         *
+         * Le type l'autorise donc, mais les policies continuent de l'interdire
+         * à un navigateur : seule une clé de service passe, et il n'y en a
+         * jamais dans le paquet envoyé au client.
+         */
+        Insert: {
+          user_id: string;
+          kind: NotificationKind;
+          title: string;
+          body?: string | null;
+          link?: string | null;
+        };
         Update: Partial<{ read_at: string }>;
         Relationships: [FK<"notifications_user_id_fkey", ["user_id"], "profiles">];
       };

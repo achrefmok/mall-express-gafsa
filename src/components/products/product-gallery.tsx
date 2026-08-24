@@ -399,7 +399,23 @@ export function ProductGallery({ alt }: { alt: string }) {
                             : alt
                         }
                         fill
+                        /*
+                          La colonne de la galerie est bornée à 420 pixels sur
+                          grand écran et prend toute la largeur en dessous. Le
+                          navigateur multiplie par la densité de l'écran, et va
+                          donc chercher 840 pixels sur un portable à deux points
+                          par pixel — ce qui est exactement ce qu'il faut.
+                        */
                         sizes="(max-width: 520px) 100vw, 420px"
+                        /*
+                          Quatre-vingt-dix plutôt que les soixante-quinze par
+                          défaut. C'est l'écran où l'on décide d'acheter : la
+                          maille d'un tissu, la finition d'une couture et le
+                          grain d'un cuir se perdent dans la compression bien
+                          avant que le poids ne devienne un problème. L'écart
+                          coûte une dizaine de kilo-octets par photo.
+                        */
+                        quality={90}
                         priority
                         draggable={false}
                         className="object-cover"
@@ -532,7 +548,10 @@ export function ProductGallery({ alt }: { alt: string }) {
                   src={miniature}
                   alt=""
                   fill
+                  // Cinquante-deux pixels affichés, trois fois plus sur un écran
+                  // dense : une vignette molle se remarque autant qu'une grande.
                   sizes="52px"
+                  quality={85}
                   className={cx(
                     "object-cover transition-opacity",
                     i === rang ? "opacity-100" : "opacity-55",

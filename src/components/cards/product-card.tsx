@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { format } from "@/lib/i18n/format";
 import { toggleFavorite } from "@/app/actions/cart";
 import { cx, formatPrice, percentOff } from "@/lib/format";
 import { Placeholder } from "@/components/ui/primitives";
 import { CartIcon, HeartIcon } from "@/components/ui/icons";
 import { ImageZoom } from "@/components/ui/image-zoom";
-import { displayableColors, variantView } from "@/lib/variants";
-import type { AppLocale, VariantImages } from "@/types/database";
+import type { AppLocale } from "@/types/database";
 
 export interface ProductCardData {
   id: string;
@@ -22,15 +20,15 @@ export interface ProductCardData {
   stock: number;
   shop?: { name: string; slug: string } | null;
   category?: { hue: number } | null;
-  /** Coloris déclarés par le vendeur. Absents = pas de pastilles sur la carte. */
-  colors?: string[] | null;
-  /**
-   * Photos par coloris, quand la colonne existe.
-   *
-   * Sans elle, aucune pastille ne s'affiche : une teinte ne se montre qu'après
-   * que le vendeur l'a validée, et c'est cette colonne qui garde son accord.
-   */
-  variant_images?: VariantImages | null;
+  /*
+    Ni coloris ni images de variante ici.
+
+    La carte ne montre plus qu'une photo, et les requêtes de liste ont été
+    allégées en conséquence : `variant_images` est un document JSON qui peut
+    porter six adresses par article, soit plusieurs kilo-octets multipliés par
+    vingt-deux vignettes sur une grille — pour une donnée que plus rien
+    n'affiche.
+  */
 }
 
 /**
@@ -76,55 +74,16 @@ export function ProductCard({
   const soldOut = product.stock === 0;
 
   /*
-    Le coloris regardé depuis la liste, sans quitter la liste.
+    La carte montre la première photo du produit, et rien d'autre.
 
-    Comparer deux coloris obligeait à ouvrir la fiche, revenir, rouvrir. Ici la
-    pastille échange la photo de la carte : la grille ne bouge pas d'un pixel,
-    rien ne se recharge, et l'on garde sa place.
-
-    Le choix reste local à la carte — il montre, il n'engage rien. La fiche
-    s'ouvre sur l'article entier, où le coloris compte vraiment.
-
-    Ne figurent que les coloris qui ont réellement une autre photo : à cette
-    taille, une pastille qui ne change rien n'a aucun moyen de s'expliquer.
+    Elle a un temps porté une rangée de pastilles qui échangeait l'image sans
+    quitter la grille. C'était joli et peu utile : à cent trente pixels de haut,
+    un coloris ne se juge pas — on distingue une teinte, pas une matière — et la
+    rangée de ronds pesait plus lourd à l'œil que le nom de l'article. Le choix
+    du coloris se fait sur la fiche, où l'image est grande et porte son nom.
   */
-  const tous = product.colors ?? [];
-  const photos = product.images ?? [];
-  const colors = displayableColors(tous, photos, product.variant_images);
-  const [tint, setTint] = useState<string | null>(null);
-  const { srcs } = variantView(tous, photos, product.variant_images, tint);
-
-  /*
-    L'image de la carte ne change qu'une fois la suivante chargée.
-
-    L'adresse sert de clé, donc React remplace l'élément : entre l'ancienne
-    image démontée et la nouvelle peinte, le cadre restait vide un instant. Sur
-    une grille qui défile, cela se lit comme un clignotement.
-
-    On précharge donc avant de basculer. Le coût est nul au second passage —
-    l'image est en cache et `complete` est déjà vrai.
-  */
-  const voulu = srcs[0];
-  const [cover, setCover] = useState(voulu);
-
-  useEffect(() => {
-    if (!voulu || voulu === cover) return;
-
-    let annule = false;
-    const poser = () => {
-      if (!annule) setCover(voulu);
-    };
-
-    const img = new window.Image();
-    img.onload = poser;
-    img.onerror = poser;
-    img.src = voulu;
-    if (img.complete) poser();
-
-    return () => {
-      annule = true;
-    };
-  }, [voulu, cover]);
+  const cover = product.images?.[0];
+  const srcs = product.images ?? [];
 
   const [favorite, setFavorite] = useState(Boolean(isFavorite));
   const [, startTransition] = useTransition();
@@ -156,14 +115,7 @@ export function ProductCard({
               className="relative block w-full overflow-hidden rounded-[19px]"
               style={{ height: imageHeight }}
             >
-              {/*
-                La photo change en fondu croisé sur place : la clé porte
-                l'adresse, donc React remplace l'élément, et l'ancienne image
-                reste visible sous la nouvelle le temps qu'elle se peigne. Le
-                cadre garde sa hauteur — la grille ne sursaute pas.
-              */}
               <Image
-                key={cover}
                 src={cover}
                 alt={product.name}
                 fill
@@ -255,43 +207,14 @@ export function ProductCard({
       </Link>
 
       {/*
-        Les coloris, en tout petit, sous le prix.
+        Plus de pastilles de couleur sous la carte.
 
-        Cinq au maximum : au-delà, la rangée pèserait plus lourd que le nom de
-        l'article et changerait une vignette en formulaire. Le reste se lit en
-        chiffre, et la fiche le montre.
+        Elles promettaient un choix que la vignette ne peut pas tenir : à cent
+        trente pixels, changer de coloris ne montre presque rien, et la rangée
+        de ronds pesait visuellement plus lourd que le nom de l'article. La
+        grille y gagne en calme, et le choix des coloris se fait où il a du sens
+        — sur la fiche, en grand, avec le nom du coloris et son image.
       */}
-      {colors.length > 1 && (
-        <div className="mt-[6px] flex items-center justify-center gap-[5px]">
-          {colors.slice(0, 5).map((value, i) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTint((current) => (current === value ? null : value))}
-              aria-pressed={tint === value}
-              aria-label={format(t.product.colorOf, { i: i + 1, n: colors.length })}
-              /* La cible déborde la pastille : douze pixels de rond, vingt-quatre
-                 pixels touchables, sans écarter les couleurs les unes des autres. */
-              className="-m-[6px] flex h-[24px] w-[24px] items-center justify-center p-[6px]"
-            >
-              <span
-                className={cx(
-                  "block h-[12px] w-[12px] rounded-full transition-transform",
-                  tint === value
-                    ? "scale-125 ring-[1.5px] ring-[var(--color-ink)]"
-                    : "ring-1 ring-[var(--color-outline)]",
-                )}
-                style={{ background: value }}
-              />
-            </button>
-          ))}
-          {colors.length > 5 && (
-            <span className="text-[0.5625rem] font-semibold text-[var(--color-faint)]">
-              +{colors.length - 5}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 }
