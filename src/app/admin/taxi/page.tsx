@@ -24,7 +24,15 @@ export default async function AdminTaxiPage() {
 
   const { data: drivers } = await supabase
     .from("taxi_drivers")
-    .select("id, display_name, phone, vehicle, plate, is_approved, is_available")
+    /*
+      Toutes les colonnes plutôt qu'une liste.
+
+      Les migrations sont collées à la main dans l'éditeur SQL : nommer `status`
+      ou `seats_free` ferait échouer la requête entière tant que le DDL n'est pas
+      passé, et l'administration perdrait l'accès aux chauffeurs pour une colonne
+      qu'elle ne fait qu'afficher.
+    */
+    .select("*")
     .order("is_approved")
     .order("created_at", { ascending: false });
 

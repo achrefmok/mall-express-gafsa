@@ -70,6 +70,34 @@ export interface VariantImage {
 
 /** Clé : la couleur telle qu'elle figure dans `products.colors`. */
 export type VariantImages = Record<string, VariantImage>;
+/**
+ * L'état qu'un chauffeur déclare.
+ *
+ * Quatre valeurs, dont une que le modèle binaire d'origine ne savait pas dire :
+ * `places` — en course, mais il reste des sièges. C'est le fonctionnement
+ * ordinaire d'un louage, et le chauffeur devait jusqu'ici choisir entre se
+ * déclarer libre, ce qui était faux, et occupé, ce qui lui coûtait des clients.
+ *
+ * `hors_ligne` est un retrait volontaire. Ce n'est pas ce que devient un
+ * chauffeur qui ferme l'application : le statut est tenu par le serveur et ne
+ * dépend d'aucune horloge de session.
+ */
+export type TaxiStatus = "libre" | "places" | "occupe" | "hors_ligne";
+
+/**
+ * Le cycle d'une demande de course.
+ *
+ * `expiree` n'est pas un échec du chauffeur : il conduisait. C'est un état
+ * terminal comme un autre, qui existe pour qu'une demande sans réponse cesse
+ * d'un elle-même plutôt que de laisser un client attendre.
+ */
+export type TaxiRequestStatus =
+  | "en_attente"
+  | "acceptee"
+  | "refusee"
+  | "expiree"
+  | "annulee";
+
 export type NotificationKind =
   | "order_update"
   | "live_starting"
@@ -79,7 +107,11 @@ export type NotificationKind =
   | "new_message"
   | "loyalty"
   | "city_alert"
-  | "referral";
+  | "referral"
+  /* Une course demandée, acceptée ou refusée. C'est le seul genre qui doive
+     atteindre quelqu'un dont l'application est fermée : un chauffeur au volant
+     n'ouvre pas l'écran pour vérifier s'il a du travail. */
+  | "taxi_request";
 
 /** Forme d'une entrée de `Relationships`. */
 type FK<Name extends string, Cols extends string[], Ref extends string> = {
@@ -567,6 +599,22 @@ export interface Database {
           heading_lng: number | null;
           takes_along: boolean;
 
+          /*
+            Ce que le chauffeur a déclaré, et depuis quand.
+
+            Distinct de `is_available`, qui reste écrit en parallèle pour les
+            écrans qui n'ont pas encore migré. La différence tient en un point :
+            ce statut ne se périme pas parce que l'application se ferme. Il est
+            tenu par le serveur et n'expire qu'au bout de douze heures.
+
+            `last_seen_at` est le battement de l'écran ouvert. Il ne dit pas où
+            se trouve le chauffeur — un chauffeur peut refuser le GPS et rester
+            parfaitement joignable — seulement qu'il était là.
+          */
+          status: TaxiStatus;
+          status_since: string;
+          last_seen_at: string | null;
+
           created_at: string;
           updated_at: string;
         };
@@ -601,6 +649,45 @@ export interface Database {
         Relationships: [
           FK<"taxi_messages_driver_id_fkey", ["driver_id"], "taxi_drivers">,
           FK<"taxi_messages_client_id_fkey", ["client_id"], "profiles">,
+        ];
+      };
+
+      /* ─── taxi_requests ──────────────────────────────────────────────
+         Une course demandée à un chauffeur précis. Le trajet y est figé au
+         moment de la demande : le chauffeur répond sur ce qu'on lui a montré,
+         pas sur une position qui a bougé depuis. `expires_at` porte
+         l'expiration dans la ligne elle-même — une minuterie côté navigateur
+         mourrait avec l'onglet, une date reste vraie. */
+      taxi_requests: {
+        Row: {
+          id: string;
+          client_id: string;
+          driver_id: string;
+          pickup_lat: number;
+          pickup_lng: number;
+          pickup_label: string | null;
+          dest_lat: number | null;
+          dest_lng: number | null;
+          dest_label: string | null;
+          /** Distance du chauffeur au client, calculée côté serveur. */
+          distance_m: number | null;
+          duration_min: number | null;
+          seats: number;
+          status: TaxiRequestStatus;
+          expires_at: string;
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          client_id: string;
+          driver_id: string;
+          pickup_lat: number;
+          pickup_lng: number;
+        } & Partial<Database["public"]["Tables"]["taxi_requests"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["taxi_requests"]["Row"]>;
+        Relationships: [
+          FK<"taxi_requests_client_id_fkey", ["client_id"], "profiles">,
+          FK<"taxi_requests_driver_id_fkey", ["driver_id"], "taxi_drivers">,
         ];
       };
 
@@ -1038,6 +1125,9 @@ export interface Database {
         Returns: undefined;
       };
       expire_stale_deals: { Args: Record<PropertyKey, never>; Returns: number };
+      /** Passe les demandes échues en « expiree » et retire les déclarations
+          de plus de douze heures. Retourne le nombre de demandes touchées. */
+      expire_taxi_requests: { Args: Record<PropertyKey, never>; Returns: number };
       /* Incrémente `shops.views_count`. `security definer` : un visiteur anonyme
          n'a aucun droit d'écriture sur `shops`, et n'en a pas besoin pour ça. */
       increment_shop_views: { Args: { shop: string }; Returns: undefined };

@@ -1,10 +1,18 @@
 "use client";
 
+import { m } from "framer-motion";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { registerDriver, setDriverAvailability, updateDriverPosition } from "@/app/actions/taxi";
+import {
+  registerDriver,
+  setDriverStatus,
+  signalerPresence,
+  updateDriverPosition,
+} from "@/app/actions/taxi";
 import { shouldPublishPosition } from "@/lib/geo";
+import { presenceDe, type TaxiStatus } from "@/lib/taxi-presence";
 import { Button, Card } from "@/components/ui/primitives";
+import { cx } from "@/lib/format";
 
 const FIELD =
   "w-full rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-surface-solid)] px-3 py-2 text-[0.75rem] text-[var(--color-ink)]";
@@ -17,14 +25,33 @@ export interface DriverProfile {
   is_available: boolean;
   is_approved: boolean;
   position_updated_at: string | null;
+  /* Ajoutées par la migration de présence. Absentes tant qu'elle n'est pas
+     collée, d'où l'optionnel : le repli de `presenceDe` prend alors le relais. */
+  status?: string | null;
+  seats_total?: number | null;
+  seats_free?: number | null;
 }
 
 /**
  * L'espace du chauffeur.
  *
- * Trois choses seulement : sa fiche, un interrupteur libre/occupé, et le partage
- * de sa position. Un chauffeur consulte cet écran au feu rouge — chaque champ
- * ajouté est un champ qu'il ne remplira pas.
+ * Sa fiche, son état, et le partage de sa position. Un chauffeur consulte cet
+ * écran au feu rouge — chaque champ ajouté est un champ qu'il ne remplira pas.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Pourquoi trois états et non un interrupteur
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * L'interrupteur libre/occupé forçait un choix faux. Un chauffeur qui emmène
+ * déjà quelqu'un et à qui il reste trois places n'est ni l'un ni l'autre : se
+ * dire libre trompe le client qui l'attend seul, se dire occupé lui coûte les
+ * trois courses qu'il aurait pu prendre en chemin. C'est pourtant le
+ * fonctionnement ordinaire d'un louage à Gafsa, et l'application ne savait pas
+ * l'écrire.
+ *
+ * Et surtout : **ce qu'il déclare ici lui survit.** Fermer l'application ne le
+ * rend plus indisponible. C'est le serveur qui tient son état, avec une
+ * expiration longue et explicite, et non la dernière fois que son GPS a parlé.
  */
 export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
   const { t } = useI18n();
@@ -40,18 +67,54 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
   /* Dernière position réellement publiée, pour ne pas republier du bruit. */
   const lastSentRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
 
+  const presence = driver ? presenceDe(driver) : null;
+  const statut = presence?.statut ?? "hors_ligne";
+  const places = presence?.places ?? null;
+
   /*
     Le partage de position s'arrête avec l'écran.
 
     `watchPosition` continue sinon à consommer le GPS en arrière-plan, ce qui
     vide la batterie d'un chauffeur qui a simplement changé d'onglet — et publie
     une position qu'il ne sait plus qu'il partage.
+
+    Ce n'est plus la même chose que devenir indisponible : le statut déclaré
+    reste, seule la position cesse d'être rafraîchie. C'était exactement la
+    confusion à défaire.
   */
   useEffect(() => {
     return () => {
       if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
     };
   }, []);
+
+  /*
+    « Je suis là », une fois par minute.
+
+    Assez pour dire au client « vu il y a deux minutes » quand le GPS est refusé
+    ou indisponible — un chauffeur peut être parfaitement joignable sans jamais
+    partager sa position, et l'ancien modèle le rendait invisible pour cette
+    seule raison.
+
+    Le battement ne part que si l'écran est réellement regardé : un téléphone
+    posé dans une poche interrogerait sinon le serveur toute la journée.
+  */
+  useEffect(() => {
+    if (!driver) return;
+
+    const battre = () => {
+      if (document.visibilityState === "visible") void signalerPresence();
+    };
+
+    battre();
+    const timer = setInterval(battre, 60_000);
+    document.addEventListener("visibilitychange", battre);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", battre);
+    };
+  }, [driver]);
 
   function onSave(event: React.FormEvent) {
     event.preventDefault();
@@ -68,6 +131,7 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
       if (!result.ok) return setError(result.error);
 
       setDriver((current) => ({
+        ...current,
         display_name: name.trim(),
         phone: phone.trim(),
         vehicle: vehicle.trim() || null,
@@ -79,16 +143,51 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
     });
   }
 
-  function onToggle() {
-    const next = !driver?.is_available;
-    setDriver((current) => (current ? { ...current, is_available: next } : current));
+  /**
+   * Changer d'état.
+   *
+   * L'écran suit le doigt avant que le serveur ait répondu, et revient en
+   * arrière si l'écriture échoue. Un chauffeur qui se déclare libre au feu vert
+   * ne doit pas attendre un aller-retour réseau pour savoir que c'est pris.
+   */
+  function choisir(prochain: TaxiStatus, prochainesPlaces?: number | null) {
+    const avant = driver;
+    if (!avant) return;
+
+    setError(null);
+    setDriver({
+      ...avant,
+      status: prochain,
+      is_available: prochain === "libre" || prochain === "places",
+      ...(prochainesPlaces === undefined ? {} : { seats_free: prochainesPlaces }),
+    });
+
     startTransition(async () => {
-      const result = await setDriverAvailability(next);
+      const result = await setDriverStatus({
+        statut: prochain,
+        places: prochainesPlaces,
+      });
+
       if (!result.ok) {
-        setDriver((current) => (current ? { ...current, is_available: !next } : current));
+        setDriver(avant);
         setError(result.error);
       }
     });
+  }
+
+  /**
+   * Une place de plus ou de moins.
+   *
+   * Le passage à « complet » n'est pas un affichage : à zéro place, le chauffeur
+   * bascule en occupé et cesse de recevoir des demandes. C'est ce qui empêche un
+   * cinquième passager de réserver dans une voiture de quatre.
+   */
+  function ajusterPlaces(delta: number) {
+    const actuelles = places ?? driver?.seats_total ?? 4;
+    const suivantes = Math.max(0, Math.min(8, actuelles + delta));
+    if (suivantes === places) return;
+
+    choisir(suivantes === 0 ? "occupe" : "places", suivantes);
   }
 
   function onShare() {
@@ -137,6 +236,14 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
     );
   }
 
+  /* Les trois états qu'un chauffeur choisit lui-même. « Hors ligne » est à part :
+     c'est un retrait, pas une disponibilité, et il ne mérite pas la même place. */
+  const etats: Array<{ cle: TaxiStatus; libelle: string; teinte: string }> = [
+    { cle: "libre", libelle: t.taxi.free, teinte: "#2f7d5d" },
+    { cle: "places", libelle: t.taxi.statusSeats, teinte: "#2563a8" },
+    { cle: "occupe", libelle: t.taxi.busy, teinte: "#b8722c" },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
       {driver && !driver.is_approved && (
@@ -148,37 +255,126 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
       )}
 
       {driver && (
-        <Card className="flex items-center gap-3 p-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{t.taxi.availability}</p>
-            <p className="text-[0.625rem] text-[var(--color-muted)]">
-              {driver.is_available ? t.taxi.free : t.taxi.busy}
+        <Card className="flex flex-col gap-[10px] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
+              {t.taxi.declareStatus}
             </p>
+
+            {statut !== "hors_ligne" && (
+              <button
+                type="button"
+                onClick={() => choisir("hors_ligne")}
+                disabled={pending}
+                className="press flex-none text-[0.59375rem] font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50"
+              >
+                {t.taxi.offline}
+              </button>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={onToggle}
-            role="switch"
-            aria-checked={driver.is_available}
-            disabled={pending}
-            className="relative h-7 w-12 flex-none rounded-full transition-colors"
-            style={{
-              background: driver.is_available ? "var(--color-ok, #2f7d5d)" : "var(--color-track)",
-            }}
-          >
-            <span
-              className="absolute top-1 h-5 w-5 rounded-full bg-white transition-[inset-inline-start]"
-              style={{ insetInlineStart: driver.is_available ? "26px" : "4px" }}
-            />
-          </button>
+          {/* Trois pastilles plutôt qu'un interrupteur : le troisième état est le
+              seul qui décrive vraiment un louage en cours de route. */}
+          <div className="relative flex gap-[6px] rounded-[14px] bg-[var(--color-field)] p-[4px]">
+            {etats.map((etat) => {
+              const actif = statut === etat.cle;
+
+              return (
+                <button
+                  key={etat.cle}
+                  type="button"
+                  onClick={() => choisir(etat.cle, etat.cle === "places" ? (places ?? 3) : undefined)}
+                  disabled={pending}
+                  aria-pressed={actif}
+                  className="press relative flex-1 rounded-[11px] px-1 py-[9px] text-[0.625rem] font-bold disabled:opacity-60"
+                  style={{ color: actif ? "#fff" : "var(--color-muted)" }}
+                >
+                  {actif && (
+                    <m.span
+                      layoutId="etat-chauffeur"
+                      transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+                      className="absolute inset-0 rounded-[11px]"
+                      style={{ background: etat.teinte }}
+                    />
+                  )}
+                  <span className="relative">{etat.libelle}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Le compteur de places n'apparaît que quand il veut dire quelque
+              chose : afficher « 0 place » à un chauffeur qui se déclare libre
+              seul dans sa voiture serait une question sans objet. */}
+          {statut === "places" && (
+            <m.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
+              className="flex items-center gap-2 overflow-hidden"
+            >
+              <p className="min-w-0 flex-1 text-[0.65625rem] text-[var(--color-muted)]">
+                {t.taxi.seatsLabel}
+              </p>
+
+              <div className="flex flex-none items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => ajusterPlaces(-1)}
+                  disabled={pending || (places ?? 0) <= 0}
+                  aria-label="−"
+                  className="press flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-field)] text-[0.9375rem] font-bold text-[var(--color-ink)] disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="min-w-[26px] text-center text-[0.875rem] font-bold tabular-nums text-[var(--color-ink)]">
+                  {places ?? "—"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => ajusterPlaces(1)}
+                  disabled={pending || (places ?? 0) >= 8}
+                  aria-label="+"
+                  className="press flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--color-field)] text-[0.9375rem] font-bold text-[var(--color-ink)] disabled:opacity-40"
+                >
+                  +
+                </button>
+              </div>
+            </m.div>
+          )}
+
+          {/*
+            La phrase qui répond à la question que tout chauffeur se pose.
+
+            Elle vaut mieux qu'un long réglage : elle dit que fermer
+            l'application ne le retire pas de la carte, ce qui est précisément ce
+            que l'ancien comportement faisait sans le dire.
+          */}
+          <p className="text-[0.59375rem] leading-[1.5] text-[var(--color-faint)]">
+            {t.taxi.statusKeptNote}
+          </p>
         </Card>
       )}
 
       {driver && (
-        <Button tone={sharing ? "outline" : "primary"} onClick={onShare} disabled={sharing}>
-          {sharing ? t.taxi.positionShared : t.taxi.sharePosition}
-        </Button>
+        <div className="flex flex-col gap-[6px]">
+          <Button tone={sharing ? "outline" : "primary"} onClick={onShare} disabled={sharing}>
+            {sharing ? t.taxi.positionShared : t.taxi.sharePosition}
+          </Button>
+
+          {/*
+            Dire la limite plutôt que la laisser découvrir.
+
+            Aucun navigateur ne permet de relever le GPS application fermée : ni
+            service worker, ni API d'arrière-plan. Un chauffeur qui croirait le
+            contraire penserait que l'application est cassée quand sa position
+            cesse de bouger. Autant l'écrire, et préciser que son statut, lui,
+            ne bouge pas.
+          */}
+          <p className="px-1 text-[0.5625rem] leading-[1.5] text-[var(--color-faint)]">
+            {t.taxi.gpsBackgroundNote}
+          </p>
+        </div>
       )}
 
       <Card className="p-3">
@@ -206,7 +402,7 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
             value={plate}
             onChange={(e) => setPlate(e.target.value)}
             placeholder={t.taxi.driverPlate}
-            className={FIELD}
+            className={cx(FIELD)}
           />
 
           {error && (

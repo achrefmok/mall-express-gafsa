@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
@@ -6,6 +7,7 @@ import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { DriverConsole } from "@/components/taxi/driver-console";
 import { DriverInbox } from "@/components/taxi/driver-inbox";
+import { DriverRequests } from "@/components/taxi/driver-requests";
 
 export const metadata: Metadata = {
   title: "Espace chauffeur",
@@ -31,7 +33,16 @@ export default async function DriverPage() {
 
   const { data: driver } = await supabase
     .from("taxi_drivers")
-    .select("display_name, phone, vehicle, plate, is_available, is_approved, position_updated_at")
+    /*
+      Toutes les colonnes, et non une liste.
+
+      Les migrations sont collées à la main dans l'éditeur SQL de Supabase :
+      nommer `status` ou `seats_free` ferait échouer la requête *entière* tant
+      que le DDL n'est pas passé, et le chauffeur perdrait l'accès à son espace
+      pour une colonne qu'il n'utilise pas encore. `*` rend le tout indifférent
+      à l'ordre des deux opérations.
+    */
+    .select("*")
     .eq("id", profile.id)
     .maybeSingle();
 
@@ -47,6 +58,22 @@ export default async function DriverPage() {
       <TopBar title={t.taxi.driverSpace} back="/taxi" />
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
+        {/*
+          Les demandes de course passent avant tout le reste.
+
+          C'est ici qu'atterrit la notification, et un chauffeur qui l'ouvre au
+          feu rouge a quelques secondes : la course qu'on lui propose doit être
+          la première chose sous son pouce, pas quelque chose à chercher sous sa
+          fiche d'immatriculation.
+
+          `Suspense` parce que le composant lit le paramètre d'adresse laissé
+          par la notification ; sans lui, la page entière basculerait en rendu
+          dynamique côté client.
+        */}
+        <Suspense fallback={null}>
+          <DriverRequests driverId={profile.id} />
+        </Suspense>
+
         <DriverConsole initial={driver} />
 
         {/*

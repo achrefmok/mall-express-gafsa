@@ -6,13 +6,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { usePoll } from "@/lib/use-poll";
-import { distanceMeters, isPositionFresh, positionPlausible } from "@/lib/geo";
+import { distanceMeters, positionPlausible } from "@/lib/geo";
+import { presenceDe } from "@/lib/taxi-presence";
 import { itineraire, type Itineraire } from "@/lib/routing";
 import { compatibilite, type Point } from "@/lib/taxi-match";
 import { monogram } from "@/lib/format";
 import { EmptyState } from "@/components/ui/primitives";
 import { TripPanel, type Champ, type LieuChoisi } from "./trip-panel";
 import { DriverChat } from "./driver-chat";
+import { RideRequest } from "./ride-request";
 import { ClientThreads } from "./client-threads";
 import { DriverList, type Filtre, type LigneChauffeur } from "./driver-list";
 import type { DriverPin, MapLabels, MapPoint } from "./driver-map";
@@ -289,8 +291,20 @@ export function TaxiClient({
   const lignes: LigneChauffeur[] = useMemo(() => {
     return drivers
       .map((d) => {
-        const fraiche = d.lat !== null && d.lng !== null && isPositionFresh(d.position_updated_at);
-        const point: Point | null = fraiche ? { lat: d.lat!, lng: d.lng! } : null;
+        /*
+          L'état vient de ce que le chauffeur a déclaré, plus de l'âge de sa
+          position.
+
+          C'était le défaut central de cet écran : un chauffeur qui fermait
+          l'application disparaissait au bout de dix minutes, quoi qu'il ait
+          déclaré. On sépare désormais ce qu'il décide — libre, des places,
+          occupé — de ce qu'on mesure, sa position, qui vieillit et qu'on date
+          honnêtement.
+        */
+        const presence = presenceDe(d);
+        const point: Point | null = presence.cartographiable
+          ? { lat: d.lat!, lng: d.lng! }
+          : null;
 
         const libreDans =
           d.free_at != null
@@ -302,13 +316,14 @@ export function TaxiClient({
           nom: d.display_name,
           telephone: d.phone,
           vehicule: [d.vehicle, d.plate].filter(Boolean).join(" · ") || null,
-          libre: d.is_available,
+          libre: presence.statut === "libre",
           distance: point && depart ? distanceMeters(point, depart) : null,
           libreDans,
-          placesLibres: d.seats_free ?? null,
+          placesLibres: presence.places,
           prendEnRoute: d.takes_along === true,
-          compat: compatibilite(point, trajet, d.is_available),
-          positionConnue: fraiche,
+          compat: compatibilite(point, trajet, presence.joignable),
+          positionConnue: presence.cartographiable,
+          presence,
         };
       })
       /*
@@ -332,23 +347,38 @@ export function TaxiClient({
   const pins: DriverPin[] = useMemo(
     () =>
       drivers
-        .filter((d) => d.lat !== null && d.lng !== null && isPositionFresh(d.position_updated_at))
-        .map((d) => ({
-          id: d.id,
-          name: d.display_name,
-          lat: d.lat!,
-          lng: d.lng!,
-          available: d.is_available,
-          detail: [d.vehicle, d.plate].filter(Boolean).join(" · ") || null,
-          phone: d.phone,
-          initials: monogram(d.display_name),
-          selected: d.id === selection,
-          caption: d.is_available
-            ? t.taxi.free
-            : d.takes_along === true && (d.seats_free ?? 0) > 0
-              ? t.taxi.filterSeats
-              : t.taxi.busy,
-        })),
+        /*
+          Seuls ceux dont on sait encore où ils sont.
+
+          Un chauffeur reste dans la liste et reste appelable même sans position
+          récente — c'est toute la différence entre « je ne sais pas où il est »
+          et « il n'est pas là ». Mais on ne pose pas de point sur une carte pour
+          une position de la veille : un point est une affirmation.
+        */
+        .filter((d) => presenceDe(d).cartographiable)
+        .map((d) => {
+          const presence = presenceDe(d);
+
+          return {
+            id: d.id,
+            name: d.display_name,
+            lat: d.lat!,
+            lng: d.lng!,
+            available: presence.joignable,
+            detail: [d.vehicle, d.plate].filter(Boolean).join(" · ") || null,
+            phone: d.phone,
+            initials: monogram(d.display_name),
+            selected: d.id === selection,
+            caption:
+              presence.statut === "libre"
+                ? t.taxi.free
+                : presence.statut === "places"
+                  ? presence.places === null
+                    ? t.taxi.statusSeats
+                    : t.taxi.seatsLeft.replace("{n}", String(presence.places))
+                  : t.taxi.busy,
+          };
+        }),
     [drivers, selection, t],
   );
 
@@ -443,6 +473,28 @@ export function TaxiClient({
               lequel rouvrir. Le bloc disparaît de lui-même quand il n'y a rien.
             */}
             <ClientThreads clientId={clientId} selection={selection} onOuvrir={setSelection} />
+
+            {/*
+              Demander la course avant d'en discuter.
+
+              Un message suppose que le chauffeur peut lire et répondre ; au
+              volant, il ne le peut pas. La demande, elle, fait sonner son
+              téléphone même application fermée et se répond d'un doigt — c'est
+              le canal le plus sûr, et il passe donc en premier. La discussion
+              reste juste en dessous pour négocier le prix.
+            */}
+            {choisi && (
+              <RideRequest
+                key={`demande-${choisi.id}`}
+                driverId={choisi.id}
+                clientId={clientId}
+                depart={depart}
+                departNom={departNom}
+                destination={destination}
+                destinationNom={destination?.nom ?? null}
+                presence={choisi.presence}
+              />
+            )}
 
             <AnimatePresence>
               {choisi && (

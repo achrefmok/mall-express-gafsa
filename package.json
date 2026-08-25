@@ -22,7 +22,8 @@
     "prod:check": "node scripts/check-production.mjs",
     "check:variants": "node scripts/check-variants.mjs",
     "check:recolor": "node scripts/check-recolor.mjs",
-    "check:taxi": "node scripts/check-taxi.mjs"
+    "check:taxi": "node scripts/check-taxi.mjs",
+    "check:presence": "node scripts/check-presence.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

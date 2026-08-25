@@ -23,6 +23,7 @@ const HUE: Record<NotificationKind, number> = {
   loyalty: 45,
   city_alert: 350,
   referral: 70,
+  taxi_request: 195,
 };
 
 const MONOGRAM: Record<NotificationKind, string> = {
@@ -35,6 +36,7 @@ const MONOGRAM: Record<NotificationKind, string> = {
   loyalty: "PT",
   city_alert: "!",
   referral: "+2",
+  taxi_request: "TX",
 };
 
 export function MarkAllRead({ count }: { count: number }) {

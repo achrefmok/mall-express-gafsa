@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { format } from "@/lib/i18n/format";
 import { cx, monogram } from "@/lib/format";
 import { formatDistance, type Compatibilite } from "@/lib/taxi-match";
+import type { Presence } from "@/lib/taxi-presence";
 import { Avatar } from "@/components/ui/primitives";
 
 /**
@@ -38,6 +39,8 @@ export interface LigneChauffeur {
   prendEnRoute: boolean;
   compat: Compatibilite | null;
   positionConnue: boolean;
+  /** Ce que le chauffeur a déclaré, et l'âge de sa dernière position. */
+  presence: Presence;
 }
 
 export type Filtre = "tous" | "libres" | "places";
@@ -286,41 +289,72 @@ function Etat({ ligne }: { ligne: LigneChauffeur }) {
   const { t } = useI18n();
 
   /*
-    Trois états, et non deux.
+    Ce que le chauffeur a déclaré, et rien d'autre.
 
-    « Libre » et « en course » décrivent ce que fait le chauffeur ; ils ne disent
-    rien de la question préalable — est-il seulement joignable. Un compte marqué
-    disponible dont le téléphone n'a rien publié depuis trois jours s'affichait
-    en vert : le client appelait dans le vide. Sans position fraîche, l'état
-    honnête est « hors ligne », et c'est celui-là qui prime.
+    Cette pastille affichait « hors ligne » dès que la position datait de plus
+    de dix minutes. Le raisonnement paraissait prudent et il était faux : un
+    chauffeur ferme l'application en démarrant, et se retrouvait donc déclaré
+    injoignable alors qu'il attendait un client. Le statut vient maintenant de
+    sa décision, que le serveur conserve ; l'âge de la position se dit à côté,
+    en petit, sans effacer personne.
   */
-  const horsLigne = !ligne.positionConnue;
+  const { statut, places, precision } = ligne.presence;
 
-  const texte = horsLigne
-    ? t.taxi.offline
-    : ligne.libre
-      ? t.taxi.freeNowState
-      : ligne.libreDans !== null
-        ? format(t.taxi.busyUntil, { n: ligne.libreDans })
-        : t.taxi.busyUnknown;
+  const texte =
+    statut === "hors_ligne"
+      ? t.taxi.offline
+      : statut === "libre"
+        ? t.taxi.freeNowState
+        : statut === "places"
+          ? places === null
+            ? t.taxi.statusSeats
+            : format(t.taxi.seatsLeft, { n: places })
+          : ligne.libreDans !== null
+            ? format(t.taxi.busyUntil, { n: ligne.libreDans })
+            : t.taxi.busyUnknown;
+
+  const ton =
+    statut === "hors_ligne"
+      ? "bg-[var(--color-field)] text-[var(--color-faint)]"
+      : statut === "libre"
+        ? "bg-[rgba(47,125,93,0.1)] text-[var(--color-ok,#2f7d5d)]"
+        : statut === "places"
+          ? "bg-[rgba(37,99,168,0.11)] text-[#2563a8]"
+          : "bg-[rgba(184,121,31,0.12)] text-[#8a5a12]";
 
   return (
-    <span
-      className={cx(
-        "flex items-center gap-[6px] rounded-[10px] px-[9px] py-[6px] text-[0.59375rem] font-semibold",
-        horsLigne
-          ? "bg-[var(--color-field)] text-[var(--color-faint)]"
-          : ligne.libre
-            ? "bg-[rgba(47,125,93,0.1)] text-[var(--color-ok,#2f7d5d)]"
-            : "bg-[rgba(184,121,31,0.12)] text-[#8a5a12]",
-      )}
-    >
+    <span className="flex min-w-0 flex-col items-start gap-[3px]">
       <span
-        aria-hidden
-        className="h-[5px] w-[5px] flex-none rounded-full"
-        style={{ background: "currentColor" }}
-      />
-      <span className="truncate">{texte}</span>
+        className={cx(
+          "flex max-w-full items-center gap-[6px] rounded-[10px] px-[9px] py-[6px] text-[0.59375rem] font-semibold",
+          ton,
+        )}
+      >
+        <span
+          aria-hidden
+          className="h-[5px] w-[5px] flex-none rounded-full"
+          style={{ background: "currentColor" }}
+        />
+        <span className="truncate">{texte}</span>
+      </span>
+
+      {/*
+        La fraîcheur de la position, dite en clair et à sa juste place.
+
+        Elle informe sans décider : un point vieux d'une heure situe encore un
+        quartier, et c'est au client de juger s'il s'y fie. Rien ne s'affiche
+        quand la position est fraîche — l'absence de mention est déjà la bonne
+        nouvelle.
+      */}
+      {statut !== "hors_ligne" && precision !== "directe" && (
+        <span className="truncate text-[0.5rem] text-[var(--color-faint)]">
+          {precision === "recente"
+            ? t.taxi.posRecent
+            : precision === "approximative"
+              ? t.taxi.posApprox
+              : t.taxi.posUnknown}
+        </span>
+      )}
     </span>
   );
 }

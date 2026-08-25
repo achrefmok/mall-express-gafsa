@@ -56,18 +56,40 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
 
-    const [expired, refreshed] = await Promise.all([
+    const [expired, refreshed, courses] = await Promise.all([
       supabase.rpc("expire_stale_deals"),
       supabase.rpc("refresh_shops_open_state"),
+      /*
+        Les demandes de course échues, et les déclarations trop vieilles.
+
+        Le navigateur écarte déjà une demande périmée à l'affichage — son
+        échéance est dans la ligne, il suffit de la lire. Ce passage-ci entérine
+        la chose en base, pour que l'historique ne garde pas des demandes
+        éternellement « en attente », et retire les chauffeurs déclarés libres
+        depuis plus de douze heures.
+      */
+      supabase.rpc("expire_taxi_requests"),
     ]);
 
     if (expired.error) throw new Error(expired.error.message);
     if (refreshed.error) throw new Error(refreshed.error.message);
 
+    /*
+      L'échec du taxi n'arrête pas la maintenance.
+
+      La fonction n'existe que si la migration a été collée, et elle l'est à la
+      main dans l'éditeur SQL de Supabase. Faire échouer toute la tâche
+      périodique pour cette raison priverait les bons plans de leur expiration
+      et les boutiques de leur état d'ouverture — une panne bien plus large que
+      celle qu'on signalerait.
+    */
+    if (courses.error) console.warn("Expiration des courses ignorée", courses.error.message);
+
     return NextResponse.json({
       ok: true,
       expiredDeals: expired.data ?? 0,
       refreshedShops: refreshed.data ?? 0,
+      expiredRides: courses.error ? null : (courses.data ?? 0),
       at: new Date().toISOString(),
     });
   } catch (cause) {

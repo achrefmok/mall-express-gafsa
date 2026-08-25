@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { grantDriverAccess, revokeDriverAccess, setDriverApproval } from "@/app/actions/taxi";
 import { Button, Card, Tag, fieldClass } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
+import { presenceDe } from "@/lib/taxi-presence";
+import { timeAgo } from "@/lib/format";
 
 export interface AdminDriver {
   id: string;
@@ -14,6 +16,15 @@ export interface AdminDriver {
   plate: string | null;
   is_approved: boolean;
   is_available: boolean;
+  /* Ajoutées par la migration de présence, d'où l'optionnel : `presenceDe`
+     retombe sur `is_available` tant que le DDL n'est pas collé. */
+  status?: string | null;
+  seats_free?: number | null;
+  lat?: number | null;
+  lng?: number | null;
+  position_updated_at?: string | null;
+  heading_lat?: number | null;
+  heading_lng?: number | null;
 }
 
 /** Une ligne de chauffeur, approuvable ou révocable. */
@@ -28,6 +39,34 @@ export function DriverRow({ driver }: { driver: AdminDriver }) {
     });
   }
 
+  const presence = presenceDe(driver);
+
+  /*
+    Une ligne d'état honnête, y compris dans ce qu'elle ne sait pas.
+
+    « Position inconnue » est une information ; une position affichée sans son
+    âge en serait une fausse. Un chauffeur peut être parfaitement disponible et
+    n'avoir jamais autorisé le GPS — l'écran doit pouvoir le dire sans le faire
+    passer pour absent.
+  */
+  const etat = [
+    presence.statut === "libre"
+      ? "libre"
+      : presence.statut === "places"
+        ? presence.places === null
+          ? "des places"
+          : `${presence.places} place(s)`
+        : presence.statut === "occupe"
+          ? "occupé"
+          : "hors ligne",
+    presence.positionConnue && driver.position_updated_at
+      ? `position ${timeAgo(driver.position_updated_at)}`
+      : "position inconnue",
+    driver.heading_lat != null && driver.heading_lng != null ? "destination déclarée" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <Card className="flex items-center gap-[10px] p-3">
       <div className="min-w-0 flex-1">
@@ -39,6 +78,17 @@ export function DriverRow({ driver }: { driver: AdminDriver }) {
           {driver.vehicle && ` · ${driver.vehicle}`}
           {driver.plate && ` · ${driver.plate}`}
         </p>
+
+        {/*
+          Ce que l'administration ne voyait pas.
+
+          Un chauffeur approuvé n'était qu'un nom et un numéro ; impossible de
+          savoir, depuis cet écran, s'il travaillait, où il se trouvait, ni s'il
+          restait des places dans sa voiture. C'est pourtant la première question
+          qu'on se pose quand un client appelle pour se plaindre de n'avoir
+          trouvé personne.
+        */}
+        <p className="truncate text-[0.5625rem] text-[var(--color-faint)]">{etat}</p>
       </div>
 
       <Tag tone={driver.is_approved ? "tinted" : "live"}>
