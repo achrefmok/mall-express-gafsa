@@ -10,6 +10,7 @@ import { formatCount, formatPrice, timeAgo } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, Placeholder, SectionTitle, Tag } from "@/components/ui/primitives";
 import { GearIcon } from "@/components/ui/icons";
+import { NewOrdersWatcher } from "@/components/vendor/new-orders-watcher";
 
 export const metadata: Metadata = {
   title: "Ma boutique",
@@ -85,6 +86,16 @@ export default async function VendorDashboard() {
       />
 
       <div className="no-sb flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-[14px] pb-4">
+        {/*
+          Une commande qui arrive pendant qu'on regarde l'écran.
+
+          La notification poussée couvre l'application fermée ; elle ne
+          s'affiche justement pas quand l'écran est au premier plan. C'est
+          l'autre moitié — et un vendeur au comptoir ne rafraîchit pas sa page
+          toutes les deux minutes pour vérifier.
+        */}
+        <NewOrdersWatcher shopId={shop.id} />
+
         {/* ─── Bannière ─────────────────────────────────────────────── */}
         <div className="relative flex-none overflow-hidden rounded-[18px]">
           {shop.banner_url ? (

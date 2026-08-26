@@ -1,4 +1,5 @@
-import type { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { createClient } from "@/lib/supabase/server";
 import { intervalleDe, lireSegment } from "@/lib/product-url";
 
 /**
@@ -29,11 +30,17 @@ import { intervalleDe, lireSegment } from "@/lib/product-url";
  *
  * Le cas le plus fréquent ne coûte rien : un identifiant complet est reconnu
  * sans toucher à la base.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Pourquoi elle est mise en cache
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Elle est appelée trois fois par ouverture de fiche : par la disposition, qui
+ * décide s'il faut répondre 404 ; par `generateMetadata` ; puis par la page.
+ * Le cache de React les ramène à un seul appel pour la durée de la requête,
+ * exactement comme `getProfile` ailleurs dans le projet.
  */
-export async function identifiantProduit(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  segment: string,
-): Promise<string | null> {
+export const identifiantProduit = cache(async (segment: string): Promise<string | null> => {
   const cle = lireSegment(segment);
   if (cle.complet) return cle.complet;
 
@@ -52,6 +59,8 @@ export async function identifiantProduit(
     les huit mêmes premiers caractères sont improbables mais pas impossibles, et
     une fiche qui refuse de s'ouvrir vaut moins que la première des deux.
   */
+  const supabase = await createClient();
+
   const { data } = await supabase
     .from("products")
     .select("id")
@@ -60,4 +69,4 @@ export async function identifiantProduit(
     .limit(1);
 
   return data?.[0]?.id ?? null;
-}
+});

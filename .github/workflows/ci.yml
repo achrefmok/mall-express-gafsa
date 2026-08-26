@@ -97,7 +97,29 @@ jobs:
       - name: Build de production
         run: npx next build
 
+      # Les modules transverses que les scripts ci-dessus ne couvrent pas :
+      # mise en forme des prix, des noms, des classes.
+      - name: Tests unitaires
+        run: npm test
+
       # Après la construction, parce que le budget se mesure sur ce qui sera
       # réellement envoyé — pas sur une estimation.
       - name: Budget de performance
         run: npm run check:budget
+
+      # ── De bout en bout ─────────────────────────────────────────────────
+      #
+      # La seule étape qui vérifie que l'application *s'affiche*. Trois des
+      # défauts trouvés récemment compilaient parfaitement et ne se voyaient
+      # qu'à l'écran : un fournisseur d'animations absent, une photo qui
+      # débordait sous son texte, un 404 servi en 200.
+      #
+      # Elle passe après la construction, qu'elle réutilise.
+
+      - name: Navigateur pour les contrôles de bout en bout
+        run: npx playwright install --with-deps chromium
+
+      - name: Parcours de bout en bout
+        run: npm run e2e
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

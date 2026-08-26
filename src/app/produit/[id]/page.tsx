@@ -42,7 +42,7 @@ export async function generateMetadata({
   const { id } = await params;
   const supabase = await createClient();
 
-  const productId = await identifiantProduit(supabase, id);
+  const productId = await identifiantProduit(id);
   if (!productId) return { title: "Produit introuvable" };
 
   const { data } = await supabase
@@ -86,7 +86,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     L'adresse peut être lisible ou porter l'identifiant nu ; les deux mènent
     ici. Un identifiant complet est reconnu sans toucher à la base.
   */
-  const productId = await identifiantProduit(supabase, id);
+  const productId = await identifiantProduit(id);
   if (!productId) notFound();
 
   const { data: product } = await supabase

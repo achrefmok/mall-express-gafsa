@@ -41,3 +41,8 @@ deno.lock
 
 # Bytecode Python des scripts d'outillage (.claude/skills)
 __pycache__/
+
+# Playwright : rapports et traces d'exécution, régénérés à chaque lancement.
+/test-results/
+/playwright-report/
+/blob-report/
