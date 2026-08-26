@@ -23,8 +23,28 @@
 
 name: Déploiement
 
+# ── Le déploiement attend que les contrôles soient verts ────────────────
+#
+# Il partait auparavant sur `push`, en parallèle de la CI : une poussée qui
+# cassait les types, le style ou l'un des sept contrôles métier partait quand
+# même en production, et l'échec s'affichait à côté du déploiement réussi.
+#
+# `workflow_run` inverse l'ordre : ce travail ne démarre qu'une fois « Contrôles »
+# terminé, et la condition `conclusion == 'success'` ci-dessous refuse tout ce
+# qui n'est pas vert.
+#
+# ATTENTION — si vous utilisez l'intégration Git de Vercel plutôt que ce
+# fichier, ce garde-fou ne s'applique pas : Vercel déploie de son côté, sans
+# rien savoir de GitHub Actions. L'équivalent s'y règle dans
+# Settings → Git → Ignored Build Step, avec la commande :
+#
+#   npx tsc --noEmit && npm run check
+#
+# Une commande qui échoue y annule la construction.
 on:
-  push:
+  workflow_run:
+    workflows: ["Contrôles"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -36,6 +56,12 @@ jobs:
   production:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    # Un déclenchement manuel reste possible — c'est la porte de sortie quand il
+    # faut publier un correctif urgent en connaissance de cause.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Les secrets sont-ils configurés ?

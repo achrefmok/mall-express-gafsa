@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireAdmin, requireProfile } from "./_helpers";
 import type { Database } from "@/types/database";
+import { NUMERO_INVALIDE, numeroValide } from "@/lib/phone";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Actions « taxi ».
@@ -28,7 +29,7 @@ export async function registerDriver(input: {
   const phone = input.phone.trim();
 
   if (displayName.length < 2) return fail("Nom trop court");
-  if (phone.length < 6) return fail("Numéro de téléphone invalide");
+  if (!numeroValide(phone)) return fail(NUMERO_INVALIDE);
 
   const { error: writeError } = await supabase.from("taxi_drivers").upsert({
     id: profile.id,
@@ -248,7 +249,7 @@ export async function grantDriverAccess(input: {
   const phone = input.phone.trim();
 
   if (displayName.length < 2) return fail("Nom trop court");
-  if (phone.length < 6) return fail("Numéro de téléphone requis");
+  if (!numeroValide(phone)) return fail(NUMERO_INVALIDE);
 
   const { error: writeError } = await supabase.from("taxi_drivers").upsert({
     id: input.profileId,

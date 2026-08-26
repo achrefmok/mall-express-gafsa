@@ -28,22 +28,50 @@ import { createClient } from "@/lib/supabase/client";
 
 export const MAX_VIEWERS = 8;
 
-/** Serveurs ICE. STUN public par défaut ; TURN si configuré (NAT symétrique). */
-function iceServers(): RTCIceServer[] {
-  const servers: RTCIceServer[] = [
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
-  ];
+/** Le STUN public suffit à la grande majorité des connexions. */
+const STUN: RTCIceServer[] = [
+  { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+];
 
-  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
-  if (turnUrl) {
-    servers.push({
-      urls: turnUrl,
-      username: process.env.NEXT_PUBLIC_TURN_USERNAME,
-      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+/*
+  Les identifiants TURN viennent du serveur, et expirent.
+
+  Ils étaient lus dans `NEXT_PUBLIC_TURN_USERNAME` et
+  `NEXT_PUBLIC_TURN_CREDENTIAL` : le préfixe dit ce qui se passait, ces valeurs
+  partaient en clair dans le paquet JavaScript de tout le monde, et ne
+  changeaient jamais. Un serveur TURN se paie à la bande passante — un
+  identifiant permanent trouvé dans un fichier public est un relais vidéo
+  gratuit pour qui le ramasse, facturé à son propriétaire.
+
+  `/api/turn` en délivre désormais qui valent six heures, dérivés d'un secret
+  qui ne quitte pas le serveur, et seulement à quelqu'un de connecté.
+
+  La réponse est gardée en mémoire pour la durée de la page : un direct ouvre
+  jusqu'à huit connexions, et il n'y a aucune raison de redemander huit fois.
+*/
+let turnEnCache: Promise<RTCIceServer[]> | null = null;
+
+function chargerTurn(): Promise<RTCIceServer[]> {
+  turnEnCache ??= fetch("/api/turn")
+    .then((r) => (r.ok ? r.json() : { iceServers: [] }))
+    .then((data: { iceServers?: RTCIceServer[] }) => data.iceServers ?? [])
+    .catch(() => {
+      /*
+        Un échec ne casse rien.
+
+        Sans relais, la connexion directe reste possible — c'est le cas courant.
+        On oublie le cache pour retenter à la prochaine connexion, plutôt que de
+        figer un échec passager pour toute la session.
+      */
+      turnEnCache = null;
+      return [];
     });
-  }
 
-  return servers;
+  return turnEnCache;
+}
+
+async function iceServers(): Promise<RTCIceServer[]> {
+  return [...STUN, ...(await chargerTurn())];
 }
 
 type SignalPayload =
@@ -173,7 +201,7 @@ export async function startBroadcast(liveId: string): Promise<BroadcasterHandle>
       return;
     }
 
-    const pc = new RTCPeerConnection({ iceServers: iceServers() });
+    const pc = new RTCPeerConnection({ iceServers: await iceServers() });
     peers.set(viewerId, pc);
     pendingIce.set(viewerId, []);
     notifyCount();
@@ -369,7 +397,7 @@ export function joinBroadcast(
     if (message.type === "offer" && message.to === peerId) {
       teardownPeer();
 
-      const connection = new RTCPeerConnection({ iceServers: iceServers() });
+      const connection = new RTCPeerConnection({ iceServers: await iceServers() });
       pc = connection;
 
       connection.ontrack = (event) => {

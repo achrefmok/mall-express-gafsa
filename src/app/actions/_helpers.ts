@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/database";
+import { signaler } from "@/lib/signal";
 
 /** Réponse uniforme des Server Actions : jamais de `throw` vers le client. */
 export type ActionResult<T = undefined> =
@@ -98,9 +99,25 @@ export function readableError(error: { message: string; code?: string } | null):
     case "42501":
       return "Vous n'avez pas les droits nécessaires";
     case "P0001":
+      /*
+        Les exceptions levées par nos propres fonctions SQL (`raise exception`)
+        sont rédigées en français, pour être lues : « Stock insuffisant »,
+        « Boutique fermée ». Elles sont donc les seules à passer telles quelles.
+      */
       return error.message;
     default:
-      return error.message || "Une erreur est survenue";
+      /*
+        Tout le reste est tu.
+
+        Un message PostgREST inconnu décrit la base : nom de colonne, nom de
+        contrainte, parfois la requête. Le renvoyer au navigateur donnait à
+        n'importe qui une carte du schéma, une erreur à la fois — et n'aidait
+        personne, ces messages étant en anglais et écrits pour un développeur.
+
+        Il part dans les journaux, où il sert vraiment.
+      */
+      signaler(error, { ou: "erreur de base non traduite", quoi: { code: error.code } });
+      return "Une erreur est survenue";
   }
 }
 

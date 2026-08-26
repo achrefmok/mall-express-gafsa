@@ -28,12 +28,17 @@ const ts = (await import(pathToFileURL(path.resolve("node_modules/typescript/lib
 const cache = path.join(os.tmpdir(), `securite-${process.pid}`);
 fs.mkdirSync(cache, { recursive: true });
 
-const js = ts.transpileModule(fs.readFileSync("src/lib/json-ld.ts", "utf8"), {
-  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-}).outputText;
-fs.writeFileSync(path.join(cache, "json-ld.mjs"), js);
+for (const nom of ["json-ld", "phone"]) {
+  const js = ts.transpileModule(fs.readFileSync(`src/lib/${nom}.ts`, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  fs.writeFileSync(path.join(cache, `${nom}.mjs`), js);
+}
 
 const { jsonLd } = await import(pathToFileURL(path.join(cache, "json-ld.mjs")).href);
+const { numeroValide, numeroNormalise, numeroLisible, numeroAppelable } = await import(
+  pathToFileURL(path.join(cache, "phone.mjs")).href
+);
 
 let ko = 0;
 const check = (nom, reel, attendu) => {
@@ -154,6 +159,66 @@ for (const fichier of sources("src")) {
 
 if (fautifs.length > 0) for (const f of fautifs) console.log("       ", f);
 check("aucun JSON.stringify nu dans une balise", fautifs, []);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Les numéros de téléphone
+   ═══════════════════════════════════════════════════════════════════════ */
+
+console.log("\nNuméros de téléphone");
+
+/*
+  La règle était `phone.length < 6`, et rien d'autre.
+
+  Elle acceptait « 123456 » et « abcdef » — aux endroits qui comptent le plus,
+  puisque le numéro est le seul moyen de joindre un chauffeur ou un dépanneur.
+  Un numéro faux ne se remarque pas à la saisie : il se remarque le soir où
+  quelqu'un cherche un plombier.
+*/
+for (const [saisie, attendu] of [
+  ["98123456", true],
+  ["98 123 456", true],
+  ["+216 98 123 456", true],
+  ["0021698123456", true],
+  ["21698123456", true],
+  ["71.234.567", true],
+  ["(98) 123-456", true],
+]) {
+  check(`« ${saisie} » est accepté`, numeroValide(saisie), attendu);
+}
+
+for (const saisie of [
+  "123456",
+  "abcdef",
+  "981234",
+  "981234567",
+  "+33 6 12 34 56 78",
+  "00000000",
+  "",
+  null,
+]) {
+  check(`« ${saisie} » est refusé`, numeroValide(saisie), false);
+}
+
+check("un numéro se réduit à ses huit chiffres", numeroNormalise("+216 98 123 456"), "98123456");
+/*
+  « 21621621621 » est un vrai numéro : 216 puis 21621621, un mobile valide.
+  L'attente initiale de ce contrôle était fausse — le code avait raison.
+  Le vrai piège est ailleurs : un indicatif suivi de huit chiffres qui n'en
+  forment pas un numéro.
+*/
+check("l'indicatif retiré, le reste doit rester valide", numeroNormalise("21601234567"), null);
+check("un numéro trop court n'est pas rattrapé", numeroNormalise("2162162"), null);
+check("l'affichage groupe par deux puis trois", numeroLisible("98123456"), "98 123 456");
+check("le lien d'appel porte l'indicatif", numeroAppelable("98 123 456"), "+21698123456");
+
+/*
+  Ce qui est déjà en base ressort tel quel.
+
+  Des numéros saisis avant cette règle existent et ne sont pas tous conformes.
+  Les effacer à l'affichage serait pire : un numéro douteux reste appelable, une
+  chaîne vide ne l'est pas.
+*/
+check("un ancien numéro non conforme s'affiche quand même", numeroLisible("12345"), "12345");
 
 fs.rmSync(cache, { recursive: true, force: true });
 console.log(

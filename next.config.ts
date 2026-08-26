@@ -66,8 +66,20 @@ const securityHeaders = [
       "object-src 'none'",
       "form-action 'self'",
       isDev ? "frame-ancestors *" : "frame-ancestors 'self'",
-      // Next.js injecte des scripts inline hydratation/runtime
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net",
+      /*
+        `unsafe-inline` reste : Next injecte les scripts d'hydratation en ligne,
+        et rien ne permet de s'en passer sans nonce par requête — ce qui
+        supposerait un rendu dynamique de chaque page.
+
+        `unsafe-eval`, en revanche, ne sert qu'au développement : c'est le
+        rechargement à chaud qui évalue du code à la volée. Le laisser en
+        production offrait à un script injecté un outil qu'il n'aurait pas eu
+        autrement, pour aucun bénéfice — et c'est précisément l'écart qui aurait
+        aggravé l'évasion de balise trouvée sur les fiches produit.
+      */
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net"
+        : "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
       "style-src 'self' 'unsafe-inline'",
       // Cairo est servie depuis notre domaine via next/font : aucun hôte tiers.
       "font-src 'self' data:",

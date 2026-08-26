@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isSosTrade } from "@/lib/sos";
 import { done, fail, ok, readableError, requireAdmin, requireProfile } from "./_helpers";
+import { NUMERO_INVALIDE, numeroValide } from "@/lib/phone";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Actions « SOS ».
@@ -30,7 +31,7 @@ export async function registerProvider(input: {
   // lisible vaut mieux qu'une erreur Postgres remontée telle quelle.
   if (!isSosTrade(input.trade)) return fail("Métier inconnu");
   if (displayName.length < 2) return fail("Nom trop court");
-  if (phone.length < 6) return fail("Numéro de téléphone invalide");
+  if (!numeroValide(phone)) return fail(NUMERO_INVALIDE);
 
   const { error: writeError } = await supabase.from("sos_providers").upsert({
     id: profile.id,
@@ -146,7 +147,7 @@ export async function grantProviderAccess(input: {
 
   if (!isSosTrade(input.trade)) return fail("Métier inconnu");
   if (displayName.length < 2) return fail("Nom trop court");
-  if (phone.length < 6) return fail("Numéro de téléphone requis");
+  if (!numeroValide(phone)) return fail(NUMERO_INVALIDE);
 
   const { error: writeError } = await supabase.from("sos_providers").upsert({
     id: input.profileId,

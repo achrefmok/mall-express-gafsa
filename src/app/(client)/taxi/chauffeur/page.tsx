@@ -8,6 +8,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { DriverConsole } from "@/components/taxi/driver-console";
 import { DriverInbox } from "@/components/taxi/driver-inbox";
 import { DriverRequests } from "@/components/taxi/driver-requests";
+import { MotionProvider } from "@/components/ui/motion";
 
 export const metadata: Metadata = {
   title: "Espace chauffeur",
@@ -57,7 +58,18 @@ export default async function DriverPage() {
     <>
       <TopBar title={t.taxi.driverSpace} back="/taxi" />
 
-      <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
+      {/*
+        Sans ce fournisseur, rien de cet écran ne s'animait.
+
+        Les composants utilisent `m` — la version réduite de Framer Motion, qui
+        attend son moteur d'un `LazyMotion` placé au-dessus. Sans lui, tout
+        s'affiche au bon endroit et rien ne bouge : l'interrupteur à trois états
+        sautait d'une position à l'autre, les cartes de demande apparaissaient
+        d'un coup. Aucune erreur nulle part — la vue client, elle, avait son
+        fournisseur, ce qui laissait croire que tout marchait.
+      */}
+      <MotionProvider>
+        <div className="col-reading no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
         {/*
           Les demandes de course passent avant tout le reste.
 
@@ -84,7 +96,8 @@ export default async function DriverPage() {
           dans le vide.
         */}
         <DriverInbox driverId={profile.id} />
-      </div>
+        </div>
+      </MotionProvider>
     </>
   );
 }
