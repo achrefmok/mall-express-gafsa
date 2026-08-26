@@ -9,6 +9,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { Card, EmptyState, Placeholder, Tag } from "@/components/ui/primitives";
 import { CartIcon } from "@/components/ui/icons";
 import type { OrderStatus } from "@/types/database";
+import { OrderTimeline } from "@/components/orders/order-timeline";
 
 export const metadata: Metadata = {
   title: "Mes commandes",
@@ -127,6 +128,32 @@ export default async function OrdersPage({
                   </p>
                 </div>
               ))}
+
+              {/*
+                Le trajet, et non le seul état courant.
+
+                « À préparer » est juste et ne répond à aucune des questions
+                qu'on se pose en attendant : ce qui s'est déjà passé, ce qui
+                vient ensuite, si quelqu'un a seulement vu la commande. Une
+                étiquette dit un état, une frise dit un trajet — et c'est le
+                trajet qu'on attend.
+              */}
+              <div className="border-t border-[var(--color-hairline)] pt-[10px]">
+                <OrderTimeline
+                  status={order.status}
+                  delivery={order.delivery_method}
+                  libelles={{
+                    pending: t.orders.step.pending,
+                    to_prepare: t.orders.step.to_prepare,
+                    ready: t.orders.step.ready,
+                    shipped: t.orders.step.shipped,
+                    delivered: t.orders.step.delivered,
+                    deliveredPickup: t.orders.step.deliveredPickup,
+                    cancelled: t.orders.step.cancelled,
+                    cancelledNote: t.orders.step.cancelledNote,
+                  }}
+                />
+              </div>
 
               <div className="flex items-center justify-between border-t border-[var(--color-hairline)] pt-2">
                 <span className="text-[0.65625rem] text-[var(--color-muted)]">

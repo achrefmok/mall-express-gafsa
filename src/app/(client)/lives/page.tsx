@@ -8,6 +8,7 @@ import { formatCount, formatDateTime, formatPrice, monogram } from "@/lib/format
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, EmptyState, Placeholder, SectionTitle, Tag } from "@/components/ui/primitives";
 import { LiveDot } from "@/components/ui/icons";
+import { lienProduit } from "@/lib/product-url";
 
 export const metadata: Metadata = {
   title: "Ventes en direct des boutiques de Gafsa",
@@ -152,7 +153,7 @@ export default async function LivesPage() {
                       {articles.map((product) => (
                         <Link
                           key={product!.id}
-                          href={`/produit/${product!.id}`}
+                          href={lienProduit(product!)}
                           className="flex w-[92px] flex-none flex-col gap-1"
                         >
                           {product!.images?.[0] ? (

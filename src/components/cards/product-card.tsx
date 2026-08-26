@@ -10,6 +10,7 @@ import { Placeholder } from "@/components/ui/primitives";
 import { CartIcon, HeartIcon } from "@/components/ui/icons";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import type { AppLocale } from "@/types/database";
+import { lienProduit } from "@/lib/product-url";
 
 export interface ProductCardData {
   id: string;
@@ -174,7 +175,7 @@ export function ProductCard({
         */}
         {!soldOut && (
           <Link
-            href={`/produit/${product.id}`}
+            href={lienProduit(product)}
             aria-label={`${t.product.addToCart} — ${product.name}`}
             className="press absolute bottom-[-15px] start-1/2 flex h-[34px] w-[34px] -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-[var(--color-app)] bg-[var(--color-brand-fill)] text-white shadow-[0_10px_20px_rgba(109,75,143,0.36)] rtl:translate-x-1/2"
           >
@@ -190,7 +191,7 @@ export function ProductCard({
       </div>
 
       <Link
-        href={`/produit/${product.id}`}
+        href={lienProduit(product)}
         className={cx("block text-center", soldOut ? "pt-[10px]" : "pt-[22px]")}
       >
         <span className="line-clamp-2 block text-[0.71875rem] font-semibold text-[var(--color-ink)]">

@@ -15,6 +15,7 @@ import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsor
 import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
 import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
 import type { PracticalService } from "@/types/database";
+import { lienProduit } from "@/lib/product-url";
 
 export const metadata: Metadata = {
   title: "Mall Express Gafsa — boutiques, marketplace et services",
@@ -511,7 +512,7 @@ export default async function HomePage() {
                   )}
                 </div>
 
-                <Link href={`/produit/${promo.data.id}`} className="block px-2 pt-3 pb-1">
+                <Link href={lienProduit(promo.data)} className="block px-2 pt-3 pb-1">
                   <p className="text-[1rem] leading-[1.25] font-extrabold tracking-[-0.01875rem] text-[var(--color-ink)]">
                     {locale === "ar" && promo.data.name_ar ? promo.data.name_ar : promo.data.name}
                   </p>

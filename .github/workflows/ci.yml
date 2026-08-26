@@ -89,6 +89,11 @@ jobs:
       - name: Préparation des photos
         run: npm run check:upload
 
+      # Un lien partagé hier doit fonctionner demain : les fiches produit ont
+      # deux formes d'adresse, et l'ancienne circule depuis des mois.
+      - name: Stabilité des adresses
+        run: npm run check:url
+
       - name: Build de production
         run: npx next build
 

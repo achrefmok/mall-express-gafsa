@@ -28,7 +28,8 @@
     "check:securite": "node scripts/check-securite.mjs",
     "check:upload": "node scripts/check-upload.mjs",
     "check:budget": "node scripts/check-budget.mjs",
-    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload"
+    "check:url": "node scripts/check-url.mjs",
+    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload && npm run check:url"
   },
   "dependencies": {
     "@sentry/node": "^10.71.0",

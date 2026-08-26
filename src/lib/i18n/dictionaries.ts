@@ -62,6 +62,7 @@ const fr = {
     saving: "Enregistrement…",
     saved: "Enregistré",
     cancel: "Annuler",
+    send: "Envoyer",
     confirm: "Confirmer",
     edit: "Modifier",
     delete: "Supprimer",
@@ -191,6 +192,13 @@ const fr = {
     addView: "Ajouter une vue",
     tintReady: "Prête",
     sizes: "Tailles",
+    reviews: "Avis sur ce produit",
+    writeReview: "Donner mon avis",
+    editReview: "Modifier mon avis",
+    removeReview: "Retirer mon avis",
+    reviewPlaceholder: "Ce que vous en avez pensé (facultatif)",
+    noReviewsYet: "Aucun avis pour l'instant. Les avis viennent des personnes qui ont acheté ce produit.",
+    beFirstToReview: "Vous êtes le premier à pouvoir donner votre avis.",
   },
 
   /*
@@ -633,6 +641,19 @@ const fr = {
 
   orders: {
     title: "Mes commandes",
+    /* Les étapes de la frise. Elles disent une progression, là où `status`
+       nomme un état : « Commande reçue » et « En attente » décrivent le même
+       instant, mais l'un rassure et l'autre inquiète. */
+    step: {
+      pending: "Commande reçue",
+      to_prepare: "Le vendeur prépare votre commande",
+      ready: "Prête",
+      shipped: "En route vers vous",
+      delivered: "Livrée",
+      deliveredPickup: "Récupérée en boutique",
+      cancelled: "Commande annulée",
+      cancelledNote: "Contactez la boutique si vous n'attendiez pas cette annulation.",
+    },
     empty: "Aucune commande",
     justPlacedBody: "Le vendeur vient de la recevoir. Vous suivez son avancement ici.",
     status: {
@@ -854,6 +875,7 @@ const ar: Dictionary = {
     saving: "جاري الحفظ…",
     saved: "تم الحفظ",
     cancel: "إلغاء",
+    send: "إرسال",
     confirm: "تأكيد",
     edit: "تعديل",
     delete: "حذف",
@@ -983,6 +1005,13 @@ const ar: Dictionary = {
     addView: "إضافة صورة",
     tintReady: "جاهزة",
     sizes: "المقاسات",
+    reviews: "آراء حول هذا المنتج",
+    writeReview: "أضف رأيي",
+    editReview: "تعديل رأيي",
+    removeReview: "حذف رأيي",
+    reviewPlaceholder: "ما رأيك فيه؟ (اختياري)",
+    noReviewsYet: "لا توجد آراء بعد. تأتي الآراء ممن اشتروا هذا المنتج.",
+    beFirstToReview: "أنت أول من يمكنه إبداء رأيه.",
   },
 
   colorNames: {
@@ -1413,6 +1442,16 @@ const ar: Dictionary = {
 
   orders: {
     title: "طلباتي",
+    step: {
+      pending: "تم استلام الطلب",
+      to_prepare: "التاجر يحضّر طلبك",
+      ready: "جاهز",
+      shipped: "في الطريق إليك",
+      delivered: "تم التسليم",
+      deliveredPickup: "تم الاستلام من المتجر",
+      cancelled: "تم إلغاء الطلب",
+      cancelledNote: "اتصل بالمتجر إذا لم تكن تتوقع هذا الإلغاء.",
+    },
     empty: "لا توجد طلبات",
     justPlacedBody: "استلمها التاجر للتوّ. يمكنك متابعة تقدّمها من هنا.",
     status: {

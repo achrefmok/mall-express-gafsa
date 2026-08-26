@@ -1,4 +1,7 @@
 import sharp from "sharp";
+/* sharp 0.35 n'expose plus ses types comme espace de noms sur l'export par
+   défaut : ils s'importent nommément. */
+import type { Sharp, OutputInfo } from "sharp";
 
 /**
  * Refaire la photo d'un vêtement dans une autre couleur — le vêtement seul.
@@ -383,8 +386,8 @@ export async function recolorGarmentRaw(
   if (!teinteCible) return { ok: false, reason: "couleur-illisible" };
   const [hCible, sCible, lCible] = teinteCible;
 
-  let image: sharp.Sharp;
-  let pleine: { data: Buffer; info: sharp.OutputInfo };
+  let image: Sharp;
+  let pleine: { data: Buffer; info: OutputInfo };
 
   try {
     // `rotate()` sans argument applique l'orientation EXIF : sans lui, une photo

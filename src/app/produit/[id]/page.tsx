@@ -11,6 +11,10 @@ import { ProductGallery } from "@/components/products/product-gallery";
 import { VariantProvider } from "@/components/products/variant-context";
 import { ProductActions, ProductTopBar } from "./product-actions";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
+import { ProductReviews } from "@/components/products/product-reviews";
+import { fullName } from "@/lib/format";
+import { lienProduit } from "@/lib/product-url";
+import { identifiantProduit } from "./resoudre";
 
 /**
  * Écran 3 — fiche produit.
@@ -38,10 +42,13 @@ export async function generateMetadata({
   const { id } = await params;
   const supabase = await createClient();
 
+  const productId = await identifiantProduit(supabase, id);
+  if (!productId) return { title: "Produit introuvable" };
+
   const { data } = await supabase
     .from("products")
-    .select("name, description, price, images, shop:shops(name)")
-    .eq("id", id)
+    .select("id, name, description, price, images, shop:shops(name)")
+    .eq("id", productId)
     .maybeSingle();
 
   if (!data) return { title: "Produit introuvable" };
@@ -53,7 +60,14 @@ export async function generateMetadata({
     description:
       data.description ??
       `${data.name} à ${formatPrice(data.price)} chez ${data.shop?.name ?? "une boutique du mall de Gafsa"}.`,
-    alternates: { canonical: `/produit/${id}` },
+    /*
+      La canonique pointe la forme lisible, jamais celle qu'on a reçue.
+
+      Un même produit est atteignable par son identifiant nu — les anciens liens
+      — et par son adresse en toutes lettres. Sans canonique, un moteur de
+      recherche voit deux pages identiques et partage le crédit entre elles.
+    */
+    alternates: { canonical: lienProduit(data) },
     openGraph: {
       title,
       description: data.description ?? undefined,
@@ -67,6 +81,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { t, locale } = await getT();
   const supabase = await createClient();
+
+  /*
+    L'adresse peut être lisible ou porter l'identifiant nu ; les deux mènent
+    ici. Un identifiant complet est reconnu sans toucher à la base.
+  */
+  const productId = await identifiantProduit(supabase, id);
+  if (!productId) notFound();
 
   const { data: product } = await supabase
     .from("products")
@@ -88,7 +109,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
        shop:shops!inner(id, name, slug, logo_url, phone, mall_level, mall_unit, status, pickup_in_store, rating_sum, rating_count),
        category:categories(hue, name_fr, name_ar)`,
     )
-    .eq("id", id)
+    .eq("id", productId)
     .maybeSingle();
 
   if (!product || product.shop?.status !== "approved") notFound();
@@ -104,6 +125,53 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       .maybeSingle();
     isFavorite = Boolean(data);
   }
+
+  /*
+    Les avis de ce produit, et le droit d'en laisser un.
+
+    Trois lectures, lancées ensemble : la note d'une boutique qui vend cent
+    références ne dit rien de l'article qu'on regarde, et c'est pourtant tout ce
+    que la fiche affichait.
+
+    Le droit de noter se décide par l'achat — l'action serveur le revérifie de
+    toute façon, mais l'écran ne doit pas proposer un bouton dont on sait qu'il
+    sera refusé.
+  */
+  const [avisResultat, achatResultat] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id, rating, body, created_at, user_id, auteur:profiles(first_name, last_name)")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+
+    user
+      ? supabase
+          .from("order_items")
+          .select("id, order:orders!inner(user_id, status)")
+          .eq("product_id", productId)
+          .eq("order.user_id", user.id)
+          .neq("order.status", "cancelled")
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const avisBruts = avisResultat.data ?? [];
+
+  const avis = avisBruts.map((a) => ({
+    id: a.id,
+    rating: a.rating,
+    body: a.body,
+    created_at: a.created_at,
+    auteur: fullName(a.auteur) || t.taxi.aClient,
+    sien: user?.id === a.user_id,
+  }));
+
+  // `null` et non zéro : « 0 sur 5 » se lit comme une très mauvaise note, alors
+  // que personne n'a encore rien dit.
+  const moyenne =
+    avis.length > 0 ? avis.reduce((somme, a) => somme + a.rating, 0) / avis.length : null;
 
   const discount = percentOff(product.price, product.compare_at_price);
 
@@ -272,6 +340,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </a>
             )}
           </div>
+
+          <ProductReviews
+            productId={product.id}
+            avis={avis}
+            moyenne={moyenne}
+            peutNoter={Boolean(achatResultat.data)}
+          />
 
           <ProductActions
             product={{

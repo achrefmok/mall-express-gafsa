@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-url";
 import { createStaticClient } from "@/lib/supabase/server";
+import { lienProduit } from "@/lib/product-url";
 
 const base = siteUrl();
 
@@ -51,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       })),
       ...(products.data ?? []).map((product) => ({
-        url: `${base}/produit/${product.id}`,
+        url: `${base}${lienProduit(product)}`,
         lastModified: new Date(product.updated_at),
         changeFrequency: "weekly" as const,
         priority: 0.7,

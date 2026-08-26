@@ -17,6 +17,7 @@
  */
 
 import type { Instrumentation } from "next";
+import { signaler } from "@/lib/signal";
 
 export function register() {
   /*
@@ -36,6 +37,24 @@ export const onRequestError: Instrumentation.onRequestError = (
 ) => {
   try {
     const e = erreur as { message?: string; digest?: string; stack?: string };
+
+    /*
+      Sentry reçoit l'erreur avec son contexte de requête.
+
+      `signaler` s'occupe de l'envoi et de sa propre absence de DSN ; on lui
+      donne ici ce que seul ce crochet connaît — le chemin, la méthode, le
+      condensé que l'utilisateur voit sur sa page d'erreur.
+    */
+    signaler(erreur, {
+      ou: "requête serveur",
+      quoi: {
+        chemin: requete.path,
+        methode: requete.method,
+        digest: e?.digest,
+        routeur: contexte.routerKind,
+        type: contexte.routeType,
+      },
+    });
 
     console.error(
       "[mall-express:erreur]",
