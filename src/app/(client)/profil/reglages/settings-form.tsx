@@ -104,7 +104,7 @@ export function AccountSettingsForm({ profile }: { profile: Profile }) {
               tone="ink"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">Photo de profil</p>
+              <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">{t.common.profilePhoto}</p>
               <p className="text-[0.65625rem] text-[var(--color-muted)]">JPG ou PNG, 2 Mo maximum</p>
             </div>
             <button

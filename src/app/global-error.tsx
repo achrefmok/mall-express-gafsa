@@ -20,6 +20,15 @@ import { useEffect } from "react";
   peut-être partie du problème. Un rechargement complet, lui, repart de zéro.
 */
 
+/*
+  Les textes de cet écran sont en français, en dur, et le resteront.
+
+  `global-error.tsx` remplace la disposition racine — fournisseur de langue
+  compris. Il s'affiche précisément quand tout le reste a échoué, et rien de ce
+  qui charge le dictionnaire n'est disponible pour l'aider. Une traduction
+  demanderait de lire le cookie de langue à la main pour deux phrases qu'on
+  espère ne jamais montrer.
+*/
 export default function GlobalError({
   error,
   reset,

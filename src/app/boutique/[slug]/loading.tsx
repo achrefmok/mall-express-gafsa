@@ -5,7 +5,7 @@
  */
 export default function Loading() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)]" aria-busy="true" aria-label="Chargement">
+    <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)]" aria-busy="true" aria-label="Chargement…">
       <div className="skeleton h-[110px] w-full" />
 
       <div className="-mt-6 flex flex-col gap-2 px-4">

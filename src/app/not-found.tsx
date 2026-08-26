@@ -7,9 +7,9 @@ export default async function NotFound() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col items-center justify-center gap-3 bg-[var(--color-app)] px-8 text-center">
       <p className="text-[2.5rem] font-bold text-[var(--color-brand)]">404</p>
-      <h1 className="text-[1rem] font-bold text-[var(--color-ink)]">Page introuvable</h1>
+      <h1 className="text-[1rem] font-bold text-[var(--color-ink)]">{t.common.notFoundTitle}</h1>
       <p className="max-w-[34ch] text-[0.75rem] leading-relaxed text-[var(--color-muted)]">
-        Cette page n&apos;existe pas ou n&apos;est plus disponible.
+        {t.common.notFoundBody}
       </p>
 
       <div className="mt-2 flex gap-2">

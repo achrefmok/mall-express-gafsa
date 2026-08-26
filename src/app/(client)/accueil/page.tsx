@@ -256,7 +256,7 @@ export default async function HomePage() {
         <div className="flex flex-none gap-2">
           <Link
             href="/notifications"
-            aria-label="Notifications"
+            aria-label={t.nav.notifications}
             className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[var(--color-surface-solid)] text-[var(--color-ink)] shadow-[0_6px_16px_rgba(60,40,90,0.09)]"
           >
             <BellIcon size={17} />

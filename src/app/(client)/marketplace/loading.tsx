@@ -8,7 +8,7 @@
  */
 export default function Loading() {
   return (
-    <div className="flex flex-1 flex-col gap-3 pt-3" aria-busy="true" aria-label="Chargement">
+    <div className="flex flex-1 flex-col gap-3 pt-3" aria-busy="true" aria-label="Chargement…">
       <div className="skeleton mx-4 h-9 rounded-[18px]" />
 
       {/* Les puces de catégorie, sur leur rail. */}

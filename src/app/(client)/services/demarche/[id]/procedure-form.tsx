@@ -146,7 +146,7 @@ export function ProcedureForm({
             />
           </label>
 
-          <span className={LABEL}>Pièces jointes</span>
+          <span className={LABEL}>{t.common.attachments}</span>
           <div className="flex flex-wrap gap-2">
             {attachments.map((url) => (
               <div key={url} className="relative h-16 w-16">
