@@ -64,6 +64,9 @@ export default async function VendorDashboard() {
     { href: "/vendeur/produits/nouveau", monogram: "+", label: t.vendor.addProduct },
     { href: "/vendeur/produits", monogram: "ST", label: t.vendor.manageStock },
     { href: "/vendeur/promotions", monogram: "PR", label: t.vendor.promotions },
+    /* Juste après les promotions : c'est au moment où l'on baisse un prix
+       qu'on veut l'annoncer, et l'affiche est le geste qui suit. */
+    { href: "/vendeur/affiche", monogram: "AF", label: t.vendor.poster, accent: true },
     { href: "/vendeur/reglages#horaires", monogram: "HR", label: t.vendor.hours },
     { href: "/vendeur/reglages#localisation", monogram: "LO", label: t.vendor.location },
     { href: "/vendeur/lives/partage", monogram: "FB", label: "Relayer mon direct Facebook", accent: true },
