@@ -10,6 +10,7 @@ import { Avatar, Card, Tag } from "@/components/ui/primitives";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { VariantProvider } from "@/components/products/variant-context";
 import { ProductActions, ProductTopBar } from "./product-actions";
+import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 
 /**
  * Écran 3 — fiche produit.
@@ -132,7 +133,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1000px] lg:px-8 lg:py-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
 
       {/*

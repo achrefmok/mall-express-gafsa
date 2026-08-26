@@ -58,6 +58,79 @@ export interface ImagePreparee {
 }
 
 /**
+ * Que faire de ce fichier ?
+ *
+ * La décision est séparée de son exécution, et ce n'est pas de la coquetterie.
+ * `prepareImage` ne tourne que dans un navigateur — canevas, `createImageBitmap`,
+ * `document` — donc rien de ce qu'elle fait ne pouvait être vérifié
+ * automatiquement. Or ce qui se décide ici gouverne la netteté de **toutes** les
+ * photos du site, et une régression ne se verrait qu'une fois un produit
+ * publié.
+ *
+ * Ces quelques lignes n'ont besoin d'aucun navigateur, et `check:upload` les
+ * éprouve sur les cas qui comptent : la photo déjà propre qu'il ne faut surtout
+ * pas réencoder, le cliché de vingt-quatre mégapixels, l'image lourde mais
+ * petite, la capture d'écran trop pauvre pour un zoom.
+ */
+export interface PlanPreparation {
+  /** `intacte` : le fichier part tel quel, sans réencodage. */
+  action: "intacte" | "reduire";
+  /** Dimensions visées. Identiques à l'entrée quand on ne touche à rien. */
+  largeur: number;
+  hauteur: number;
+  /** La définition restera insuffisante pour un affichage net. */
+  basseDefinition: boolean;
+}
+
+export function planPreparation(source: {
+  type: string;
+  taille: number;
+  largeur: number;
+  hauteur: number;
+}): PlanPreparation {
+  const { largeur, hauteur, taille, type } = source;
+  const cote = Math.max(largeur, hauteur);
+  const basseDefinition = cote < LARGEUR_CONSEILLEE;
+
+  /*
+    Les formats vectoriels n'ont pas de définition à mesurer.
+
+    Un SVG reste net à toute taille : le réduire n'a pas de sens, et le
+    signaler « basse définition » serait un contresens.
+  */
+  if (!type.startsWith("image/") || type === "image/svg+xml") {
+    return { action: "intacte", largeur, hauteur, basseDefinition: false };
+  }
+
+  /*
+    Le cas de loin le plus fréquent : la photo tient dans les clous.
+
+    On la laisse rigoureusement intacte. Réencoder ne ferait que retirer de
+    l'information — même à qualité élevée, une seconde compression avec perte
+    en enlève toujours.
+  */
+  if (cote <= MASTER && taille <= POIDS_MAX) {
+    return { action: "intacte", largeur, hauteur, basseDefinition };
+  }
+
+  /*
+    Au-delà, on réduit — mais seulement si la définition le justifie.
+
+    Une image de mille pixels qui pèse huit mégaoctets (un PNG sans perte, par
+    exemple) doit être réencodée sans être rétrécie : c'est son poids qui pose
+    problème, pas sa taille. `Math.min(1, …)` garde donc l'échelle à un.
+  */
+  const echelle = Math.min(1, MASTER / cote);
+
+  return {
+    action: "reduire",
+    largeur: Math.round(largeur * echelle),
+    hauteur: Math.round(hauteur * echelle),
+    basseDefinition,
+  };
+}
+
+/**
  * Prépare une image pour l'envoi — en préservant l'original chaque fois que
  * c'est possible.
  */
@@ -70,8 +143,7 @@ export async function prepareImage(file: File): Promise<ImagePreparee> {
     intacte: true,
   };
 
-  // Les formats vectoriels n'ont pas de définition à mesurer, et rien à gagner
-  // à passer par un canevas.
+  // Les formats vectoriels n'ont rien à gagner à passer par un canevas.
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") return brut;
 
   let bitmap: ImageBitmap;
@@ -84,24 +156,23 @@ export async function prepareImage(file: File): Promise<ImagePreparee> {
   }
 
   const { width, height } = bitmap;
-  const cote = Math.max(width, height);
-  const basseDefinition = Math.max(width, height) < LARGEUR_CONSEILLEE;
 
-  /*
-    Le cas de loin le plus fréquent : la photo tient dans les clous.
+  // La décision est prise ailleurs, et vérifiée : ici on ne fait que l'exécuter.
+  const plan = planPreparation({
+    type: file.type,
+    taille: file.size,
+    largeur: width,
+    hauteur: height,
+  });
+  const basseDefinition = plan.basseDefinition;
 
-    On la laisse rigoureusement intacte. Réencoder ne ferait que retirer de
-    l'information — même à qualité élevée, une seconde compression avec perte
-    en enlève toujours.
-  */
-  if (cote <= MASTER && file.size <= POIDS_MAX) {
+  if (plan.action === "intacte") {
     bitmap.close();
     return { blob: file, largeur: width, hauteur: height, basseDefinition, intacte: true };
   }
 
-  const echelle = Math.min(1, MASTER / cote);
-  const w = Math.round(width * echelle);
-  const h = Math.round(height * echelle);
+  const w = plan.largeur;
+  const h = plan.hauteur;
 
   const canvas = document.createElement("canvas");
   canvas.width = w;

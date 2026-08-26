@@ -44,7 +44,16 @@ export async function requireProfile(): Promise<
   const { supabase, user, error } = await requireUser();
   if (!user) return { supabase, profile: null, error: error! };
 
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  /*
+    Son propre profil, colonnes fermées comprises.
+
+    `select("*")` ne rend plus le téléphone, les points ni `is_banned` : depuis
+    l'audit du 26 août 2026, ces colonnes sont retirées aux rôles `anon` et
+    `authenticated`, faute de quoi n'importe qui moissonnait les numéros de
+    toute la ville avec la clé publique. `mon_profil()` est la seule porte par
+    laquelle elles ressortent, et elle ne rend que la ligne de l'appelant.
+  */
+  const { data } = await monProfil(supabase);
   if (!data) return { supabase, profile: null, error: "Profil introuvable" };
   if (data.is_banned) return { supabase, profile: null, error: "Compte suspendu" };
 
@@ -93,4 +102,32 @@ export function readableError(error: { message: string; code?: string } | null):
     default:
       return error.message || "Une erreur est survenue";
   }
+}
+
+/**
+ * Le profil complet de la personne connectée.
+ *
+ * Passe par `mon_profil()`, seule porte de sortie des colonnes fermées aux
+ * rôles `anon` et `authenticated` depuis l'audit du 26 août 2026 — téléphone,
+ * code de parrainage, points, `is_banned`.
+ *
+ * **Le repli n'est pas de la prudence excessive.** Les changements de schéma
+ * sont collés à la main dans l'éditeur SQL de Supabase : il existe forcément
+ * une fenêtre, entre le déploiement et le collage, où le code appelle une
+ * fonction qui n'existe pas encore. Sans ce repli, cette fenêtre serait une
+ * panne totale — `requireProfile` gouverne toutes les actions du site.
+ *
+ * Une fois le DDL passé, la seconde branche ne s'exécute plus jamais : la
+ * lecture directe rend alors un profil amputé de ses colonnes fermées, ce que
+ * seule la fonction sait éviter.
+ */
+async function monProfil(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const viaFonction = await supabase.rpc("mon_profil");
+  if (!viaFonction.error) return { data: viaFonction.data };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null };
+
+  const direct = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  return { data: direct.data };
 }

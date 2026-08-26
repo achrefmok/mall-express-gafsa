@@ -12,6 +12,7 @@ import { Card, EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primit
 import { CartIcon, PinIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
 import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
+import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 
 /**
  * Écran 6 — profil boutique, vue client.
@@ -182,7 +183,7 @@ export default async function ShopPage({
     <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1120px] lg:px-8 lg:py-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
 
       <main id="contenu" className="no-sb relative flex flex-1 flex-col overflow-y-auto">

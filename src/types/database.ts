@@ -691,6 +691,27 @@ export interface Database {
         ];
       };
 
+      /* ─── cron_runs ──────────────────────────────────────────────────
+         La trace des tâches périodiques. Une tâche qui cesse d'être
+         déclenchée était jusqu'ici indiscernable d'une tâche qui n'a rien
+         eu à faire : les deux ne laissaient rien. Écrite avec la clé de
+         service seule — un navigateur ne doit pas pouvoir fabriquer un faux
+         relevé et masquer une panne. */
+      cron_runs: {
+        Row: {
+          id: number;
+          tache: string;
+          ok: boolean;
+          detail: Json | null;
+          ran_at: string;
+        };
+        Insert: { tache: string; ok: boolean } & Partial<
+          Database["public"]["Tables"]["cron_runs"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["cron_runs"]["Row"]>;
+        Relationships: [];
+      };
+
       /* ─── sos_providers ──────────────────────────────────────────────
          Dépanneurs d'urgence : un métier, une disponibilité, un numéro.
          Même contrat que `taxi_drivers`, `trade` en plus — c'est lui qui
@@ -1125,6 +1146,12 @@ export interface Database {
         Returns: undefined;
       };
       expire_stale_deals: { Args: Record<PropertyKey, never>; Returns: number };
+      /** Le profil complet de la personne connectée. Seule porte de sortie du
+          téléphone, du code de parrainage, des points et de `is_banned`, que
+          les droits de colonne ferment à `anon` et `authenticated`. */
+      mon_profil: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["profiles"]["Row"] };
+      /** Purge les relevés d'exécution de plus de trente jours. */
+      purge_cron_runs: { Args: Record<PropertyKey, never>; Returns: undefined };
       /** Passe les demandes échues en « expiree » et retire les déclarations
           de plus de douze heures. Retourne le nombre de demandes touchées. */
       expire_taxi_requests: { Args: Record<PropertyKey, never>; Returns: number };

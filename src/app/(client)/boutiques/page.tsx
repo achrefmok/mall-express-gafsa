@@ -31,7 +31,20 @@ export default async function ShopsPage() {
     .from("shops")
     .select("id, name, slug, phone, latitude, longitude, mall_level, mall_unit")
     .eq("status", "approved")
-    .order("followers_count", { ascending: false });
+    .order("followers_count", { ascending: false })
+    /*
+      Une borne, parce que la carte en a une de fait.
+
+      Cet écran pose une épingle par boutique sur une carte de Gafsa. Au-delà de
+      quelques centaines, les épingles se recouvrent et l'écran cesse d'être
+      lisible bien avant que la requête ne devienne lente — la limite ne retire
+      donc rien à personne. Elle évite en revanche qu'une page publique ne
+      rapatrie une table entière le jour où elle grossit.
+
+      Les plus suivies d'abord : si la coupure devait un jour mordre, elle
+      mordrait sur les boutiques que le moins de gens cherchent.
+    */
+    .limit(500);
 
   return (
     <>

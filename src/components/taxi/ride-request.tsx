@@ -80,7 +80,7 @@ export function RideRequest({
       .eq("id", demandeId)
       .maybeSingle();
 
-    if (!data) return;
+    if (!data) return false;
 
     if (data.status === "acceptee") setEtat("acceptee");
     else if (data.status === "refusee") setEtat("refusee");

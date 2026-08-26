@@ -24,8 +24,17 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   if (!user) return null;
 
   const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  return data;
+  /*
+    Voir `requireProfile` : les colonnes sensibles ne sortent que par ici.
+
+    Le repli sur la lecture directe couvre la fenêtre entre le déploiement et le
+    collage du DDL, pendant laquelle la fonction n'existe pas encore.
+  */
+  const { data, error } = await supabase.rpc("mon_profil");
+  if (!error) return data;
+
+  const direct = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  return direct.data;
 });
 
 /** Compteurs des badges de la barre supérieure. */

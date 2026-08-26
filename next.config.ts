@@ -159,6 +159,20 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" },
     ],
     formats: ["image/avif", "image/webp"],
+
+    /*
+      Trente jours plutôt qu'une minute.
+
+      Next retient une image optimisée soixante secondes par défaut, puis la
+      revalide. C'est le bon réglage pour une image dont l'URL est stable et le
+      contenu changeant — un logo servi depuis `/images/logo.png`.
+
+      Ce n'est pas notre cas : les photos de produits sont stockées sous un
+      identifiant aléatoire, et modifier une photo produit une nouvelle URL.
+      L'adresse et le contenu naissent et meurent ensemble. On payait donc une
+      revalidation permanente pour une donnée immuable par construction.
+    */
+    minimumCacheTTL: 2_592_000,
   },
   experimental: {
     optimizePackageImports: ["@supabase/supabase-js"],

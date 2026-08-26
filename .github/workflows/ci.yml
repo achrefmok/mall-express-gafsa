@@ -55,5 +55,39 @@ jobs:
       - name: Liens internes
         run: npm run check:links
 
+      # ── Les contrôles métier ────────────────────────────────────────────
+      #
+      # Ils étaient écrits et ne tournaient pas. L'audit du 26 août 2026 a
+      # compté 126 assertions vérifiées à la main une seule fois, puis jamais
+      # rejouées — exactement la situation que le commentaire en tête de ce
+      # fichier prétendait avoir corrigée, pour un script sur six.
+      #
+      # Chacun est une étape distincte : un échec doit nommer ce qui a cassé
+      # sans obliger à ouvrir le journal.
+
+      - name: Sécurité — évasion de balise
+        run: npm run check:securite
+
+      - name: Variantes de couleur
+        run: npm run check:variants
+
+      - name: Recoloration du tissu
+        run: npm run check:recolor
+
+      # `check:taxi` interroge le service de routage public. Il se met de
+      # lui-même en attente quand celui-ci est injoignable, et ne rendra donc
+      # pas la CI instable un jour de panne d'OSRM.
+      - name: Taxi — géographie et routage
+        run: npm run check:taxi
+
+      - name: Taxi — présence des chauffeurs
+        run: npm run check:presence
+
+      - name: Affiche marketing
+        run: npm run check:poster
+
+      - name: Préparation des photos
+        run: npm run check:upload
+
       - name: Build de production
         run: npx next build

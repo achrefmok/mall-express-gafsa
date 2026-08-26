@@ -63,7 +63,7 @@ export function DriverRequests({ driverId }: { driverId: string }) {
 
     if (error) {
       if (TABLE_ABSENTE.includes(error.code)) setDisponible(false);
-      return;
+      return false;
     }
 
     /*

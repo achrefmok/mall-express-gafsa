@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { grantDriverAccess, revokeDriverAccess, setDriverApproval } from "@/app/actions/taxi";
 import { Button, Card, Tag, fieldClass } from "@/components/ui/primitives";
-import { createClient } from "@/lib/supabase/client";
 import { presenceDe } from "@/lib/taxi-presence";
 import { timeAgo } from "@/lib/format";
+import { chercherMembres } from "@/app/actions/admin";
 
 export interface AdminDriver {
   id: string;
@@ -155,15 +155,19 @@ export function GrantDriver() {
     const term = query.trim();
     if (term.length < 2) return;
 
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, phone")
-      .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone.ilike.%${term}%`)
-      .limit(8);
+    /*
+      La recherche passe par le serveur.
 
-    setMembers(data ?? []);
-    if ((data ?? []).length === 0) setError("Aucun membre ne correspond.");
+      Le navigateur interrogeait `profiles` directement, avec la clé publique.
+      Depuis l'audit du 26 août 2026, le rôle `authenticated` n'a plus accès à
+      la colonne `phone` — elle était moissonnable par n'importe qui. L'action
+      vérifie que l'appelant est bien administrateur avant de la lire.
+    */
+    const result = await chercherMembres(term);
+    if (!result.ok) return setError(result.error);
+
+    setMembers(result.data);
+    if (result.data.length === 0) setError("Aucun membre ne correspond.");
   }
 
   function grant(member: Member) {

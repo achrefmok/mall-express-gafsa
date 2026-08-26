@@ -78,7 +78,9 @@ export function SosClient({ initialProviders }: { initialProviders: Provider[] }
       .eq("is_approved", true)
       .order("is_available", { ascending: false });
 
-    if (data) setProviders(data as Provider[]);
+    // Voir `usePoll` : un échec signalé fait ralentir le sondage.
+    if (!data) return false;
+    setProviders(data as Provider[]);
   }, []);
 
   usePoll(reload, 30_000);

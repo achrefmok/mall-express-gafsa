@@ -129,7 +129,10 @@ export function TaxiClient({
       .eq("is_approved", true)
       .order("is_available", { ascending: false });
 
-    if (data) setDrivers(data as Driver[]);
+    // `false` prévient le crochet de sondage : il ralentira plutôt que de
+    // marteler un service en panne à la même cadence qu'un service sain.
+    if (!data) return false;
+    setDrivers(data as Driver[]);
   }, []);
 
   usePoll(reload, 30_000);

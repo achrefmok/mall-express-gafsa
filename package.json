@@ -24,7 +24,10 @@
     "check:recolor": "node scripts/check-recolor.mjs",
     "check:taxi": "node scripts/check-taxi.mjs",
     "check:presence": "node scripts/check-presence.mjs",
-    "check:poster": "node scripts/check-poster.mjs"
+    "check:poster": "node scripts/check-poster.mjs",
+    "check:securite": "node scripts/check-securite.mjs",
+    "check:upload": "node scripts/check-upload.mjs",
+    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

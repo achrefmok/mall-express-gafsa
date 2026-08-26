@@ -61,7 +61,7 @@ export function ClientThreads({
       .order("created_at")
       .limit(200);
 
-    if (!data) return;
+    if (!data) return false;
     setMessages(data);
 
     /*

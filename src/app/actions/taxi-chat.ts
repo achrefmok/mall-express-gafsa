@@ -2,6 +2,7 @@
 
 import { done, fail, requireUser } from "./_helpers";
 import { createAdminClient } from "@/lib/supabase/server";
+import { signaler } from "@/lib/signal";
 
 /**
  * Envoyer un message de taxi — et prévenir celui à qui il s'adresse.
@@ -105,7 +106,13 @@ async function notifier(
       body: corps.slice(0, 140),
       link: fromDriver ? "/taxi" : "/taxi/chauffeur",
     });
-  } catch {
-    // Voir plus haut : la notification ne fait pas échouer l'envoi.
+  } catch (cause) {
+    // Voir plus haut : la notification ne fait pas échouer l'envoi. Elle est
+    // consignée parce qu'un message livré mais jamais annoncé est un message
+    // que personne ne lit — et rien ne le signalait.
+    signaler(cause, {
+      ou: "notification de message taxi",
+      quoi: { destinataire, duChauffeur: fromDriver },
+    });
   }
 }

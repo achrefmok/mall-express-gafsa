@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireAdmin } from "./_helpers";
 import type { UserRole } from "@/types/database";
+import { createAdminClient } from "@/lib/supabase/server";
 
 /* ─── Validation des boutiques (écran 14) ──────────────────────────────── */
 
@@ -285,4 +286,53 @@ export async function toggleSponsoredSlot(slotId: string, active: boolean) {
   revalidatePath("/admin");
   revalidatePath("/");
   return done();
+}
+
+/**
+ * Chercher un membre par son nom ou son numéro.
+ *
+ * Les écrans d'administration interrogeaient `profiles` directement depuis le
+ * navigateur, donc avec le rôle `authenticated`. Depuis l'audit du 26 août 2026,
+ * ce rôle n'a plus accès à la colonne `phone` — elle était moissonnable par
+ * n'importe qui avec la clé publique. La recherche remonte donc côté serveur,
+ * où `requireAdmin` vérifie qui appelle avant que la clé de service ne franchisse
+ * la restriction.
+ *
+ * C'est de toute façon la bonne place pour une recherche sur les membres : le
+ * navigateur n'avait aucune raison de pouvoir balayer la table entière.
+ */
+export async function chercherMembres(terme: string) {
+  const { profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const q = terme.trim();
+  // Deux caractères : en dessous, la recherche ramène la moitié de la ville.
+  if (q.length < 2) return ok([] as Membre[]);
+
+  /*
+    Les caractères de motif sont neutralisés.
+
+    `%` et `_` ont un sens dans un `ilike`, et `,` sépare les conditions d'un
+    `or` PostgREST : un terme mal filtré permettrait d'élargir la requête
+    au-delà de ce que l'écran propose.
+  */
+  const propre = q.replace(/[%_,()]/g, " ").trim();
+  if (propre.length < 2) return ok([] as Membre[]);
+
+  const admin = createAdminClient();
+  const { data, error: lectureError } = await admin
+    .from("profiles")
+    .select("id, first_name, last_name, phone")
+    .or(`first_name.ilike.%${propre}%,last_name.ilike.%${propre}%,phone.ilike.%${propre}%`)
+    .limit(8);
+
+  if (lectureError) return fail(readableError(lectureError));
+  return ok((data ?? []) as Membre[]);
+}
+
+export interface Membre {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
 }

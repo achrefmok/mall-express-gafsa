@@ -255,6 +255,36 @@ export async function discardVariantPreviews(urls: string[]) {
 */
 const enCours = new Map<string, Promise<string | null>>();
 
+/*
+  Un plafond sur le nombre de recolorations par minute.
+
+  `ensureVariantImage` est la seule action serveur sans garde d'identité, et
+  c'est délibéré : la génération à la demande sert la fiche produit publique,
+  qu'un visiteur consulte sans compte. Mais elle enchaîne un téléchargement, un
+  traitement pixel par pixel et une écriture dans le stockage.
+
+  Les garde-fous existants bornent la répétition — la couleur doit figurer parmi
+  celles que le vendeur a déclarées, les appels concurrents sur la même clé sont
+  dédoublonnés, et le résultat est mis en cache dès la première fois. Ils ne
+  bornaient pas l'**étendue** : parcourir le catalogue en demandant chaque
+  coloris non encore généré déclenchait autant de traitements, sans que rien ne
+  s'y oppose.
+
+  Vingt par minute laisse passer la navigation la plus curieuse — un visiteur ne
+  regarde pas vingt coloris inédits en soixante secondes — et divise par
+  plusieurs ordres de grandeur ce qu'un balayage automatique peut coûter. Comme
+  la carte ci-dessus, le compteur ne vaut que pour une instance ; c'est une
+  limite de coût, pas une frontière de sécurité, et le refus reste gracieux.
+*/
+const PLAFOND_PAR_MINUTE = 20;
+const recentes: number[] = [];
+
+function plafondAtteint(maintenant = Date.now()): boolean {
+  const depuis = maintenant - 60_000;
+  while (recentes.length > 0 && recentes[0] < depuis) recentes.shift();
+  return recentes.length >= PLAFOND_PAR_MINUTE;
+}
+
 /**
  * L'image d'un coloris — celle qui existe, ou celle qu'on fabrique à l'instant.
  *
@@ -282,6 +312,18 @@ export async function ensureVariantImage(productId: string, color: string) {
   const cle = `${productId}|${color}`;
   const dejaLa = enCours.get(cle);
   if (dejaLa) return ok({ url: await dejaLa });
+
+  /*
+    Le refus est gracieux, et c'est important.
+
+    La galerie retombe alors sur la photo d'origine du produit — l'article reste
+    visible, son prix aussi, et rien ne se casse à l'écran. Un visiteur légitime
+    ne rencontrera jamais ce cas ; celui qui balaie le catalogue le rencontrera
+    tout de suite.
+  */
+  if (plafondAtteint()) return ok({ url: null });
+
+  recentes.push(Date.now());
 
   const travail = fabriquerALaDemande(productId, color).finally(() => enCours.delete(cle));
   enCours.set(cle, travail);

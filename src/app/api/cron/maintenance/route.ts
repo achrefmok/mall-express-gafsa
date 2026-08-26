@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { APP_SPACE } from "@/lib/space";
 import { createAdminClient } from "@/lib/supabase/server";
+import { signaler } from "@/lib/signal";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -83,19 +84,69 @@ export async function GET(request: NextRequest) {
       et les boutiques de leur état d'ouverture — une panne bien plus large que
       celle qu'on signalerait.
     */
-    if (courses.error) console.warn("Expiration des courses ignorée", courses.error.message);
+    if (courses.error) {
+      signaler(courses.error, { ou: "expiration des demandes de course" });
+    }
 
-    return NextResponse.json({
-      ok: true,
+    const detail = {
       expiredDeals: expired.data ?? 0,
       refreshedShops: refreshed.data ?? 0,
       expiredRides: courses.error ? null : (courses.data ?? 0),
-      at: new Date().toISOString(),
-    });
+    };
+
+    /*
+      Garder la trace du passage.
+
+      Sans elle, une tâche qui cesse d'être déclenchée ne se remarque pas : les
+      bons plans n'expirent plus, les boutiques restent ouvertes la nuit, les
+      demandes de course s'accumulent en « en attente » — et le premier signal
+      est un client qui se plaint. Trois colonnes suffisent à répondre « quand
+      a-t-elle tourné la dernière fois ? », qui est la seule question qu'on se
+      pose vraiment.
+    */
+    await consigner(supabase, true, detail);
+
+    return NextResponse.json({ ok: true, ...detail, at: new Date().toISOString() });
   } catch (cause) {
-    console.error("Maintenance échouée", cause);
+    signaler(cause, { ou: "tâche de maintenance" });
+
+    /*
+      Un échec se consigne aussi — surtout un échec.
+
+      Une exécution qui plante sans laisser de trace est indiscernable d'une
+      exécution qui n'a pas eu lieu, et les deux appellent pourtant des gestes
+      différents.
+    */
+    try {
+      await consigner(createAdminClient(), false, {
+        message: cause instanceof Error ? cause.message : String(cause),
+      });
+    } catch {
+      // La base est peut-être ce qui vient de tomber. `signaler` a déjà écrit.
+    }
+
     return NextResponse.json({ error: "Maintenance échouée" }, { status: 500 });
   }
+}
+
+/**
+ * Déposer un relevé d'exécution.
+ *
+ * Silencieuse par construction : la maintenance a fait son travail, et
+ * l'incapacité à en garder la trace ne doit pas la faire passer pour un échec.
+ * Tant que la migration n'est pas collée, la table n'existe pas et l'écriture
+ * échoue — sans conséquence.
+ */
+async function consigner(
+  supabase: ReturnType<typeof createAdminClient>,
+  ok: boolean,
+  detail: Record<string, unknown>,
+) {
+  const { error } = await supabase
+    .from("cron_runs")
+    .insert({ tache: "maintenance", ok, detail: detail as never });
+
+  if (error) signaler(error, { ou: "relevé d'exécution de la maintenance" });
 }
 
 /** Comparaison à durée constante : ne fuit pas la longueur du préfixe correct. */

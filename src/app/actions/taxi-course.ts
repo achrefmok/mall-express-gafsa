@@ -5,6 +5,7 @@ import { fullName } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/server";
 import { distanceMeters } from "@/lib/geo";
 import { apresReservation, presenceDe } from "@/lib/taxi-presence";
+import { signaler } from "@/lib/signal";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Demander une course, et y répondre.
@@ -207,7 +208,7 @@ async function notifierChauffeur(info: {
       body: corps,
       link: `/taxi/chauffeur?demande=${info.demandeId}`,
     });
-  } catch {
+  } catch (cause) {
     /*
       La demande existe même si la cloche a échoué.
 
@@ -215,7 +216,14 @@ async function notifierChauffeur(info: {
       elle expirera d'elle-même sinon. Faire échouer la demande parce que la
       notification n'est pas partie priverait le client du seul canal qui lui
       reste — le fil de discussion.
+
+      Mais on le consigne : un chauffeur qui ne reçoit plus rien avait jusqu'ici
+      exactement la même signature qu'un chauffeur que personne n'appelle.
     */
+    signaler(cause, {
+      ou: "notification de demande de course",
+      quoi: { chauffeur: info.driverId, demande: info.demandeId },
+    });
   }
 }
 
@@ -324,8 +332,11 @@ async function consommerPlaces(driverId: string, sieges: number) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", driverId);
-  } catch {
-    // Une place mal décomptée ne doit pas annuler une course acceptée.
+  } catch (cause) {
+    // Une place mal décomptée ne doit pas annuler une course acceptée — mais
+    // un décompte qui échoue silencieusement laisse un véhicule complet
+    // ouvert aux réservations, ce qu'il faut pouvoir constater.
+    signaler(cause, { ou: "décompte des places", quoi: { chauffeur: driverId, sieges } });
   }
 }
 
@@ -342,8 +353,9 @@ async function notifierClient(clientId: string, accepte: boolean, chauffeur: str
         : "Essayez un autre chauffeur sur la carte.",
       link: "/taxi",
     });
-  } catch {
+  } catch (cause) {
     // Voir plus haut : la réponse vaut, la cloche n'est qu'un rappel.
+    signaler(cause, { ou: "notification de réponse au client", quoi: { client: clientId } });
   }
 }
 

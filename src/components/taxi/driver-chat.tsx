@@ -80,7 +80,7 @@ export function DriverChat({
       // une panne. Toute autre erreur laisse le fil en l'état plutôt que de
       // l'effacer sous les yeux de quelqu'un qui écrivait.
       if (TABLE_ABSENTE.includes(error.code)) setEtat("indisponible");
-      return;
+      return false;
     }
 
     setMessages(data ?? []);
