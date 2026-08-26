@@ -8,6 +8,7 @@ import { NavDepthTracker } from "@/components/shell/back";
 import "./globals.css";
 
 import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
+import { WebVitals } from "@/components/shell/web-vitals";
 
 const siteUrl = resolveSiteUrl();
 
@@ -109,6 +110,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <NavDepthTracker />
         <ServiceWorkerBridge />
+        {/*
+          La mesure de performance, sur de vrais téléphones.
+
+          Elle n'envoie rien tant que tout va bien : seuls les relevés qui
+          dépassent le seuil « à améliorer » de Google partent. Un audit lancé
+          depuis un ordinateur de bureau en fibre mesure un site que personne
+          n'utilise ; ici on mesure ce que vit quelqu'un en 3G à Gafsa.
+        */}
+        <WebVitals />
         </I18nProvider>
       </body>
     </html>

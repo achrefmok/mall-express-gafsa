@@ -91,3 +91,8 @@ jobs:
 
       - name: Build de production
         run: npx next build
+
+      # Après la construction, parce que le budget se mesure sur ce qui sera
+      # réellement envoyé — pas sur une estimation.
+      - name: Budget de performance
+        run: npm run check:budget

@@ -77,9 +77,22 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (guard.role !== "client") {
+      /*
+        Le rôle et la boutique en une seule requête.
+
+        Il en fallait deux, l'une après l'autre : le rôle, puis — pour un
+        vendeur — l'existence de sa boutique. Avec la revalidation du jeton qui
+        précède, cela faisait **trois allers-retours réseau avant le premier
+        octet** de n'importe quelle page vendeur, sur un intergiciel qui
+        s'exécute à chaque navigation.
+
+        La relation imbriquée les fusionne. Elle ne coûte rien de plus à la
+        base — c'est la même jointure qu'elle aurait faite — et retire une
+        latence complète du chemin critique.
+      */
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, shops(id)")
         .eq("id", user.id)
         .single();
 
@@ -104,13 +117,10 @@ export async function updateSession(request: NextRequest) {
         inspecter, pas pour ouvrir boutique.
       */
       if (guard.role === "vendor" && role === "vendor" && pathname !== "/vendeur/creer") {
-        const { data: shop } = await supabase
-          .from("shops")
-          .select("id")
-          .eq("owner_id", user.id)
-          .maybeSingle();
+        // Déjà rapportée par la requête ci-dessus : plus rien à demander.
+        const boutiques = (profile?.shops ?? []) as Array<{ id: string }>;
 
-        if (!shop) {
+        if (boutiques.length === 0) {
           const create = request.nextUrl.clone();
           create.pathname = "/vendeur/creer";
           create.search = "";

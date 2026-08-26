@@ -189,6 +189,21 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@supabase/supabase-js"],
   },
+
+  /*
+    Sentry n'est pas empaqueté, il est requis à l'exécution.
+
+    `@sentry/node` touche `node:child_process` et d'autres modules natifs. Next
+    compile `instrumentation.ts` pour les deux environnements d'exécution, et le
+    bundler de l'environnement Edge — celui de l'intergiciel — ne sait pas quoi
+    faire de ces schémas : la construction échouait avec un
+    « UnhandledSchemeError » qui ne disait rien de la cause.
+
+    L'externaliser laisse Node le charger lui-même, au moment où il sert. Le
+    module ne traverse aucun paquet client : le budget de performance ne bouge
+    pas.
+  */
+  serverExternalPackages: ["@sentry/node"],
   /*
     La présentation a d'abord vécu sur /presentation, avant de devenir la
     racine du site. L'alias reste, pour les liens déjà partagés.

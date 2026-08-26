@@ -27,9 +27,11 @@
     "check:poster": "node scripts/check-poster.mjs",
     "check:securite": "node scripts/check-securite.mjs",
     "check:upload": "node scripts/check-upload.mjs",
+    "check:budget": "node scripts/check-budget.mjs",
     "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload"
   },
   "dependencies": {
+    "@sentry/node": "^10.71.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
     "@types/leaflet": "^1.9.22",
@@ -38,7 +40,7 @@
     "next": "^15.5.23",
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

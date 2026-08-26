@@ -34,13 +34,76 @@ import "server-only";
  * pas une erreur remontée. Le préfixe et la forme JSON rendent la recherche
  * possible — et une alerte, plus tard, triviale à écrire.
  *
- * Aucun service tiers n'est requis : la journalisation structurée fonctionne le
- * jour où on la déploie. `SENTRY_DSN` est reconnu si un jour on en ajoute un,
- * sans que rien d'autre n'ait à changer ici.
+ * **Sentry est branché, mais seulement côté serveur.** `@sentry/node` reste sur
+ * le serveur et n'entre dans aucun paquet envoyé au navigateur : le budget de
+ * performance ne bouge pas d'un octet. C'est aussi là que se trouve l'essentiel
+ * de ce qu'on veut voir — actions, routes, tâches périodiques.
+ *
+ * Sans `SENTRY_DSN`, tout continue de fonctionner : la journalisation
+ * structurée suffit à chercher, et elle marche le jour du déploiement sans
+ * qu'aucun compte n'ait à être créé.
  */
 
 /** Le préfixe qui rend une recherche possible dans les journaux de l'hébergeur. */
 const MARQUEUR = "[mall-express:erreur]";
+
+/*
+  Le client Sentry, chargé une seule fois et seulement s'il sert.
+
+  L'import est différé : sans DSN, le module n'est jamais évalué, et son coût de
+  démarrage — non nul sur une fonction sans état qui démarre à froid — n'est
+  jamais payé.
+*/
+let sentry: typeof import("@sentry/node") | null = null;
+let sentryPret: Promise<void> | null = null;
+
+function preparerSentry() {
+  const dsn = process.env.SENTRY_DSN;
+  if (!dsn) return null;
+
+  /*
+    Seulement dans l'environnement Node.
+
+    `signaler` est aussi appelé depuis l'intergiciel, qui s'exécute sur Edge —
+    où `@sentry/node` n'existe pas et ne peut pas exister. Le journal structuré,
+    lui, fonctionne des deux côtés : c'est la partie qui compte le plus.
+  */
+  if (process.env.NEXT_RUNTIME !== "nodejs") return null;
+
+  /*
+    `webpackIgnore` : l'import échappe à l'empaquetage.
+
+    Next compile `instrumentation.ts` pour l'environnement Node *et* pour Edge.
+    Le bundler Edge suivait la chaîne jusqu'à `node:child_process`, qu'il ne
+    sait pas traiter, et la construction échouait sur un « UnhandledSchemeError »
+    qui ne nommait pas la cause. La garde `NEXT_RUNTIME` ci-dessus empêche
+    l'exécution, pas l'analyse statique — seule cette annotation le fait.
+
+    Node résout alors le module lui-même, au moment où il sert. `serverExternalPackages`
+    garantit qu'il est bien déployé à côté.
+  */
+  sentryPret ??= import(/* webpackIgnore: true */ "@sentry/node")
+    .then((mod) => {
+      mod.init({
+        dsn,
+        environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
+        /*
+          Aucun échantillonnage de performance.
+
+          On veut les erreurs, pas les traces : les traces coûtent cher en
+          quota et n'apprennent rien qu'un journal structuré ne dise déjà pour
+          une application de cette taille.
+        */
+        tracesSampleRate: 0,
+      });
+      sentry = mod;
+    })
+    .catch(() => {
+      // Un service de suivi indisponible ne doit jamais gêner l'application.
+    });
+
+  return sentryPret;
+}
 
 export interface Contexte {
   /** Où cela s'est produit, en termes métier. Ex. « notification de course ». */
@@ -89,6 +152,23 @@ function lisible(cause: unknown): { message: string; pile?: string } {
 export function signaler(cause: unknown, contexte: Contexte): void {
   try {
     const { message, pile } = lisible(cause);
+
+    /*
+      Sentry en plus du journal, jamais à sa place.
+
+      Le journal est immédiat et sans dépendance ; Sentry regroupe, date et
+      alerte. Perdre l'un ne doit pas faire perdre l'autre — et le jour où le
+      quota Sentry est atteint, on veut encore pouvoir chercher.
+    */
+    const pret = preparerSentry();
+    if (pret) {
+      void pret.then(() => {
+        sentry?.captureException(cause instanceof Error ? cause : new Error(message), {
+          tags: { ou: contexte.ou },
+          extra: contexte.quoi,
+        });
+      });
+    }
 
     console.error(
       MARQUEUR,
