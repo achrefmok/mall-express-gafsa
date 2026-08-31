@@ -90,11 +90,19 @@ export async function updateSession(request: NextRequest) {
         base — c'est la même jointure qu'elle aurait faite — et retire une
         latence complète du chemin critique.
       */
-      const { data: profile } = await supabase
+      const { data: profile, error: profErr } = await supabase
         .from("profiles")
         .select("role, shops(id)")
         .eq("id", user.id)
         .single();
+      console.log("[MIDDLEWARE-DEBUG]", {
+        path: pathname,
+        user: user.id,
+        role: profile?.role ?? null,
+        shops: Array.isArray(profile?.shops) ? profile.shops.length : typeof profile?.shops,
+        profErr: profErr?.message ?? null,
+        profErrCode: profErr?.code ?? null,
+      });
 
       const role = profile?.role ?? "client";
       const allowed = guard.role === "vendor" ? role === "vendor" || role === "admin" : role === "admin";
