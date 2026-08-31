@@ -148,7 +148,10 @@ export interface Database {
         };
         Insert: { id: string } & Partial<Omit<Database["public"]["Tables"]["profiles"]["Row"], "id">>;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
-        Relationships: [FK<"profiles_referred_by_fkey", ["referred_by"], "profiles">];
+        Relationships: [
+          FK<"profiles_referred_by_fkey", ["referred_by"], "profiles">,
+          FK<"shops_owner_id_fkey", ["id"], "shops">,
+        ];
       };
 
       /* ─── categories ─────────────────────────────────────────────── */
