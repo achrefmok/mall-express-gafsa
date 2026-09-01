@@ -75,6 +75,23 @@ export function formatTime(sqlTime: string | null | undefined): string {
   return sqlTime.slice(0, 5);
 }
 
+/**
+ * La date du jour à Gafsa, au format `YYYY-MM-DD`.
+ *
+ * `toISOString()` rendrait la date UTC : entre minuit et une heure du matin à
+ * Tunis (UTC+1), elle retomberait sur la veille. Tout ce qui cherche une ligne
+ * `on_date` — prière, pharmacie de garde — doit demander la date locale de
+ * Tunis, ou il ne trouvera rien pour « aujourd'hui ».
+ */
+export function tunisDateISO(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat("fr-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Africa/Tunis",
+  }).format(date);
+}
+
 /** Compte à rebours « 02:41 » pour l'offre live. */
 export function countdown(msRemaining: number): string {
   const total = Math.max(0, Math.floor(msRemaining / 1000));

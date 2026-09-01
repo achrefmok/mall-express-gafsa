@@ -2,10 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatDate, formatTime, tunisDateISO } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Card, SectionTitle } from "@/components/ui/primitives";
 import { ChevronRightIcon, SearchIcon } from "@/components/ui/icons";
+import { PharmaciesMap } from "@/components/services/pharmacies-map";
 
 export const metadata: Metadata = {
   title: "Services citoyens de Gafsa",
@@ -47,11 +48,18 @@ function nextPrayer(
 export default async function ServicesPage() {
   const { t, locale } = await getT();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  // Le jour à Gafsa, pas celui d'UTC : c'est par ce fuseau que la prière et la
+  // pharmacie de garde sont enregistrées. {@link tunisDateISO}
+  const today = tunisDateISO();
 
   const [prayer, pharmacy, infos, alerts] = await Promise.all([
     supabase.from("prayer_times").select("*").eq("on_date", today).maybeSingle(),
-    supabase.from("pharmacies_on_duty").select("*").eq("on_date", today).maybeSingle(),
+    supabase
+      .from("pharmacies_on_duty")
+      .select("*")
+      .eq("on_date", today)
+      .order("name")
+      .limit(6),
     supabase.from("city_infos").select("*").eq("is_active", true).order("sort_order"),
     supabase
       .from("city_alerts")
@@ -65,6 +73,7 @@ export default async function ServicesPage() {
   const prayerNow = nextPrayer(prayer.data, t.services.prayers);
   const municipal = (infos.data ?? []).filter((i) => i.kind !== "admin_procedure");
   const procedures = (infos.data ?? []).filter((i) => i.kind === "admin_procedure");
+  const pharmacies = pharmacy.data ?? [];
 
   return (
     <>
@@ -87,7 +96,7 @@ export default async function ServicesPage() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <div
               id="prayer"
               className="flex-1 rounded-[14px] bg-[var(--color-brand-tint)] p-2 text-center"
@@ -98,15 +107,55 @@ export default async function ServicesPage() {
               </p>
             </div>
 
-            <div
-              id="pharmacy"
-              className="flex-1 rounded-[14px] bg-[var(--color-brand-tint)] p-2 text-center"
-            >
-              <p className="text-[0.59375rem] text-[var(--color-muted)]">{t.services.pharmacyOnDuty}</p>
-              <p className="truncate text-[0.75rem] font-bold text-[var(--color-brand)]">
-                {pharmacy.data?.name ?? "—"}
-              </p>
-            </div>
+            {pharmacies.length > 0 && (
+              <div id="pharmacy" className="flex flex-col gap-2">
+                <p className="px-1 text-[0.59375rem] font-bold text-[var(--color-brand)]">
+                  {t.services.pharmacyOnDuty}
+                </p>
+
+                {/*
+                  Les pharmacies de garde du jour, jusqu'à trois d'entre elles,
+                  et leur emplacement sur la carte. Chacune donne l'adresse, le
+                  téléphone et un itinéraire — on s'y rend, on ne les appelle
+                  pas pour qu'elles viennent.
+                */}
+                {pharmacies.map((p) => (
+                  <div key={p.id} className="rounded-[14px] bg-[var(--color-brand-tint)] p-2">
+                    <p className="truncate text-[0.75rem] font-bold text-[var(--color-ink)]">{p.name}</p>
+                    <div className="mt-[2px] flex flex-col gap-[1px]">
+                      {p.address && (
+                        <p className="truncate text-[0.625rem] text-[var(--color-muted)]">{p.address}</p>
+                      )}
+                      {p.phone && (
+                        <a
+                          href={`tel:${p.phone.replace(/\s+/g, "")}`}
+                          className="truncate text-[0.625rem] font-semibold text-[var(--color-brand)]"
+                        >
+                          {p.phone}
+                        </a>
+                      )}
+                    </div>
+                    {p.latitude !== null && p.longitude !== null && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`}
+                        className="mt-[6px] inline-flex items-center gap-1 rounded-[9px] bg-[var(--color-brand-fill)] px-2 py-[3px] text-[0.59375rem] font-bold text-white"
+                      >
+                        {t.services.directions}
+                      </a>
+                    )}
+                  </div>
+                ))}
+
+                {pharmacies.some((p) => p.latitude !== null && p.longitude !== null) && (
+                  <>
+                    <p className="px-1 pt-1 text-[0.59375rem] font-bold text-[var(--color-brand)]">
+                      {t.services.pharmaciesTonight}
+                    </p>
+                    <PharmaciesMap pharmacies={pharmacies} />
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </Card>
 

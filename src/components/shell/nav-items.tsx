@@ -55,6 +55,7 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/admin/boutiques", label: t.nav.shops, icon: <StoreIcon size={17} /> },
       { href: "/admin/membres", label: t.nav.members, icon: <UserIcon size={17} /> },
       { href: "/admin/signalements", label: t.nav.reports, icon: <FlagIcon size={17} /> },
+      { href: "/admin/pharmacies", label: t.admin.pharmacies, icon: <SparkIcon size={17} /> },
       { href: "/admin/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
     ],
   };

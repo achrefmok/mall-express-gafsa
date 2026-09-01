@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
 
-    const [expired, refreshed, courses] = await Promise.all([
+    const [expired, refreshed, courses, services] = await Promise.all([
       supabase.rpc("expire_stale_deals"),
       supabase.rpc("refresh_shops_open_state"),
       /*
@@ -70,6 +70,13 @@ export async function GET(request: NextRequest) {
         depuis plus de douze heures.
       */
       supabase.rpc("expire_taxi_requests"),
+      /*
+        La prière et la pharmacie de garde du jour.
+
+        Sans ce passage quotidien, la fenêtre de sept jours laissée par le seed
+        glisse et « Aujourd'hui à Gafsa » retombe sur ses tirets.
+      */
+      supabase.rpc("refresh_daily_services"),
     ]);
 
     if (expired.error) throw new Error(expired.error.message);
@@ -88,10 +95,19 @@ export async function GET(request: NextRequest) {
       signaler(courses.error, { ou: "expiration des demandes de course" });
     }
 
+    /*
+      Idem pour les services du jour : tant que la migration n'est pas collée,
+      la fonction manque, et ce n'est pas une raison pour faire sombrer le reste.
+    */
+    if (services.error) {
+      signaler(services.error, { ou: "rafraîchissement des services du jour" });
+    }
+
     const detail = {
       expiredDeals: expired.data ?? 0,
       refreshedShops: refreshed.data ?? 0,
       expiredRides: courses.error ? null : (courses.data ?? 0),
+      servicesToday: services.error ? null : (services.data ?? 0),
     };
 
     /*

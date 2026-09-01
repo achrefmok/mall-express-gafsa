@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/queries";
+import { getProfile, getCategories } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { fullName, monogram } from "@/lib/format";
@@ -10,6 +10,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { Avatar, Card } from "@/components/ui/primitives";
 import { ChevronRightIcon, GearIcon } from "@/components/ui/icons";
 import { InstallSheet } from "@/components/pwa/install-sheet";
+import { BecomeVendorModal } from "@/components/profile/become-vendor-modal";
 import { crossSpaceHref } from "@/lib/space";
 import { InviteButton, SignOutButton } from "./profile-client";
 
@@ -42,7 +43,7 @@ export default async function ProfilePage() {
   const { t } = await getT();
   const supabase = await createClient();
 
-  const [orders, favorites, reviews] = await Promise.all([
+  const [orders, favorites, reviews, categories] = await Promise.all([
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -50,6 +51,7 @@ export default async function ProfilePage() {
       .eq("status", "delivered"),
     supabase.from("favorites").select("product_id", { count: "exact", head: true }).eq("user_id", profile.id),
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", profile.id),
+    getCategories(),
   ]);
 
   const points = profile.loyalty_points;
@@ -162,13 +164,7 @@ export default async function ProfilePage() {
           </Link>
         )}
         {profile.role === "client" && (
-          <Link
-            href={vendorSignUpUrl ?? "/inscription?role=vendeur"}
-            className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-outline)] p-3 text-[var(--color-ink)]"
-          >
-            <span className="flex-1 text-[0.78125rem] font-semibold">{t.account.becomeVendor}</span>
-            <ChevronRightIcon size={14} className="text-[var(--color-faint)]" />
-          </Link>
+          <BecomeVendorModal categories={categories} label={t.account.becomeVendor} />
         )}
 
         {/* ─── Lignes de navigation ───────────────────────────────────── */}

@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { createClient } from "@/lib/supabase/client";
 
 const SEEN_KEY = "meg-welcome-seen";
 
@@ -34,11 +35,28 @@ export function WelcomeScreen() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (localStorage.getItem(SEEN_KEY)) return;
+
+    // Le logo de l'application, changé par l'administration. Rien à voir avec
+    // les réglages serveur : `app_brand` est lisible par tous.
+    void (async () => {
+      try {
+        const { data } = await createClient()
+          .from("app_brand")
+          .select("app_logo_url")
+          .eq("id", true)
+          .maybeSingle();
+        setLogo(data?.app_logo_url ?? null);
+      } catch {
+        // L'accueil n'attend pas le logo : si la lecture échoue, on garde le
+        // monogramme et l'écran de bienvenue reste inaltéré.
+      }
+    })();
 
     // Une animation d'accueil est exactement ce que ce réglage écarte.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -76,14 +94,26 @@ export function WelcomeScreen() {
         transition: "opacity 380ms ease-out",
       }}
     >
-      <span
-        className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] bg-white/15 text-[1.875rem] font-bold text-white backdrop-blur-sm"
-        style={{
-          animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
-        }}
-      >
-        M
-      </span>
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- logo de l'application, chargé dynamiquement
+          <img
+            src={logo}
+            alt=""
+            className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] object-cover"
+            style={{
+              animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
+            }}
+          />
+        ) : (
+          <span
+            className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] bg-white/15 text-[1.875rem] font-bold text-white backdrop-blur-sm"
+            style={{
+              animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
+            }}
+          >
+            M
+          </span>
+        )}
 
       <div className="flex flex-col items-center gap-1 px-8 text-center">
         <p

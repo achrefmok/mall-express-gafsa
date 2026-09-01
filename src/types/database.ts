@@ -205,6 +205,9 @@ export interface Database {
           latitude: number | null;
           longitude: number | null;
           phone: string | null;
+          whatsapp: string | null;
+          instagram: string | null;
+          facebook_url: string | null;
           status: ShopStatus;
           rejection_reason: string | null;
           missing_document: string | null;
@@ -755,6 +758,17 @@ export interface Database {
         Relationships: [];
       };
 
+      /* ─── app_brand ─────────────────────────────────────────────────
+         Réglage public à une seule ligne : le logo de l'application. Lisible
+         par tous, modifiable par l'administration uniquement. Il ne partage
+         pas `app_settings`, réservée aux secrets serveur et fermée au client. */
+      app_brand: {
+        Row: { id: boolean; app_logo_url: string | null; updated_at: string };
+        Insert: { id?: boolean; app_logo_url?: string | null; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["app_brand"]["Row"]>;
+        Relationships: [];
+      };
+
       /* ─── push_subscriptions ─────────────────────────────────────────
          Un enregistrement par appareil et par navigateur : la même personne
          sur son téléphone et sur son ordinateur en a deux, et doit être
@@ -1083,6 +1097,8 @@ export interface Database {
           name: string;
           address: string | null;
           phone: string | null;
+          latitude: number | null;
+          longitude: number | null;
         };
         Insert: {
           id?: string;
@@ -1090,6 +1106,8 @@ export interface Database {
           name: string;
           address?: string | null;
           phone?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["pharmacies_on_duty"]["Row"]>;
         Relationships: [];
@@ -1162,6 +1180,10 @@ export interface Database {
          n'a aucun droit d'écriture sur `shops`, et n'en a pas besoin pour ça. */
       increment_shop_views: { Args: { shop: string }; Returns: undefined };
       refresh_shops_open_state: { Args: Record<PropertyKey, never>; Returns: number };
+      /** Garantit une prière et une pharmacie de garde pour le jour courant
+          (fuseau `Africa/Tunis`), et nettoie les vieilles lignes. Appelée par
+          la tâche de maintenance quotidienne. */
+      refresh_daily_services: { Args: Record<PropertyKey, never>; Returns: number };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_service_context: { Args: Record<PropertyKey, never>; Returns: boolean };
       admin_members: {

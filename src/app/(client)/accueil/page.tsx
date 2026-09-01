@@ -14,6 +14,7 @@ import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
 import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
 import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
+import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
 
@@ -254,6 +255,13 @@ export default async function HomePage() {
         </div>
 
         <div className="flex flex-none gap-2">
+          {/*
+            La langue, au premier coup d'œil, à côté de la cloche et du panier.
+            La barre d'accessibilité, plus bas, la propose aussi — mais ici elle
+            se voit sans avoir à faire défiler l'écran.
+          */}
+          <LanguageToggle />
+
           <Link
             href="/notifications"
             aria-label={t.nav.notifications}

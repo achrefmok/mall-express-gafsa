@@ -9,6 +9,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { Card, Divider, KeyValueRow, SectionTitle } from "@/components/ui/primitives";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { SignOutButton } from "@/app/(client)/profil/profile-client";
+import { LogoManager } from "@/components/admin/logo-manager";
 
 export const metadata: Metadata = {
   title: "Réglages de la plateforme",
@@ -22,7 +23,7 @@ export default async function AdminSettingsPage() {
   const [profile, { t }] = await Promise.all([getProfile(), getT()]);
   const supabase = await createClient();
 
-  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers, pendingProviders] =
+  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers, pendingProviders, brand] =
     await Promise.all([
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -62,9 +63,10 @@ export default async function AdminSettingsPage() {
       // Dépanneurs autorisés mais pas encore vérifiés : invisibles des clients
       // tant que personne n'a contrôlé identité et qualification.
       supabase
-        .from("sos_providers")
-        .select("id", { count: "exact", head: true })
-        .eq("is_approved", false),
+          .from("sos_providers")
+          .select("id", { count: "exact", head: true })
+          .eq("is_approved", false),
+      supabase.from("app_brand").select("app_logo_url").eq("id", true).maybeSingle(),
     ]);
 
   const links = [
@@ -87,6 +89,11 @@ export default async function AdminSettingsPage() {
       href: "/admin/sos",
       label: "SOS dépannage",
       value: `${pendingProviders.count ?? 0} à vérifier`,
+    },
+    {
+      href: "/admin/pharmacies",
+      label: t.admin.pharmacies,
+      value: "Garde du jour",
     },
   ];
 
@@ -138,6 +145,11 @@ export default async function AdminSettingsPage() {
               </Card>
             ))}
           </div>
+        </section>
+
+        <section className="flex flex-none flex-col gap-2">
+          <SectionTitle>Identité</SectionTitle>
+          <LogoManager current={brand.data?.app_logo_url ?? null} />
         </section>
 
         <section className="flex flex-none flex-col gap-2">

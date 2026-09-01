@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E3F0FF"/>
+      <stop offset="0.55" stop-color="#BFDAFF"/>
+      <stop offset="1" stop-color="#92BCF2"/>
+    </linearGradient>
+    <linearGradient id="vanbody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6FA8FF"/>
+      <stop offset="0.5" stop-color="#2F6FE0"/>
+      <stop offset="1" stop-color="#1E4FA8"/>
+    </linearGradient>
+    <linearGradient id="vanroof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9CC6FF"/>
+      <stop offset="1" stop-color="#5A92E8"/>
+    </linearGradient>
+    <linearGradient id="vglass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E7F6FF"/>
+      <stop offset="1" stop-color="#A9D3F2"/>
+    </linearGradient>
+    <linearGradient id="vwheel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3A3A44"/>
+      <stop offset="1" stop-color="#101016"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="480" height="480" rx="140" fill="url(#bg)"/>
+  <rect x="0" y="0" width="480" height="480" rx="140" fill="url(#glow)"/>
+
+  <ellipse cx="240" cy="340" rx="156" ry="28" fill="#1E3F75" opacity="0.35"/>
+  <ellipse cx="240" cy="338" rx="142" ry="21" fill="#183255" opacity="0.25"/>
+
+  <!-- LOUAGE fourgonnette -->
+  <g transform="translate(240 236)">
+    <!-- caisse -->
+    <path d="M-146 26 L-150 -14 Q-151 -26 -138 -28 L36 -34 Q48 -34 52 -28 L62 -24 Q72 -22 74 -10 L112 6 L120 18 L118 30 L-138 32 Q-150 32 -146 26 Z"
+          fill="url(#vanbody)" stroke="#15408F" stroke-width="2"/>
+    <!-- toit -->
+    <path d="M-138 -26 L-120 -40 Q-106 -48 -78 -50 L60 -50 Q72 -50 74 -42 L88 -30 L-138 -26 Z"
+          fill="url(#vanroof)"/>
+    <!-- pare-brise -->
+    <path d="M40 -48 L66 -44 Q74 -43 76 -36 L80 -24 L34 -26 L40 -48 Z" fill="url(#vglass)" stroke="#5E8CC8" stroke-width="1.5"/>
+    <!-- vitres latérales -->
+    <path d="M-124 -26 L-96 -34 Q-84 -36 -70 -34 L-66 -20 L-122 -14 Z" fill="url(#vglass)" stroke="#5E8CC8" stroke-width="1.5"/>
+    <path d="M-60 -32 L-30 -34 Q-20 -34 -14 -28 L-12 -18 L-58 -16 Z" fill="url(#vglass)" stroke="#5E8CC8" stroke-width="1.5"/>
+    <path d="M-8 -28 L20 -30 Q28 -30 30 -24 L32 -16 L-6 -16 Z" fill="url(#vglass)" stroke="#5E8CC8" stroke-width="1.5"/>
+    <!-- bande blanche -->
+    <rect x="-140" y="12" width="268" height="9" fill="#FFFFFF" opacity="0.92"/>
+    <!-- bande damier avant -->
+    <g>
+      <rect x="48" y="-8" width="9" height="9" fill="#12121a"/>
+      <rect x="66" y="-8" width="9" height="9" fill="#F7F7FB"/>
+      <rect x="84" y="-8" width="9" height="9" fill="#12121a"/>
+      <rect x="57" y="1" width="9" height="9" fill="#F7F7FB"/>
+      <rect x="75" y="1" width="9" height="9" fill="#12121a"/>
+    </g>
+    <!-- feux avant -->
+    <path d="M112 4 Q120 2 120 10 L118 22 L106 18 Z" fill="#FFE37A" stroke="#C9A000" stroke-width="1.5"/>
+    <path d="M106 10 L116 12 L114 18 L106 16 Z" fill="#FFFFFF" opacity="0.9"/>
+    <!-- feux arrière -->
+    <path d="M-150 4 L-132 2 L-134 22 L-148 24 Z" fill="#FF6B4A" stroke="#C63E24" stroke-width="1.5"/>
+    <!-- porte coulissante + poignée -->
+    <line x1="14" y1="-2" x2="14" y2="28" stroke="#15408F" stroke-width="2" opacity="0.6"/>
+    <rect x="86" y="18" width="6" height="6" rx="1" fill="#0F3166"/>
+    <!-- enseigne route "GAFSA — TUNIS" -->
+    <g transform="translate(-96 -62)">
+      <rect x="-34" y="-8" width="74" height="18" rx="4" fill="#FFFFFF" stroke="#C9D8EE" stroke-width="1.5"/>
+      <text x="3" y="5.5" font-family="Arial, sans-serif" font-size="9" font-weight="900" fill="#173D7E" text-anchor="middle" letter-spacing="0.5">GAFSA — TUNIS</text>
+    </g>
+    <!-- housses toit / bagages -->
+    <rect x="-70" y="-56" width="52" height="10" rx="5" fill="#D75A5A" opacity="0.9"/>
+    <rect x="-62" y="-56" width="18" height="10" rx="5" fill="#E07070" opacity="0.8"/>
+  </g>
+</svg>

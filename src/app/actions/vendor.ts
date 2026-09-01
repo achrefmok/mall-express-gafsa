@@ -175,6 +175,14 @@ export async function createMyShop(input: {
   categoryId?: string | null;
   address?: string;
   phone?: string;
+  whatsapp?: string;
+  instagram?: string;
+  facebookUrl?: string;
+  description?: string;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }) {
   const { supabase, profile, error } = await requireProfile();
   if (!profile) return fail(error);
@@ -221,6 +229,14 @@ export async function createMyShop(input: {
       category_id: input.categoryId || null,
       address: input.address?.trim() || null,
       phone: input.phone?.trim() || null,
+      whatsapp: input.whatsapp?.trim() || null,
+      instagram: input.instagram?.trim() || null,
+      facebook_url: input.facebookUrl?.trim() || null,
+      description: input.description?.trim() || null,
+      logo_url: input.logoUrl || null,
+      cover_url: input.coverUrl || null,
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
     })
     .select("slug")
     .single();

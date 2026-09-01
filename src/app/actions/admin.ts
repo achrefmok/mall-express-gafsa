@@ -336,3 +336,77 @@ export interface Membre {
   last_name: string | null;
   phone: string | null;
 }
+
+/* ─── Pharmacies de garde ─────────────────────────────────────────────── */
+
+/**
+ * Ajoute ou corrige une pharmacie de garde pour une date donnée.
+ *
+ * Depuis que la rotation automatique a été retirée, c'est l'administration qui
+ * fixe la liste des gardes de chaque jour — nom, adresse, téléphone, et la
+ * position qui la place sur la carte de l'écran Services.
+ */
+export async function savePharmacyDuty(input: {
+  id?: string;
+  onDate: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.onDate)) return fail("Date invalide");
+  if (!input.name.trim()) return fail("Le nom de la pharmacie est obligatoire");
+
+  const payload = {
+    on_date: input.onDate,
+    name: input.name.trim(),
+    address: input.address?.trim() || null,
+    phone: input.phone?.trim() || null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
+  };
+
+  const query = input.id
+    ? supabase.from("pharmacies_on_duty").update(payload).eq("id", input.id)
+    : supabase.from("pharmacies_on_duty").insert(payload);
+
+  const { error: e } = await query;
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/services");
+  revalidatePath("/admin/pharmacies");
+  return done();
+}
+
+export async function removePharmacyDuty(id: string) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase.from("pharmacies_on_duty").delete().eq("id", id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/services");
+  revalidatePath("/admin/pharmacies");
+  return done();
+}
+
+/** Définir le logo de l'application depuis l'administration. */
+export async function setAppLogo(logoUrl: string | null) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase
+    .from("app_brand")
+    .update({ app_logo_url: logoUrl, updated_at: new Date().toISOString() })
+    .eq("id", true);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/");
+  revalidatePath("/accueil");
+  return done();
+}
