@@ -93,11 +93,45 @@ walk(srcDir, (path, name) => {
 
 const matchers = routes.map((route) => new RegExp(`^${route.replace(/\[[^\]]+\]/g, "[^/]+")}$`));
 
+/*
+  Une interpolation n'est pas toujours un segment de chemin.
+
+  Le détecteur ramène `/chemin${…}` à `/chemin[param]`, en supposant que
+  l'interpolation complète l'adresse. C'est vrai de `/produit/${id}` ; c'est
+  faux dès que l'interpolation produit une chaîne de requête :
+
+    router.push(`/admin/pharmacies${p.toString() ? `?${p}` : ""}`)
+
+  Le contrôle sondait `/admin/pharmaciesX`, ne trouvait rien, et déclarait
+  morte une route qui existe. Comme `npm run check` enchaîne ses étapes par
+  `&&`, ce seul faux positif empêchait les huit contrôles suivants de tourner
+  — et faisait échouer l'intégration continue, donc le déploiement qu'elle
+  garde.
+
+  Deviner ce que produit l'interpolation demanderait d'interpréter le code :
+  ici, le `?` est à l'intérieur d'une ternaire, pas après elle. On ne devine
+  donc pas — on accepte les deux lectures. Un lien à interpolation est vivant
+  si le chemin complété correspond à une route, **ou** si le chemin sans elle
+  en désigne déjà une.
+
+  Rien n'est perdu en couverture : un `/produit/${id}` vers une route
+  supprimée échoue toujours des deux côtés, puisque ni `/produit/X` ni
+  `/produit` n'existeraient.
+*/
+const vivant = (link) => {
+  const complet = link.replace(/\/$/, "").replace(/\[param\]/g, "X") || "/";
+  if (matchers.some((matcher) => matcher.test(complet))) return true;
+
+  if (!link.includes("[param]")) return false;
+
+  const base = link.replace(/\[param\]/g, "").replace(/\/$/, "") || "/";
+  return matchers.some((matcher) => matcher.test(base));
+};
+
 const dead = [...links.entries()]
   .filter(([link]) => {
     if (link.startsWith("/icons")) return false; // fichiers statiques
-    const probe = link.replace(/\/$/, "").replace(/\[param\]/g, "X") || "/";
-    return !matchers.some((matcher) => matcher.test(probe));
+    return !vivant(link);
   })
   .sort(([a], [b]) => a.localeCompare(b));
 

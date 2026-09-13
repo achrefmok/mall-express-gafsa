@@ -38,11 +38,20 @@ export function GET() {
     dir: "auto", // bascule automatiquement en RTL quand l'interface passe en arabe
     categories: ["shopping", "lifestyle", "business"],
 
+    /*
+      L'icône installée sur le téléphone, depuis le logo de l'administration.
+
+      Les adresses restent fixes — le manifeste peut donc rester statique —
+      et c'est la route `/brand-icon/` qui lit le logo en vigueur. Changer le
+      logo change l'icône des nouvelles installations, sans reconstruction.
+
+      La variante « masquable » garde sa marge : Android la découpe selon la
+      forme du lanceur, et un logo bord à bord y perdrait ses coins.
+    */
     icons: [
-      { src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/brand-icon/192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/brand-icon/512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/brand-icon/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
 
     // Raccourcis à l'appui long sur l'icône installée

@@ -7,6 +7,7 @@ import { format } from "@/lib/i18n/format";
 import { monogram } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
 import { ProductCard } from "@/components/cards/product-card";
+import { avecBlackFriday } from "@/lib/black-friday-server";
 import { Avatar, EmptyState, ButtonLink, Rail, SectionTitle } from "@/components/ui/primitives";
 import { BackButton } from "@/components/shell/back";
 
@@ -53,7 +54,7 @@ export default async function SearchPage({
   */
   const motif = `%${query.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
 
-  const [products, shops, favorites] = await Promise.all([
+  const [trouves, shops, favorites] = await Promise.all([
     query.length >= 2
       ? supabase
           .from("products")
@@ -88,6 +89,9 @@ export default async function SearchPage({
           .then(({ data }) => new Set((data ?? []).map((r) => r.product_id)))
       : Promise.resolve(null),
   ]);
+
+  // Le prix Black Friday sur les résultats, en une requête.
+  const products = await avecBlackFriday(trouves);
 
   const vide = query.length >= 2 && products.length === 0 && shops.length === 0;
 

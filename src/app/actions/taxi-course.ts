@@ -24,7 +24,12 @@ import { signaler } from "@/lib/signal";
    ═══════════════════════════════════════════════════════════════════════ */
 
 /** Réponse de PostgREST quand la migration n'a pas encore été collée. */
-const TABLE_ABSENTE = ["42P01", "PGRST205", "PGRST202"];
+/*
+  PGRST204 — « colonne absente du cache de schéma » — manquait à la liste, et
+  une écriture visant une colonne pas encore migrée tombait donc dans le repli
+  générique au lieu d être reconnue comme un DDL en retard.
+*/
+const TABLE_ABSENTE = ["42P01", "42883", "PGRST202", "PGRST204", "PGRST205"];
 
 const MINUTES_VALIDITE = 3;
 
@@ -319,9 +324,15 @@ async function consommerPlaces(driverId: string, sieges: number) {
     const presence = presenceDe(chauffeur);
     const suite = apresReservation({ statut: presence.statut, places: presence.places }, sieges);
 
-    // Places non renseignées : rien à décompter, et rien à décider à sa place.
-    if (suite.places === null) return;
+    /*
+      Plus de sortie anticipée quand les places sont inconnues.
 
+      Elle empêchait l'écriture entière — donc aussi le passage en « occupé » —
+      pour le cas le plus courant : un chauffeur qui n'a jamais renseigné ses
+      places. Il restait « libre » après avoir accepté, et pouvait accepter
+      encore. La fonction distingue désormais les deux questions :
+      le chiffre reste inconnu, la disponibilité ne l'est pas.
+    */
     await admin
       .from("taxi_drivers")
       .update({
@@ -341,16 +352,35 @@ async function consommerPlaces(driverId: string, sieges: number) {
 }
 
 async function notifierClient(clientId: string, accepte: boolean, chauffeur: string) {
+  return notifierCourse(
+    clientId,
+    accepte ? `${chauffeur} arrive` : `${chauffeur} n'est pas disponible`,
+    accepte
+      ? "Votre course est acceptée. Retrouvez le chauffeur sur la carte."
+      : "Essayez un autre chauffeur sur la carte.",
+  );
+}
+
+/**
+ * Une notification de course, titre et corps décidés par l'appelant.
+ *
+ * `notifierClient` composait son titre par `${chauffeur} arrive`, et les
+ * quatre transitions d'état lui passaient une **phrase entière** à la place
+ * d'un nom. Le client recevait « Votre chauffeur arrive arrive », « Bonne
+ * route ! arrive », « Course terminée. Merci ! arrive » — et, dans les quatre
+ * cas, le corps annonçait une acceptation qui datait de plusieurs minutes.
+ *
+ * Chaque étape dit donc désormais ce qu'elle a à dire, en entier.
+ */
+async function notifierCourse(clientId: string, titre: string, corps: string) {
   try {
     const admin = createAdminClient();
 
     await admin.from("notifications").insert({
       user_id: clientId,
       kind: "taxi_request",
-      title: accepte ? `${chauffeur} arrive` : `${chauffeur} n'est pas disponible`,
-      body: accepte
-        ? "Votre course est acceptée. Retrouvez le chauffeur sur la carte."
-        : "Essayez un autre chauffeur sur la carte.",
+      title: titre,
+      body: corps,
       link: "/taxi",
     });
   } catch (cause) {
@@ -359,18 +389,219 @@ async function notifierClient(clientId: string, accepte: boolean, chauffeur: str
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Machine d'états de la course.
+   
+   en_attente → acceptee → driver_arriving → picked_up → in_progress → completed
+                 ↘ refusee / expiree / annulee
+   
+   Chaque transition est une action séparée, appelée par le chauffeur ou le
+   client au bon moment. Le serveur vérifie la transition valide avant d'écrire.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Le chauffeur confirme qu'il se rend au point de pickup.
+ * Transition : acceptee → driver_arriving
+ */
+export async function marquerChauffeurEnRoute(demandeId: string) {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return fail(error);
+
+  const { data: demande, error: lectureError } = await supabase
+    .from("taxi_requests")
+    .select("id, status, driver_id, client_id")
+    .eq("id", demandeId)
+    .maybeSingle();
+
+  if (lectureError) return fail(readableError(lectureError));
+  if (!demande) return fail("Demande introuvable");
+  if (demande.driver_id !== profile.id) return fail("Cette demande ne vous est pas adressée");
+  if (demande.status !== "acceptee") return fail("Cette course n'est pas dans l'état attendu");
+
+  const { error: writeError } = await supabase
+    .from("taxi_requests")
+    .update({ status: "driver_arriving" })
+    .eq("id", demandeId)
+    .eq("status", "acceptee");
+
+  if (writeError) return fail(readableError(writeError));
+
+  await notifierCourse(
+    demande.client_id,
+    "Votre chauffeur est en route",
+    "Il se dirige vers votre point de départ.",
+  );
+
+  return done();
+}
+
+/**
+ * Le chauffeur a récupéré le passager.
+ * Transition : driver_arriving → picked_up
+ */
+export async function marquerPassagerPris(demandeId: string) {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return fail(error);
+
+  const { data: demande, error: lectureError } = await supabase
+    .from("taxi_requests")
+    .select("id, status, driver_id, client_id")
+    .eq("id", demandeId)
+    .maybeSingle();
+
+  if (lectureError) return fail(readableError(lectureError));
+  if (!demande) return fail("Demande introuvable");
+  if (demande.driver_id !== profile.id) return fail("Cette demande ne vous est pas adressée");
+  if (demande.status !== "driver_arriving") return fail("Le chauffeur n'est pas en route");
+
+  const { error: writeError } = await supabase
+    .from("taxi_requests")
+    .update({ status: "picked_up" })
+    .eq("id", demandeId)
+    .eq("status", "driver_arriving");
+
+  if (writeError) return fail(readableError(writeError));
+
+  await notifierCourse(
+    demande.client_id,
+    "Vous êtes à bord",
+    "Le chauffeur vous a pris en charge.",
+  );
+
+  return done();
+}
+
+/**
+ * La course commence.
+ * Transition : picked_up → in_progress
+ */
+export async function marquerCourseEnCours(demandeId: string) {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return fail(error);
+
+  const { data: demande, error: lectureError } = await supabase
+    .from("taxi_requests")
+    .select("id, status, driver_id, client_id")
+    .eq("id", demandeId)
+    .maybeSingle();
+
+  if (lectureError) return fail(readableError(lectureError));
+  if (!demande) return fail("Demande introuvable");
+  if (demande.driver_id !== profile.id) return fail("Cette demande ne vous est pas adressée");
+  if (demande.status !== "picked_up") return fail("Le passager n'a pas encore été pris en charge");
+
+  const { error: writeError } = await supabase
+    .from("taxi_requests")
+    .update({ status: "in_progress" })
+    .eq("id", demandeId)
+    .eq("status", "picked_up");
+
+  if (writeError) return fail(readableError(writeError));
+
+  await notifierCourse(
+    demande.client_id,
+    "Course démarrée",
+    "Bonne route ! Vous êtes en chemin vers votre destination.",
+  );
+
+  return done();
+}
+
+/**
+ * La course est terminée.
+ * Transition : in_progress → completed
+ */
+export async function marquerCourseTerminee(demandeId: string) {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return fail(error);
+
+  const { data: demande, error: lectureError } = await supabase
+    .from("taxi_requests")
+    .select("id, status, driver_id, client_id, seats")
+    .eq("id", demandeId)
+    .maybeSingle();
+
+  if (lectureError) return fail(readableError(lectureError));
+  if (!demande) return fail("Demande introuvable");
+  if (demande.driver_id !== profile.id) return fail("Cette demande ne vous est pas adressée");
+  if (demande.status !== "in_progress") return fail("La course n'est pas en cours");
+
+  const { error: writeError } = await supabase
+    .from("taxi_requests")
+    .update({ status: "completed", responded_at: new Date().toISOString() })
+    .eq("id", demandeId)
+    .eq("status", "in_progress");
+
+  if (writeError) return fail(readableError(writeError));
+
+  // Rendre les places au chauffeur
+  try {
+    const admin = createAdminClient();
+    const { data: chauffeur } = await admin
+      .from("taxi_drivers")
+      .select("*")
+      .eq("id", profile.id)
+      .maybeSingle();
+
+    if (chauffeur) {
+      const presence = presenceDe(chauffeur);
+      if (presence.places !== null) {
+        const nouvellesPlaces = Math.min(
+          chauffeur.seats_total ?? 4,
+          presence.places + (demande.seats ?? 1),
+        );
+        await admin
+          .from("taxi_drivers")
+          .update({
+            seats_free: nouvellesPlaces,
+            status: "libre",
+            status_since: new Date().toISOString(),
+            is_available: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", profile.id);
+      }
+    }
+  } catch (cause) {
+    signaler(cause, { ou: "remise des places après course", quoi: { chauffeur: profile.id } });
+  }
+
+  await notifierCourse(
+    demande.client_id,
+    "Course terminée",
+    "Merci d avoir voyagé avec nous.",
+  );
+
+  return done();
+}
+
 /** Le client se ravise. Les places ne sont pas rendues : elles n'ont pas été prises. */
 export async function annulerDemande(demandeId: string) {
   const { supabase, profile, error } = await requireProfile();
   if (!profile) return fail(error);
 
-  const { error: writeError } = await supabase
+  const { data: annulee, error: writeError } = await supabase
     .from("taxi_requests")
     .update({ status: "annulee", responded_at: new Date().toISOString() })
     .eq("id", demandeId)
     .eq("client_id", profile.id)
-    .eq("status", "en_attente");
+    .eq("status", "en_attente")
+    .select("id")
+    .maybeSingle();
 
   if (writeError) return fail(readableError(writeError));
+
+  // Si la demande était aussi en diffusion, ses correspondances s'éteignent
+  // d'un coup : un chauffeur ne doit pas voir une course que le client a
+  // annulée. Le crochet de maintenance ferait le ménage, mais trop tard.
+  if (annulee) {
+    try {
+      const admin = createAdminClient();
+      await admin.from("taxi_request_matches").delete().eq("request_id", demandeId);
+    } catch {
+      // L'échec ne doit pas faire passer l'annulation pour un refus.
+    }
+  }
+
   return done();
 }

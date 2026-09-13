@@ -8,6 +8,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { DriverConsole } from "@/components/taxi/driver-console";
 import { DriverInbox } from "@/components/taxi/driver-inbox";
 import { DriverRequests } from "@/components/taxi/driver-requests";
+import { DriverNearby } from "@/components/taxi/driver-nearby";
 import { MotionProvider } from "@/components/ui/motion";
 
 export const metadata: Metadata = {
@@ -85,6 +86,20 @@ export default async function DriverPage() {
         <Suspense fallback={null}>
           <DriverRequests driverId={profile.id} />
         </Suspense>
+
+        {/*
+          Chercher, et non plus seulement attendre.
+
+          Les demandes ci-dessus sont celles qu'on lui a adressées. Celles-ci
+          sont celles qu'il va chercher : les courses ouvertes autour de lui,
+          qu'aucun appariement ne lui avait envoyées — parce qu'il n'avait pas
+          déclaré de trajet, parce que sa zone ne correspondait pas, ou parce
+          qu'elles sont nées avant qu'il ne se déclare libre.
+
+          Placé juste après, et avant la fiche : un chauffeur qui ouvre cet
+          écran cherche du travail. La plaque d'immatriculation attend.
+        */}
+        <DriverNearby />
 
         <DriverConsole initial={driver} />
 

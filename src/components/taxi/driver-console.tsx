@@ -9,9 +9,11 @@ import {
   signalerPresence,
   updateDriverPosition,
 } from "@/app/actions/taxi";
+import { updateDriverRoute } from "@/app/actions/taxi-matching";
 import { shouldPublishPosition } from "@/lib/geo";
 import { presenceDe, type TaxiStatus } from "@/lib/taxi-presence";
 import { Button, Card } from "@/components/ui/primitives";
+import { TAXI_ZONES, nomZone, estZone } from "@/lib/taxi-zones";
 import { cx } from "@/lib/format";
 
 const FIELD =
@@ -30,6 +32,11 @@ export interface DriverProfile {
   status?: string | null;
   seats_total?: number | null;
   seats_free?: number | null;
+  /* Ajoutées par la migration de matching. Absentes tant qu'elle n'est pas
+     collée ; la carte de trajet les laisse alors vides, sans planter. */
+  origin_zone?: string | null;
+  destination_zone?: string | null;
+  accepts_custom?: boolean | null;
 }
 
 /**
@@ -54,7 +61,7 @@ export interface DriverProfile {
  * expiration longue et explicite, et non la dernière fois que son GPS a parlé.
  */
 export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [driver, setDriver] = useState(initial);
   const [name, setName] = useState(initial?.display_name ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
@@ -64,6 +71,16 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const watchRef = useRef<number | null>(null);
+
+  /* Le trajet déclaré : qui il est prêt à prendre. Vient de la fiche, puis
+     vit localement jusqu'à « Enregistrer mon trajet ». */
+  const [origine, setOrigine] = useState<(typeof TAXI_ZONES)[number]["id"] | null>(
+    initial?.origin_zone && estZone(initial.origin_zone) ? initial.origin_zone : null,
+  );
+  const [arrivee, setArrivee] = useState<(typeof TAXI_ZONES)[number]["id"] | null>(
+    initial?.destination_zone && estZone(initial.destination_zone) ? initial.destination_zone : null,
+  );
+  const [acceptCustom, setAcceptCustom] = useState(initial?.accepts_custom ?? false);
   /* Dernière position réellement publiée, pour ne pas republier du bruit. */
   const lastSentRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
 
@@ -188,6 +205,22 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
     if (suivantes === places) return;
 
     choisir(suivantes === 0 ? "occupe" : "places", suivantes);
+  }
+
+  /** Enregistrer le trajet déclaré ; les demandes compatibles affluent ensuite. */
+  function enregistrerTrajet(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+
+    startTransition(async () => {
+      const result = await updateDriverRoute({
+        originZone: origine,
+        destinationZone: arrivee,
+        acceptCustom,
+      });
+
+      if (!result.ok) setError(result.error);
+    });
   }
 
   function onShare() {
@@ -353,6 +386,93 @@ export function DriverConsole({ initial }: { initial: DriverProfile | null }) {
           <p className="text-[0.59375rem] leading-[1.5] text-[var(--color-faint)]">
             {t.taxi.statusKeptNote}
           </p>
+        </Card>
+      )}
+
+      {/*
+        Le trajet que le chauffeur choisit de servir.
+        
+        Sans lui, aucune demande de matching ne lui arrive : c'est la route
+        déclarée qui fait la correspondance. Pour les destinations hors zones,
+        la case est son accord — jamais une hypothèse de la plateforme.
+      */}
+      {driver && (
+        <Card className="flex flex-col gap-[10px] p-3">
+          <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
+            🧭 {t.taxi.orderDriverRoute}
+          </p>
+
+          <div className="flex flex-col gap-[6px]">
+            <p className="text-[0.53125rem] font-bold tracking-[0.06em] text-[var(--color-faint)] uppercase">
+              {t.taxi.orderRouteOrigin}
+            </p>
+            <div className="flex flex-wrap gap-[6px]">
+              {TAXI_ZONES.map((zone) => (
+                <button
+                  key={zone.id}
+                  type="button"
+                  onClick={() => setOrigine(zone.id)}
+                  aria-pressed={origine === zone.id}
+                  className={cx(
+                    "press rounded-full border px-[11px] py-[7px] text-[0.625rem] font-bold",
+                    origine === zone.id
+                      ? "border-[var(--color-brand-fill)] bg-[var(--color-brand-tint,rgba(131,56,228,0.1))] text-[var(--color-brand)]"
+                      : "border-[var(--color-outline)] text-[var(--color-muted)]",
+                  )}
+                >
+                  {nomZone(zone.id, locale)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-[6px]">
+            <p className="text-[0.53125rem] font-bold tracking-[0.06em] text-[var(--color-faint)] uppercase">
+              {t.taxi.orderRouteDest}
+            </p>
+            <div className="flex flex-wrap gap-[6px]">
+              {TAXI_ZONES.map((zone) => (
+                <button
+                  key={zone.id}
+                  type="button"
+                  onClick={() => setArrivee(zone.id)}
+                  aria-pressed={arrivee === zone.id}
+                  className={cx(
+                    "press rounded-full border px-[11px] py-[7px] text-[0.625rem] font-bold",
+                    arrivee === zone.id
+                      ? "border-[var(--color-brand-fill)] bg-[var(--color-brand-tint,rgba(131,56,228,0.1))] text-[var(--color-brand)]"
+                      : "border-[var(--color-outline)] text-[var(--color-muted)]",
+                  )}
+                >
+                  {nomZone(zone.id, locale)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 rounded-[12px] bg-[var(--color-field)] px-3 py-[9px]">
+            <input
+              type="checkbox"
+              checked={acceptCustom}
+              onChange={(e) => setAcceptCustom(e.target.checked)}
+              className="h-[16px] w-[16px] flex-none accent-[var(--color-brand-fill)]"
+            />
+            <span className="text-[0.65625rem] font-semibold text-[var(--color-ink)]">
+              {t.taxi.orderAcceptCustom}
+            </span>
+          </label>
+
+          <p className="text-[0.59375rem] leading-[1.5] text-[var(--color-faint)]">
+            {t.taxi.orderRouteNote}
+          </p>
+
+          <Button
+            type="button"
+            onClick={enregistrerTrajet}
+            disabled={pending || origine !== null !== (arrivee !== null)}
+          >
+            {t.taxi.orderRouteCta}
+          </Button>
         </Card>
       )}
 

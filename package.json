@@ -32,7 +32,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload && npm run check:url"
+    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload && npm run check:url",
+    "db:concurrence": "node scripts/check-concurrence.mjs",
+    "db:black-friday": "node scripts/check-black-friday.mjs"
   },
   "dependencies": {
     "@sentry/node": "^10.71.0",

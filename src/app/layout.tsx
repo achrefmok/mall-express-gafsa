@@ -92,8 +92,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
-        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        {/*
+          Les icônes viennent du logo de l'administration.
+
+          `/brand-icon/*` le lit à la source et le met à la taille demandée
+          (voir la route). Elles désignaient auparavant des fichiers figés dans
+          `public/icons/` : le logo changé depuis l'administration n'atteignait
+          ni l'onglet, ni l'écran d'accueil de l'iPhone.
+
+          Plus de variante SVG : un navigateur qui lit le SVG le préfère au
+          PNG, et c'est donc l'ancien dessin qui aurait gagné.
+        */}
+        <link rel="icon" href="/brand-icon/32.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/brand-icon/192.png" sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href="/brand-icon/180.png" sizes="180x180" />
         {/* Voir le commentaire sur `manifest` dans `metadata`, plus haut. */}
         <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
       </head>

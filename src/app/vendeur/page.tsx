@@ -65,6 +65,8 @@ export default async function VendorDashboard() {
     { href: "/vendeur/produits/nouveau", monogram: "+", label: t.vendor.addProduct },
     { href: "/vendeur/produits", monogram: "ST", label: t.vendor.manageStock },
     { href: "/vendeur/promotions", monogram: "PR", label: t.vendor.promotions },
+    // À côté des promotions : c'est la même intention, pour un seul jour.
+    { href: "/vendeur/black-friday", monogram: "BF", label: "Black Friday", accent: true },
     /* Juste après les promotions : c'est au moment où l'on baisse un prix
        qu'on veut l'annoncer, et l'affiche est le geste qui suit. */
     { href: "/vendeur/affiche", monogram: "AF", label: t.vendor.poster, accent: true },

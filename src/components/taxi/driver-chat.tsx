@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { envoyerMessageTaxi } from "@/app/actions/taxi-chat";
 import { usePoll } from "@/lib/use-poll";
+import { useFrappe } from "@/lib/taxi-frappe";
 import { cx, monogram } from "@/lib/format";
 import { Avatar } from "@/components/ui/primitives";
 
@@ -57,6 +58,10 @@ export function DriverChat({
   const [brouillon, setBrouillon] = useState("");
   const [etat, setEtat] = useState<"chargement" | "pret" | "indisponible">("chargement");
   const [envoi, setEnvoi] = useState(false);
+
+  /* Le fil de frappe passe par la diffusion, jamais par la base : un
+     indicateur qui ne vaut rien passe la seconde ne merite pas une ecriture. */
+  const { autreEcrit, signaler } = useFrappe({ driverId, clientId, moi: "client" });
 
   const filRef = useRef<HTMLDivElement>(null);
 
@@ -232,7 +237,32 @@ export function DriverChat({
               ))}
             </AnimatePresence>
 
-            {messages.length === 0 && etat === "pret" && (
+            <AnimatePresence>
+              {autreEcrit && (
+                <m.p
+                  key="frappe"
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.18 }}
+                  aria-live="polite"
+                  className="flex max-w-[86%] items-center gap-[5px] self-start rounded-[14px] bg-[var(--color-field)] px-[11px] py-[9px]"
+                >
+                  <span className="sr-only">{driverName} est en train d&apos;écrire</span>
+                  {[0, 1, 2].map((i) => (
+                    <m.span
+                      key={i}
+                      aria-hidden
+                      className="h-[5px] w-[5px] rounded-full bg-[var(--color-muted)]"
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
+                      transition={{ duration: 1.05, repeat: Infinity, delay: i * 0.16, ease: "easeInOut" }}
+                    />
+                  ))}
+                </m.p>
+              )}
+            </AnimatePresence>
+
+            {messages.length === 0 && etat === "pret" && !autreEcrit && (
               <p className="self-start rounded-[14px] bg-[var(--color-field)] px-[11px] py-[8px] text-[0.65625rem] leading-[1.5] text-[var(--color-muted)]">
                 {t.taxi.writeToDriver}
               </p>
@@ -264,7 +294,7 @@ export function DriverChat({
           >
             <input
               value={brouillon}
-              onChange={(event) => setBrouillon(event.target.value)}
+              onChange={(event) => { setBrouillon(event.target.value); signaler(); }}
               placeholder={t.taxi.writeToDriver}
               maxLength={500}
               className="min-w-0 flex-1 rounded-full bg-[var(--color-field)] px-[13px] py-[9px] text-[0.65625rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"

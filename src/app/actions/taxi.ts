@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireAdmin, requireProfile } from "./_helpers";
 import type { Database } from "@/types/database";
 import { NUMERO_INVALIDE, numeroValide } from "@/lib/phone";
+import { offrirDemandesAuChauffeur } from "./taxi-matching";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Actions « taxi ».
@@ -132,6 +133,17 @@ export async function setDriverStatus(input: {
       .eq("id", profile.id);
 
     if (repli) return fail(readableError(repli));
+  }
+
+  /*
+    Celui qui s'allume retrouve les demandes nées pendant qu'il était éteint.
+
+    Une demande en attente est offerte au matching au moment de sa création ;
+    si aucun chauffeur compatible n'était là, elle l'attend. Se déclarer libre
+    est l'instant où elle peut enfin lui être adressée.
+  */
+  if (input.statut === "libre" || input.statut === "places") {
+    await offrirDemandesAuChauffeur(profile.id);
   }
 
   revalidatePath("/taxi");

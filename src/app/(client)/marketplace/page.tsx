@@ -6,6 +6,7 @@ import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { SearchBar } from "@/components/shell/search-bar";
 import { ProductCard } from "@/components/cards/product-card";
+import { avecBlackFriday } from "@/lib/black-friday-server";
 import { EmptyState } from "@/components/ui/primitives";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { CategoryFilters } from "./filters";
@@ -61,7 +62,9 @@ export default async function MarketplacePage({
     query = query.in("category_id", ids);
   }
 
-  const { data: products } = await query;
+  const { data: lus } = await query;
+  // Le prix Black Friday sur chaque carte, en une requête pour la grille.
+  const products = await avecBlackFriday(lus ?? []);
 
   /*
     Les favoris de la personne, en une requête.
@@ -141,11 +144,11 @@ export default async function MarketplacePage({
       <CategoryFilters categories={categories} activeSlug={activeSlug} locale={locale} />
 
       <div className="no-sb flex-1 overflow-y-auto px-4 pt-[6px] pb-4">
-        {(products ?? []).length === 0 ? (
+        {products.length === 0 ? (
           <EmptyState title={t.marketplace.noResults} body={t.marketplace.noResultsBody} />
         ) : (
           <div className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-            {products!.map((product) => (
+            {products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}

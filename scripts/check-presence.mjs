@@ -174,10 +174,27 @@ check(
   { places: 0, statut: "occupe" },
 );
 
+/*
+  Places inconnues : aucun chiffre n'est inventé, mais il n'est plus libre.
+
+  L'assertion attendait auparavant l'état inchangé — `{ statut: "libre" }` —
+  et c'était le bug : `seats_free` étant nullable sans défaut, ne rien
+  renseigner est le cas ordinaire. Un chauffeur qui acceptait une course
+  restait donc éligible au matching et pouvait en accepter d'autres.
+
+  Ce qu'on ne sait pas reste `null` ; ce qu'on sait — il vient de prendre
+  quelqu'un — s'écrit.
+*/
 check(
-  "un chauffeur qui n'a rien renseigné n'est pas déclaré complet",
+  "des places non renseignées n'inventent aucun chiffre",
+  apresReservation({ statut: "libre", places: null }, 2).places,
+  null,
+);
+
+check(
+  "mais accepter une course rend le chauffeur occupé",
   apresReservation({ statut: "libre", places: null }, 2),
-  { statut: "libre", places: null },
+  { places: null, statut: "occupe" },
 );
 
 check(

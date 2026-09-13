@@ -43,7 +43,7 @@ export default async function ProfilePage() {
   const { t } = await getT();
   const supabase = await createClient();
 
-  const [orders, favorites, reviews, categories] = await Promise.all([
+  const [orders, favorites, reviews, categories, ficheTaxi] = await Promise.all([
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -52,6 +52,15 @@ export default async function ProfilePage() {
     supabase.from("favorites").select("product_id", { count: "exact", head: true }).eq("user_id", profile.id),
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", profile.id),
     getCategories(),
+    /*
+      Le compte est-il chauffeur, et validé ?
+
+      Le bouton de l'espace taxi n'apparaît qu'à ces deux conditions. Un
+      bouton montré à tout le monde proposerait une fonctionnalité qui ne
+      concerne presque personne ; montré à un chauffeur non validé, il
+      mènerait à une fiche que les clients ne verront pas encore.
+    */
+    supabase.from("taxi_drivers").select("is_approved").eq("id", profile.id).maybeSingle(),
   ]);
 
   const points = profile.loyalty_points;
@@ -165,6 +174,16 @@ export default async function ProfilePage() {
         )}
         {profile.role === "client" && (
           <BecomeVendorModal categories={categories} label={t.account.becomeVendor} />
+        )}
+        {ficheTaxi.data?.is_approved && (
+          <Link
+            href="/profil/chauffeur"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[var(--color-ink)] p-3 text-[var(--color-app)]"
+          >
+            <span aria-hidden className="text-[1rem]">🚕</span>
+            <span className="flex-1 text-[0.78125rem] font-bold">{t.shortcuts.driverSpace}</span>
+            <ChevronRightIcon size={14} />
+          </Link>
         )}
 
         {/* ─── Lignes de navigation ───────────────────────────────────── */}

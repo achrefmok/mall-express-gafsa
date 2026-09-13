@@ -7,6 +7,7 @@ import { getT } from "@/lib/i18n/server";
 import { formatCount, monogram } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { ProductCard } from "@/components/cards/product-card";
+import { avecBlackFriday } from "@/lib/black-friday-server";
 import { Avatar, ButtonLink, Card, EmptyState, SectionTitle } from "@/components/ui/primitives";
 import { ChevronRightIcon } from "@/components/ui/icons";
 
@@ -43,7 +44,9 @@ export default async function FavoritesPage() {
       .limit(40),
   ]);
 
-  const products = (favorites.data ?? []).map((row) => row.product).filter(Boolean);
+  const products = await avecBlackFriday(
+    (favorites.data ?? []).map((row) => row.product).filter((p) => p !== null),
+  );
   const shops = (follows.data ?? []).map((row) => row.shop).filter(Boolean);
 
   return (
@@ -92,7 +95,7 @@ export default async function FavoritesPage() {
             <SectionTitle>{t.account.favorites}</SectionTitle>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard key={product!.id} product={product!} locale={locale} />
+                <ProductCard key={product.id} product={product} locale={locale} />
               ))}
             </div>
           </section>

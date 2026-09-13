@@ -180,15 +180,38 @@ export function presenceDe(row: DriverRow, maintenant = Date.now()): Presence {
  * cinquième client de demander une place dans une voiture qui en a quatre. Il
  * se produit quand il ne reste plus rien, et seulement là.
  *
- * Retourne les places restantes et le statut à écrire. Un chauffeur qui n'a
- * jamais renseigné ses places reste tel quel — on ne va pas décider pour lui
- * qu'il est complet à partir d'un chiffre qu'il n'a pas donné.
+ * Retourne les places restantes et le statut à écrire.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Le cas des places non renseignées, et pourquoi il a changé
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Cette fonction rendait auparavant l'état **inchangé** quand les places
+ * n'étaient pas renseignées, au nom d'un principe juste : ne pas décider à la
+ * place du chauffeur qu'il est complet, à partir d'un chiffre qu'il n'a pas
+ * donné.
+ *
+ * Le principe était juste, sa portée était fausse. `seats_free` est nullable
+ * et sans valeur par défaut : ne rien renseigner est donc le cas **ordinaire**,
+ * pas l'exception. Résultat, un chauffeur qui acceptait une course restait
+ * « libre », continuait d'apparaître dans le matching, recevait les demandes
+ * suivantes et pouvait les accepter — plusieurs courses simultanées pour une
+ * seule voiture.
+ *
+ * Deux questions étaient confondues en une :
+ *
+ *   · **combien de places reste-t-il ?** On l'ignore, et on continue de
+ *     l'ignorer : `places` reste `null`, le véhicule n'est pas « déclaré
+ *     complet », et aucun chiffre n'est inventé ;
+ *   · **est-il disponible ?** Il vient d'accepter une course. La réponse est
+ *     non, et elle ne dépend d'aucun chiffre.
  */
 export function apresReservation(
   actuel: { statut: TaxiStatus; places: number | null },
   sieges: number,
 ): { statut: TaxiStatus; places: number | null } {
-  if (actuel.places === null) return actuel;
+  // Places inconnues : rien à décompter, mais il n'est plus disponible.
+  if (actuel.places === null) return { places: null, statut: "occupe" };
 
   const restantes = Math.max(0, actuel.places - Math.max(1, Math.trunc(sieges)));
 

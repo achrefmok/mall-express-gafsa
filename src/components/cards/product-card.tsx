@@ -11,6 +11,7 @@ import { CartIcon, HeartIcon } from "@/components/ui/icons";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import type { AppLocale } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
+import { bfEnVigueur, pourcentageReduction, type PrixBf } from "@/lib/black-friday";
 
 export interface ProductCardData {
   id: string;
@@ -21,6 +22,11 @@ export interface ProductCardData {
   stock: number;
   shop?: { name: string; slug: string } | null;
   category?: { hue: number } | null;
+  /**
+   * L'offre Black Friday du produit, posée par `avecBlackFriday` côté
+   * serveur. Absente ou nulle : la carte reste celle de tous les jours.
+   */
+  bf?: PrixBf | null;
   /*
     Ni coloris ni images de variante ici.
 
@@ -71,8 +77,28 @@ export function ProductCard({
   isFavorite?: boolean;
 }) {
   const { t } = useI18n();
-  const discount = percentOff(product.price, product.compare_at_price);
   const soldOut = product.stock === 0;
+
+  /*
+    Le Black Friday, quand il est en vigueur.
+
+    Le prix vient du serveur (`avecBlackFriday`, la règle de `place_order`) ;
+    la carte ne fait que vérifier l'heure, pour qu'une page restée en cache
+    ne montre pas une offre terminée. L'heure est lue une fois au montage :
+    la relire à chaque rendu ferait changer la carte entre le serveur et le
+    navigateur au moindre re-rendu.
+
+    Pendant l'offre, l'ancien prix barré est le prix normal — pas le
+    `compare_at_price` : c'est la baisse du jour qu'on annonce, et c'est elle
+    que le client paiera.
+  */
+  const [maintenant] = useState(() => Date.now());
+  const bf = bfEnVigueur(product.bf, maintenant) ? product.bf : null;
+  const reductionBf = bf ? pourcentageReduction(product.price, bf.prix) : null;
+
+  const discount = bf ? reductionBf : percentOff(product.price, product.compare_at_price);
+  const prixAffiche = bf ? bf.prix : product.price;
+  const prixBarre = bf ? product.price : product.compare_at_price;
 
   /*
     La carte montre la première photo du produit, et rien d'autre.
@@ -133,15 +159,30 @@ export function ProductCard({
           />
         )}
 
-        {showShop && product.shop && (
+        {showShop && product.shop && !bf && (
           <span className="absolute start-[14px] top-[14px] max-w-[62%] truncate rounded-[10px] bg-[var(--color-surface-solid)]/96 px-2 py-1 text-[0.5625rem] font-bold text-[var(--color-ink)] shadow-[0_4px_10px_rgba(60,40,90,0.14)]">
             {product.shop.name}
           </span>
         )}
 
         {discount !== null && (
-          <span className="absolute start-[14px] bottom-[14px] rounded-[10px] bg-[var(--color-brand-fill)] px-2 py-[3px] text-[0.53125rem] font-bold text-white">
-            −{discount}%
+          <span
+            className={cx(
+              "absolute start-[14px] bottom-[14px] rounded-[10px] px-2 py-[3px] font-bold text-white",
+              bf
+                ? "bg-[#111] text-[0.625rem] font-extrabold shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                : "bg-[var(--color-brand-fill)] text-[0.53125rem]",
+            )}
+          >
+            {bf && <span aria-hidden>🔥 </span>}
+            <span dir="ltr">−{discount}%</span>
+          </span>
+        )}
+
+        {/* Le bandeau Black Friday, là où la boutique s'affiche d'habitude. */}
+        {bf && (
+          <span className="absolute start-[14px] top-[14px] rounded-[10px] bg-[linear-gradient(135deg,#0d0b10,#5a3a78)] px-2 py-1 text-[0.5rem] font-extrabold tracking-[0.08em] text-white uppercase shadow-[0_4px_10px_rgba(13,11,16,0.3)]">
+            {t.bf.badge}
           </span>
         )}
 
@@ -197,13 +238,19 @@ export function ProductCard({
         <span className="line-clamp-2 block text-[0.71875rem] font-semibold text-[var(--color-ink)]">
           {product.name}
         </span>
-        <span className="mt-[2px] block text-[0.8125rem] font-extrabold text-[var(--color-brand)]">
-          {formatPrice(product.price, locale)}
-          {product.compare_at_price && (
-            <span className="ms-[6px] text-[0.625rem] font-normal text-[var(--color-faint)] line-through">
-              {formatPrice(product.compare_at_price, locale)}
+        <span
+          className={cx(
+            "mt-[2px] block text-[0.8125rem] font-extrabold",
+            bf ? "text-[var(--color-ink)]" : "text-[var(--color-brand)]",
+          )}
+        >
+          {prixBarre && (
+            <span className="me-[6px] text-[0.625rem] font-normal text-[var(--color-faint)] line-through">
+              {formatPrice(prixBarre, locale)}
             </span>
           )}
+          {bf && <span className="sr-only">{t.bf.nowAt} </span>}
+          {formatPrice(prixAffiche, locale)}
         </span>
       </Link>
 

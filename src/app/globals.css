@@ -491,3 +491,152 @@ html[data-simplified="true"] body {
   animation: enter-fade 0.35s ease-out both;
   @media (prefers-reduced-motion: reduce) { animation: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Repères animés de la carte taxi
+
+   En CSS et non en JavaScript, et c'est le point important. Une carte peut
+   porter trente chauffeurs et autant de clients en attente ; autant
+   d'animations pilotées par un moteur JavaScript réveilleraient le fil
+   principal soixante fois par seconde pour recalculer des opacités.
+
+   Une animation CSS sur `transform` et `opacity` est composée par le GPU,
+   sans repasser par la mise en page ni par le fil principal. Le coût d'un
+   repère de plus est alors proche de zéro — ce qui est la condition pour
+   qu'une carte dense reste fluide sur un téléphone d'entrée de gamme.
+
+   Chaque règle se neutralise sous `prefers-reduced-motion`, comme le reste
+   du projet : l'état final reste lisible, seul le mouvement disparaît.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── L'onde qui dit « disponible » ──────────────────────────────────── */
+
+.meg-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--halo, #2f7d5d);
+  opacity: 0;
+  /* Le halo ne doit jamais intercepter le doigt : c'est le repère qu'on vise. */
+  pointer-events: none;
+  animation: meg-halo 2s ease-out infinite;
+}
+
+/* Deux ondes décalées valent mieux qu'une plus rapide : le rythme reste
+   calme, et l'œil lit une pulsation plutôt qu'un clignotement. */
+.meg-halo--retard {
+  animation-delay: 1s;
+}
+
+@keyframes meg-halo {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* ─── L'apparition d'un repère ───────────────────────────────────────── */
+
+/*
+  Un chauffeur qui se déclare libre ne surgit pas : il arrive.
+
+  `backwards` retient l'état initial pendant le délai éventuel, sans quoi le
+  repère clignote à pleine taille avant de rétrécir pour s'animer.
+*/
+.meg-pin {
+  animation: meg-pin-entree 0.34s cubic-bezier(0.32, 0.72, 0, 1) backwards;
+}
+
+@keyframes meg-pin-entree {
+  from {
+    transform: scale(0.6) translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Le retrait, joué avant que Leaflet ne retire l'élément du document. */
+.meg-pin--sortie {
+  animation: meg-pin-sortie 0.24s ease-in forwards;
+}
+
+@keyframes meg-pin-sortie {
+  to {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+}
+
+/* ─── Le repère choisi ───────────────────────────────────────────────── */
+
+/*
+  Agrandi, jamais déplacé : `transform-origin` au centre bas, là où la pointe
+  du repère touche la carte. Un agrandissement centré ferait glisser le point
+  de contact de quelques pixels, et le taxi paraîtrait avoir bougé.
+*/
+.meg-pin--choisi {
+  transform-origin: 50% 100%;
+  transform: scale(1.22);
+  filter: drop-shadow(0 3px 8px rgb(20 14 26 / 0.35));
+  transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ─── Le client qui attend ───────────────────────────────────────────── */
+
+/*
+  Une respiration, pas une alarme.
+
+  Le repère client signale une demande active : il doit attirer l'œil du
+  chauffeur sans le presser. D'où un cycle lent et une amplitude faible —
+  l'inverse du clignotement rouge qu'on met sur une urgence.
+*/
+.meg-client-coeur {
+  animation: meg-respire 2.6s ease-in-out infinite;
+}
+
+@keyframes meg-respire {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.09);
+  }
+}
+
+/* ─── Le véhicule qui s'oriente ──────────────────────────────────────── */
+
+/*
+  La rotation est portée par une variable, écrite par le composant à chaque
+  relevé. La transition l'adoucit : sans elle, un cap qui passe de 10° à 350°
+  ferait pivoter la voiture d'un tour presque complet en une image.
+*/
+.meg-taxi-corps {
+  transform: rotate(var(--cap, 0deg));
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meg-halo,
+  .meg-client-coeur {
+    animation: none;
+    opacity: 0.28;
+  }
+
+  .meg-pin,
+  .meg-pin--sortie {
+    animation: none;
+  }
+
+  .meg-taxi-corps,
+  .meg-pin--choisi {
+    transition: none;
+  }
+}

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { done, fail, ok, readableError, requireAdmin } from "./_helpers";
 import type { UserRole } from "@/types/database";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -408,5 +408,12 @@ export async function setAppLogo(logoUrl: string | null) {
 
   revalidatePath("/");
   revalidatePath("/accueil");
+  /*
+    Le logo est gardé une heure par `lireLogo` : icône installée, favicon,
+    images de partage. Sans cette ligne, le nouveau logo n'apparaîtrait
+    qu'à l'expiration du cache — une heure pendant laquelle l'administrateur
+    croirait que son changement n'a pas été pris.
+  */
+  revalidateTag("brand");
   return done();
 }

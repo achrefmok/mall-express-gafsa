@@ -40,6 +40,71 @@ function taxiSvg(couleur: string, taille = 15): string {
   </svg>`;
 }
 
+/**
+ * La couleur de chaque état, et ce qu'elle promet.
+ *
+ * Vert et ambre battent — on peut les appeler. Gris et bleu ne battent pas :
+ * l'un n'est pas joignable, l'autre est déjà en course avec quelqu'un. Le
+ * halo est donc une information, pas une décoration : il dit « celui-là peut
+ * venir ».
+ */
+const ETATS = {
+  libre: { couleur: "#2f7d5d", halo: true },
+  places: { couleur: "#b5761f", halo: true },
+  occupe: { couleur: "#948da6", halo: false },
+  course: { couleur: "#3f6cd0", halo: false },
+} as const;
+
+/** Le cap entre deux points, en degrés, pour orienter la voiture. */
+function capDegres(
+  de: { lat: number; lng: number },
+  vers: { lat: number; lng: number },
+): number {
+  const rad = Math.PI / 180;
+  const dLng = (vers.lng - de.lng) * rad;
+  const lat1 = de.lat * rad;
+  const lat2 = vers.lat * rad;
+
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
+  return (Math.atan2(y, x) / rad + 360) % 360;
+}
+
+/**
+ * Retirer un repère en le laissant s'effacer.
+ *
+ * Leaflet retire l'élément du document dès l'appel : une transition CSS n'a
+ * jamais le temps de se jouer. On pose donc la classe de sortie, puis on
+ * retire une fois l'animation finie.
+ *
+ * Le repli par minuterie n'est pas de la prudence excessive : `animationend`
+ * ne se déclenche pas si l'élément est masqué, si l'onglet passe en arrière-
+ * plan, ou si l'utilisateur a demandé moins de mouvement — et le repère
+ * resterait alors sur la carte pour toujours.
+ */
+function retirerEnDouceur(marker: Marker, apres: () => void) {
+  const el = marker.getElement();
+
+  if (!el) {
+    marker.remove();
+    apres();
+    return;
+  }
+
+  let fini = false;
+  const achever = () => {
+    if (fini) return;
+    fini = true;
+    marker.remove();
+    apres();
+  };
+
+  el.classList.add("meg-pin--sortie");
+  el.addEventListener("animationend", achever, { once: true });
+  window.setTimeout(achever, 320);
+}
+
 /** Centre de Gafsa : le repli quand aucun chauffeur n'a encore publié sa position. */
 const GAFSA: [number, number] = [34.425, 8.784];
 
@@ -75,6 +140,40 @@ export interface DriverPin {
   selected?: boolean;
   /** Un mot sous le repère : « libre », « place libre »… */
   caption?: string | null;
+  /**
+   * L'état réel, pour la couleur et le halo.
+   *
+   * `available` ne disait que oui ou non. Trois situations se distinguent
+   * pourtant à l'œil sur une carte : celui qui est libre, celui qui roule mais
+   * garde des places — le louage urbain, cas le plus fréquent ici —, et celui
+   * qui est pris. Le halo ne bat que pour les deux premiers, ce qui en fait
+   * une information et non une décoration : il dit « celui-là peut venir ».
+   *
+   * Facultatif : le SOS réemploie cette carte et ne connaît que `available`.
+   */
+  etat?: "libre" | "places" | "occupe" | "course";
+}
+
+/**
+ * Un client qui cherche un taxi, vu depuis l'écran du chauffeur.
+ *
+ * Il n'apparaît que le temps de sa demande : créée quand il confirme sa
+ * recherche, retirée dès qu'il annule, qu'un chauffeur accepte, ou que
+ * l'échéance tombe. Un compte ordinaire n'a jamais de repère ici — et ce
+ * n'est pas cet affichage qui le garantit, mais la fonction SQL
+ * `taxi_demandes_proches`, qui ne rend que les demandes ouvertes et refuse
+ * de répondre à qui n'est pas un chauffeur approuvé.
+ */
+export interface ClientPin {
+  id: string;
+  lat: number;
+  lng: number;
+  /** Distance au chauffeur, déjà calculée côté serveur. */
+  distanceM: number;
+  destination: string;
+  seats: number;
+  prix: number | null;
+  selected?: boolean;
 }
 
 /** Un point remarquable qui n'est pas un chauffeur : vous, ou votre arrivée. */
@@ -172,6 +271,7 @@ function popupHtml(pin: DriverPin, labels: MapLabels): string {
  */
 export function DriverMap({
   drivers,
+  clients,
   labels,
   points,
   route,
@@ -179,6 +279,15 @@ export function DriverMap({
   recentrer,
 }: {
   drivers: DriverPin[];
+  /**
+   * Les demandes de course ouvertes autour du chauffeur.
+   *
+   * Absent sur la carte du client, et c'est la moitié de la règle de
+   * visibilité : un passager ne voit jamais les autres passagers. L'autre
+   * moitié tient côté base, où `taxi_demandes_proches` refuse de répondre à
+   * qui n'est pas un chauffeur approuvé.
+   */
+  clients?: ClientPin[];
   labels: MapLabels;
   /** Départ et arrivée, quand l'écran en a. Facultatif : le SOS n'en a pas. */
   points?: MapPoint[];
@@ -210,6 +319,18 @@ export function DriverMap({
   */
   const taxisRef = useRef(new Map<string, Marker>());
   const animationsRef = useRef(new Map<string, number>());
+
+  /*
+    La dernière position connue de chaque taxi, et le cap qui en découle.
+
+    Gardée ici plutôt que déduite du repère : `getLatLng()` rend la position
+    *interpolée*, celle de l'image en cours, pas celle du dernier relevé. Un
+    cap calculé dessus tremblerait pendant toute l'animation.
+  */
+  const capsRef = useRef(new Map<string, { lat: number; lng: number; cap: number }>());
+
+  /** Les repères des clients en attente, tenus comme ceux des taxis. */
+  const clientsRef = useRef(new Map<string, Marker>());
 
   const pointsRef = useRef<Marker[]>([]);
   const calquesRef = useRef<Array<{ remove: () => void }>>([]);
@@ -346,8 +467,51 @@ export function DriverMap({
           L'ancrage suit : au centre de la zone, soit quatorze pixels, sans quoi
           le point se décalerait de sa position réelle.
         */
-        const teinte = driver.available ? "#2f7d5d" : "#b8791f";
+        /*
+          L'état gouverne la couleur et le halo, et `available` reste le repli.
+
+          Les deux coexistent parce que cette carte sert aussi le SOS, qui ne
+          connaît que « joignable ou non ». Un appelant qui ne renseigne pas
+          `etat` retrouve donc exactement le comportement d'avant.
+        */
+        const etat = driver.etat ?? (driver.available ? "libre" : "occupe");
+        const { couleur: teinte, halo } = ETATS[etat];
         const choisi = driver.selected === true;
+
+        /*
+          Le cap, déduit du déplacement plutôt que transmis.
+
+          Aucune colonne ne porte la direction, et en ajouter une obligerait le
+          téléphone du chauffeur à la calculer puis à l'écrire — une donnée de
+          plus à chaque relevé, pour un détail d'affichage.
+
+          Deux positions successives la donnent gratuitement. Sous une dizaine
+          de mètres, on garde le cap précédent : le tremblement du capteur
+          ferait sinon pivoter la voiture sur place.
+        */
+        const precedent = capsRef.current.get(driver.id);
+        let cap = precedent?.cap ?? 0;
+
+        if (precedent) {
+          const bougeAssez =
+            Math.abs(precedent.lat - driver.lat) > 1e-4 ||
+            Math.abs(precedent.lng - driver.lng) > 1e-4;
+
+          if (bougeAssez) {
+            cap = capDegres(
+              { lat: precedent.lat, lng: precedent.lng },
+              { lat: driver.lat, lng: driver.lng },
+            );
+          }
+        }
+
+        capsRef.current.set(driver.id, { lat: driver.lat, lng: driver.lng, cap });
+
+        /* Les deux ondes, seulement quand le chauffeur peut réellement venir. */
+        const haloHtml = halo
+          ? `<span class="meg-halo" style="--halo:${teinte}"></span>
+             <span class="meg-halo meg-halo--retard" style="--halo:${teinte}"></span>`
+          : "";
 
         /*
           Deux dessins pour un même repère.
@@ -362,14 +526,19 @@ export function DriverMap({
           en compte cinq, il faut retrouver le sien d'un coup d'œil.
         */
         const html = driver.initials
-          ? `<span style="display:flex;flex-direction:column;align-items:center;gap:2px">
-               <span style="display:flex;align-items:center;justify-content:center;gap:4px;min-width:30px;height:26px;padding:0 8px;border-radius:13px;
-                 font:700 11px/1 system-ui,sans-serif;letter-spacing:.02em;
-                 background:${choisi ? teinte : "#fff"};color:${choisi ? "#fff" : "#1b1420"};
-                 border:2px solid ${choisi ? "#fff" : teinte};
-                 box-shadow:0 2px ${choisi ? "10px" : "6px"} rgba(20,14,26,${choisi ? ".45" : ".25"})">
-                 ${taxiSvg(choisi ? "#fff" : teinte)}
-                 ${esc(driver.initials)}
+          ? `<span class="meg-pin${choisi ? " meg-pin--choisi" : ""}" style="display:flex;flex-direction:column;align-items:center;gap:2px">
+               <span style="position:relative;display:flex;align-items:center;justify-content:center">
+                 ${haloHtml}
+                 <span style="position:relative;display:flex;align-items:center;justify-content:center;gap:4px;min-width:30px;height:26px;padding:0 8px;border-radius:13px;
+                   font:700 11px/1 system-ui,sans-serif;letter-spacing:.02em;
+                   background:${choisi ? teinte : "#fff"};color:${choisi ? "#fff" : "#1b1420"};
+                   border:2px solid ${choisi ? "#fff" : teinte};
+                   box-shadow:0 2px ${choisi ? "10px" : "6px"} rgba(20,14,26,${choisi ? ".45" : ".25"})">
+                   <span class="meg-taxi-corps" style="--cap:${cap.toFixed(0)}deg;display:block">
+                     ${taxiSvg(choisi ? "#fff" : teinte)}
+                   </span>
+                   ${esc(driver.initials)}
+                 </span>
                </span>
                ${
                  driver.caption
@@ -378,10 +547,9 @@ export function DriverMap({
                    : ""
                }
              </span>`
-          : `<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px">
-               <span style="display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${
-                 driver.available ? "#2f7d5d" : "#948da6"
-               }"></span>
+          : `<span class="meg-pin" style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:28px">
+               ${haloHtml}
+               <span style="position:relative;display:block;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:${teinte}"></span>
              </span>`;
 
         const icon = L.divIcon({
@@ -474,8 +642,83 @@ export function DriverMap({
         const anim = animationsRef.current.get(id);
         if (anim) cancelAnimationFrame(anim);
         animationsRef.current.delete(id);
-        marker.remove();
-        taxisRef.current.delete(id);
+        capsRef.current.delete(id);
+        retirerEnDouceur(marker, () => taxisRef.current.delete(id));
+      }
+
+      /* ─── Les clients qui attendent ──────────────────────────────────
+         Même mécanique que les taxis : repères conservés par identifiant,
+         retirés en fondu. Ils ne bougent pas — un client qui attend un taxi
+         reste où il est — donc pas d'interpolation ici. */
+      const clientsVus = new Set<string>();
+
+      for (const client of clients ?? []) {
+        clientsVus.add(client.id);
+
+        const distance =
+          client.distanceM < 1000
+            ? `${client.distanceM} m`
+            : `${(client.distanceM / 1000).toFixed(1)} km`;
+
+        const html = `<span class="meg-pin" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="position:relative;display:flex;align-items:center;justify-content:center">
+              <span class="meg-halo" style="--halo:#7a4fd0"></span>
+              <span class="meg-client-coeur" style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;
+                background:${client.selected ? "#7a4fd0" : "#fff"};border:2px solid ${client.selected ? "#fff" : "#7a4fd0"};
+                box-shadow:0 2px 6px rgba(20,14,26,.28);font:700 12px/1 system-ui,sans-serif">
+                <span style="filter:${client.selected ? "grayscale(1) brightness(3)" : "none"}">👤</span>
+              </span>
+            </span>
+            <span style="padding:1px 6px;border-radius:8px;font:700 8.5px/1.5 system-ui,sans-serif;white-space:nowrap;
+              background:#7a4fd0;color:#fff;box-shadow:0 1px 4px rgba(20,14,26,.3)">${esc(distance)}</span>
+          </span>`;
+
+        const icon = L.divIcon({
+          className: "",
+          html,
+          iconSize: [76, 46],
+          iconAnchor: [38, 23],
+        });
+
+        const bulle = `<div style="min-width:150px;font:400 12px/1.5 system-ui,sans-serif">
+            <p style="margin:0 0 4px;font-weight:700">👤 Client · ${esc(distance)}</p>
+            <p style="margin:0 0 2px">🎯 ${esc(client.destination)}</p>
+            <p style="margin:0;color:#6b6478">👥 ${client.seats} pers.${
+              client.prix !== null ? ` · 💰 ${client.prix} DT` : ""
+            }</p>
+          </div>`;
+
+        const existant = clientsRef.current.get(client.id);
+
+        if (existant) {
+          existant.setIcon(icon);
+          existant.setLatLng([client.lat, client.lng]);
+          existant.setPopupContent(bulle);
+          existant.setZIndexOffset(client.selected ? 900 : 200);
+          continue;
+        }
+
+        clientsRef.current.set(
+          client.id,
+          L.marker([client.lat, client.lng], {
+            icon,
+            zIndexOffset: client.selected ? 900 : 200,
+          })
+            .addTo(map)
+            .bindPopup(bulle),
+        );
+      }
+
+      /*
+        Une demande qui s'éteint — annulée, acceptée, expirée — s'efface.
+
+        Le fondu n'est pas un ornement : sur une carte que l'on regarde en
+        conduisant, un repère qui disparaît d'une image à l'autre passe
+        inaperçu. Un quart de seconde suffit à voir *lequel* est parti.
+      */
+      for (const [id, marker] of clientsRef.current) {
+        if (clientsVus.has(id)) continue;
+        retirerEnDouceur(marker, () => clientsRef.current.delete(id));
       }
 
       /*
@@ -546,12 +789,31 @@ export function DriverMap({
     return () => {
       cancelled = true;
     };
-  }, [drivers, labels, points, route]);
+  }, [drivers, clients, labels, points, route]);
 
   // La carte est démontée avec l'écran : Leaflet garde sinon des écouteurs sur
   // un nœud qui n'existe plus.
   useEffect(() => {
+    /*
+      Les collections suivent la carte dans la tombe.
+
+      `map.remove()` détruit les repères côté Leaflet, mais nos `Map` gardent
+      leurs références et les minuteurs de `retirerEnDouceur` peuvent encore
+      se déclencher sur des repères dont la carte n'existe plus. Un écran
+      taxi ouvert, fermé, rouvert accumulait sinon des entrées mortes.
+    */
+    const taxis = taxisRef.current;
+    const clientsPins = clientsRef.current;
+    const animations = animationsRef.current;
+    const caps = capsRef.current;
+
     return () => {
+      for (const id of animations.values()) cancelAnimationFrame(id);
+      animations.clear();
+      taxis.clear();
+      clientsPins.clear();
+      caps.clear();
+
       mapRef.current?.remove();
       mapRef.current = null;
     };

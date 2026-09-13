@@ -58,7 +58,6 @@ export default async function TaxiPage() {
       : Promise.resolve(false),
   ]);
 
-  const libres = (drivers ?? []).filter((d) => d.is_available).length;
 
   return (
     <>
@@ -70,32 +69,33 @@ export default async function TaxiPage() {
         cinquante pixels, on ne situe rien. La largeur maximale double donc ici,
         et c'est le seul écran client dans ce cas.
       */}
-      <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-3 overflow-y-auto px-4 pt-1">
-        {/*
-          Un en-tête compact : la famille de service, le nom, et l'essentiel —
-          combien de chauffeurs sont libres à cette seconde.
-        */}
-        <header className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-[0.53125rem] font-bold tracking-[0.1em] text-[var(--color-faint)] uppercase">
-              {t.taxi.services}
-            </p>
-            <h1 className="flex items-baseline gap-[7px] text-[1.375rem] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
-              {t.taxi.title}
-              <span className="text-[0.6875rem] font-semibold text-[var(--color-faint)]">
-                · تاكسي قفصة
-              </span>
-            </h1>
-          </div>
+      {/*
+        `overflow-hidden` et `min-h-0`, et non plus `overflow-y-auto`.
 
-          <span className="flex items-center gap-[7px] rounded-full bg-[var(--color-surface-solid)] px-[11px] py-[6px] text-[0.59375rem] font-bold text-[var(--color-ink)] shadow-[0_3px_10px_rgba(60,40,90,0.08)]">
-            <span
-              aria-hidden
-              className="h-[6px] w-[6px] rounded-full"
-              style={{ background: libres > 0 ? "var(--color-ok, #2f7d5d)" : "var(--color-faint)" }}
-            />
-            {t.taxi.freeCount.replace("{n}", String(libres))}
-          </span>
+        La carte réclame désormais la hauteur restante. Dans un conteneur qui
+        défile, un enfant en `flex-1` ne se borne à rien : il prend sa hauteur
+        naturelle, pousse le conteneur, et la carte finit sous la barre
+        d'onglets. Le défilement descend donc d'un cran — il vit maintenant
+        dans le panneau, qui est le seul contenu qui puisse être plus long que
+        l'écran.
+      */}
+      <div className="mx-auto flex min-h-0 w-full max-w-[1180px] flex-1 flex-col gap-2 overflow-hidden px-4 pt-1 pb-2">
+        {/*
+          Un en-tête réduit au strict nécessaire.
+
+          Il portait aussi le nombre de chauffeurs libres. Ce compteur est
+          passé sur la carte, où il est à sa place : c'est une information de
+          carte, elle change avec elle, et la répéter deux fois à trois
+          centimètres d'écart n'apprenait rien de plus tout en volant de la
+          hauteur à ce que l'on est venu regarder.
+        */}
+        <header className="flex-none">
+          <p className="text-[0.53125rem] font-bold tracking-[0.1em] text-[var(--color-faint)] uppercase">
+            {t.taxi.services}
+          </p>
+          <h1 className="text-[1.25rem] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-ink)]">
+            {t.taxi.title}
+          </h1>
         </header>
 
         <TaxiClient

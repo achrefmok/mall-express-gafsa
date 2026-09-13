@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { prixBlackFriday } from "@/lib/black-friday-server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
@@ -35,6 +36,16 @@ export default async function CartPage() {
     .order("created_at");
 
   const rows = (items ?? []).filter((row) => row.product?.shop);
+
+  /*
+    Les prix Black Friday du panier, en une requête.
+
+    Le total affiché ici est indicatif — `place_order` recalcule tout — mais
+    un panier qui annonce 250 DT pour un article facturé 179 DT ferait
+    renoncer à l'achat, ou croire à une erreur. Il montre donc le prix que
+    la commande retiendra.
+  */
+  const prixBf = await prixBlackFriday(rows.map((r) => r.product!.id));
 
   /*
    * Une commande par boutique : chaque commerçant prépare et livre pour son
@@ -91,7 +102,7 @@ export default async function CartPage() {
                   product: {
                     id: row.product!.id,
                     name: row.product!.name,
-                    price: row.product!.price,
+                    price: prixBf.get(row.product!.id) ?? row.product!.price,
                     images: row.product!.images ?? [],
                     stock: row.product!.stock,
                   },

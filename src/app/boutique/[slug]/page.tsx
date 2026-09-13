@@ -8,6 +8,8 @@ import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { formatCount, formatRating, formatTime, monogram } from "@/lib/format";
 import { ProductCard } from "@/components/cards/product-card";
+import { avecBlackFriday } from "@/lib/black-friday-server";
+import { BoutonPartage } from "@/components/black-friday/share-button";
 import { Card, EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primitives";
 import { CartIcon, PinIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
@@ -67,7 +69,12 @@ export async function generateMetadata({
     openGraph: {
       title: data.name,
       description: data.description ?? undefined,
-      images: data.cover_url ? [data.cover_url] : undefined,
+      /*
+        Plus d image ici : opengraph-image.tsx, a cote, fabrique la carte de
+        partage. Une cle images declaree ici, meme a undefined, empechait
+        l image du fichier d apparaitre : la boutique partagee arrivait sans
+        aucun apercu, quand la fiche produit - sans cette cle - en avait un.
+      */
     },
   };
 }
@@ -175,9 +182,17 @@ export default async function ShopPage({
     }),
   };
 
-  const visible = sous
+  const lus = sous
     ? (products.data ?? []).filter(() => true) // filtrage sous-catégorie côté client-tabs
     : (products.data ?? []);
+
+  /*
+    Le prix Black Friday, lu avec le client anonyme : cette page est mise en
+    cache cinq minutes, et le client de session la rendrait dynamique. La
+    carte revérifie la fenêtre à l'affichage — une page servie depuis le cache
+    après 00:01 le samedi ne montre donc pas une offre terminée.
+  */
+  const visible = await avecBlackFriday(lus, createStaticClient());
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1120px] lg:px-8 lg:py-6">
@@ -245,6 +260,14 @@ export default async function ShopPage({
                 {locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr}
                 {shop.mall_level !== null && ` · Niveau ${shop.mall_level}`}
               </p>
+              <div className="mt-2">
+                <BoutonPartage
+                  chemin={`/boutique/${shop.slug}`}
+                  titre={shop.name}
+                  texte={`${shop.name} — ${t.brand.first} ${t.brand.second}`}
+                  image={`/partage/boutique/${shop.slug}`}
+                />
+              </div>
             </div>
             <FollowButton shopId={shop.id} initiallyFollowing={following} />
             {/*

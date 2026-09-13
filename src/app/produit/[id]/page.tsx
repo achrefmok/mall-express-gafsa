@@ -6,6 +6,10 @@ import { getSessionUser } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { formatPrice, formatRating, monogram, percentOff } from "@/lib/format";
+import { prixBlackFriday } from "@/lib/black-friday-server";
+import { BoutonPartage } from "@/components/black-friday/share-button";
+import { format as remplir } from "@/lib/i18n/format";
+import { pourcentageReduction } from "@/lib/black-friday";
 import { Avatar, Card, Tag } from "@/components/ui/primitives";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { VariantProvider } from "@/components/products/variant-context";
@@ -71,7 +75,12 @@ export async function generateMetadata({
     openGraph: {
       title,
       description: data.description ?? undefined,
-      images: data.images?.[0] ? [data.images[0]] : undefined,
+      /*
+        Plus d'image ici : `opengraph-image.tsx`, à côté, fabrique une carte
+        avec le nom, le prix et la marque — là où l'on ne donnait que la
+        photo brute. L'image issue du fichier l'emporte de toute façon sur
+        celle déclarée ici ; la laisser aurait fait croire le contraire.
+      */
       type: "website",
     },
   };
@@ -174,6 +183,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     avis.length > 0 ? avis.reduce((somme, a) => somme + a.rating, 0) / avis.length : null;
 
   const discount = percentOff(product.price, product.compare_at_price);
+
+  /*
+    Le prix Black Friday, s'il est en vigueur.
+
+    C'est celui que `place_order` facturera : même règle, même heure — celle
+    du serveur. Afficher ici le prix normal pendant la campagne, c'était
+    montrer 250 DT à un client qui en paierait 179, et lui faire manquer
+    l'offre qu'il était venu chercher.
+  */
+  const prixBf = (await prixBlackFriday([product.id])).get(product.id) ?? null;
+  const reductionBf = prixBf !== null ? pourcentageReduction(Number(product.price), prixBf) : null;
 
   const name = locale === "ar" && product.name_ar ? product.name_ar : product.name;
   const description =
@@ -290,13 +310,31 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {name}
             </h1>
             <div className="flex-none text-end">
-              <p className="text-[1.1875rem] font-extrabold whitespace-nowrap text-[var(--color-brand)]">
-                {formatPrice(product.price, locale)}
-              </p>
-              {product.compare_at_price && (
-                <p className="text-[0.65625rem] whitespace-nowrap text-[var(--color-faint)] line-through">
-                  {formatPrice(product.compare_at_price, locale)}
-                </p>
+              {prixBf !== null ? (
+                <>
+                  <p className="flex items-center justify-end gap-[6px]">
+                    <span className="rounded-full bg-[#111] px-2 py-[2px] text-[0.625rem] font-extrabold tracking-wide text-white">
+                      BLACK FRIDAY{reductionBf !== null ? ` −${reductionBf}%` : ""}
+                    </span>
+                  </p>
+                  <p className="mt-[3px] text-[1.1875rem] font-extrabold whitespace-nowrap text-[var(--color-ink)]">
+                    {formatPrice(prixBf, locale)}
+                  </p>
+                  <p className="text-[0.65625rem] whitespace-nowrap text-[var(--color-faint)] line-through">
+                    {formatPrice(product.price, locale)}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[1.1875rem] font-extrabold whitespace-nowrap text-[var(--color-brand)]">
+                    {formatPrice(product.price, locale)}
+                  </p>
+                  {product.compare_at_price && (
+                    <p className="text-[0.65625rem] whitespace-nowrap text-[var(--color-faint)] line-through">
+                      {formatPrice(product.compare_at_price, locale)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -306,6 +344,26 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {description}
             </p>
           )}
+
+          {/*
+            Le lien, et l'image au format d'Instagram. Pendant le Black Friday,
+            le texte porte le prix du jour — celui que la personne qui reçoit
+            le lien paiera.
+          */}
+          <BoutonPartage
+            chemin={lienProduit(product)}
+            titre={name}
+            texte={
+              prixBf !== null
+                ? remplir(t.bf.shareProduct, {
+                    name,
+                    price: formatPrice(prixBf, locale),
+                    old: formatPrice(product.price, locale),
+                  })
+                : `${name} — ${formatPrice(product.price, locale)}`
+            }
+            image={`/partage/produit/${product.id}`}
+          />
 
           {/* ─── Retrait et stock, côte à côte ───────────────────────── */}
           <div className="flex gap-2">

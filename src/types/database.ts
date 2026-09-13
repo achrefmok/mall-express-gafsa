@@ -96,7 +96,11 @@ export type TaxiRequestStatus =
   | "acceptee"
   | "refusee"
   | "expiree"
-  | "annulee";
+  | "annulee"
+  | "driver_arriving"
+  | "picked_up"
+  | "in_progress"
+  | "completed";
 
 export type NotificationKind =
   | "order_update"
@@ -606,6 +610,15 @@ export interface Database {
           takes_along: boolean;
 
           /*
+            Le trajet qu'il a choisi de servir, et son offre aux destinations
+            personnalisées. Nuls tant qu'il ne l'a pas déclaré : sans route, le
+            matching par trajet ne lui propose rien.
+          */
+          origin_zone: string | null;
+          destination_zone: string | null;
+          accepts_custom: boolean;
+
+          /*
             Ce que le chauffeur a déclaré, et depuis quand.
 
             Distinct de `is_available`, qui reste écrit en parallèle pour les
@@ -621,10 +634,28 @@ export interface Database {
           status_since: string;
           last_seen_at: string | null;
 
+          /*
+            Le profil du chauffeur (migration `20260913003000`). Tout ce qui
+            est ici est public pour un chauffeur approuvé ; le numéro de
+            permis vit donc dans `taxi_driver_private`, pas ici.
+          */
+          photo_url: string | null;
+          bio: string | null;
+          vehicle_brand: string | null;
+          vehicle_model: string | null;
+          vehicle_color: string | null;
+          vehicle_year: number | null;
+          service_zones: string[];
+          languages: string[];
+          experience_years: number | null;
+          /** Gouverne l'affichage, pas l'accès : voir la migration. */
+          show_phone: boolean;
+
           created_at: string;
           updated_at: string;
         };
-        Insert: { id: string; display_name: string; phone: string } & Partial<
+        Insert: { id: string; display_name: string; phone: string }
+ & Partial<
           Database["public"]["Tables"]["taxi_drivers"]["Row"]
         >;
         Update: Partial<Database["public"]["Tables"]["taxi_drivers"]["Row"]>;
@@ -659,16 +690,17 @@ export interface Database {
       };
 
       /* ─── taxi_requests ──────────────────────────────────────────────
-         Une course demandée à un chauffeur précis. Le trajet y est figé au
-         moment de la demande : le chauffeur répond sur ce qu'on lui a montré,
-         pas sur une position qui a bougé depuis. `expires_at` porte
-         l'expiration dans la ligne elle-même — une minuterie côté navigateur
-         mourrait avec l'onglet, une date reste vraie. */
+         Une course demandée. Soit à un chauffeur précis (`driver_id` renseigné
+         à la création — l'ancien chemin), soit diffusée au matching par trajet
+         (`driver_id` nul, offerte à plusieurs chauffeurs, attribuée à
+         l'acceptation). Le trajet y est figé au moment de la demande :
+         `expires_at` porte l'expiration dans la ligne elle-même. */
       taxi_requests: {
         Row: {
           id: string;
           client_id: string;
-          driver_id: string;
+          /** Le chauffeur qui a accepté. Nul tant que la demande est diffusée. */
+          driver_id: string | null;
           pickup_lat: number;
           pickup_lng: number;
           pickup_label: string | null;
@@ -683,10 +715,39 @@ export interface Database {
           expires_at: string;
           created_at: string;
           responded_at: string | null;
+
+          /*
+            Le trajet en zones, quand le matching par trajet est utilisé.
+            `destination_type` distingue la zone prédéfinie du « autre »
+            destination, dont `destination_name` garde le nom exact tapé.
+          */
+          origin_zone: string | null;
+          destination_zone: string | null;
+          destination_type: "zone" | "autre";
+          destination_name: string | null;
+
+          /** La proposition du client — jamais un tarif imposé. */
+          proposed_price: number | null;
+          /** Le prix entériné à l'acceptation. */
+          accepted_price: number | null;
+
+          /*
+            La contre-proposition de destination.
+
+            Le chauffeur propose autre chose — « je vais vers Lella, ça vous
+            arrange ? » —, et la course ne bascule qu'après acceptation du
+            client. Tant que `proposal_status` vaut `pending`, la destination
+            de la course reste celle que le client avait annoncée.
+          */
+          proposed_dest_label: string | null;
+          proposed_dest_lat: number | null;
+          proposed_dest_lng: number | null;
+          proposal_by: string | null;
+          proposal_status: "pending" | "accepted" | "refused" | null;
+          proposal_at: string | null;
         };
         Insert: {
           client_id: string;
-          driver_id: string;
           pickup_lat: number;
           pickup_lng: number;
         } & Partial<Database["public"]["Tables"]["taxi_requests"]["Row"]>;
@@ -694,6 +755,124 @@ export interface Database {
         Relationships: [
           FK<"taxi_requests_client_id_fkey", ["client_id"], "profiles">,
           FK<"taxi_requests_driver_id_fkey", ["driver_id"], "taxi_drivers">,
+        ];
+      };
+
+      /* ─── black_friday_campaigns ─────────────────────────────────────
+         Une campagne par vendredi. `starts_at` et `ends_at` sont calculés
+         par le déclencheur `black_friday_fenetre` : vendredi 00:01 → samedi
+         00:01, heure de Tunis. Jamais saisis à la main. */
+      black_friday_campaigns: {
+        Row: {
+          id: string;
+          friday_date: string;
+          starts_at: string;
+          ends_at: string;
+          is_enabled: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: { friday_date: string } & Partial<
+          Database["public"]["Tables"]["black_friday_campaigns"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["black_friday_campaigns"]["Row"]>;
+        Relationships: [];
+      };
+
+      /* ─── black_friday_offers ────────────────────────────────────────
+         Un prix par produit et par campagne. `shop_id` est recopié du
+         produit par le déclencheur `black_friday_garde` : la valeur
+         envoyée par le navigateur est écrasée. */
+      black_friday_offers: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          product_id: string;
+          shop_id: string;
+          bf_price: number;
+          is_enabled: boolean;
+          is_moderated: boolean;
+          moderation_note: string | null;
+          shares_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { campaign_id: string; product_id: string; bf_price: number } & Partial<
+          Database["public"]["Tables"]["black_friday_offers"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["black_friday_offers"]["Row"]>;
+        Relationships: [
+          FK<"black_friday_offers_campaign_id_fkey", ["campaign_id"], "black_friday_campaigns">,
+          FK<"black_friday_offers_product_id_fkey", ["product_id"], "products">,
+          FK<"black_friday_offers_shop_id_fkey", ["shop_id"], "shops">,
+        ];
+      };
+
+      /* ─── taxi_driver_private ────────────────────────────────────────
+         Ce qui ne doit pas être public : `taxi_drivers` est lisible par
+         tous pour les chauffeurs approuvés. */
+      taxi_driver_private: {
+        Row: {
+          id: string;
+          license_number: string | null;
+          updated_at: string;
+        };
+        Insert: { id: string } & Partial<Database["public"]["Tables"]["taxi_driver_private"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["taxi_driver_private"]["Row"]>;
+        Relationships: [FK<"taxi_driver_private_id_fkey", ["id"], "taxi_drivers">];
+      };
+
+      /* ─── taxi_driver_reviews ───────────────────────────────────────
+         Un avis par course terminée. Aucune écriture directe : on n'y entre
+         que par `taxi_noter_course`. */
+      taxi_driver_reviews: {
+        Row: {
+          id: string;
+          request_id: string;
+          driver_id: string;
+          client_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: { request_id: string; driver_id: string; client_id: string; rating: number; comment?: string | null };
+        Update: Partial<Database["public"]["Tables"]["taxi_driver_reviews"]["Row"]>;
+        Relationships: [
+          FK<"taxi_driver_reviews_request_id_fkey", ["request_id"], "taxi_requests">,
+          FK<"taxi_driver_reviews_driver_id_fkey", ["driver_id"], "taxi_drivers">,
+          FK<"taxi_driver_reviews_client_id_fkey", ["client_id"], "profiles">,
+        ];
+      };
+
+      /* ─── taxi_request_matches ──────────────────────────────────────
+         La diffusion d'une demande aux chauffeurs compatibles, calculée côté
+         serveur. Un instantané de ce qu'un chauffeur doit voir, sans qu'il
+         lise `taxi_requests` (qui ne lui est pas accessible tant que
+         `driver_id` est nul). Diffusée en temps réel : apparition et retrait
+         sans rechargement. */
+      taxi_request_matches: {
+        Row: {
+          id: string;
+          request_id: string;
+          driver_id: string;
+          pickup_label: string | null;
+          origin_zone: string | null;
+          destination_zone: string | null;
+          destination_type: "zone" | "autre";
+          destination_name: string | null;
+          proposed_price: number | null;
+          seats: number | null;
+          expires_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          request_id: string;
+          driver_id: string;
+        } & Partial<Database["public"]["Tables"]["taxi_request_matches"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["taxi_request_matches"]["Row"]>;
+        Relationships: [
+          FK<"taxi_request_matches_request_id_fkey", ["request_id"], "taxi_requests">,
+          FK<"taxi_request_matches_driver_id_fkey", ["driver_id"], "taxi_drivers">,
         ];
       };
 
@@ -1176,6 +1355,128 @@ export interface Database {
       /** Passe les demandes échues en « expiree » et retire les déclarations
           de plus de douze heures. Retourne le nombre de demandes touchées. */
       expire_taxi_requests: { Args: Record<PropertyKey, never>; Returns: number };
+
+      /* ─── Négociation de course et recherche de clients ────────────────
+         Migration `20260907001000_taxi_propositions`. Le code appelant
+         tolère leur absence : tant que le DDL n'est pas collé, PostgREST
+         répond `42883` / `PGRST202` et l'écran retombe sur le chemin
+         existant plutôt que de tomber en panne. */
+
+      /** Les demandes ouvertes autour d'un point, pour un chauffeur approuvé.
+          Ne rend ni l'identité du client, ni son téléphone, ni le départ exact. */
+      taxi_demandes_proches: {
+        Args: {
+          p_lat: number;
+          p_lng: number;
+          p_rayon_m?: number;
+          p_limite?: number;
+        };
+        Returns: Array<{
+          id: string;
+          pickup_label: string | null;
+          origin_zone: string | null;
+          destination_zone: string | null;
+          destination_type: "zone" | "autre";
+          destination_name: string | null;
+          dest_label: string | null;
+          proposed_price: number | null;
+          seats: number;
+          expires_at: string;
+          created_at: string;
+          distance_m: number;
+          deja_diffusee: boolean;
+        }>;
+      };
+
+      /** Le chauffeur propose une autre destination. N'écrase rien : la
+          course garde la sienne tant que le client n'a pas accepté. */
+      taxi_proposer_destination: {
+        Args: {
+          p_demande: string;
+          p_label: string;
+          p_lat?: number | null;
+          p_lng?: number | null;
+        };
+        Returns: undefined;
+      };
+
+      /** Le client accepte ou refuse la destination proposée. */
+      taxi_repondre_proposition: {
+        Args: { p_demande: string; p_accepte: boolean };
+        Returns: undefined;
+      };
+
+      /** Annule une course déjà acceptée, des deux côtés, et rend les places. */
+      taxi_annuler_course: {
+        Args: { p_demande: string; p_motif?: string | null };
+        Returns: undefined;
+      };
+
+      /* ─── Black Friday ─────────────────────────────────────────────── */
+
+      /** L'état de la campagne retenue, et l'heure du serveur. */
+      black_friday_etat: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          now: string;
+          campagne: {
+            id: string;
+            friday_date: string;
+            starts_at: string;
+            ends_at: string;
+            phase: "avant" | "actif" | "termine";
+          } | null;
+        };
+      };
+
+      /** Compter un partage — sans effet hors de la fenêtre. */
+      black_friday_partage: { Args: { p_offre: string }; Returns: undefined };
+
+      /* ─── Profil public du chauffeur ───────────────────────────────── */
+
+      /** La fiche publique ; `null` pour un chauffeur non approuvé. */
+      taxi_profil_public: {
+        Args: { p_chauffeur: string };
+        Returns: {
+          id: string;
+          display_name: string;
+          photo_url: string | null;
+          bio: string | null;
+          vehicle: string | null;
+          plate: string | null;
+          vehicle_brand: string | null;
+          vehicle_model: string | null;
+          vehicle_color: string | null;
+          vehicle_year: number | null;
+          service_zones: string[];
+          languages: string[];
+          experience_years: number | null;
+          status: TaxiStatus;
+          status_since: string;
+          seats_total: number | null;
+          seats_free: number | null;
+          /** Nul quand le chauffeur a choisi de ne pas l'afficher. */
+          phone: string | null;
+          courses_terminees: number;
+          membre_depuis: string;
+          /* Absents tant que la migration des avis n'est pas collée. */
+          note_moyenne?: number | null;
+          nb_avis?: number;
+          avis_recents?: Array<{
+            note: number;
+            commentaire: string | null;
+            created_at: string;
+            prenom: string | null;
+          }>;
+        } | null;
+      };
+
+      /** Noter une course terminée. Refus sous forme de clés `AVIS_…`. */
+      taxi_noter_course: {
+        Args: { p_course: string; p_note: number; p_commentaire?: string | null };
+        Returns: string;
+      };
+
       /* Incrémente `shops.views_count`. `security definer` : un visiteur anonyme
          n'a aucun droit d'écriture sur `shops`, et n'en a pas besoin pour ça. */
       increment_shop_views: { Args: { shop: string }; Returns: undefined };

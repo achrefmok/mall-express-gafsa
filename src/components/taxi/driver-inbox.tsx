@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 import { envoyerMessageTaxi } from "@/app/actions/taxi-chat";
+import { useFrappe } from "@/lib/taxi-frappe";
 import { usePoll } from "@/lib/use-poll";
 import { cx, monogram } from "@/lib/format";
 import { Avatar } from "@/components/ui/primitives";
@@ -136,6 +137,13 @@ export function DriverInbox({ driverId }: { driverId: string }) {
   }, [messages, noms, t]);
 
   const filOuvert = fils.find((f) => f.clientId === ouvert) ?? null;
+
+  /* Le pendant chauffeur du fil de frappe : meme canal, autre extremite. */
+  const { autreEcrit, signaler } = useFrappe({
+    driverId,
+    clientId: filOuvert?.clientId ?? null,
+    moi: "chauffeur",
+  });
 
   // Le fil se tient sur le dernier message : c'est celui qu'on attend.
   useEffect(() => {
@@ -315,6 +323,24 @@ export function DriverInbox({ driverId }: { driverId: string }) {
                   {message.body}
                 </p>
               ))}
+
+              {autreEcrit && (
+                <p
+                  aria-live="polite"
+                  className="flex max-w-[86%] items-center gap-[5px] self-start rounded-[14px] bg-[var(--color-field)] px-[11px] py-[9px]"
+                >
+                  <span className="sr-only">{filOuvert.nom} est en train d&apos;écrire</span>
+                  {[0, 1, 2].map((i) => (
+                    <m.span
+                      key={i}
+                      aria-hidden
+                      className="h-[5px] w-[5px] rounded-full bg-[var(--color-muted)]"
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
+                      transition={{ duration: 1.05, repeat: Infinity, delay: i * 0.16, ease: "easeInOut" }}
+                    />
+                  ))}
+                </p>
+              )}
             </div>
 
             {/* Trois phrases qui règlent l'essentiel d'une course, sans quitter
@@ -342,7 +368,7 @@ export function DriverInbox({ driverId }: { driverId: string }) {
             >
               <input
                 value={brouillon}
-                onChange={(event) => setBrouillon(event.target.value)}
+                onChange={(event) => { setBrouillon(event.target.value); signaler(); }}
                 placeholder={t.taxi.writeToClient}
                 maxLength={500}
                 className="min-w-0 flex-1 rounded-full bg-[var(--color-field)] px-[13px] py-[9px] text-[0.65625rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"

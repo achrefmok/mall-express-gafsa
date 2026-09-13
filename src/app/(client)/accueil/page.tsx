@@ -17,6 +17,8 @@ import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
+import { avecBlackFriday, lireEtatBlackFriday, lireOffresActives } from "@/lib/black-friday-server";
+import { SectionBlackFriday } from "@/components/black-friday/home-section";
 
 export const metadata: Metadata = {
   title: "Mall Express Gafsa — boutiques, marketplace et services",
@@ -42,6 +44,32 @@ export const metadata: Metadata = {
 */
 export const dynamic = "force-dynamic";
 
+/*
+  Un clic, et l'on est dans le service.
+
+  Chaque pastille menait à `/services#<genre>` — une page de services, puis
+  il fallait y chercher le bon bloc. Pour le taxi, c'était une page de trop :
+  la page des services renvoie elle-même vers `/taxi`. Pour le louage,
+  c'était pire : `/services` n'affiche pas les louages, l'ancre ne menait
+  nulle part.
+
+  Chaque genre a désormais son adresse directe. Les pharmacies et la prière
+  vivent sur `/services`, et l'ancre y fait défiler jusqu'au bon bloc : c'est
+  bien l'expérience visée, sans étape intermédiaire.
+*/
+const LIEN_SERVICE: Record<string, string> = {
+  taxi: "/taxi",
+  louage: "/louage",
+  pharmacy: "/services#pharmacy",
+  prayer: "/services#prayer",
+};
+
+/** Les raccourcis qui ne sont pas des services pratiques en base. */
+const RACCOURCIS = [
+  { cle: "animaux", nom: "Animaux", emoji: "🐾", hue: 190, href: "/marketplace?categorie=animaux" },
+  { cle: "sos", nom: "SOS", emoji: "🛠", hue: 20, href: "/sos" },
+] as const;
+
 export default async function HomePage() {
   const { t, locale } = await getT();
   const supabase = await createClient();
@@ -58,6 +86,8 @@ export default async function HomePage() {
     catalogue,
     services,
     shopsByCategory,
+    etatBf,
+    offresBf,
   ] = await Promise.all([
     getMallStatus(),
     getCategories(),
@@ -167,7 +197,15 @@ export default async function HomePage() {
       boutiques approuvées, comptée ici plutôt que par douze agrégats.
     */
     supabase.from("shops").select("category_id").eq("status", "approved"),
+    /*
+      Le Black Friday : l'état de la campagne et, pendant, dix offres.
 
+      Dans le même Promise.all que le reste — deux requêtes de plus en
+      parallèle, pas deux allers-retours de plus. Hors campagne, la seconde
+      rend une liste vide en quelques millisecondes.
+    */
+    lireEtatBlackFriday(),
+    lireOffresActives(10),
   ]);
 
   /* Combien de boutiques approuvées derrière chaque catégorie. */
@@ -211,7 +249,8 @@ export default async function HomePage() {
   */
   const allProducts = catalogue.data ?? [];
   const featured = allProducts.filter((p) => p.shop?.is_featured);
-  const highlights = (featured.length > 0 ? featured : allProducts).slice(0, 3);
+  // Le prix Black Friday sur ces trois cartes : une requête, rien hors campagne.
+  const highlights = await avecBlackFriday((featured.length > 0 ? featured : allProducts).slice(0, 3));
 
   const next = status.nextLive;
   const minutesToLive = next?.scheduled_at
@@ -312,6 +351,17 @@ export default async function HomePage() {
           </div>
           {next && <NotifyLiveButton liveId={next.id} />}
         </Card>
+
+        {/*
+          ─── Black Friday ────────────────────────────────────────────
+
+          Tout en haut, avant même la publicité : pendant vingt-quatre heures
+          c'est la chose la plus importante de l'application, et une section
+          qu'il faut chercher en faisant défiler est une section qu'on rate.
+          Elle ne s'affiche que pendant la campagne, ou en compte à rebours
+          juste avant — le reste du temps, elle n'existe pas.
+        */}
+        <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
 
         {/*
           ─── 1 · Sponsorisé ──────────────────────────────────────────
@@ -604,10 +654,23 @@ export default async function HomePage() {
               choisi une image.
             */}
             <Rail gap={16} className="py-[2px]">
+              {etatBf.campagne && etatBf.campagne.phase !== "termine" && (
+                <Link href="/black-friday" className="press flex w-[76px] flex-none flex-col items-center gap-[7px]">
+                  <span
+                    aria-hidden
+                    className="flex h-[58px] w-[58px] flex-none items-center justify-center rounded-full bg-[linear-gradient(135deg,#0d0b10,#5a3a78)] text-[1.375rem] shadow-[0_8px_18px_rgba(13,11,16,0.25)]"
+                  >
+                    🔥
+                  </span>
+                  <span className="text-center text-[0.65625rem] leading-tight font-bold text-[var(--color-ink)]">
+                    Black Friday
+                  </span>
+                </Link>
+              )}
               {serviceTiles.map((service) => (
                 <Link
                   key={service.id}
-                  href={`/services#${service.kind}`}
+                  href={LIEN_SERVICE[service.kind] ?? `/services#${service.kind}`}
                   className="press flex w-[76px] flex-none flex-col items-center gap-[7px]"
                 >
                   <span
@@ -643,6 +706,20 @@ export default async function HomePage() {
                         {service.info}
                       </span>
                     )}
+                  </span>
+                </Link>
+              ))}
+              {RACCOURCIS.map((r) => (
+                <Link key={r.cle} href={r.href} className="press flex w-[76px] flex-none flex-col items-center gap-[7px]">
+                  <span
+                    aria-hidden
+                    className="cat-surface cat-ink flex h-[58px] w-[58px] flex-none items-center justify-center rounded-full text-[1.375rem]"
+                    style={{ "--hue": r.hue } as React.CSSProperties}
+                  >
+                    {r.emoji}
+                  </span>
+                  <span className="text-center text-[0.65625rem] leading-tight font-bold text-[var(--color-ink)]">
+                    {r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
                   </span>
                 </Link>
               ))}

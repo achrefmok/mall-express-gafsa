@@ -32,6 +32,15 @@ export function BottomNav({ variant }: { variant: NavVariant }) {
   */
   return (
     <div
+      /*
+        Repérable depuis un tiroir qui se pose au-dessus d elle.
+
+        Le panneau taxi doit s arrêter juste au-dessus de cette barre plutôt
+        que de la recouvrir : on doit pouvoir quitter l écran sans replier le
+        tiroir d abord. Sa hauteur varie avec la zone sûre de l appareil, donc
+        elle se mesure — on ne la devine pas.
+      */
+      data-bottom-nav
       className="sticky bottom-0 z-40 flex-none px-3 lg:hidden"
       /* L'écart voulu *plus* la zone sûre, jamais l'un à la place de l'autre :
          deux classes de rembourrage bas se seraient annulées. */
