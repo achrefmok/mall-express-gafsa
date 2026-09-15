@@ -233,10 +233,13 @@ function FacebookRelay({ url }: { url: string }) {
   }, []);
 
   /*
-    Facebook interdit la lecture automatique dans son propre greffon — ses
-    en-têtes renvoient `autoplay=()`, mesuré identique sur iPhone, Android et
-    ordinateur. Le paramètre `autoplay=true` ci-dessous ne change donc rien : la
-    vidéo ne démarre que sur un geste du spectateur.
+    La vidéo ne démarre que sur un geste du spectateur, et ce n'est pas le
+    navigateur qui l'impose. Mesuré dans le cadre du greffon, sur ordinateur
+    et sur Android : un `play()` en sourdine sans aucun geste y est accepté,
+    alors même que Facebook déclare `Permissions-Policy: autoplay=()`. C'est
+    le lecteur de Facebook qui n'appelle jamais `play()` de lui-même. Le
+    paramètre `autoplay=true` a été retiré de l'adresse : il ne lançait rien,
+    et mettait seulement la vidéo en sourdine.
 
     Or rien ne l'indiquait, et le bouton du greffon est petit et posé en bas à
     gauche — juste à côté de notre champ de commentaire. Le spectateur tâtonnait,
@@ -250,14 +253,13 @@ function FacebookRelay({ url }: { url: string }) {
     bandeau de l'écran spectateur.
 
     Nous ne pouvons pas lire l'état du lecteur : l'iframe est d'une autre
-    origine. Mais nous savons quand le spectateur y a touché — un appui dans une
-    iframe donne le focus à l'élément côté parent. L'indication s'effave donc sur
+    origine. Mais nous savons quand le spectateur y a touché : le focus quitte
+    notre document pour entrer dans celui de Facebook. L'indication s'efface sur
     ce signal, et un délai de repli couvre les navigateurs qui ne l'émettent pas.
   */
   const [showHint, setShowHint] = useState(true);
   const [onIOS, setOnIOS] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const focusedByUs = useRef(false);
 
   // Après hydratation seulement : le serveur ne connaît pas les capacités du
   // navigateur, et rendre deux arbres différents de part et d'autre casserait
@@ -267,49 +269,48 @@ function FacebookRelay({ url }: { url: string }) {
   }, []);
 
   useEffect(() => {
-    const frame = frameRef.current;
-    const hide = () => {
-      // Ignorer le focus que nous posons nous-mêmes juste en dessous.
-      if (!focusedByUs.current) setShowHint(false);
+    const hide = () => setShowHint(false);
+
+    /*
+      Le toucher dans l'iframe fait quitter le focus à notre document : la
+      fenêtre reçoit `blur`, et `document.activeElement` désigne alors
+      l'iframe. On vérifie les deux, parce qu'un `blur` seul peut aussi venir
+      d'un changement d'onglet ou d'application.
+
+      L'ancien signal — l'évènement `focus` de l'iframe — ne se déclenchait
+      plus : `focusFrame()` donnait le focus à l'iframe dès son chargement, et
+      le toucher du spectateur ne changeait donc plus rien. Le message restait
+      affiché par-dessus la vidéo en cours, jusqu'au délai de repli.
+
+      Le délai nul laisse au navigateur le temps de mettre `activeElement` à
+      jour : au moment exact du `blur`, certains ne l'ont pas encore fait.
+    */
+    const onBlur = () => {
+      setTimeout(() => {
+        if (frameRef.current && document.activeElement === frameRef.current) hide();
+      }, 0);
     };
 
-    frame?.addEventListener("focus", hide);
+    window.addEventListener("blur", onBlur);
     const timer = setTimeout(hide, 20_000);
 
     return () => {
-      frame?.removeEventListener("focus", hide);
+      window.removeEventListener("blur", onBlur);
       clearTimeout(timer);
     };
-  }, [box.width]);
+  }, []);
 
   /*
-    Donner le focus à l'iframe dès qu'elle est chargée.
+    Plus de focus posé d'office sur l'iframe.
 
-    Safari sur iOS demande un premier appui pour donner le focus à une iframe
-    d'une autre origine ; seul le second actionne le contrôle visé. D'où le
-    « il faut agrandir, puis démarrer » — deux gestes là où un seul devrait
-    suffire. En posant ce focus nous-mêmes, le premier appui du spectateur
-    tombe directement sur le bouton de lecture.
-
-    `preventScroll` est indispensable : sans lui, donner le focus fait défiler
-    la page jusqu'à l'élément, ce qui déplacerait l'écran du direct.
-
-    Réserve honnête : ce comportement d'iOS n'est pas documenté noir sur blanc
-    et je n'ai pas pu le reproduire depuis un terminal. La manœuvre est sans
-    risque — au pire elle ne change rien.
+    `focusFrame()` devait épargner un appui sur iPhone. Mesuré : une iframe
+    aux mêmes dimensions, sans ce focus, se lance tout aussi bien d'un seul
+    toucher sur ordinateur et sur Android. Il n'apportait rien de vérifiable,
+    et il empêchait le message de s'effacer. Sur iPhone, le plein écran vient
+    du lecteur que Facebook sert à ce système — sans `playsinline` —, pas du
+    focus : rien de notre côté ne le change.
   */
-  const focusFrame = () => {
-    const frame = frameRef.current;
-    if (!frame) return;
-
-    focusedByUs.current = true;
-    frame.focus({ preventScroll: true });
-    setTimeout(() => {
-      focusedByUs.current = false;
-    }, 0);
-  };
-
-  const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=true&width=${box.width}&height=${box.height}`;
+  const embed = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=${box.width}&height=${box.height}`;
 
   /*
     Notre propre lecteur dès que le navigateur sait lire du HLS.
@@ -348,7 +349,6 @@ function FacebookRelay({ url }: { url: string }) {
           allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
-          onLoad={focusFrame}
         />
       )}
 
