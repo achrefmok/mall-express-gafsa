@@ -20,10 +20,16 @@ const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 export function ProductEditor({
   product,
   categories,
+  categoriesFiltrees = true,
   locale,
 }: {
   product: Product | null;
   categories: Category[];
+  /**
+   * Faux quand la boutique n'a déclaré aucun type : toutes les catégories du
+   * mall sont alors proposées, et l'on invite à les restreindre.
+   */
+  categoriesFiltrees?: boolean;
   locale: AppLocale;
 }) {
   const { t } = useI18n();
@@ -271,6 +277,11 @@ export function ProductEditor({
         {/* ─── Catégorie ─────────────────────────────────────────────── */}
         <Card className="flex flex-col gap-2 p-3">
           <span className={LABEL}>{t.deals.category}</span>
+          {!categoriesFiltrees && (
+            <p className="text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">
+              {t.vendeur.categoriesHint}
+            </p>
+          )}
           <div className="flex flex-wrap gap-[6px]">
             {categories.map((category) => (
               <Chip

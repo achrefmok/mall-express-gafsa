@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/vendor";
 import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
+import { format } from "@/lib/i18n/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Button, Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch, fieldClass } from "@/components/ui/primitives";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
@@ -25,6 +26,9 @@ interface DayHours {
 
 const FIELD =
   fieldClass({ size: "sm", strong: true });
+
+/** Assez pour présenter une boutique, trop peu pour écrire un roman. */
+const MAX_DESCRIPTION = 500;
 
 /** Écran 10 — réglages boutique. */
 export function ShopSettingsForm({
@@ -50,6 +54,16 @@ export function ShopSettingsForm({
 
   const [name, setName] = useState(shop.name);
   const [phone, setPhone] = useState(shop.phone ?? "");
+  /*
+    La présentation de la boutique.
+
+    L'action serveur savait déjà l'enregistrer, mais aucun champ ne la
+    proposait : le commerçant ne pouvait pas l'écrire, et sa page publique
+    restait muette sous son nom. Deux champs, une langue chacun — l'arabe n'est
+    pas une traduction automatique du français, il s'écrit.
+  */
+  const [description, setDescription] = useState(shop.description ?? "");
+  const [descriptionAr, setDescriptionAr] = useState(shop.description_ar ?? "");
   const [mallLevel, setMallLevel] = useState(shop.mall_level?.toString() ?? "");
   const [mallUnit, setMallUnit] = useState(shop.mall_unit ?? "");
 
@@ -104,6 +118,8 @@ export function ShopSettingsForm({
         updateShopSettings({
           name,
           phone,
+          description,
+          descriptionAr,
           logoUrl,
           bannerUrl,
           mallLevel: mallLevel === "" ? null : Number.parseInt(mallLevel, 10),
@@ -253,6 +269,53 @@ export function ShopSettingsForm({
                 type="tel"
                 inputMode="tel"
                 className={FIELD}
+              />
+            </label>
+
+            <Divider />
+
+            <div className="flex flex-col gap-[3px]">
+              <span className="text-[0.71875rem] font-bold text-[var(--color-ink)]">
+                {t.vendeur.presentationTitle}
+              </span>
+              <span className="text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">
+                {t.vendeur.presentationHint}
+              </span>
+            </div>
+
+            <label className="flex flex-col gap-1">
+              <span className="flex items-center justify-between text-[0.65625rem] text-[var(--color-muted)]">
+                <span>{t.vendeur.descriptionFr}</span>
+                <span dir="ltr" className="tabular-nums">
+                  {format(t.vendeur.charCount, { n: description.length, max: MAX_DESCRIPTION })}
+                </span>
+              </span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
+                rows={3}
+                lang="fr"
+                dir="ltr"
+                placeholder={t.vendeur.descriptionPlaceholderFr}
+                className={cx(FIELD, "min-h-[84px] resize-y py-2 leading-[1.5]")}
+              />
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="flex items-center justify-between text-[0.65625rem] text-[var(--color-muted)]">
+                <span>{t.vendeur.descriptionAr}</span>
+                <span dir="ltr" className="tabular-nums">
+                  {format(t.vendeur.charCount, { n: descriptionAr.length, max: MAX_DESCRIPTION })}
+                </span>
+              </span>
+              <textarea
+                value={descriptionAr}
+                onChange={(e) => setDescriptionAr(e.target.value.slice(0, MAX_DESCRIPTION))}
+                rows={3}
+                lang="ar"
+                dir="rtl"
+                placeholder={t.vendeur.descriptionPlaceholderAr}
+                className={cx(FIELD, "min-h-[84px] resize-y py-2 leading-[1.5]")}
               />
             </label>
 

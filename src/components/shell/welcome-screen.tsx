@@ -5,45 +5,60 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 
+/** Posé pour compatibilité : le guide pas à pas attend que l'accueil ait été vu. */
 const SEEN_KEY = "meg-welcome-seen";
+/** Une fois par lancement : `sessionStorage` meurt avec l'application fermée. */
+const SESSION_KEY = "meg-splash-session";
+/** Le logo de l'administration, gardé pour le lancement suivant. */
+const LOGO_CACHE_KEY = "meg-logo-url";
+const LOGO_PAR_DEFAUT = "/brand/logo-mall-gafsa.png";
+
+/** Visible 1,25 s, puis fondu de 0,38 s : un peu plus de 1,6 s en tout. */
+const DUREE_AFFICHAGE = 1250;
+const DUREE_FONDU = 380;
 
 /**
- * L'écran de bienvenue, une seule fois dans la vie de l'application.
+ * L'écran d'ouverture, à chaque lancement de l'application.
  *
- * Il dit ce qu'est le site en trois mots pendant que la page se charge derrière
- * lui, puis s'efface. Ce n'est pas un tutoriel — le guide pas à pas existe
- * ailleurs — c'est le temps d'une respiration, celui qui manque à une
- * application web qui s'ouvre sur un écran à moitié construit.
+ * Logo → apparition douce → léger rebond d'échelle → l'application. Il dure un
+ * peu plus d'une seconde et demie, et il ne retient rien : la page se charge
+ * derrière lui pendant qu'il joue, un toucher l'efface tout de suite, et il se
+ * saute entièrement quand le système demande moins d'animations.
  *
- * Trois décisions le rendent supportable plutôt qu'agaçant :
+ * Une fois par lancement, pas à chaque page : `sessionStorage` survit à la
+ * navigation et aux rechargements d'un même lancement, et disparaît quand
+ * l'application est fermée. Le rejouer à chaque changement de page serait un
+ * péage.
  *
- *   · **Il ne bloque rien.** Un toucher l'efface immédiatement, et il part seul
- *     après deux secondes. Un écran d'accueil dont on ne peut pas sortir est un
- *     péage, pas une présentation.
- *   · **Une seule fois.** Le drapeau est posé à l'ouverture, pas à la
- *     fermeture : quelqu'un qui le balaie aussitôt ne doit pas le revoir.
- *   · **Il se saute entièrement** si le système demande des animations
- *     réduites, ou si la page est déjà visitée.
- *
- * La profondeur vient d'un `perspective` sur le conteneur et d'un `translateZ`
- * sur le logo : les deux plans n'arrivent pas à la même vitesse, ce qui donne le
- * relief sans image 3D ni bibliothèque. C'est la seule 3D de l'application, et
- * elle dure une seconde.
+ * Le logo : celui que l'administration a choisi, s'il y en a un — mis en
+ * mémoire au lancement précédent, pour l'afficher sans attendre le réseau —,
+ * sinon le logo de l'application livré avec elle. On ne l'échange jamais au
+ * milieu de l'animation : un logo qui change sous les yeux fait amateur.
  */
 export function WelcomeScreen() {
   const { t } = useI18n();
+  const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [logo, setLogo] = useState<string | null>(null);
+  const [logo, setLogo] = useState(LOGO_PAR_DEFAUT);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (localStorage.getItem(SEEN_KEY)) return;
+    let dejaJoue = false;
+    try {
+      dejaJoue = sessionStorage.getItem(SESSION_KEY) === "1";
+      sessionStorage.setItem(SESSION_KEY, "1");
+      localStorage.setItem(SEEN_KEY, "1");
+      const enCache = localStorage.getItem(LOGO_CACHE_KEY);
+      if (enCache) setLogo(enCache);
+    } catch {
+      // Stockage indisponible (navigation privée stricte) : on joue, sans mémoire.
+    }
 
-    // Le logo de l'application, changé par l'administration. Rien à voir avec
-    // les réglages serveur : `app_brand` est lisible par tous.
+    if (dejaJoue) return;
+
+    // Mettre à jour le logo pour le prochain lancement, sans toucher à celui-ci.
     void (async () => {
       try {
         const { data } = await createClient()
@@ -51,24 +66,20 @@ export function WelcomeScreen() {
           .select("app_logo_url")
           .eq("id", true)
           .maybeSingle();
-        setLogo(data?.app_logo_url ?? null);
+        try {
+          if (data?.app_logo_url) localStorage.setItem(LOGO_CACHE_KEY, data.app_logo_url);
+          else localStorage.removeItem(LOGO_CACHE_KEY);
+        } catch {}
       } catch {
-        // L'accueil n'attend pas le logo : si la lecture échoue, on garde le
-        // monogramme et l'écran de bienvenue reste inaltéré.
+        // Réseau absent : le logo en place reste valable.
       }
     })();
 
-    // Une animation d'accueil est exactement ce que ce réglage écarte.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      localStorage.setItem(SEEN_KEY, "1");
-      return;
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    localStorage.setItem(SEEN_KEY, "1");
     setVisible(true);
-
-    const out = setTimeout(() => setLeaving(true), 1900);
-    const gone = setTimeout(() => setVisible(false), 2320);
+    const out = setTimeout(() => setLeaving(true), DUREE_AFFICHAGE);
+    const gone = setTimeout(() => setVisible(false), DUREE_AFFICHAGE + DUREE_FONDU);
 
     return () => {
       clearTimeout(out);
@@ -80,79 +91,44 @@ export function WelcomeScreen() {
 
   function dismiss() {
     setLeaving(true);
-    setTimeout(() => setVisible(false), 380);
+    setTimeout(() => setVisible(false), DUREE_FONDU);
   }
 
   return createPortal(
     <div
       role="presentation"
       onClick={dismiss}
-      className="fixed inset-0 z-[95] flex flex-col items-center justify-center gap-4 bg-[image:var(--gradient-brand)]"
-      style={{
-        perspective: "800px",
-        opacity: leaving ? 0 : 1,
-        transition: "opacity 380ms ease-out",
-      }}
+      className="fixed inset-0 z-[95] flex flex-col items-center justify-center gap-5 bg-[image:var(--gradient-brand)]"
+      style={{ opacity: leaving ? 0 : 1, transition: `opacity ${DUREE_FONDU}ms ease-out` }}
     >
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- logo de l'application, chargé dynamiquement
-          <img
-            src={logo}
-            alt=""
-            className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] object-cover"
-            style={{
-              animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
-            }}
-          />
-        ) : (
-          <span
-            className="flex h-[86px] w-[86px] items-center justify-center rounded-[26px] bg-white/15 text-[1.875rem] font-bold text-white backdrop-blur-sm"
-            style={{
-              animation: "welcome-mark 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both",
-            }}
-          >
-            M
-          </span>
-        )}
+      {/* eslint-disable-next-line @next/next/no-img-element -- logo servi tel quel, avant tout le reste */}
+      <img
+        src={logo}
+        alt=""
+        onError={() => setLogo(LOGO_PAR_DEFAUT)}
+        className="h-[108px] w-[108px] rounded-[30px] object-cover shadow-[0_18px_44px_rgba(0,0,0,0.3)]"
+        style={{ animation: "splash-logo 820ms cubic-bezier(0.22, 0.61, 0.36, 1) both" }}
+      />
 
-      <div className="flex flex-col items-center gap-1 px-8 text-center">
-        <p
-          className="text-[1.25rem] font-bold tracking-[-0.01875rem] text-white"
-          style={{ animation: "enter-up 520ms cubic-bezier(0.22,0.61,0.36,1) 220ms both" }}
-        >
+      <div
+        className="flex flex-col items-center gap-1 px-8 text-center"
+        style={{ animation: "splash-texte 560ms cubic-bezier(0.22, 0.61, 0.36, 1) 240ms both" }}
+      >
+        <p className="text-[1.3125rem] font-extrabold tracking-[-0.02em] text-white">
           {t.brand.first} {t.brand.second}
         </p>
-        <p
-          className="text-[0.75rem] leading-[1.5] text-white/80"
-          style={{ animation: "enter-up 520ms cubic-bezier(0.22,0.61,0.36,1) 340ms both" }}
-        >
-          {t.welcome.tagline}
-        </p>
-      </div>
-
-      {/*
-        Les mots-clés, décalés l'un après l'autre. Trente millisecondes de plus
-        par élément : assez pour que l'œil suive la séquence, trop peu pour
-        qu'on attende la fin.
-      */}
-      <div className="flex flex-wrap items-center justify-center gap-[6px] px-8">
-        {[t.nav.marketplace, t.nav.lives, t.nav.deals, t.nav.services].map((mot, i) => (
-          <span
-            key={mot}
-            className="rounded-[10px] bg-white/12 px-[10px] py-[5px] text-[0.625rem] font-semibold text-white/90"
-            style={{
-              animation: `enter-up 420ms cubic-bezier(0.22,0.61,0.36,1) ${480 + i * 70}ms both`,
-            }}
-          >
-            {mot}
-          </span>
-        ))}
+        <p className="text-[0.75rem] leading-[1.5] text-white/75">{t.welcome.tagline}</p>
       </div>
 
       <style>{`
-        @keyframes welcome-mark {
-          from { opacity: 0; transform: translateZ(-140px) scale(0.86); }
-          to   { opacity: 1; transform: translateZ(0) scale(1); }
+        @keyframes splash-logo {
+          0%   { opacity: 0; transform: scale(0.78); }
+          62%  { opacity: 1; transform: scale(1.05); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes splash-texte {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: none; }
         }
       `}</style>
     </div>,

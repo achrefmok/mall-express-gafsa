@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCategories, getMyShop } from "@/lib/queries";
+import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
+import { categoriesProduitPourBoutique } from "@/lib/categories-boutique-server";
 import { ProductEditor } from "../product-editor";
 
 export const metadata: Metadata = {
@@ -13,7 +14,13 @@ export default async function NewProductPage() {
   const shop = await getMyShop();
   if (!shop) redirect("/vendeur/creer");
 
-  const [categories, { locale }] = await Promise.all([getCategories(false), getT()]);
+  // Les catégories de la famille de la boutique, pas celles de tout le mall.
+  const [{ categories, filtre }, { locale }] = await Promise.all([
+    categoriesProduitPourBoutique(shop),
+    getT(),
+  ]);
 
-  return <ProductEditor product={null} categories={categories} locale={locale} />;
+  return (
+    <ProductEditor product={null} categories={categories} categoriesFiltrees={filtre} locale={locale} />
+  );
 }

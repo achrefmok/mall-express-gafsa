@@ -8,15 +8,16 @@ import { format } from "@/lib/i18n/format";
 import { cx, formatPrice, monogram, percentOff } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
 import { AccessibilityBar } from "@/components/shell/accessibility-bar";
-import { NotifyLiveButton } from "@/components/live/notify-live-button";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
-import { Avatar, Card, Placeholder, Rail } from "@/components/ui/primitives";
-import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
+import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
+import { categoryIcon } from "@/components/ui/category-icons";
+import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
+import { lireLogo } from "@/lib/brand";
 import { avecBlackFriday, lireEtatBlackFriday, lireOffresActives } from "@/lib/black-friday-server";
 import { SectionBlackFriday } from "@/components/black-friday/home-section";
 
@@ -252,12 +253,14 @@ export default async function HomePage() {
   // Le prix Black Friday sur ces trois cartes : une requête, rien hors campagne.
   const highlights = await avecBlackFriday((featured.length > 0 ? featured : allProducts).slice(0, 3));
 
-  const next = status.nextLive;
-  const minutesToLive = next?.scheduled_at
-    ? Math.max(0, Math.round((new Date(next.scheduled_at).getTime() - Date.now()) / 60_000))
-    : null;
-
   const discount = promo.data ? percentOff(promo.data.price, promo.data.compare_at_price) : null;
+
+  /*
+    Le logo choisi dans l'administration, sinon celui livré avec l'application.
+    Lecture mise en cache une heure par `lireLogo` : elle ne coûte rien à la
+    page.
+  */
+  const logoApp = (await lireLogo()) ?? "/brand/logo-mall-gafsa.png";
 
   return (
     <>
@@ -287,9 +290,14 @@ export default async function HomePage() {
 
         <div className="relative flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/60 uppercase">
-              {t.marketplace.eyebrow}
-            </p>
+            <div className="flex items-center gap-[7px]">
+              <span className="relative h-[26px] w-[26px] flex-none overflow-hidden rounded-[9px] bg-white/15 ring-1 ring-white/25">
+                <Image src={logoApp} alt="" fill sizes="26px" className="object-cover" />
+              </span>
+              <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/70 uppercase">
+                {t.marketplace.eyebrow}
+              </p>
+            </div>
             <h1 className="mt-[7px] truncate text-[1.6875rem] leading-[1.05] font-extrabold tracking-[-0.02em]">
               {profile?.first_name
                 ? format(t.home.greeting, { name: profile.first_name })
@@ -351,24 +359,6 @@ export default async function HomePage() {
       <div className="no-sb flex flex-1 flex-col gap-7 overflow-y-auto pt-4 pb-5">
         <AccessibilityBar />
 
-        {/* ─── Ce qui se passe maintenant ─────────────────────────────── */}
-        <Card className="mx-4 flex flex-none items-center gap-[10px] p-[11px_13px]">
-          <LiveDot size={8} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
-              {format(status.anyOpen ? t.home.contextOpen : t.home.contextClosed, {
-                n: status.anyOpen ? status.openCount : status.totalCount,
-              })}
-            </p>
-            <p className="truncate text-[0.65625rem] text-[var(--color-muted)]">
-              {next && minutesToLive !== null
-                ? format(t.home.nextLive, { shop: next.shop?.name ?? "", min: minutesToLive })
-                : t.home.noLive}
-            </p>
-          </div>
-          {next && <NotifyLiveButton liveId={next.id} />}
-        </Card>
-
         {/*
           ─── 1 · Affiches sponsorisées ───────────────────────────────
 
@@ -399,61 +389,31 @@ export default async function HomePage() {
         {/*
           ─── 3 · Catégories ──────────────────────────────────────────
 
-          Remontées juste après l'urgence : c'est le point de départ de
-          quiconque vient acheter sans savoir encore quoi. Une grille de
-          trois colonnes plutôt qu'une rangée qui défile — on les voit toutes
-          d'un coup, et chaque tuile porte sa teinte, son dessin et le nombre
-          de boutiques en filigrane.
+          La photo occupe toute la carte, le nom se lit sur un voile en bas :
+          une catégorie se reconnaît à son image avant de se lire, et une part
+          des clients visés lit peu le français.
+
+          Deux rangées qui glissent sur téléphone : onze catégories en deux
+          colonnes feraient six écrans de haut, et l'accueil ne montrerait plus
+          rien d'autre. Sur grand écran, une grille de quatre, sans défilement.
+
+          Fête & Événements et Sport & Loisirs mènent à leur annuaire : ce sont
+          des lieux, pas des produits.
         */}
         <section className="flex flex-col gap-3">
           <EnteteSection hue={300} titre={t.home.categories} />
-          <div className="grid grid-cols-3 gap-[10px] px-4">
+          <div className="no-sb grid auto-cols-[45%] grid-flow-col grid-rows-2 gap-[10px] overflow-x-auto px-4 pb-1 sm:auto-cols-[31%] lg:grid-flow-row lg:grid-cols-4 lg:grid-rows-none lg:overflow-visible">
             {categories.map((category) => (
-              <Link
+              <CarteCategorie
                 key={category.id}
-                href={`/marketplace?categorie=${category.slug}`}
-                className="press cat-surface relative flex min-h-[96px] flex-col justify-end overflow-hidden rounded-[18px] p-3"
-                style={{ "--hue": category.hue } as React.CSSProperties}
-              >
-                {/* Le compte en filigrane : lisible sans être lu, il donne du
-                    poids à la tuile sans ajouter une ligne de texte. */}
-                {shopCount[category.id] ? (
-                  <span
-                    aria-hidden
-                    className="cat-ink pointer-events-none absolute -top-3 end-[2px] text-[2.875rem] leading-none font-black opacity-[0.14]"
-                  >
-                    {shopCount[category.id]}
-                  </span>
-                ) : null}
-
-                <span className="absolute start-3 top-[10px] h-[26px] w-[26px] overflow-hidden rounded-full bg-[var(--color-surface-solid)]/70">
-                  {category.image_url ? (
-                    <Image
-                      src={category.image_url}
-                      alt=""
-                      width={26}
-                      height={26}
-                      className="fade-in-img h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="cat-ink flex h-full w-full items-center justify-center text-[0.5625rem] font-bold">
-                      {category.monogram}
-                    </span>
-                  )}
-                </span>
-
-                <span className="cat-ink relative text-[0.75rem] leading-[1.2] font-extrabold tracking-[-0.01em]">
-                  {locale === "ar" ? category.name_ar : category.name_fr}
-                </span>
-                {/* Le compte seulement s'il y a quelque chose à compter :
-                    « 0 boutiques » décourage sans informer, et une catégorie
-                    sans boutique attribuée n'est pas vide pour autant. */}
-                {shopCount[category.id] ? (
-                  <span className="relative mt-[3px] text-[0.59375rem] font-semibold text-[var(--color-muted)]">
-                    {format(t.home.shopCount, { n: shopCount[category.id] })}
-                  </span>
-                ) : null}
-              </Link>
+                category={category}
+                nom={locale === "ar" ? category.name_ar : category.name_fr}
+                compte={
+                  shopCount[category.id]
+                    ? format(t.home.shopCount, { n: shopCount[category.id] })
+                    : null
+                }
+              />
             ))}
           </div>
         </section>
@@ -900,6 +860,77 @@ function ChipService({
           <span className="mt-[3px] block truncate text-[0.59375rem] font-semibold text-[var(--color-muted)]">
             {detail}
           </span>
+        )}
+      </span>
+    </Link>
+  );
+}
+
+/* ─── Les catégories de l'accueil ─────────────────────────────────────── */
+
+/**
+ * Les photos livrées avec l'application, quand l'administration n'en a pas
+ * encore téléversé. Une catégorie sans photo garde son dessin sur fond teinté :
+ * elle reste reconnaissable, et rien ne manque à l'écran.
+ */
+const PHOTOS_CATEGORIES: Record<string, string> = {
+  mode: "/images/cat-mode.webp",
+  beaute: "/images/cat-beaute.webp",
+  maison: "/images/cat-maison.webp",
+  sport: "/images/cat-sport.webp",
+  alimentation: "/images/cat-alim.webp",
+  electronique: "/images/cat-electro.webp",
+  cafes: "/images/cat-cafes.webp",
+};
+
+/** Deux familles mènent à leur annuaire de lieux, pas au marketplace. */
+const ANNUAIRES: Record<string, string> = {
+  "fete-evenements": "/evenements",
+  "sport-loisirs": "/sport-loisirs",
+};
+
+function CarteCategorie({
+  category,
+  nom,
+  compte,
+}: {
+  category: Awaited<ReturnType<typeof getCategories>>[number];
+  nom: string;
+  compte: string | null;
+}) {
+  const photo = category.image_url ?? PHOTOS_CATEGORIES[category.slug] ?? null;
+  const Dessin = categoryIcon(category.slug);
+
+  return (
+    <Link
+      href={ANNUAIRES[category.slug] ?? `/marketplace?categorie=${category.slug}`}
+      className="press cat-surface relative block aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_8px_20px_rgba(60,40,90,0.12)]"
+      style={{ "--hue": category.hue } as React.CSSProperties}
+    >
+      {photo ? (
+        <Image
+          src={photo}
+          alt=""
+          fill
+          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 31vw, 260px"
+          className="fade-in-img object-cover"
+        />
+      ) : (
+        <span aria-hidden className="cat-ink absolute inset-0 flex items-center justify-center pb-5">
+          {Dessin ? <Dessin size={54} /> : <span className="text-[1.75rem] font-black">{category.monogram}</span>}
+        </span>
+      )}
+
+      {/* Le voile : sans lui, un nom blanc sur une photo claire devient illisible. */}
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-[linear-gradient(to_top,rgba(20,14,26,0.82)_0%,rgba(20,14,26,0.25)_48%,rgba(20,14,26,0)_72%)]"
+      />
+
+      <span className="absolute inset-x-[10px] bottom-[9px]">
+        <span className="block text-[0.84375rem] leading-tight font-extrabold text-white">{nom}</span>
+        {compte && (
+          <span className="mt-[2px] block text-[0.59375rem] font-semibold text-white/75">{compte}</span>
         )}
       </span>
     </Link>

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCategories, getMyShop } from "@/lib/queries";
+import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
+import { categoriesProduitPourBoutique } from "@/lib/categories-boutique-server";
 import { ProductEditor } from "../product-editor";
 
 export const metadata: Metadata = {
@@ -17,13 +18,21 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   if (!shop) redirect("/vendeur/creer");
 
   const supabase = await createClient();
-  const [{ data: product }, categories, { locale }] = await Promise.all([
+  const [{ data: product }, { locale }] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).eq("shop_id", shop.id).maybeSingle(),
-    getCategories(false),
     getT(),
   ]);
 
   if (!product) notFound();
 
-  return <ProductEditor product={product} categories={categories} locale={locale} />;
+  /*
+    La catégorie actuelle du produit est toujours proposée, même hors de la
+    famille de la boutique : un produit rangé avant ce filtre ne doit pas voir
+    sa catégorie disparaître à l'ouverture.
+  */
+  const { categories, filtre } = await categoriesProduitPourBoutique(shop, product.category_id);
+
+  return (
+    <ProductEditor product={product} categories={categories} categoriesFiltrees={filtre} locale={locale} />
+  );
 }

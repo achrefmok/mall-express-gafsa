@@ -378,7 +378,7 @@ export default async function VendorDashboard() {
 
   const categorie = locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr;
   const emplacement =
-    shop.mall_level !== null && shop.mall_unit ? `${t.vendeur.level} ${shop.mall_level} — ${t.vendeur.unit} ${shop.mall_unit}` : null;
+    shop.mall_level !== null && shop.mall_unit ? `${t.vendeur.level} ${shop.mall_level} · ${shop.mall_unit}` : null;
 
   return (
     <>

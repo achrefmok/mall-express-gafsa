@@ -69,7 +69,7 @@ export async function contenuBoutique(slug: string): Promise<ContenuPartage | nu
 
   const { data: s } = await supabase
     .from("shops")
-    .select("name, description, logo_url, cover_url, mall_level, mall_unit, category:categories!shops_category_id_fkey(name_fr)")
+    .select("name, description, logo_url, cover_url, banner_url, mall_level, mall_unit, category:categories!shops_category_id_fkey(name_fr)")
     .eq("slug", slug)
     .eq("status", "approved")
     .maybeSingle();
@@ -84,7 +84,7 @@ export async function contenuBoutique(slug: string): Promise<ContenuPartage | nu
     bandeau: categorie ? categorie.toUpperCase() : "BOUTIQUE",
     titre: s.name,
     sousTitre: emplacement ?? s.description?.slice(0, 90) ?? "Au mall de Gafsa",
-    image: s.cover_url ?? s.logo_url,
+    image: s.banner_url ?? s.cover_url ?? s.logo_url,
   };
 }
 

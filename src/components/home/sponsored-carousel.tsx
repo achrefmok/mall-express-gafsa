@@ -165,6 +165,34 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
               )}
 
               {/*
+                Le titre sur l'affiche, et l'appel à l'action.
+
+                L'emplacement ne montrait que l'image : une affiche sans texte
+                lisible — et il y en a — n'annonçait rien du tout. Le voile ne
+                couvre que le bas, là où les graphistes laissent de la place, et
+                il ne capte aucun toucher : la bannière entière reste le lien.
+              */}
+              {slot.image_url && (slot.title || slot.subtitle) && (
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-[linear-gradient(to_top,rgba(20,14,26,0.86)_0%,rgba(20,14,26,0.25)_58%,transparent_100%)] p-[14px] pt-10">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[0.9375rem] leading-tight font-extrabold text-white">
+                      {slot.title}
+                    </span>
+                    {slot.subtitle && (
+                      <span className="mt-[2px] block truncate text-[0.6875rem] text-white/80">
+                        {slot.subtitle}
+                      </span>
+                    )}
+                  </span>
+                  {href && (
+                    <span className="flex-none rounded-full bg-white px-[13px] py-[8px] text-[0.6875rem] font-bold whitespace-nowrap text-[#241f2e]">
+                      {t.accueil.discover}
+                    </span>
+                  )}
+                </span>
+              )}
+
+              {/*
                 La mention légale, discrète mais présente : une publicité doit se
                 dire telle. Posée sur l'image plutôt que sous elle, pour ne pas
                 ajouter une ligne de texte à une section qui doit rester visuelle.
@@ -213,7 +241,7 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
                 résumée : le clic donne mieux que deux lignes. Une affiche sans
                 destination, si — c'est là que se trouvent la date et le lieu.
               */}
-              {!href && (slot.title || slot.subtitle) && (
+              {!href && !slot.image_url && (slot.title || slot.subtitle) && (
                 <div className="px-1 pt-[6px]">
                   <p className="text-[0.71875rem] font-bold text-[var(--color-ink)]">{slot.title}</p>
                   {slot.subtitle && (

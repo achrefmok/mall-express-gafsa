@@ -94,7 +94,7 @@ export default async function ShopPage({
   const { data: shop } = await supabase
     .from("shops")
     .select(
-      `id, name, name_ar, description, description_ar, slug, logo_url, cover_url,
+      `id, name, name_ar, description, description_ar, slug, logo_url, cover_url, banner_url,
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count,
        followers_count, posts_count, views_count, status, latitude, longitude,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue)`,
@@ -160,12 +160,23 @@ export default async function ShopPage({
 
   const rating = formatRating(shop.rating_sum, shop.rating_count);
 
+  /*
+    L'image du haut : la bannière des réglages d'abord.
+
+    Le commerçant modifie `banner_url` dans ses réglages ; cette page lisait
+    `cover_url`, remplie une seule fois à la création. Sa nouvelle bannière
+    n'apparaissait donc jamais : il la changeait, revenait, et retrouvait
+    l'ancienne image. Les deux colonnes restent, la plus récemment choisie
+    l'emporte.
+  */
+  const enTete = shop.banner_url ?? shop.cover_url;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Store",
     name: shop.name,
     description: shop.description ?? undefined,
-    image: shop.cover_url ?? undefined,
+    image: enTete ?? undefined,
     telephone: shop.phone ?? undefined,
     address: {
       "@type": "PostalAddress",
@@ -217,7 +228,7 @@ export default async function ShopPage({
           />
         </div>
 
-        {shop.cover_url ? (
+        {enTete ? (
           /*
             `fill` dans un cadre de hauteur fixe, et un `sizes` déclaré.
 
@@ -230,7 +241,7 @@ export default async function ShopPage({
           */
           <span className="relative block h-[110px] w-full flex-none">
             <Image
-              src={shop.cover_url}
+              src={enTete}
               alt=""
               fill
               priority

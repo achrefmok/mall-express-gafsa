@@ -218,6 +218,24 @@ export async function upsertCategory(input: {
 
 /* ─── Régie ────────────────────────────────────────────────────────────── */
 
+/**
+ * Le lien d'une affiche : http(s) seulement.
+ *
+ * Il entre dans un `<a>` : `javascript:` et `data:` n'y ont rien à faire.
+ */
+function lienAffiche(brut?: string): { ok: true; lien: string | null } | { ok: false; error: string } {
+  if (!brut?.trim()) return { ok: true, lien: null };
+  try {
+    const parsed = new URL(brut.trim());
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return { ok: false, error: "Le lien doit commencer par https://" };
+    }
+    return { ok: true, lien: parsed.toString() };
+  } catch {
+    return { ok: false, error: "Lien invalide" };
+  }
+}
+
 export async function createSponsoredSlot(input: {
   advertiser: string;
   title: string;
@@ -225,6 +243,7 @@ export async function createSponsoredSlot(input: {
   imageUrl?: string | null;
   linkUrl?: string;
   shopId?: string;
+  startsAt?: string;
   endsAt: string;
   position?: number;
 }) {
@@ -237,6 +256,11 @@ export async function createSponsoredSlot(input: {
   const ends = new Date(input.endsAt);
   if (Number.isNaN(ends.getTime()) || ends.getTime() <= Date.now()) {
     return fail("La date de fin doit être dans le futur");
+  }
+
+  const debut = input.startsAt ? new Date(input.startsAt) : null;
+  if (debut && (Number.isNaN(debut.getTime()) || debut.getTime() >= ends.getTime())) {
+    return fail("La date de début doit précéder la date de fin");
   }
 
   // Un lien externe entre dans un <a> : on n'accepte que http(s), pour
@@ -262,12 +286,14 @@ export async function createSponsoredSlot(input: {
     link_url: link,
     shop_id: input.shopId || null,
     position: input.position ?? 0,
+    starts_at: debut?.toISOString(),
     ends_at: ends.toISOString(),
   });
 
   if (e) return fail(readableError(e));
 
   revalidatePath("/admin/sponsors");
+  revalidatePath("/accueil");
   revalidatePath("/");
   return done();
 }
@@ -284,6 +310,69 @@ export async function toggleSponsoredSlot(slotId: string, active: boolean) {
   if (e) return fail(readableError(e));
 
   revalidatePath("/admin");
+  revalidatePath("/admin/sponsors");
+  revalidatePath("/accueil");
+  revalidatePath("/");
+  return done();
+}
+
+/**
+ * Corriger une affiche, plutôt qu'en créer une seconde.
+ *
+ * L'écran ne savait que créer et couper la diffusion : une faute de frappe, une
+ * image à remplacer ou une date à prolonger obligeaient à recommencer, et
+ * l'ancienne affiche restait dans la liste. On met à jour la ligne existante —
+ * même identifiant, aucun doublon.
+ */
+export async function updateSponsoredSlot(
+  slotId: string,
+  input: {
+    advertiser?: string;
+    title: string;
+    subtitle?: string;
+    imageUrl?: string | null;
+    linkUrl?: string;
+    shopId?: string;
+    startsAt?: string;
+    endsAt: string;
+    position?: number;
+  },
+) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  if (!input.title.trim()) return fail("Le titre est obligatoire");
+
+  const ends = new Date(input.endsAt);
+  if (Number.isNaN(ends.getTime())) return fail("Date de fin invalide");
+
+  const debut = input.startsAt ? new Date(input.startsAt) : null;
+  if (debut && (Number.isNaN(debut.getTime()) || debut.getTime() >= ends.getTime())) {
+    return fail("La date de début doit précéder la date de fin");
+  }
+
+  const lien = lienAffiche(input.linkUrl);
+  if (!lien.ok) return fail(lien.error);
+
+  const { error: e } = await supabase
+    .from("sponsored_slots")
+    .update({
+      ...(input.advertiser?.trim() ? { advertiser: input.advertiser.trim() } : {}),
+      title: input.title.trim(),
+      subtitle: input.subtitle?.trim() || null,
+      image_url: input.imageUrl ?? null,
+      link_url: lien.lien,
+      shop_id: input.shopId || null,
+      position: input.position ?? 0,
+      ...(debut ? { starts_at: debut.toISOString() } : {}),
+      ends_at: ends.toISOString(),
+    })
+    .eq("id", slotId);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/admin/sponsors");
+  revalidatePath("/accueil");
   revalidatePath("/");
   return done();
 }

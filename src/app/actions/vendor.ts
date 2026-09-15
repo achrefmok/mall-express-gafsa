@@ -301,6 +301,7 @@ export async function updateShopSettings(input: {
   if (e) return fail(readableError(e));
 
   revalidatePath("/vendeur/reglages");
+  revalidatePath("/vendeur");
   revalidatePath(`/boutique/${shop.slug}`);
   return done();
 }
