@@ -144,7 +144,7 @@ export function SponsoredCarousel({ slots }: { slots: SponsoredSlot[] }) {
           const href = destination(slot);
 
           const visuel = (
-            <div className="relative overflow-hidden rounded-[20px] bg-[var(--color-track)]">
+            <div className="relative overflow-hidden rounded-[22px] bg-[var(--color-track)] shadow-[0_10px_26px_rgba(60,40,90,0.16)]">
               {slot.image_url ? (
                 <Image
                   src={slot.image_url}

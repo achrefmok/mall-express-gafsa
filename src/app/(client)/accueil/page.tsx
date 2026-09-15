@@ -12,7 +12,7 @@ import { NotifyLiveButton } from "@/components/live/notify-live-button";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
-import { Avatar, Card, CategoryTile, Placeholder, Rail, SectionTitle } from "@/components/ui/primitives";
+import { Avatar, Card, Placeholder, Rail } from "@/components/ui/primitives";
 import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
@@ -262,79 +262,96 @@ export default async function HomePage() {
   return (
     <>
       {/*
-        On salue la personne avant de nommer l'application.
+        ═══ Le panneau d'en-tête ═══════════════════════════════════════
 
-        « Mall Express Gafsa » en gros titre occupait le tiers supérieur de
-        l'écran pour dire ce que l'icône de l'application dit déjà. La salutation
-        et le nombre de boutiques ouvertes, eux, disent quelque chose de
-        nouveau : à qui l'on parle, et s'il se passe quelque chose maintenant.
+        Quatre choses tenaient chacune sa bande : le surtitre, la salutation,
+        l'état du mall, puis la recherche. Réunies sur une même surface
+        violette arrondie, elles deviennent un seul bloc — celui qui dit à
+        qui l'on parle et ce qui se passe maintenant —, et la barre de
+        recherche vient à cheval sur son bord inférieur plutôt que de
+        commencer une cinquième bande.
 
-        Les deux pastilles rondes reprennent les deux seules destinations qu'on
-        cherche depuis l'accueil. La messagerie quitte cette barre : elle vit
-        dans le profil, et trois icônes côte à côte se ressemblaient trop pour
-        qu'on les distingue d'un coup d'œil.
+        L'en-tête et la recherche restent hors de la zone qui défile : la
+        recherche est la porte de sortie de toutes les autres sections, elle
+        ne doit jamais demander de remonter.
       */}
-      <header className="flex flex-none items-start gap-3 px-[18px] pt-[14px] pb-[2px]">
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.5625rem] font-extrabold tracking-[0.08125rem] text-[var(--color-muted)]">
-            {t.marketplace.eyebrow}
-          </p>
-          <h1 className="mt-[2px] truncate text-[1.5rem] leading-[1.14] font-extrabold tracking-[-0.04375rem] text-[var(--color-ink)]">
-            {profile?.first_name
-              ? format(t.home.greeting, { name: profile.first_name })
-              : t.home.greetingAnon}
-          </h1>
-          {/* Aucune boutique ouverte ne veut pas dire qu'il n'y a rien à voir :
-              on annonce alors le catalogue plutôt qu'un zéro. */}
-          <p className="truncate text-[0.71875rem] text-[var(--color-muted)]">
-            {status.anyOpen
-              ? format(t.home.activeShops, { n: status.openCount })
-              : format(t.marketplace.allShops, { n: status.totalCount })}
-          </p>
-        </div>
+      <header className="relative flex-none overflow-hidden rounded-b-[30px] bg-[image:var(--gradient-brand)] px-[18px] pt-[16px] pb-[40px] text-white">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-[70px] -end-[60px] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.16),transparent_65%)]"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -bottom-[90px] -start-[70px] h-[210px] w-[210px] rounded-full bg-[radial-gradient(circle,var(--color-live-tint),transparent_68%)]"
+        />
 
-        <div className="flex flex-none gap-2">
-          {/*
-            La langue, au premier coup d'œil, à côté de la cloche et du panier.
-            La barre d'accessibilité, plus bas, la propose aussi — mais ici elle
-            se voit sans avoir à faire défiler l'écran.
-          */}
-          <LanguageToggle />
+        <div className="relative flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/60 uppercase">
+              {t.marketplace.eyebrow}
+            </p>
+            <h1 className="mt-[7px] truncate text-[1.6875rem] leading-[1.05] font-extrabold tracking-[-0.02em]">
+              {profile?.first_name
+                ? format(t.home.greeting, { name: profile.first_name })
+                : t.home.greetingAnon}
+            </h1>
+            {/* Aucune boutique ouverte ne veut pas dire qu'il n'y a rien à voir :
+                on annonce alors le catalogue plutôt qu'un zéro. */}
+            <div className="mt-[7px] flex items-center gap-[7px]">
+              <span
+                aria-hidden
+                className="animate-live-dot h-2 w-2 flex-none rounded-full"
+                style={{ background: status.anyOpen ? "#7ee2a8" : "rgba(255,255,255,0.45)" }}
+              />
+              <p className="truncate text-[0.71875rem] font-medium text-white/85">
+                {status.anyOpen
+                  ? format(t.home.activeShops, { n: status.openCount })
+                  : format(t.marketplace.allShops, { n: status.totalCount })}
+              </p>
+            </div>
+          </div>
 
-          <Link
-            href="/notifications"
-            aria-label={t.nav.notifications}
-            className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[var(--color-surface-solid)] text-[var(--color-ink)] shadow-[0_6px_16px_rgba(60,40,90,0.09)]"
-          >
-            <BellIcon size={17} />
-            {counts.notifications > 0 && (
-              <span className="absolute -top-[1px] -end-[1px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[var(--color-brand-fill)] px-1 text-[0.53125rem] font-bold text-white">
-                {counts.notifications > 99 ? "99+" : counts.notifications}
-              </span>
-            )}
-          </Link>
+          <div className="flex flex-none gap-[7px]">
+            <LanguageToggle sombre />
 
-          <Link
-            href="/panier"
-            aria-label={t.cart.title}
-            className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-white shadow-[0_8px_18px_rgba(109,75,143,0.28)]"
-          >
-            <CartIcon size={17} />
-            {counts.cart > 0 && (
-              <span className="absolute -top-[1px] -end-[1px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[var(--color-surface-solid)] px-1 text-[0.53125rem] font-extrabold text-[var(--color-brand)] shadow-[0_2px_6px_rgba(60,40,90,0.18)]">
-                {counts.cart > 99 ? "99+" : counts.cart}
-              </span>
-            )}
-          </Link>
+            <Link
+              href="/notifications"
+              aria-label={t.nav.notifications}
+              className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-white/25 bg-white/15 text-white"
+            >
+              <BellIcon size={17} />
+              {counts.notifications > 0 && (
+                <span className="absolute -top-[1px] -end-[1px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--color-live-fill)] px-1 text-[0.53125rem] font-bold text-white">
+                  {counts.notifications > 99 ? "99+" : counts.notifications}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/panier"
+              aria-label={t.cart.title}
+              className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-white text-[var(--color-brand)]"
+            >
+              <CartIcon size={17} />
+              {counts.cart > 0 && (
+                <span className="absolute -top-[2px] -end-[2px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--color-ink)] px-1 text-[0.53125rem] font-extrabold text-white">
+                  {counts.cart > 99 ? "99+" : counts.cart}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
 
-      <SearchBar />
+      {/* La pilule de recherche, posée sur le bord du panneau. */}
+      <div className="relative z-10 -mt-[26px] flex-none">
+        <SearchBar flottante />
+      </div>
 
-      <div className="no-sb flex flex-1 flex-col gap-[18px] overflow-y-auto pt-3 pb-4">
+      <div className="no-sb flex flex-1 flex-col gap-7 overflow-y-auto pt-4 pb-5">
         <AccessibilityBar />
 
-        {/* ─── Bandeau contextuel ─────────────────────────────────────── */}
+        {/* ─── Ce qui se passe maintenant ─────────────────────────────── */}
         <Card className="mx-4 flex flex-none items-center gap-[10px] p-[11px_13px]">
           <LiveDot size={8} />
           <div className="min-w-0 flex-1">
@@ -353,126 +370,102 @@ export default async function HomePage() {
         </Card>
 
         {/*
-          ─── Black Friday ────────────────────────────────────────────
+          ─── 1 · Affiches sponsorisées ───────────────────────────────
 
-          Tout en haut, avant même la publicité : pendant vingt-quatre heures
-          c'est la chose la plus importante de l'application, et une section
-          qu'il faut chercher en faisant défiler est une section qu'on rate.
-          Elle ne s'affiche que pendant la campagne, ou en compte à rebours
-          juste avant — le reste du temps, elle n'existe pas.
+          En ouverture, avec un titre de section : une affiche sans titre
+          au-dessus se confondait avec une bannière du site lui-même. La
+          mention « sponsorisé » reste posée sur l'image, comme il se doit.
+        */}
+        {(sponsored.data ?? []).length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={40} titre={t.accueil.sponsoredTitle}>
+              <span className="rounded-full border border-[var(--color-outline)] px-[9px] py-1 text-[0.53125rem] font-bold tracking-[0.14em] text-[var(--color-faint)]">
+                {t.home.sponsoredBadge}
+              </span>
+            </EnteteSection>
+            <SponsoredCarousel slots={(sponsored.data ?? []) as SponsoredSlot[]} />
+          </section>
+        )}
+
+        {/*
+          ─── 2 · Black Friday ────────────────────────────────────────
+
+          Haut de page pendant vingt-quatre heures : c'est alors la chose la
+          plus importante de l'application, et une section qu'il faut
+          chercher en faisant défiler est une section qu'on rate.
         */}
         <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
 
         {/*
-          ─── 1 · Sponsorisé ──────────────────────────────────────────
+          ─── 3 · Catégories ──────────────────────────────────────────
 
-          Une bannière pleine largeur que l'on fait glisser du doigt, et non
-          plus une vignette de 96 pixels avec titre, sous-titre et cadre. Un
-          annonceur qui paie une mise en avant n'achète pas une fiche de plus
-          dans une liste : il achète une image qu'on regarde.
+          Remontées juste après l'urgence : c'est le point de départ de
+          quiconque vient acheter sans savoir encore quoi. Une grille de
+          trois colonnes plutôt qu'une rangée qui défile — on les voit toutes
+          d'un coup, et chaque tuile porte sa teinte, son dessin et le nombre
+          de boutiques en filigrane.
         */}
-        <SponsoredCarousel slots={(sponsored.data ?? []) as SponsoredSlot[]} />
-
-        {/*
-          ─── 2 · En direct maintenant, ou la sélection ─────────────────
-
-          L'une ou l'autre, jamais les deux. Un direct est un rendez-vous : tant
-          qu'il en existe un, rien ne doit lui disputer cette place. Le reste du
-          temps — c'est-à-dire presque toujours — la place revient à ce que les
-          boutiques mises en avant ont à vendre.
-        */}
-        {!anyLive && highlights.length > 0 && (
-          <section className="flex flex-col gap-2">
-            <SectionTitle className="px-4">{t.home.featured}</SectionTitle>
-
-            {/*
-              Un rail que l'on fait glisser, et plus de « Tout voir ».
-
-              Une rangée qui déborde de l'écran se comprend sans qu'on
-              l'explique : c'est le geste que tout le monde connaît. Le lien
-              qu'on remplace ne servait qu'à réparer une grille de trois
-              vignettes qui n'en montrait que trois.
-            */}
-            <Rail gap={10} className="px-4">
-              {highlights.map((product, i) => (
-                /*
-                  Arrivée décalée de soixante millisecondes par carte. Assez pour
-                  que l'œil suive la rangée de gauche à droite, trop peu pour
-                  qu'on attende la dernière — au-delà de trois ou quatre cartes,
-                  un décalage devient une file d'attente.
-                */
-                <div
-                  key={product.id}
-                  className="enter-item w-[150px] flex-none"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <ProductCard product={product} locale={locale} imageHeight={112} />
-                </div>
-              ))}
-            </Rail>
-          </section>
-        )}
-
-        {/*
-          Les boutiques, toujours là — en direct ou non.
-
-          Ce rail ne s'affichait que pendant un direct, c'est-à-dire presque
-          jamais : un commerçant diffuse une heure par semaine. Le reste du
-          temps, l'accueil ne montrait aucun visage de commerce, alors que ce
-          sont eux qu'on vient voir. Il devient « Nos partenaires » hors
-          diffusion, et reprend son titre de direct dès qu'une boutique est à
-          l'antenne — les mêmes pastilles, le même geste, un seul mot qui change.
-        */}
-        {withLiveFirst.length > 0 && (
-          <section className="flex flex-col gap-2 px-4">
-            <SectionTitle>{anyLive ? t.home.liveNow : t.home.partners}</SectionTitle>
-            <Rail gap={14}>
-              {withLiveFirst.map((shop) => {
-                const live = shop.lives?.find((l) => l.status === "live");
-                return (
-                  <Link
-                    key={shop.id}
-                    href={live ? `/lives/${live.id}` : `/boutique/${shop.slug}`}
-                    className="relative flex flex-none flex-col items-center gap-[5px]"
+        <section className="flex flex-col gap-3">
+          <EnteteSection hue={300} titre={t.home.categories} />
+          <div className="grid grid-cols-3 gap-[10px] px-4">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/marketplace?categorie=${category.slug}`}
+                className="press cat-surface relative flex min-h-[96px] flex-col justify-end overflow-hidden rounded-[18px] p-3"
+                style={{ "--hue": category.hue } as React.CSSProperties}
+              >
+                {/* Le compte en filigrane : lisible sans être lu, il donne du
+                    poids à la tuile sans ajouter une ligne de texte. */}
+                {shopCount[category.id] ? (
+                  <span
+                    aria-hidden
+                    className="cat-ink pointer-events-none absolute -top-3 end-[2px] text-[2.875rem] leading-none font-black opacity-[0.14]"
                   >
-                    <span
-                      className={
-                        live
-                          ? "flex h-[58px] w-[58px] items-center justify-center rounded-full border-2 border-[var(--color-live)] text-[0.625rem] font-bold text-[var(--color-brand)]"
-                          : "flex h-[58px] w-[58px] items-center justify-center rounded-full border-[1.5px] border-[var(--color-track)] text-[0.625rem] font-bold text-[var(--color-muted)]"
-                      }
-                    >
-                      {shop.logo_url ? (
-                        <Image
-                          src={shop.logo_url}
-                          alt=""
-                          width={54}
-                          height={54}
-                          className="h-[54px] w-[54px] rounded-full object-cover"
-                        />
-                      ) : (
-                        monogram(shop.name)
-                      )}
-                    </span>
-                    {live && (
-                      <span className="absolute bottom-4 start-1/2 -translate-x-1/2 rounded-[3px] bg-[var(--color-live-fill)] px-[5px] py-[1px] text-[0.4375rem] font-bold text-white rtl:translate-x-1/2">
-                        LIVE
-                      </span>
-                    )}
-                    <span className="max-w-[64px] truncate text-[0.625rem] text-[var(--color-muted)]">
-                      {shop.name}
-                    </span>
-                  </Link>
-                );
-              })}
-            </Rail>
-          </section>
-        )}
+                    {shopCount[category.id]}
+                  </span>
+                ) : null}
 
-        {/* ─── 3 · Promotions du moment ───────────────────────────────── */}
+                <span className="absolute start-3 top-[10px] h-[26px] w-[26px] overflow-hidden rounded-full bg-[var(--color-surface-solid)]/70">
+                  {category.image_url ? (
+                    <Image
+                      src={category.image_url}
+                      alt=""
+                      width={26}
+                      height={26}
+                      className="fade-in-img h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="cat-ink flex h-full w-full items-center justify-center text-[0.5625rem] font-bold">
+                      {category.monogram}
+                    </span>
+                  )}
+                </span>
+
+                <span className="cat-ink relative text-[0.75rem] leading-[1.2] font-extrabold tracking-[-0.01em]">
+                  {locale === "ar" ? category.name_ar : category.name_fr}
+                </span>
+                {/* Le compte seulement s'il y a quelque chose à compter :
+                    « 0 boutiques » décourage sans informer, et une catégorie
+                    sans boutique attribuée n'est pas vide pour autant. */}
+                {shopCount[category.id] ? (
+                  <span className="relative mt-[3px] text-[0.59375rem] font-semibold text-[var(--color-muted)]">
+                    {format(t.home.shopCount, { n: shopCount[category.id] })}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── 4 · Promotions du moment ───────────────────────────────── */}
         {(promo.data || (shopPromos.data ?? []).length > 0) && (
-          <section className="flex flex-col gap-2 px-4">
-            <SectionTitle>{t.home.promos}</SectionTitle>
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={25} titre={t.home.promos}>
+              <Link href="/bons-plans" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
+                {t.common.seeAll} →
+              </Link>
+            </EnteteSection>
 
             {/*
               Les remises de boutique, en tête et sur un rail.
@@ -480,16 +473,15 @@ export default async function HomePage() {
               Elles portent sur un commerce entier, là où la carte qui suit
               porte sur un seul article : les présenter dans le même format
               laisserait croire à un produit en promotion, et le client
-              chercherait un prix qui n'existe pas. D'où une tuile compacte qui
-              nomme la boutique et mène à sa page, où la remise est détaillée.
+              chercherait un prix qui n'existe pas.
             */}
             {(shopPromos.data ?? []).length > 0 && (
-              <Rail gap={10}>
+              <Rail gap={10} className="px-4">
                 {(shopPromos.data ?? []).map((offer) => (
                   <Link
                     key={offer.id}
                     href={`/boutique/${offer.shop?.slug}`}
-                    className="flex w-[196px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[10px] shadow-[var(--shadow-card)]"
+                    className="press flex w-[196px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[10px] shadow-[var(--shadow-card)]"
                   >
                     <Avatar
                       src={offer.shop?.logo_url}
@@ -504,7 +496,11 @@ export default async function HomePage() {
                         {locale === "ar" && offer.title_ar ? offer.title_ar : offer.title}
                       </p>
                     </div>
-                    <span className="flex-none rounded-[10px] bg-[var(--color-live-fill)] px-2 py-[3px] text-[0.59375rem] font-bold text-white">
+                    {/* Le signe reste devant le nombre, même en arabe. */}
+                    <span
+                      dir="ltr"
+                      className="flex-none rounded-[10px] bg-[var(--color-live-fill)] px-2 py-[3px] text-[0.59375rem] font-bold text-white"
+                    >
                       −{offer.percent_off}%
                     </span>
                   </Link>
@@ -513,21 +509,20 @@ export default async function HomePage() {
             )}
 
             {/*
-              L'article en promotion prend toute la place, et ses repères
-              passent sur la photo.
+              L'article en promotion prend la forme d'un coupon.
 
-              La carte les empilait sous l'image : logo, nom, remise, titre,
-              prix — cinq lignes de texte pour un seul article, et l'image
-              réduite à une bande de cent-cinquante pixels. La photo occupe
-              désormais cent-soixante-huit pixels dans un cadre à gros rayon, et
-              porte ce qui la qualifie : qui vend, et de combien on économise.
+              Encoches sur les côtés, ligne perforée, remise posée sur la
+              photo : la carte dit « bon à découper » avant même d'être lue,
+              là où une vignette de plus se serait fondue dans la page. La
+              photo garde ses cent-soixante-huit pixels et porte ce qui la
+              qualifie — qui vend, et de combien on économise.
 
-              L'ensemble reste un lien vers la fiche ; seule la photo dérive vers
-              l'agrandissement, comme partout ailleurs dans l'application.
+              L'ensemble reste un lien vers la fiche ; seule la photo dérive
+              vers l'agrandissement, comme partout ailleurs.
             */}
             {promo.data && (
-              <div className="rounded-[26px] bg-[var(--color-surface-solid)] p-2 shadow-[0_12px_30px_rgba(60,40,90,0.1)]">
-                <div className="relative overflow-hidden rounded-[20px] bg-[var(--color-track)]">
+              <div className="mx-4 rounded-[20px] bg-[var(--color-surface-solid)] shadow-[0_8px_22px_rgba(60,40,90,0.1)]">
+                <div className="relative overflow-hidden rounded-t-[20px] bg-[var(--color-track)]">
                   {promo.data.images?.[0] ? (
                     <ImageZoom
                       images={promo.data.images}
@@ -551,27 +546,38 @@ export default async function HomePage() {
 
                   <Link
                     href={`/boutique/${promo.data.shop?.slug}`}
-                    className="press absolute start-3 top-3 flex max-w-[70%] items-center gap-[6px] rounded-[14px] bg-[var(--color-surface-solid)]/96 py-1 pe-[9px] ps-1 shadow-[0_4px_10px_rgba(60,40,90,0.14)]"
+                    className="press absolute start-3 top-3 flex max-w-[70%] items-center gap-[6px] rounded-full bg-[var(--color-surface-solid)]/96 py-1 pe-[10px] ps-1 shadow-[0_3px_10px_rgba(36,31,46,0.16)]"
                   >
                     <Avatar
                       src={promo.data.shop?.logo_url}
                       initials={monogram(promo.data.shop?.name)}
                       size={20}
                     />
-                    <span className="truncate text-[0.59375rem] font-bold text-[var(--color-ink)]">
+                    <span className="truncate text-[0.625rem] font-bold text-[var(--color-ink)]">
                       {promo.data.shop?.name}
                     </span>
                   </Link>
 
                   {discount !== null && (
-                    <span className="absolute start-3 bottom-3 rounded-[10px] bg-[var(--color-brand-fill)] px-[9px] py-1 text-[0.5625rem] font-extrabold text-white">
+                    <span
+                      dir="ltr"
+                      className="absolute start-3 bottom-3 rounded-full bg-[var(--color-live-fill)] px-[11px] py-[6px] text-[0.75rem] font-extrabold text-white shadow-[0_4px_12px_rgba(60,40,90,0.34)]"
+                    >
                       −{discount}%
                     </span>
                   )}
                 </div>
 
-                <Link href={lienProduit(promo.data)} className="block px-2 pt-3 pb-1">
-                  <p className="text-[1rem] leading-[1.25] font-extrabold tracking-[-0.01875rem] text-[var(--color-ink)]">
+                {/* La perforation : deux encoches du fond de l'application, et
+                    des pointillés entre les deux. */}
+                <div className="relative h-4" aria-hidden>
+                  <span className="absolute -top-2 -start-2 h-4 w-4 rounded-full bg-[var(--color-app)]" />
+                  <span className="absolute -top-2 -end-2 h-4 w-4 rounded-full bg-[var(--color-app)]" />
+                  <span className="absolute start-[14px] end-[14px] top-[7px] h-[2px] bg-[repeating-linear-gradient(90deg,var(--color-outline)_0_5px,transparent_5px_10px)]" />
+                </div>
+
+                <Link href={lienProduit(promo.data)} className="block px-4 pt-[2px] pb-4">
+                  <p className="text-[0.875rem] leading-[1.3] font-bold tracking-[-0.01em] text-[var(--color-ink)]">
                     {locale === "ar" && promo.data.name_ar ? promo.data.name_ar : promo.data.name}
                   </p>
                   {promo.data.description_ar && (
@@ -583,164 +589,319 @@ export default async function HomePage() {
                       {promo.data.description_ar}
                     </p>
                   )}
-                  <p className="mt-[9px] flex items-baseline gap-2 text-[0.8125rem] font-extrabold text-[var(--color-brand)]">
-                    {formatPrice(promo.data.price, locale)}
-                    {promo.data.compare_at_price && (
-                      <span className="text-[0.65625rem] font-normal text-[var(--color-faint)] line-through">
-                        {formatPrice(promo.data.compare_at_price, locale)}
-                      </span>
-                    )}
-                    <span className="ms-auto text-[0.65625rem] font-extrabold whitespace-nowrap text-[var(--color-brand)]">
+                  <div className="mt-[9px] flex items-end gap-[9px]">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[1.125rem] leading-none font-extrabold tracking-[-0.02em] text-[var(--color-brand)]">
+                        {formatPrice(promo.data.price, locale)}
+                      </p>
+                      {promo.data.compare_at_price && (
+                        <p className="mt-1 text-[0.6875rem] text-[var(--color-faint)] line-through">
+                          {formatPrice(promo.data.compare_at_price, locale)}
+                        </p>
+                      )}
+                    </div>
+                    <span className="flex-none rounded-full bg-[var(--color-brand-fill)] px-[14px] py-[10px] text-[0.6875rem] font-bold whitespace-nowrap text-white shadow-[0_6px_16px_rgba(109,75,143,0.36)]">
                       {t.product.seeShop}
                     </span>
-                  </p>
+                  </div>
                 </Link>
               </div>
             )}
           </section>
         )}
 
-        {/* ─── 4 · Catégories ─────────────────────────────────────────── */}
-        <section className="flex flex-col gap-[10px]">
-          <SectionTitle className="px-4">{t.home.categories}</SectionTitle>
-          {/*
-            Toutes les catégories sur un rail, et plus de tuile « Plus ».
+        {/*
+          ─── 5 · La sélection, ou le direct ──────────────────────────
 
-            La grille n'en montrait que sept sur douze, et renvoyait le reste
-            derrière un bouton. Faire glisser la rangée les donne toutes, sans
-            détour ni page intermédiaire.
-          */}
-          <Rail gap={12} className="px-4">
-            {categories.map((category) => (
-              <div key={category.id} className="w-[74px] flex-none">
-                <CategoryTile
-                  hue={category.hue}
-                  monogram={category.monogram}
-                  slug={category.slug}
-                  imageUrl={category.image_url}
-                  size={66}
-                  radius={22}
-                  label={locale === "ar" ? category.name_ar : category.name_fr}
-                  /* Le compte seulement s'il y a quelque chose à compter :
-                     « 0 boutiques » sous chaque tuile décourage sans informer,
-                     et une catégorie sans boutique attribuée n'est pas vide pour
-                     autant — ses produits, eux, sont bien là. */
-                  caption={
-                    shopCount[category.id]
-                      ? format(t.home.shopCount, { n: shopCount[category.id] })
-                      : undefined
-                  }
-                  href={`/marketplace?categorie=${category.slug}`}
-                />
-              </div>
-            ))}
-          </Rail>
-        </section>
-
-        {/* ─── 5 · Services pratiques ─────────────────────────────────── */}
-        {serviceTiles.length > 0 && (
-          <section className="flex flex-col gap-2 px-4">
-            <SectionTitle>{t.home.practicalServices}</SectionTitle>
-            {/*
-              Des pastilles rondes plutôt que des fiches encadrées.
-
-              Un service n'est pas un produit : il n'a ni prix ni photo de
-              vitrine, et l'encadrer comme une carte le faisait ressembler à une
-              offre. Le rond, lui, se lit comme un raccourci — la forme que
-              prennent partout les contacts et les destinations.
-
-              La photo quand elle existe, le monogramme sinon : un service ajouté
-              depuis l'administration s'affiche correctement avant qu'on lui ait
-              choisi une image.
-            */}
-            <Rail gap={16} className="py-[2px]">
-              {etatBf.campagne && etatBf.campagne.phase !== "termine" && (
-                <Link href="/black-friday" className="press flex w-[76px] flex-none flex-col items-center gap-[7px]">
-                  <span
-                    aria-hidden
-                    className="flex h-[58px] w-[58px] flex-none items-center justify-center rounded-full bg-[linear-gradient(135deg,#0d0b10,#5a3a78)] text-[1.375rem] shadow-[0_8px_18px_rgba(13,11,16,0.25)]"
-                  >
-                    🔥
-                  </span>
-                  <span className="text-center text-[0.65625rem] leading-tight font-bold text-[var(--color-ink)]">
-                    Black Friday
-                  </span>
-                </Link>
-              )}
-              {serviceTiles.map((service) => (
-                <Link
-                  key={service.id}
-                  href={LIEN_SERVICE[service.kind] ?? `/services#${service.kind}`}
-                  className="press flex w-[76px] flex-none flex-col items-center gap-[7px]"
+          L'une ou l'autre, jamais les deux. Un direct est un rendez-vous :
+          tant qu'il en existe un, rien ne doit lui disputer cette place. Le
+          reste du temps — c'est-à-dire presque toujours — la place revient à
+          ce que les boutiques mises en avant ont à vendre.
+        */}
+        {!anyLive && highlights.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={300} titre={t.home.featured} />
+            <Rail gap={10} className="px-4">
+              {highlights.map((product, i) => (
+                /*
+                  Arrivée décalée de soixante millisecondes par carte. Assez
+                  pour que l'œil suive la rangée, trop peu pour qu'on attende
+                  la dernière.
+                */
+                <div
+                  key={product.id}
+                  className="enter-item w-[150px] flex-none"
+                  style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  <span
-                    className={cx(
-                      "flex h-[58px] w-[58px] flex-none items-center justify-center overflow-hidden rounded-full text-[0.9375rem] font-semibold tracking-[0.03125rem]",
-                      service.image_url
-                        ? "bg-[var(--color-track)] shadow-[0_8px_18px_rgba(60,40,90,0.10)]"
-                        : "cat-surface cat-ink",
-                    )}
-                    style={{ "--hue": service.hue } as React.CSSProperties}
-                    aria-hidden
-                  >
-                    {service.image_url ? (
-                      /* Même raison que les tuiles de catégorie : le fichier
-                         source fait 480 px, la pastille 58. */
-                      <Image
-                        src={service.image_url}
-                        alt=""
-                        width={58}
-                        height={58}
-                        className="fade-in-img h-full w-full object-cover"
-                      />
-                    ) : (
-                      service.monogram
-                    )}
-                  </span>
-                  <span className="flex flex-col items-center gap-[1px] text-center">
-                    <span className="text-[0.65625rem] leading-tight font-bold text-[var(--color-ink)]">
-                      {locale === "ar" && service.name_ar ? service.name_ar : service.name}
-                    </span>
-                    {service.info && (
-                      <span className="line-clamp-1 text-[0.53125rem] leading-tight font-semibold text-[var(--color-faint)]">
-                        {service.info}
-                      </span>
-                    )}
-                  </span>
-                </Link>
-              ))}
-              {RACCOURCIS.map((r) => (
-                <Link key={r.cle} href={r.href} className="press flex w-[76px] flex-none flex-col items-center gap-[7px]">
-                  <span
-                    aria-hidden
-                    className="cat-surface cat-ink flex h-[58px] w-[58px] flex-none items-center justify-center rounded-full text-[1.375rem]"
-                    style={{ "--hue": r.hue } as React.CSSProperties}
-                  >
-                    {r.emoji}
-                  </span>
-                  <span className="text-center text-[0.65625rem] leading-tight font-bold text-[var(--color-ink)]">
-                    {r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
-                  </span>
-                </Link>
+                  <ProductCard product={product} locale={locale} imageHeight={112} />
+                </div>
               ))}
             </Rail>
           </section>
         )}
 
-        {/* ─── 6 · Invitation commerçants ─────────────────────────────── */}
-        <div className="mx-4 flex flex-none items-center gap-3 rounded-[18px] bg-[image:var(--gradient-brand)] p-[14px] text-white">
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.78125rem] font-bold">{t.home.merchantTitle}</p>
-            <p className="text-[0.65625rem] leading-[1.45] opacity-85">{t.home.merchantBody}</p>
+        {/*
+          ─── 6 · Les boutiques ───────────────────────────────────────
+
+          Toujours là, en direct ou non : un commerçant diffuse une heure par
+          semaine, et sans ce rail l'accueil ne montrait aucun visage de
+          commerce le reste du temps. L'anneau framboise et l'étiquette
+          disent qui est à l'antenne.
+        */}
+        {withLiveFirst.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection
+              hue="var(--color-brand)"
+              titre={anyLive ? t.home.liveNow : t.home.partners}
+            >
+              {anyLive && (
+                <span className="text-[0.6875rem] font-semibold text-[var(--color-muted)]">
+                  {format(t.accueil.liveCount, {
+                    n: withLiveFirst.filter((s) => s.lives?.some((l) => l.status === "live")).length,
+                  })}
+                </span>
+              )}
+            </EnteteSection>
+
+            <Rail gap={14} className="px-4">
+              {withLiveFirst.map((shop) => {
+                const live = shop.lives?.find((l) => l.status === "live");
+                return (
+                  <Link
+                    key={shop.id}
+                    href={live ? `/lives/${live.id}` : `/boutique/${shop.slug}`}
+                    className="w-[66px] flex-none text-center"
+                  >
+                    <span
+                      className="relative flex h-[66px] w-[66px] items-center justify-center rounded-full p-[3px]"
+                      style={{
+                        background: live
+                          ? "linear-gradient(135deg, var(--color-live), var(--color-brand-strong))"
+                          : "var(--color-outline)",
+                      }}
+                    >
+                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--color-app)] bg-[var(--color-surface-solid)] text-[0.625rem] font-bold text-[var(--color-muted)]">
+                        {shop.logo_url ? (
+                          <Image
+                            src={shop.logo_url}
+                            alt=""
+                            width={58}
+                            height={58}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          monogram(shop.name)
+                        )}
+                      </span>
+                      {live && (
+                        <span className="absolute -bottom-[3px] start-1/2 -translate-x-1/2 rounded-full bg-[var(--color-live-fill)] px-[7px] py-[3px] text-[0.4375rem] font-bold tracking-[0.12em] text-white rtl:translate-x-1/2">
+                          LIVE
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-[9px] block truncate text-[0.65625rem] font-bold text-[var(--color-ink)]">
+                      {shop.name}
+                    </span>
+                    {shop.followers_count > 0 && (
+                      <span className="block truncate text-[0.59375rem] text-[var(--color-muted)]">
+                        {shop.followers_count} {t.shop.followers}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </Rail>
+          </section>
+        )}
+
+        {/*
+          ─── 7 · Services pratiques ──────────────────────────────────
+
+          Des chips de deux lignes sur deux rangées, plutôt que des pastilles
+          rondes : le nom seul ne disait pas l'essentiel — une pharmacie de
+          garde, c'est son horaire ; un taxi, c'est le nombre de chauffeurs
+          en ligne. La seconde ligne porte ce que l'administration a
+          renseigné.
+        */}
+        {serviceTiles.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={165} titre={t.home.practicalServices}>
+              <Link href="/services" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
+                {t.common.seeAll} →
+              </Link>
+            </EnteteSection>
+
+            <div className="no-sb grid grid-flow-col grid-rows-2 gap-[10px] overflow-x-auto px-4 pb-[6px]">
+              {etatBf.campagne && etatBf.campagne.phase !== "termine" && (
+                <ChipService
+                  href="/black-friday"
+                  nom={t.bf.title}
+                  detail={etatBf.campagne.phase === "actif" ? t.bf.now : t.bf.soon}
+                  emoji="🔥"
+                  sombre
+                />
+              )}
+
+              {serviceTiles.map((service) => (
+                <ChipService
+                  key={service.id}
+                  href={LIEN_SERVICE[service.kind] ?? `/services#${service.kind}`}
+                  nom={locale === "ar" && service.name_ar ? service.name_ar : service.name}
+                  detail={service.info}
+                  imageUrl={service.image_url}
+                  monogramme={service.monogram}
+                  hue={service.hue}
+                />
+              ))}
+
+              {RACCOURCIS.map((r) => (
+                <ChipService
+                  key={r.cle}
+                  href={r.href}
+                  nom={r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
+                  emoji={r.emoji}
+                  hue={r.hue}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ─── 8 · Invitation commerçants ─────────────────────────────── */}
+        <div className="relative mx-4 overflow-hidden rounded-[24px] bg-[image:var(--gradient-brand)] p-[18px] text-white shadow-[0_12px_30px_rgba(109,75,143,0.26)]">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -top-[70px] -end-[56px] h-[190px] w-[190px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.18),transparent_66%)]"
+          />
+          {/* Le reflet qui traverse : une seule couche animée en `transform`,
+              rien à repeindre. Il s'arrête si le système demande moins de
+              mouvement. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 -start-[70px] w-[70px] -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent)] motion-safe:animate-[shimmer_5s_ease-in-out_infinite]"
+          />
+
+          <div className="relative">
+            <p className="text-[0.875rem] leading-[1.25] font-extrabold tracking-[-0.01em]">
+              {t.home.merchantTitle}
+            </p>
+            <p className="mt-[6px] text-[0.6875rem] leading-[1.5] text-white/80">
+              {t.home.merchantBody}
+            </p>
           </div>
+
           <Link
             href="/inscription?role=vendeur"
-            className="flex-none whitespace-nowrap rounded-[13px] bg-white px-3 py-[7px] text-[0.65625rem] font-bold text-[var(--color-on-light)]"
+            className="press relative mt-[14px] flex min-h-11 items-center justify-center rounded-full bg-white px-4 text-[0.71875rem] font-bold text-[var(--color-on-light)]"
           >
             {t.home.merchantCta}
           </Link>
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * Le titre d'une section, avec sa pastille de couleur.
+ *
+ * La pastille reprend la règle de teinte des catégories — `oklch(0.47 0.12
+ * <teinte>)` — ou une couleur du thème quand la section n'en a pas. C'est
+ * assez pour distinguer sept sections empilées sans dessiner sept cadres, et
+ * le titre reprend la taille qu'il mérite : quinze pixels, là où onze le
+ * faisaient passer pour une légende.
+ */
+function EnteteSection({
+  hue,
+  titre,
+  children,
+}: {
+  hue: number | string;
+  titre: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-[18px]">
+      <span
+        aria-hidden
+        className="h-[9px] w-[9px] flex-none rounded-full"
+        style={{ background: typeof hue === "number" ? `oklch(0.47 0.12 ${hue})` : hue }}
+      />
+      <h2 className="text-[0.9375rem] leading-none font-extrabold tracking-[-0.01em] text-[var(--color-ink)]">
+        {titre}
+      </h2>
+      {children && <div className="ms-auto flex items-center">{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * Un service, en chip de deux lignes.
+ *
+ * Le rond garde la photo quand l'administration en a téléversé une, le
+ * monogramme ou l'emoji sinon : un service ajouté ce matin s'affiche
+ * correctement avant qu'on lui ait choisi une image.
+ */
+function ChipService({
+  href,
+  nom,
+  detail,
+  imageUrl,
+  monogramme,
+  emoji,
+  hue = 300,
+  sombre = false,
+}: {
+  href: string;
+  nom: string;
+  detail?: string | null;
+  imageUrl?: string | null;
+  monogramme?: string;
+  emoji?: string;
+  hue?: number;
+  /** Le Black Friday, qui n'emprunte à aucune teinte de catégorie. */
+  sombre?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="press flex w-[170px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-2 pe-[11px] shadow-[0_4px_14px_rgba(60,40,90,0.06)]"
+    >
+      <span
+        aria-hidden
+        className={cx(
+          "flex h-[42px] w-[42px] flex-none items-center justify-center overflow-hidden rounded-full text-[1.0625rem]",
+          sombre
+            ? "bg-[linear-gradient(135deg,#0d0b10,#5a3a78)]"
+            : imageUrl
+              ? "bg-[var(--color-track)]"
+              : "cat-surface cat-ink",
+        )}
+        style={sombre ? undefined : ({ "--hue": hue } as React.CSSProperties)}
+      >
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt=""
+            width={42}
+            height={42}
+            className="fade-in-img h-full w-full object-cover"
+          />
+        ) : (
+          (emoji ?? <span className="text-[0.8125rem] font-bold">{monogramme}</span>)
+        )}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
+          {nom}
+        </span>
+        {detail && (
+          <span className="mt-[3px] block truncate text-[0.59375rem] font-semibold text-[var(--color-muted)]">
+            {detail}
+          </span>
+        )}
+      </span>
+    </Link>
   );
 }

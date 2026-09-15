@@ -25,6 +25,7 @@ export function SearchBar({
   withMenu = true,
   filterAction,
   initialQuery = "",
+  flottante = false,
 }: {
   placeholder?: string;
   withVoice?: boolean;
@@ -32,6 +33,14 @@ export function SearchBar({
   filterAction?: React.ReactNode;
   /** Terme déjà cherché : la page de résultats le remet dans le champ. */
   initialQuery?: string;
+  /**
+   * Posée à cheval sur le panneau d'en-tête de l'accueil.
+   *
+   * Elle y flotte au lieu de séparer deux bandes : le filet du bas n'aurait
+   * plus rien à séparer, et l'ombre doit porter plus loin pour détacher la
+   * pilule du dégradé violet qu'elle recouvre.
+   */
+  flottante?: boolean;
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -134,7 +143,10 @@ export function SearchBar({
   return (
     <div
       ref={boxRef}
-      className="relative flex flex-none items-center gap-2 border-b border-[var(--color-hairline)] px-4 pt-[6px] pb-3"
+      className={cx(
+        "relative flex flex-none items-center gap-2 px-4",
+        flottante ? "pt-0 pb-0" : "border-b border-[var(--color-hairline)] pt-[6px] pb-3",
+      )}
     >
       {/*
         Un vrai formulaire, pour que « Entrée » et la touche « Rechercher » du
@@ -157,7 +169,12 @@ export function SearchBar({
           if (!query.trim()) event.preventDefault();
           else setOpen(false);
         }}
-        className="flex flex-1 items-center gap-[9px] rounded-[24px] bg-[var(--color-surface-solid)] px-4 py-[13px] shadow-[0_8px_20px_rgba(60,40,90,0.08)]"
+        className={cx(
+          "flex flex-1 items-center gap-[9px] rounded-[24px] bg-[var(--color-surface-solid)] px-4 py-[13px]",
+          flottante
+            ? "shadow-[0_10px_26px_rgba(36,31,46,0.18)]"
+            : "shadow-[0_8px_20px_rgba(60,40,90,0.08)]",
+        )}
       >
         <label className="flex min-w-0 flex-1 items-center gap-[9px]">
           <SearchIcon size={15} className="flex-none text-[var(--color-muted)]" />
@@ -194,7 +211,10 @@ export function SearchBar({
             "press flex h-11 w-11 flex-none items-center justify-center rounded-[22px] shadow-[0_10px_22px_rgba(109,75,143,0.3)]",
             listening
               ? "bg-[var(--color-live-fill)] text-white"
-              : "bg-[var(--color-brand-fill)] text-white",
+              : flottante
+                ? /* Sur le panneau violet : un bouton violet y disparaîtrait. */
+                  "bg-[var(--color-surface-solid)] text-[var(--color-brand)]"
+                : "bg-[var(--color-brand-fill)] text-white",
           )}
         >
           <MicIcon size={17} />

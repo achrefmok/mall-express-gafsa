@@ -37,6 +37,7 @@ export function CompteARebours({
   serveurMaintenant,
   libelle,
   variante = "clair",
+  boites = false,
 }: {
   /** L'instant visé, ISO. */
   cible: string;
@@ -44,6 +45,15 @@ export function CompteARebours({
   serveurMaintenant: string;
   libelle: string;
   variante?: "clair" | "sombre";
+  /**
+   * Trois cases chiffrées plutôt qu'une ligne de texte.
+   *
+   * Sur la bannière de l'accueil, le décompte est l'argument : en cases, il se
+   * lit d'un coup d'œil et ne se confond pas avec le reste du texte. La ligne
+   * compacte reste la forme par défaut, là où le décompte accompagne sans
+   * dominer — l'écran du vendeur, la page de la campagne.
+   */
+  boites?: boolean;
 }) {
   const router = useRouter();
 
@@ -87,6 +97,42 @@ export function CompteARebours({
 
   const d = decompte(reste ?? 0);
   const sombre = variante === "sombre";
+
+  if (boites) {
+    /*
+      Au-delà d'un jour, les secondes ne disent rien : on montre alors
+      jours · heures · minutes. Sous la journée, les secondes reprennent la
+      dernière case — c'est là qu'elles pressent.
+    */
+    const deux = (n: number) => String(n).padStart(2, "0");
+    const cases = reste === null
+      ? ["--", "--", "--"]
+      : d.jours > 0
+        ? [deux(d.jours), deux(d.heures), deux(d.minutes)]
+        : [deux(d.heures), deux(d.minutes), deux(d.secondes)];
+
+    return (
+      <div className="flex flex-col items-end gap-[6px]" role="timer" aria-live="off">
+        <span className="text-[0.53125rem] font-bold tracking-[0.16em] text-white/55 uppercase">
+          {libelle}
+        </span>
+        <span className="flex gap-[5px]" dir="ltr" suppressHydrationWarning>
+          {cases.map((valeur, i) => (
+            <span
+              key={i}
+              className={`min-w-[34px] rounded-[12px] px-[7px] py-[9px] text-center font-mono text-[1rem] font-bold tabular-nums ${
+                i === 2
+                  ? "bg-[var(--color-live-fill)] text-white"
+                  : "border border-white/15 bg-white/10 text-white"
+              }`}
+            >
+              {valeur}
+            </span>
+          ))}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-start gap-1" role="timer" aria-live="off">
