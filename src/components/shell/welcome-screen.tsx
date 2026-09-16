@@ -101,14 +101,23 @@ export function WelcomeScreen() {
       className="fixed inset-0 z-[95] flex flex-col items-center justify-center gap-5 bg-[image:var(--gradient-brand)]"
       style={{ opacity: leaving ? 0 : 1, transition: `opacity ${DUREE_FONDU}ms ease-out` }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- logo servi tel quel, avant tout le reste */}
-      <img
-        src={logo}
-        alt=""
-        onError={() => setLogo(LOGO_PAR_DEFAUT)}
-        className="h-[108px] w-[108px] rounded-[30px] object-cover shadow-[0_18px_44px_rgba(0,0,0,0.3)]"
+      <span
+        className="relative flex items-center justify-center"
         style={{ animation: "splash-logo 820ms cubic-bezier(0.22, 0.61, 0.36, 1) both" }}
-      />
+      >
+        {/* Le halo détache le logo du dégradé, sans ajouter d image à charger. */}
+        <span
+          aria-hidden
+          className="absolute h-[230px] w-[230px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.2),transparent_68%)]"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element -- logo servi tel quel, avant tout le reste */}
+        <img
+          src={logo}
+          alt=""
+          onError={() => setLogo(LOGO_PAR_DEFAUT)}
+          className="relative h-[148px] w-[148px] rounded-[40px] object-cover shadow-[0_24px_54px_rgba(0,0,0,0.36)]"
+        />
+      </span>
 
       <div
         className="flex flex-col items-center gap-1 px-8 text-center"
