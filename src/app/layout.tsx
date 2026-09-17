@@ -9,6 +9,7 @@ import "./globals.css";
 
 import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
 import { WebVitals } from "@/components/shell/web-vitals";
+import { lireMarque } from "@/lib/brand";
 
 const siteUrl = resolveSiteUrl();
 
@@ -81,6 +82,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const prefs = await getPreferences();
   const t = getDictionary(prefs.locale);
+  const { version: versionMarque } = await lireMarque();
 
   return (
     <html
@@ -102,10 +104,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           Plus de variante SVG : un navigateur qui lit le SVG le préfère au
           PNG, et c'est donc l'ancien dessin qui aurait gagné.
+
+          `?v=` porte la date du logo. iOS range les icônes par adresse et ne
+          les relit jamais — supprimer puis réinstaller l'application regrave
+          la même image. L'adresse change donc quand le logo change, et
+          seulement là.
         */}
-        <link rel="icon" href="/brand-icon/32.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/brand-icon/192.png" sizes="192x192" type="image/png" />
-        <link rel="apple-touch-icon" href="/brand-icon/180.png" sizes="180x180" />
+        <link rel="icon" href={`/brand-icon/32.png?v=${versionMarque}`} sizes="32x32" type="image/png" />
+        <link rel="icon" href={`/brand-icon/192.png?v=${versionMarque}`} sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href={`/brand-icon/180.png?v=${versionMarque}`} sizes="180x180" />
         {/* Voir le commentaire sur `manifest` dans `metadata`, plus haut. */}
         <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
       </head>

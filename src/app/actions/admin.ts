@@ -498,9 +498,9 @@ export async function setAppLogo(logoUrl: string | null) {
   revalidatePath("/");
   revalidatePath("/accueil");
   /*
-    Le logo est gardé une heure par `lireLogo` : icône installée, favicon,
+    Le logo est gardé une minute par `lireMarque` : icône installée, favicon,
     images de partage. Sans cette ligne, le nouveau logo n'apparaîtrait
-    qu'à l'expiration du cache — une heure pendant laquelle l'administrateur
+    qu'à l'expiration du cache — une minute pendant laquelle l'administrateur
     croirait que son changement n'a pas été pris.
   */
   revalidateTag("brand");

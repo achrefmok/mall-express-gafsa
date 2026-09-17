@@ -257,7 +257,7 @@ export default async function HomePage() {
 
   /*
     Le logo choisi dans l'administration, sinon celui livré avec l'application.
-    Lecture mise en cache une heure par `lireLogo` : elle ne coûte rien à la
+    Lecture mise en cache une minute par `lireMarque` : elle ne coûte rien à la
     page.
   */
   const logoApp = (await lireLogo()) ?? "/brand/app-icon.png";

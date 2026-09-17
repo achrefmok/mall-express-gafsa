@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import type { MetadataRoute } from "next";
+import { lireMarque } from "@/lib/brand";
 
-export const dynamic = "force-static";
+/*
+  Plus figé : les adresses des icônes portent la date du logo (voir
+  `lireMarque`), et un manifeste figé les gèlerait au jour de la
+  construction. La lecture est mise en cache une minute ; le coût est nul.
+*/
+export const revalidate = 60;
 
 /**
  * Manifeste PWA, servi par une route et non par `app/manifest.ts`.
@@ -19,7 +25,9 @@ export const dynamic = "force-static";
  * Impossible de lui ajouter `crossorigin` ; en déclarant le lien nous-mêmes
  * dans `<head>` et en servant le manifeste ici, il n en reste qu un seul.
  */
-export function GET() {
+export async function GET() {
+  const { version } = await lireMarque();
+
   const manifest: MetadataRoute.Manifest & {
     share_target?: unknown;
   } = {
@@ -49,9 +57,9 @@ export function GET() {
       forme du lanceur, et un logo bord à bord y perdrait ses coins.
     */
     icons: [
-      { src: "/brand-icon/192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/brand-icon/512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/brand-icon/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: `/brand-icon/192.png?v=${version}`, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: `/brand-icon/512.png?v=${version}`, sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: `/brand-icon/maskable-512.png?v=${version}`, sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
 
     // Raccourcis à l'appui long sur l'icône installée
@@ -60,31 +68,31 @@ export function GET() {
         name: "Passer en direct",
         short_name: "Direct",
         url: "/vendeur/lives/partage",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+        icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
       {
         name: "Marketplace",
         short_name: "Marketplace",
         url: "/marketplace",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+        icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
       {
         name: "Ventes en direct",
         short_name: "Lives",
         url: "/lives",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+        icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
       {
         name: "Bons plans",
         short_name: "Bons plans",
         url: "/bons-plans",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+        icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
       {
         name: "Services citoyens",
         short_name: "Services",
         url: "/services",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+        icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
     ],
 

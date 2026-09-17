@@ -58,22 +58,50 @@ export const COULEURS_MARQUE = {
   encre: "#241f2e", // --color-ink
 } as const;
 
-export const lireLogo = unstable_cache(
-  async (): Promise<string | null> => {
+/** Le logo, avec l'empreinte de sa version. */
+export interface Marque {
+  logo: string | null;
+  /** Change à chaque changement de logo, et seulement là. */
+  version: string;
+}
+
+export const lireMarque = unstable_cache(
+  async (): Promise<Marque> => {
     try {
       const supabase = createStaticClient();
       const { data } = await supabase
         .from("app_brand")
-        .select("app_logo_url")
+        .select("app_logo_url, updated_at")
         .eq("id", true)
         .maybeSingle();
 
-      return data?.app_logo_url ?? null;
+      return { logo: data?.app_logo_url ?? null, version: empreinte(data?.updated_at) };
     } catch {
       // Base injoignable à la construction : on retombe sur l'icône du dépôt.
-      return null;
+      return { logo: null, version: "0" };
     }
   },
   ["app-logo"],
   { tags: [TAG_MARQUE], revalidate: 60 },
 );
+
+/** Le logo seul, pour ceux que sa version n'intéresse pas. */
+export async function lireLogo(): Promise<string | null> {
+  return (await lireMarque()).logo;
+}
+
+/**
+ * Une date en six caractères, à coller aux adresses des icônes.
+ *
+ * iOS garde l'icône d'un site dans une réserve à lui, rangée par adresse.
+ * Supprimer l'application de l'écran d'accueil ne la vide pas : réinstaller
+ * depuis la même adresse regrave la même image, indéfiniment. Le seul moyen
+ * honnête de lui faire relire une icône est de changer son adresse — non pas
+ * à chaque visite, ce qui la ferait retélécharger pour rien, mais à chaque
+ * changement de logo. D'où la date du logo, et elle seule.
+ */
+function empreinte(date: string | null | undefined): string {
+  if (!date) return "0";
+  const t = Date.parse(date);
+  return Number.isNaN(t) ? "0" : Math.floor(t / 1000).toString(36);
+}
