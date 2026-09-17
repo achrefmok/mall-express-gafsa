@@ -24,8 +24,15 @@ import { createStaticClient } from "@/lib/supabase/server";
  *
  * Le logo est lu à chaque icône, chaque manifeste, chaque aperçu de partage.
  * Le relire en base à chaque fois serait absurde pour une valeur qui change
- * une fois par an. Il est gardé une heure, et l'étiquette `brand` permet à
- * l'action d'administration de le périmer à l'instant où il change.
+ * une fois par an. L'étiquette `brand` le périme à l'instant où l'écran
+ * d'administration le change.
+ *
+ * Une minute, et non une heure, pour le cas où il change par un autre
+ * chemin — un correctif posé en base, une reprise de sauvegarde. À une
+ * heure, l'application servait encore l'ancien logo longtemps après, et
+ * rien dans l'interface ne permettait de comprendre pourquoi. Une lecture
+ * par minute et par région ne coûte rien ; une icône qui ne change pas se
+ * paie en confiance.
  *
  * Client statique, sans cookie : le logo est public, et `unstable_cache`
  * interdit de toute façon de lire les cookies de la requête.
@@ -68,5 +75,5 @@ export const lireLogo = unstable_cache(
     }
   },
   ["app-logo"],
-  { tags: [TAG_MARQUE], revalidate: 3600 },
+  { tags: [TAG_MARQUE], revalidate: 60 },
 );

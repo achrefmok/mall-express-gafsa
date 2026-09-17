@@ -260,7 +260,7 @@ export default async function HomePage() {
     Lecture mise en cache une heure par `lireLogo` : elle ne coûte rien à la
     page.
   */
-  const logoApp = (await lireLogo()) ?? "/brand/logo-mall-gafsa.png";
+  const logoApp = (await lireLogo()) ?? "/brand/app-icon.png";
 
   return (
     <>

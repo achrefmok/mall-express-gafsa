@@ -5,14 +5,16 @@
       <stop offset="1" stop-color="#46295f"/>
     </linearGradient>
     <linearGradient id="reflet" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
-<rect x="48" y="48" width="928" height="928" rx="232" fill="url(#fond)"/>
-       <rect x="48" y="48" width="928" height="928" rx="232" fill="url(#reflet)"/>
+  <rect width="1024" height="1024" fill="url(#fond)"/>
+  <rect width="1024" height="1024" fill="url(#reflet)"/>
+  <g transform="translate(512 545) scale(1.24) translate(-512 -545)">
   <path d="M404 380 V340 a108 108 0 0 1 216 0 V380" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round"/>
-  <path d="M318 372 H706 a34 34 0 0 1 33.9 31.4 L762 740 a44 44 0 0 1 -43.9 47 H305.9 a44 44 0 0 1 -43.9 -47 L284.1 403.4 A34 34 0 0 1 318 372 Z" fill="#ffffff"/>
-  <path d="M400 702 V512 L512 626 L624 512 V702" fill="none" stroke="#6d4b8f" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="742" cy="322" r="52" fill="#e0556f" stroke="#ffffff" stroke-width="18"/>
+  <path d="M318 372 H706 a34 34 0 0 1 33.9 31.4 L762 740 a44 44 0 0 1 -43.9 47 H305.9 a44 44 0 0 1 -43.9 -47 L284.1 403.4 A34 34 0 0 1 318 372 Z" fill="#ffffff"/><g fill="none" stroke="#6d4b8f" stroke-width="48" stroke-linecap="round">
+    <path d="M 586.9 501.8 A 112 112 0 1 0 624.0 585.0"/>
+    <path d="M 624.0 585.0 H 547.2"/>
+  </g></g>
 </svg>

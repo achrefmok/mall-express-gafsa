@@ -11,7 +11,7 @@ const SEEN_KEY = "meg-welcome-seen";
 const SESSION_KEY = "meg-splash-session";
 /** Le logo de l'administration, gardé pour le lancement suivant. */
 const LOGO_CACHE_KEY = "meg-logo-url";
-const LOGO_PAR_DEFAUT = "/brand/logo-mall-gafsa.png";
+const LOGO_PAR_DEFAUT = "/brand/app-icon.png";
 
 /** Visible 1,25 s, puis fondu de 0,38 s : un peu plus de 1,6 s en tout. */
 const DUREE_AFFICHAGE = 1250;

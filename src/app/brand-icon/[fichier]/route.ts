@@ -50,8 +50,21 @@ const bordABord = (source: Buffer, taille: number, fond: Fond) =>
     .png({ compressionLevel: 9 })
     .toBuffer();
 
-/** Le logo centré sur sa vignette, avec la marge demandée. */
+/**
+ * Le logo centré sur sa vignette, avec la marge demandée.
+ *
+ * Derrière lui, le logo lui-même, étalé au carré et flouté. Une couleur unie
+ * ne convient qu'aux logos qui en ont une : le nôtre est un dégradé, et le
+ * poser sur un aplat dessinait un carré dans un autre. Le flou, lui, prolonge
+ * n'importe quel fond — dégradé, photo, matière — sans couture.
+ */
 async function surVignette(source: Buffer, taille: number, part: number, fond: Fond) {
+  const arriere = await sharp(source)
+    .resize(taille, taille, { fit: "cover", position: "centre" })
+    .blur(Math.max(2, Math.round(taille / 12)))
+    .flatten({ background: fond })
+    .toBuffer();
+
   const interieur = Math.round(taille * part);
 
   const logo = await sharp(source)
@@ -59,9 +72,7 @@ async function surVignette(source: Buffer, taille: number, part: number, fond: F
     .png()
     .toBuffer();
 
-  return sharp({
-    create: { width: taille, height: taille, channels: 4, background: fond },
-  })
+  return sharp(arriere)
     .composite([{ input: logo, gravity: "center" }])
     .png({ compressionLevel: 9 })
     .toBuffer();

@@ -78,6 +78,27 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
 
+    /* ─── L'icône de l'application ─────────────────────────────────── */
+    {
+      /*
+        Servie par une route, mais son adresse finit par « .png ».
+
+        La règle générale des images, plus bas, gardait donc l'icône trente
+        jours dans le cache du navigateur : le logo changé depuis
+        l'administration n'atteignait jamais les appareils déjà installés.
+
+        Le réseau d'abord, le cache seulement s'il ne répond pas. Une icône
+        n'est demandée qu'à l'installation et à l'ouverture d'un onglet : ce
+        n'est pas un coût.
+      */
+      matcher: ({ url }) => url.pathname.startsWith("/brand-icon/"),
+      handler: new NetworkFirst({
+        cacheName: "meg-icone",
+        networkTimeoutSeconds: 4,
+        plugins: [new ExpirationPlugin({ maxEntries: 8, maxAgeSeconds: 24 * 60 * 60 })],
+      }),
+    },
+
     /* ─── Images de produits et de boutiques ───────────────────────── */
     {
       matcher: ({ request, url }) =>
