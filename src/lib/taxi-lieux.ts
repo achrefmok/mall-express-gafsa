@@ -46,7 +46,7 @@ const POINTS: ReadonlyArray<Lieu> = [
   { nom: "Aéroport de Gafsa — Ksar", lat: 34.422, lng: 8.8225, zone: "ksar", genre: "transport" },
   { nom: "Hôpital régional Houcine Bouzaiene", lat: 34.4271, lng: 8.7796, zone: null, genre: "sante" },
   { nom: "Marché central", lat: 34.4251, lng: 8.7855, zone: "gafsa_centre", genre: "commerce" },
-  { nom: "Mall Express", lat: 34.4258, lng: 8.7828, zone: "gafsa_centre", genre: "commerce" },
+  { nom: "G-Mall", lat: 34.4258, lng: 8.7828, zone: "gafsa_centre", genre: "commerce" },
   { nom: "Piscines romaines", lat: 34.4232, lng: 8.7808, zone: null, genre: "public" },
   { nom: "Université de Gafsa", lat: 34.4318, lng: 8.7766, zone: null, genre: "public" },
   { nom: "Stade municipal", lat: 34.4295, lng: 8.7893, zone: null, genre: "public" },

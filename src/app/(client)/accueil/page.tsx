@@ -22,7 +22,7 @@ import { avecBlackFriday, lireEtatBlackFriday, lireOffresActives } from "@/lib/b
 import { SectionBlackFriday } from "@/components/black-friday/home-section";
 
 export const metadata: Metadata = {
-  title: "Mall Express Gafsa — boutiques, marketplace et services",
+  title: "G-Mall — boutiques, marketplace et services",
   alternates: { canonical: "/accueil" },
 };
 

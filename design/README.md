@@ -1,11 +1,11 @@
-# Référence de design — Mall Express Gafsa v3
+# Référence de design — G-Mall v3
 
 Dossier de **référence visuelle uniquement**. Rien ici n'est compilé ni
 déployé : `tsconfig.json` et `eslint.config.mjs` l'excluent.
 
 | Fichier | Rôle |
 |---|---|
-| `Mall Express Gafsa v3.dc.html` | Les 14 écrans côte à côte. **S'ouvre directement dans un navigateur.** |
+| `G-Mall v3.dc.html` | Les 14 écrans côte à côte. **S'ouvre directement dans un navigateur.** |
 | `ios-frame.jsx`, `support.js` | Mécanique d'affichage des maquettes. Non portée. |
 
 L'implémentation se trouve dans `src/`. Le tableau de correspondance

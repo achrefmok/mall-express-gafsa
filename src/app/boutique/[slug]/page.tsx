@@ -64,7 +64,7 @@ export async function generateMetadata({
   return {
     title: `${data.name} — Mall de Gafsa`,
     description:
-      data.description ?? `${data.name}${place}. Découvrez ses produits sur Mall Express Gafsa.`,
+      data.description ?? `${data.name}${place}. Découvrez ses produits sur G-Mall.`,
     alternates: { canonical: `/boutique/${slug}` },
     openGraph: {
       title: data.name,
@@ -275,7 +275,7 @@ export default async function ShopPage({
                 <BoutonPartage
                   chemin={`/boutique/${shop.slug}`}
                   titre={shop.name}
-                  texte={`${shop.name} — ${t.brand.first} ${t.brand.second}`}
+                  texte={`${shop.name} — ${t.brand.first}${t.brand.second}`}
                   image={`/partage/boutique/${shop.slug}`}
                 />
               </div>

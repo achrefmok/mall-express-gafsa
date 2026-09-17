@@ -1,4 +1,4 @@
-# Vérification mobile — Mall Express Gafsa
+# Vérification mobile — G-Mall
 
 À faire sur **un vrai téléphone**, en production (pas sur une préversion Vercel protégée par SSO). Un Android récent avec Chrome, et un iPhone avec Safari si possible. Cochez au fur et à mesure et notez tout écart avec une capture.
 

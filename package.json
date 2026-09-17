@@ -2,7 +2,7 @@
   "name": "mall-express-gafsa",
   "version": "1.0.0",
   "private": true,
-  "description": "Mall Express Gafsa — plateforme locale : marketplace, lives, bons plans, services citoyens. Web + PWA.",
+  "description": "G-Mall — plateforme locale : marketplace, lives, bons plans, services citoyens. Web + PWA.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -149,7 +149,7 @@ export async function createLive(input: {
  * Crée un direct Facebook et le passe à l'antenne d'un seul geste.
  *
  * Sert le partage depuis le système : le commerçant diffuse sur Facebook,
- * touche « Partager », choisit Mall Express — et le direct est en ligne ici,
+ * touche « Partager », choisit G-Mall — et le direct est en ligne ici,
  * avec sa couche commerce. Rien à saisir.
  *
  * Le produit épinglé et la remise sont reportés du direct précédent : c'est

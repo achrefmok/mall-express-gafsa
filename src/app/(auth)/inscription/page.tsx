@@ -8,7 +8,7 @@ import { SignUpScreen } from "./sign-up-screen";
 export const metadata: Metadata = {
   title: "Créer mon compte",
   description:
-    "Rejoignez Mall Express Gafsa en trois minutes — client ou commerçant. Zéro commission les trois premiers mois.",
+    "Rejoignez G-Mall en trois minutes — client ou commerçant. Zéro commission les trois premiers mois.",
 };
 
 /**

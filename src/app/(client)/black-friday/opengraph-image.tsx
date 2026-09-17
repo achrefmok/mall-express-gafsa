@@ -2,7 +2,7 @@ import { carteDePartage, TAILLE_OG } from "@/lib/og";
 import { contenuBlackFriday } from "@/lib/og-contenus";
 
 export const runtime = "nodejs";
-export const alt = "Black Friday — Mall Express Gafsa";
+export const alt = "Black Friday — G-Mall";
 export const size = TAILLE_OG;
 export const contentType = "image/png";
 // Dix minutes : l'image change au début et à la fin de la campagne.

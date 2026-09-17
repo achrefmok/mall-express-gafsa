@@ -22,7 +22,7 @@ export function dirFor(locale: AppLocale): "ltr" | "rtl" {
 }
 
 const fr = {
-  brand: { first: "Mall Express", second: "Gafsa" },
+  brand: { first: "G-", second: "Mall" },
 
   nav: {
     home: "Accueil",
@@ -139,7 +139,7 @@ const fr = {
 
   marketplace: {
     title: "Marketplace",
-    eyebrow: "MALL GAFSA",
+    eyebrow: "G-MALL GAFSA",
     headingTop: "Découvrir",
     headingBottom: "vos boutiques",
     openShops: "{n} boutiques ouvertes",
@@ -568,7 +568,7 @@ const fr = {
   },
 
   install: {
-    title: "Installer Mall Express",
+    title: "Installer G-Mall",
     body: "L'application s'ajoute à votre écran d'accueil. Aucun magasin d'applications, moins de 2 Mo, et elle fonctionne même sans réseau.",
     action: "Installer l'application",
     oneTap: "Installer maintenant",
@@ -646,7 +646,7 @@ const fr = {
     purchases: "achats",
     favorites: "favoris",
     reviewsCount: "avis",
-    loyaltyCard: "Carte Mall Express",
+    loyaltyCard: "Carte G-Mall",
     tierBronze: "Niveau Bronze",
     tierSilver: "Niveau Argent",
     tierGold: "Niveau Or",
@@ -785,7 +785,7 @@ const fr = {
     vendorStep2: "Local au mall ou adresse",
     vendorNote:
       "Vous préparez votre boutique tout de suite ; elle devient visible dès que l'administration l'approuve.",
-    legal: "En continuant, vous acceptez les conditions d'utilisation de Mall Express Gafsa.",
+    legal: "En continuant, vous acceptez les conditions d'utilisation de G-Mall.",
     haveAccount: "Vous avez déjà un compte ?",
     noAccount: "Pas encore de compte ?",
     checkEmail: "Vérifiez votre boîte mail",
@@ -936,7 +936,7 @@ const fr = {
 export type Dictionary = typeof fr;
 
 const ar: Dictionary = {
-  brand: { first: "مول إكسبرس", second: "قفصة" },
+  brand: { first: "جي-", second: "مول" },
 
   nav: {
     home: "الرئيسية",
@@ -1051,7 +1051,7 @@ const ar: Dictionary = {
 
   marketplace: {
     title: "السوق",
-    eyebrow: "مول قفصة",
+    eyebrow: "جي-مول قفصة",
     headingTop: "اكتشف",
     headingBottom: "متاجرك",
     openShops: "{n} متجر مفتوح",
@@ -1469,7 +1469,7 @@ const ar: Dictionary = {
   },
 
   install: {
-    title: "تثبيت مول إكسبرس",
+    title: "تثبيت جي-مول",
     body: "يُضاف التطبيق إلى شاشتك الرئيسية. بدون متجر تطبيقات، أقل من 2 ميغابايت، ويعمل حتى بدون شبكة.",
     action: "تثبيت التطبيق",
     oneTap: "التثبيت الآن",
@@ -1546,7 +1546,7 @@ const ar: Dictionary = {
     purchases: "مشتريات",
     favorites: "مفضلة",
     reviewsCount: "تقييمات",
-    loyaltyCard: "بطاقة مول إكسبرس",
+    loyaltyCard: "بطاقة جي-مول",
     tierBronze: "المستوى البرونزي",
     tierSilver: "المستوى الفضي",
     tierGold: "المستوى الذهبي",
@@ -1681,7 +1681,7 @@ const ar: Dictionary = {
     vendorStep1: "اسم المتجر",
     vendorStep2: "المحل في المول أو العنوان",
     vendorNote: "تجهّز متجرك حالاً؛ يصبح ظاهرًا بمجرد موافقة الإدارة.",
-    legal: "بمتابعتك، أنت توافق على شروط استخدام مول إكسبرس قفصة.",
+    legal: "بمتابعتك، أنت توافق على شروط استخدام جي-مول.",
     haveAccount: "لديك حساب؟",
     noAccount: "ليس لديك حساب؟",
     checkEmail: "تحقّق من بريدك",

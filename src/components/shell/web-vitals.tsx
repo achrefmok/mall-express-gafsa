@@ -10,7 +10,7 @@ import { useReportWebVitals } from "next/web-vitals";
  * ────────────────────────────────────────────────────────────────────────
  *
  * Un audit lancé depuis un ordinateur de bureau relié en fibre mesure un site
- * que personne n'utilise. Le public de Mall Express ouvre l'application sur un
+ * que personne n'utilise. Le public de G-Mall ouvre l'application sur un
  * téléphone Android d'entrée de gamme, en 3G, à Gafsa. L'écart entre les deux
  * n'est pas de dix pour cent : il se compte en secondes.
  *

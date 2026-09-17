@@ -75,7 +75,7 @@ export default function GlobalError({
           !
         </div>
 
-        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Mall Express est momentanément indisponible</h1>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>G-Mall est momentanément indisponible</h1>
 
         <p style={{ margin: 0, maxWidth: "34ch", fontSize: 13, lineHeight: 1.6, color: "#6f6880" }}>
           Rechargez la page. Si cela persiste, réessayez dans quelques minutes —

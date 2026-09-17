@@ -223,7 +223,7 @@ function esc(value: string): string {
 function popupHtml(pin: DriverPin, labels: MapLabels): string {
   const state = pin.available ? labels.free : labels.busy;
   const tel = telHref(pin.phone);
-  const wa = whatsAppHref(pin.phone, `Bonjour, je vous contacte depuis Mall Express Gafsa.`);
+  const wa = whatsAppHref(pin.phone, `Bonjour, je vous contacte depuis G-Mall.`);
 
   const button =
     "display:inline-block;padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;text-decoration:none;";

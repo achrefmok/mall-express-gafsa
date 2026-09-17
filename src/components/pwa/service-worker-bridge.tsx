@@ -12,14 +12,14 @@ import { WelcomeScreen } from "@/components/shell/welcome-screen";
  *   · proposer l'installation quand le navigateur le permet ;
  *   · signaler la perte de réseau.
  */
-export function ServiceWorkerBridge() {
+export function ServiceWorkerBridge({ logo }: { logo?: string | null }) {
   return (
     <>
       <ServiceWorkerRegistration />
       <InstallCapture />
       {/* Monté ici plutôt que dans une coque : il doit couvrir l'écran quelle
           que soit la page d'entrée, y compris une fiche produit partagée. */}
-      <WelcomeScreen />
+      <WelcomeScreen logo={logo} />
       <OfflineBanner />
       <InstallPrompt />
     </>
@@ -132,7 +132,7 @@ function InstallPrompt() {
       <div className="animate-slide-up flex items-center gap-3 rounded-[18px] bg-[image:var(--gradient-brand)] p-3 text-white shadow-[0_10px_30px_rgba(60,40,90,0.28)]">
         <div className="min-w-0 flex-1">
           <p className="text-[0.75rem] font-bold">
-            {t.brand.first} {t.brand.second}
+            {t.brand.first}{t.brand.second}
           </p>
           <p className="text-[0.65625rem] opacity-85">{t.install.bannerBody}</p>
         </div>

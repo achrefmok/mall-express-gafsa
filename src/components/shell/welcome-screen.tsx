@@ -3,7 +3,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { createClient } from "@/lib/supabase/client";
 
 /** Posé pour compatibilité : le guide pas à pas attend que l'accueil ait été vu. */
 const SEEN_KEY = "meg-welcome-seen";
@@ -30,17 +29,19 @@ const DUREE_FONDU = 380;
  * l'application est fermée. Le rejouer à chaque changement de page serait un
  * péage.
  *
- * Le logo : celui que l'administration a choisi, s'il y en a un — mis en
- * mémoire au lancement précédent, pour l'afficher sans attendre le réseau —,
- * sinon le logo de l'application livré avec elle. On ne l'échange jamais au
- * milieu de l'animation : un logo qui change sous les yeux fait amateur.
+ * Le logo : celui que l'administration a choisi. Il arrive du serveur, qui
+ * l'a déjà lu pour les icônes de la page — donc juste au premier lancement
+ * comme aux suivants. La copie gardée en mémoire ne sert plus qu'au cas où
+ * le serveur n'a rien à dire : page servie hors ligne par le cache. On ne
+ * l'échange jamais au milieu de l'animation : un logo qui change sous les
+ * yeux fait amateur.
  */
-export function WelcomeScreen() {
+export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
   const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [logo, setLogo] = useState(LOGO_PAR_DEFAUT);
+  const [logo, setLogo] = useState(logoServeur ?? LOGO_PAR_DEFAUT);
 
   useEffect(() => setMounted(true), []);
 
@@ -51,29 +52,18 @@ export function WelcomeScreen() {
       sessionStorage.setItem(SESSION_KEY, "1");
       localStorage.setItem(SEEN_KEY, "1");
       const enCache = localStorage.getItem(LOGO_CACHE_KEY);
-      if (enCache) setLogo(enCache);
+      if (!logoServeur && enCache) setLogo(enCache);
     } catch {
       // Stockage indisponible (navigation privée stricte) : on joue, sans mémoire.
     }
 
     if (dejaJoue) return;
 
-    // Mettre à jour le logo pour le prochain lancement, sans toucher à celui-ci.
-    void (async () => {
-      try {
-        const { data } = await createClient()
-          .from("app_brand")
-          .select("app_logo_url")
-          .eq("id", true)
-          .maybeSingle();
-        try {
-          if (data?.app_logo_url) localStorage.setItem(LOGO_CACHE_KEY, data.app_logo_url);
-          else localStorage.removeItem(LOGO_CACHE_KEY);
-        } catch {}
-      } catch {
-        // Réseau absent : le logo en place reste valable.
-      }
-    })();
+    // Garder ce logo pour une ouverture hors ligne, où le serveur ne répond pas.
+    try {
+      if (logoServeur) localStorage.setItem(LOGO_CACHE_KEY, logoServeur);
+      else localStorage.removeItem(LOGO_CACHE_KEY);
+    } catch {}
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -85,7 +75,7 @@ export function WelcomeScreen() {
       clearTimeout(out);
       clearTimeout(gone);
     };
-  }, []);
+  }, [logoServeur]);
 
   if (!visible || !mounted) return null;
 
@@ -124,7 +114,7 @@ export function WelcomeScreen() {
         style={{ animation: "splash-texte 560ms cubic-bezier(0.22, 0.61, 0.36, 1) 240ms both" }}
       >
         <p className="text-[1.3125rem] font-extrabold tracking-[-0.02em] text-white">
-          {t.brand.first} {t.brand.second}
+          {t.brand.first}{t.brand.second}
         </p>
         <p className="text-[0.75rem] leading-[1.5] text-white/75">{t.welcome.tagline}</p>
       </div>

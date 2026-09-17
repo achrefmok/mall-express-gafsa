@@ -175,7 +175,7 @@ export async function unsubscribePage(pageId: string, pageToken: string): Promis
     url.searchParams.set("access_token", pageToken);
     await fetch(url, { method: "DELETE", signal: AbortSignal.timeout(15_000) });
   } catch {
-    // La déconnexion côté Mall Express prime : si Facebook ne répond pas, on
+    // La déconnexion côté G-Mall prime : si Facebook ne répond pas, on
     // supprime quand même le lien. Le pire cas est un abonnement orphelin,
     // dont les notifications seront ignorées faute de boutique associée.
   }

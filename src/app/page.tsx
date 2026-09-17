@@ -102,17 +102,17 @@ export const metadata: Metadata = {
     figurent désormais, parce que c'est ce que tapent les gens — « mall gafsa »,
     « boutiques gafsa en ligne ».
 
-    `absolute` évite le suffixe du gabarit, qui répéterait « Mall Express
+    `absolute` évite le suffixe du gabarit, qui répéterait « G-Mall
     Gafsa » deux fois dans le même titre.
   */
   title: {
-    absolute: "Mall Express Gafsa — les boutiques du mall de Gafsa en ligne",
+    absolute: "G-Mall — les boutiques du mall de Gafsa en ligne",
   },
   description:
-    "Mall Express Gafsa réunit les boutiques de Gafsa dans une seule application : marketplace de proximité, ventes en direct, bons plans vérifiés et services citoyens. À parcourir dans le navigateur ou à installer.",
+    "G-Mall réunit les boutiques de Gafsa dans une seule application : marketplace de proximité, ventes en direct, bons plans vérifiés et services citoyens. À parcourir dans le navigateur ou à installer.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Mall Express Gafsa — le commerce de Gafsa, en ligne",
+    title: "G-Mall — le commerce de Gafsa, en ligne",
     description:
       "Marketplace de proximité, ventes en direct, bons plans vérifiés et services citoyens.",
     type: "website",
@@ -168,7 +168,7 @@ export default async function PresentationPage() {
       <header className="sticky top-0 z-40 border-b border-[var(--color-hairline)] bg-[var(--color-workshop)]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
           <p className="text-[1.0625rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
-            Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
+            G-<span className="text-[var(--color-brand)]">Mall</span>
           </p>
 
           <nav aria-label="Sections" className="hidden items-center gap-7 md:flex">
@@ -250,7 +250,7 @@ export default async function PresentationPage() {
                 <div className="flex flex-col gap-3 rounded-[26px] bg-[var(--color-field)] p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
-                      Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
+                      G-<span className="text-[var(--color-brand)]">Mall</span>
                     </p>
                     <span className="flex h-2 w-2 rounded-full bg-[var(--color-live-fill)]" />
                   </div>
@@ -518,7 +518,7 @@ export default async function PresentationPage() {
       <footer className="border-t border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[1140px] flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p className="text-[0.75rem] text-[var(--color-muted)]">
-            Mall Express Gafsa — Gafsa, Tunisie
+            G-Mall — Gafsa, Tunisie
           </p>
           <nav aria-label="Liens" className="flex flex-wrap gap-x-6 gap-y-2">
             {[

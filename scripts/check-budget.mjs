@@ -9,7 +9,7 @@
  * trois kilo-octets par semaine, chacun parfaitement justifié, et personne ne
  * remarque rien jusqu'au jour où l'accueil met huit secondes à s'afficher sur
  * un téléphone d'entrée de gamme en 3G — ce qui est exactement le public de
- * Mall Express à Gafsa.
+ * G-Mall à Gafsa.
  *
  * Un chiffre écrit dans un document ne change rien : c'est le refus automatique
  * qui protège.

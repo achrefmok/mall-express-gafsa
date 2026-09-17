@@ -47,7 +47,7 @@ export async function generateMetadata({
           .slice(0, 4)
           .map((product) => product.name)
           .join(", ")}`
-      : `${data.status === "live" ? "En direct" : "Direct"} chez ${data.shop?.name} — vente en direct sur Mall Express Gafsa.`;
+      : `${data.status === "live" ? "En direct" : "Direct"} chez ${data.shop?.name} — vente en direct sur G-Mall.`;
 
   return {
     title,
@@ -57,7 +57,7 @@ export async function generateMetadata({
       title,
       description,
       type: "video.other",
-      siteName: "Mall Express Gafsa",
+      siteName: "G-Mall",
       images: cover ? [{ url: cover }] : undefined,
     },
     twitter: {

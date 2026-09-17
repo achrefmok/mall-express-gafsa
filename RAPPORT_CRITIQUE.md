@@ -1,4 +1,4 @@
-# Rapport de Critique Complète — Mall Express Gafsa
+# Rapport de Critique Complète — G-Mall
 
 > **Date :** 26 août 2026
 > **Objectif :** Audit complet du site sans modification de code
@@ -8,7 +8,7 @@
 
 ## Résumé Exécutif
 
-Mall Express Gafsa est une plateforme e-commerce locale ambitieuse et techniquement impressionnante. Le codebase est mature, bien documenté (en français), et suit des patterns cohérents. Cependant, **22 problèmes critiques/élevés** nécessitent une attention immédiate, ainsi que de nombreuses améliorations moyennes et faibles.
+G-Mall est une plateforme e-commerce locale ambitieuse et techniquement impressionnante. Le codebase est mature, bien documenté (en français), et suit des patterns cohérents. Cependant, **22 problèmes critiques/élevés** nécessitent une attention immédiate, ainsi que de nombreuses améliorations moyennes et faibles.
 
 | Sévérité | Nombre |
 |----------|--------|

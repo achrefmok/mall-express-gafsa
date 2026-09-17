@@ -129,7 +129,7 @@ export function ShopContact({
   const tel = telHref(phone);
   const wa = whatsAppHref(
     phone,
-    `Bonjour ${shopName}, je vous contacte depuis Mall Express Gafsa.`,
+    `Bonjour ${shopName}, je vous contacte depuis G-Mall.`,
   );
 
   function onMessage() {

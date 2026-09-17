@@ -31,8 +31,8 @@ export async function GET() {
   const manifest: MetadataRoute.Manifest & {
     share_target?: unknown;
   } = {
-    name: "Mall Express Gafsa",
-    short_name: "Mall Express",
+    name: "G-Mall",
+    short_name: "G-Mall",
     description:
       "Les boutiques du mall de Gafsa : marketplace, ventes en direct, bons plans et services citoyens.",
     id: "/",
@@ -101,7 +101,7 @@ export async function GET() {
 
       Rend l'application choisissable dans la feuille « Partager » du système.
       Un commerçant qui diffuse depuis son profil Facebook — cas où la Graph API
-      n'expose rien — touche « Partager » sur sa vidéo, choisit Mall Express, et
+      n'expose rien — touche « Partager » sur sa vidéo, choisit G-Mall, et
       le lien arrive ici sans qu'il ait à le copier.
 
       Pris en charge par Chrome et Edge sur Android, une fois l'application

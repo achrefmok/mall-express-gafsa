@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  * Arrivée d'un partage système.
  *
  * Déclaré comme `share_target` dans le manifeste : le commerçant diffuse sur
- * Facebook, touche « Partager », choisit Mall Express, et atterrit ici avec le
+ * Facebook, touche « Partager », choisit G-Mall, et atterrit ici avec le
  * lien déjà transmis. Un bouton, et le direct est en ligne.
  *
  * Facebook ne place pas toujours l'adresse dans le même paramètre — parfois

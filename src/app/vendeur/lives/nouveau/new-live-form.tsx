@@ -190,7 +190,7 @@ export function NewLiveForm({
               <span className="mt-1 rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[0.59375rem] leading-[1.5] text-[var(--color-ink)]">
                 <strong>Plus rapide, sur Android :</strong> installez
                 l&apos;application, puis touchez « Partager » sur votre vidéo
-                Facebook et choisissez Mall Express. Le direct se met en ligne
+                Facebook et choisissez G-Mall. Le direct se met en ligne
                 sans que vous ayez à copier quoi que ce soit.
               </span>
             </label>

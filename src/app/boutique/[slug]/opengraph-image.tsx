@@ -2,7 +2,7 @@ import { carteDePartage, TAILLE_OG } from "@/lib/og";
 import { contenuBoutique } from "@/lib/og-contenus";
 
 export const runtime = "nodejs";
-export const alt = "Boutique sur Mall Express Gafsa";
+export const alt = "Boutique sur G-Mall";
 export const size = TAILLE_OG;
 export const contentType = "image/png";
 export const revalidate = 3600;
@@ -11,5 +11,5 @@ export const revalidate = 3600;
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const contenu = await contenuBoutique(slug);
-  return carteDePartage(contenu ?? { titre: "Boutique introuvable", sousTitre: "Mall Express Gafsa" });
+  return carteDePartage(contenu ?? { titre: "Boutique introuvable", sousTitre: "G-Mall" });
 }

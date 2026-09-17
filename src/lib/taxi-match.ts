@@ -195,5 +195,5 @@ export const LIEUX_GAFSA: readonly Lieu[] = [
   { id: "universite", nom: "Université de Gafsa", nomAr: "جامعة قفصة", lat: 34.4139, lng: 8.7688 },
   { id: "piscine", nom: "Piscine romaine", nomAr: "الحمامات الرومانية", lat: 34.4256, lng: 8.7806 },
   { id: "gare-louage", nom: "Station de louages", nomAr: "محطة اللواجات", lat: 34.4211, lng: 8.7869 },
-  { id: "mall", nom: "Mall Express Gafsa", nomAr: "مول إكسبرس قفصة", lat: 34.4257, lng: 8.7842 },
+  { id: "mall", nom: "G-Mall", nomAr: "جي-مول", lat: 34.4257, lng: 8.7842 },
 ];

@@ -8,7 +8,7 @@ import { carteDePartage, TAILLE_OG } from "@/lib/og";
   sites affichent, le nôtre ne l'avait pas.
 */
 export const runtime = "nodejs";
-export const alt = "Mall Express Gafsa";
+export const alt = "G-Mall";
 export const size = TAILLE_OG;
 export const contentType = "image/png";
 export const revalidate = 3600;

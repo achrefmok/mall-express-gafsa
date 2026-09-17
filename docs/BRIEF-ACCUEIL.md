@@ -1,4 +1,4 @@
-# Brief design — Page d'accueil « Mall Express Gafsa »
+# Brief design — Page d'accueil « G-Mall »
 
 ## Le produit
 

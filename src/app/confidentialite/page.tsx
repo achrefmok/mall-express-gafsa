@@ -10,7 +10,7 @@ import type { Metadata } from "next";
    ═══════════════════════════════════════════════════════════════════════ */
 
 const OPERATOR = {
-  name: process.env.NEXT_PUBLIC_OPERATOR_NAME ?? "Mall Express Gafsa",
+  name: process.env.NEXT_PUBLIC_OPERATOR_NAME ?? "G-Mall",
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
   address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS ?? "Gafsa, Tunisie",
 };
@@ -20,7 +20,7 @@ const UPDATED = "11 août 2026";
 export const metadata: Metadata = {
   title: "Politique de confidentialité",
   description:
-    "Quelles données Mall Express Gafsa collecte, pourquoi, combien de temps elles sont conservées, et comment demander leur suppression.",
+    "Quelles données G-Mall collecte, pourquoi, combien de temps elles sont conservées, et comment demander leur suppression.",
   alternates: { canonical: "/confidentialite" },
 };
 
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
       <header className="border-b border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[820px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
           <Link href="/" className="-my-1 py-1 text-[0.9375rem] font-bold text-[var(--color-ink)]">
-            Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
+            G-<span className="text-[var(--color-brand)]">Mall</span>
           </Link>
           <Link
             href="/accueil"

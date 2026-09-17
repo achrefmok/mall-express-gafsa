@@ -15,7 +15,7 @@ declare const self: ServiceWorkerGlobalScope;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════
- * Service worker — Mall Express Gafsa
+ * Service worker — G-Mall
  * ═══════════════════════════════════════════════════════════════════════
  *
  * L'application vise des connexions mobiles tunisiennes irrégulières. La
@@ -201,7 +201,7 @@ self.addEventListener("push", (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? "Mall Express Gafsa", {
+    self.registration.showNotification(payload.title ?? "G-Mall", {
       body: payload.body,
       icon: "/icons/icon-192.png",
       badge: "/icons/badge.png",

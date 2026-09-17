@@ -84,7 +84,7 @@ export function QuickRelay({
             steps={[
               "Sur Facebook, ouvrez votre vidéo en direct",
               "Touchez « Partager »",
-              "Choisissez « Mall Express Gafsa » dans la liste",
+              "Choisissez « G-Mall » dans la liste",
             ]}
             note="Le direct se met en ligne sans que vous ayez rien à copier."
           />
@@ -94,7 +94,7 @@ export function QuickRelay({
           <Guide
             steps={[
               "Installez d'abord l'application : menu du navigateur → « Installer l'application »",
-              "Ensuite, sur Facebook : votre vidéo → « Partager » → « Mall Express Gafsa »",
+              "Ensuite, sur Facebook : votre vidéo → « Partager » → « G-Mall »",
             ]}
             note="Une fois installée, plus rien à copier : le partage suffit."
           />

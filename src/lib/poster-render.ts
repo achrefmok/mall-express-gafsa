@@ -467,7 +467,7 @@ export function dessinerAffiche(canvas: HTMLCanvasElement, options: OptionsAffic
   ctx.fillStyle = theme.discret;
   ctx.font = police(taillePied * 0.78, 600);
   ctx.textAlign = "end";
-  ctx.fillText("Mall Express Gafsa", pied.x + pied.w, pied.y + pied.h / 2);
+  ctx.fillText("G-Mall", pied.x + pied.w, pied.y + pied.h / 2);
   ctx.textAlign = "start";
 }
 

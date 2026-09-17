@@ -57,7 +57,7 @@ export async function generateMetadata({
 
   if (!data) return { title: "Produit introuvable" };
 
-  const title = `${data.name} — ${data.shop?.name ?? "Mall Express Gafsa"}`;
+  const title = `${data.name} — ${data.shop?.name ?? "G-Mall"}`;
 
   return {
     title,

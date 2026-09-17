@@ -41,8 +41,8 @@ import { createStaticClient } from "@/lib/supabase/server";
 export const TAG_MARQUE = "brand";
 
 /** Le nom, écrit une fois. */
-export const NOM_APPLICATION = "Mall Express Gafsa";
-export const NOM_COURT = "Mall Express";
+export const NOM_APPLICATION = "G-Mall";
+export const NOM_COURT = "G-Mall";
 
 /**
  * Les teintes de la marque, recopiées des jetons de `globals.css`.

@@ -1,4 +1,4 @@
-# Mall Express Gafsa
+# G-Mall
 
 Plateforme locale pour Gafsa : vitrine des boutiques du mall, marketplace,
 ventes en direct, bons plans partagés par les habitants, services citoyens,
@@ -485,9 +485,9 @@ pages de Facebook casserait à la première refonte de leur HTML.
 Le collage, lui, se supprime — par deux mécanismes standards.
 
 **Partage système** — Android, Chrome ou Edge, application installée. Le
-manifeste déclare `share_target` : Mall Express apparaît dans la feuille
+manifeste déclare `share_target` : G-Mall apparaît dans la feuille
 « Partager » du téléphone. Le commerçant lance son direct sur Facebook, touche
-**Partager → Mall Express**, et
+**Partager → G-Mall**, et
 [`/vendeur/lives/partage`](src/app/vendeur/lives/partage/page.tsx) met le direct
 en ligne d'un bouton. Rien à copier.
 

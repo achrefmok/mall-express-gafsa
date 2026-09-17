@@ -10,14 +10,14 @@ import type { Metadata } from "next";
  */
 
 const OPERATOR = {
-  name: process.env.NEXT_PUBLIC_OPERATOR_NAME ?? "Mall Express Gafsa",
+  name: process.env.NEXT_PUBLIC_OPERATOR_NAME ?? "G-Mall",
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
 };
 
 export const metadata: Metadata = {
   title: "Supprimer mes données",
   description:
-    "Comment supprimer votre compte Mall Express Gafsa et les données associées, et comment couper la liaison avec votre page Facebook.",
+    "Comment supprimer votre compte G-Mall et les données associées, et comment couper la liaison avec votre page Facebook.",
   alternates: { canonical: "/suppression-donnees" },
 };
 
@@ -27,7 +27,7 @@ export default function DataDeletionPage() {
       <header className="border-b border-[var(--color-hairline)]">
         <div className="mx-auto flex max-w-[820px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
           <Link href="/" className="text-[0.9375rem] font-bold text-[var(--color-ink)]">
-            Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
+            G-<span className="text-[var(--color-brand)]">Mall</span>
           </Link>
           <Link
             href="/confidentialite"

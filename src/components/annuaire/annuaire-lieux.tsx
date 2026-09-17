@@ -163,7 +163,7 @@ export async function AnnuaireLieux({ famille }: { famille: FamilleLieux }) {
                 ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lieu.address}, Gafsa`)}`
                 : null;
 
-          const whatsapp = whatsAppHref(lieu.whatsapp ?? lieu.phone, `Bonjour, je vous contacte depuis Mall Express Gafsa au sujet de ${lieu.name}.`);
+          const whatsapp = whatsAppHref(lieu.whatsapp ?? lieu.phone, `Bonjour, je vous contacte depuis G-Mall au sujet de ${lieu.name}.`);
           const facebook = lienWeb(lieu.facebook_url);
           const instagram = lienInstagram(lieu.instagram);
 

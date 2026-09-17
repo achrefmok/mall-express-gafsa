@@ -50,7 +50,7 @@ type Etape = "saisie" | "recherche" | "resultats" | "course";
 const RESSORT = { type: "spring" as const, stiffness: 320, damping: 32 };
 
 /** Le premier message, pré-rempli : le chauffeur sait d où vient le contact. */
-const MESSAGE_WHATSAPP = "Bonjour, je cherche un taxi via Mall Express Gafsa.";
+const MESSAGE_WHATSAPP = "Bonjour, je cherche un taxi via G-Mall.";
 
 /** Le rendu des états de course, dans l'ordre du parcours. */
 const ETATS_COURSE: Record<string, { titre: string; corps: string; teinte: string }> = {

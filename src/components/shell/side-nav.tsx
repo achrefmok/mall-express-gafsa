@@ -53,7 +53,7 @@ export function SideNav({
   return (
     <div className="hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:border-e lg:border-[var(--color-hairline)] lg:px-5 lg:py-7">
       <Link href="/accueil" className="flex-none text-[1.125rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
-        Mall Express <span className="text-[var(--color-brand)]">Gafsa</span>
+        G-<span className="text-[var(--color-brand)]">Mall</span>
       </Link>
 
       <nav aria-label={t.nav.home} className="flex flex-none flex-col gap-1">

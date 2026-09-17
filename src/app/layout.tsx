@@ -29,12 +29,12 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Mall Express Gafsa — boutiques, marketplace et services de Gafsa",
-    template: "%s · Mall Express Gafsa",
+    default: "G-Mall — boutiques, marketplace et services de Gafsa",
+    template: "%s · G-Mall",
   },
   description:
     "Les boutiques du mall de Gafsa en ligne : marketplace, ventes en direct, bons plans partagés par les habitants et services citoyens. En français et en arabe.",
-  applicationName: "Mall Express Gafsa",
+  applicationName: "G-Mall",
   /*
     Le manifeste n'est pas déclaré ici mais dans <head>, à la main.
 
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   */
   appleWebApp: {
     capable: true,
-    title: "Mall Express",
+    title: "G-Mall",
     statusBarStyle: "default",
   },
   formatDetection: { telephone: false },
@@ -58,9 +58,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_TN",
     alternateLocale: "ar_TN",
-    siteName: "Mall Express Gafsa",
+    siteName: "G-Mall",
     url: siteUrl,
-    title: "Mall Express Gafsa",
+    title: "G-Mall",
     description:
       "Marketplace, ventes en direct, bons plans et services citoyens — pour Gafsa.",
   },
@@ -82,7 +82,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const prefs = await getPreferences();
   const t = getDictionary(prefs.locale);
-  const { version: versionMarque } = await lireMarque();
+  const { logo: logoMarque, version: versionMarque } = await lireMarque();
 
   return (
     <html
@@ -128,7 +128,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider initial={prefs} dictionary={t}>
           {children}
           <NavDepthTracker />
-        <ServiceWorkerBridge />
+        <ServiceWorkerBridge logo={logoMarque} />
         {/*
           La mesure de performance, sur de vrais téléphones.
 

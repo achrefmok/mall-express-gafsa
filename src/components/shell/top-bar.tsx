@@ -15,7 +15,7 @@ export interface TopBarCounts {
 
 /**
  * Barre supérieure. Trois formes selon l'écran :
- *   — marque « Mall Express Gafsa » + icônes à compteur (accueil)
+ *   — marque « G-Mall » + icônes à compteur (accueil)
  *   — titre simple + icônes choisies
  *   — flèche retour + titre + action de droite (fiche produit, réglages)
  */
@@ -29,7 +29,7 @@ export function TopBar({
   className,
 }: {
   title?: string;
-  /** Rend « Mall Express » + « Gafsa » en couleur de marque. */
+  /** Rend « G-Mall » + « Gafsa » en couleur de marque. */
   brand?: boolean;
   back?: string | (() => void);
   action?: ReactNode;
@@ -65,7 +65,7 @@ export function TopBar({
 
         {brand ? (
           <p className="truncate text-[1.1875rem] font-bold tracking-[-0.0125rem] text-[var(--color-ink)]">
-            {t.brand.first} <span className="text-[var(--color-brand)]">{t.brand.second}</span>
+            {t.brand.first}<span className="text-[var(--color-brand)]">{t.brand.second}</span>
           </p>
         ) : (
           title && (

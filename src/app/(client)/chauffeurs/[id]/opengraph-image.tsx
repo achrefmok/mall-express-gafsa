@@ -2,7 +2,7 @@ import { carteDePartage, TAILLE_OG } from "@/lib/og";
 import { contenuChauffeur } from "@/lib/og-contenus";
 
 export const runtime = "nodejs";
-export const alt = "Chauffeur de taxi sur Mall Express Gafsa";
+export const alt = "Chauffeur de taxi sur G-Mall";
 export const size = TAILLE_OG;
 export const contentType = "image/png";
 export const revalidate = 600;
@@ -11,5 +11,5 @@ export const revalidate = 600;
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const contenu = await contenuChauffeur(id);
-  return carteDePartage(contenu ?? { titre: "Chauffeur introuvable", sousTitre: "Mall Express Gafsa" });
+  return carteDePartage(contenu ?? { titre: "Chauffeur introuvable", sousTitre: "G-Mall" });
 }

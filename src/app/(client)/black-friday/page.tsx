@@ -38,7 +38,7 @@ export default async function PageBlackFriday() {
       <div className="no-sb flex flex-1 flex-col gap-4 overflow-y-auto pb-6">
         <header className="mx-4 mt-2 overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#0d0b10_0%,#241f2e_55%,#5a3a78_100%)] p-5 text-white">
           <p className="text-[0.625rem] font-bold tracking-[0.16em] text-white/60 uppercase">
-            {t.brand.first} {t.brand.second}
+            {t.brand.first}{t.brand.second}
           </p>
           <h1 className="mt-1 text-[2rem] leading-none font-extrabold tracking-[-0.03em]">
             <span aria-hidden>🔥 </span>BLACK FRIDAY
