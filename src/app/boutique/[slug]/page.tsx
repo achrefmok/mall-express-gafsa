@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient, createStaticClient } from "@/lib/supabase/server";
-import { getSessionUser, getTopBarCounts } from "@/lib/queries";
+import { getProfile, getSessionUser, getTopBarCounts } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { formatCount, formatRating, formatTime, monogram } from "@/lib/format";
@@ -14,6 +14,7 @@ import { Card, EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primit
 import { CartIcon, PinIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
 import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
+import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 
 /**
@@ -96,6 +97,7 @@ export default async function ShopPage({
     .select(
       `id, name, name_ar, description, description_ar, slug, logo_url, cover_url, banner_url,
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count,
+       is_partner, partner_tagline, partner_tagline_ar, accepts_reservations,
        followers_count, posts_count, views_count, status, latitude, longitude,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue)`,
     )
@@ -105,6 +107,8 @@ export default async function ShopPage({
   if (!shop || shop.status !== "approved") notFound();
 
   const user = await getSessionUser();
+  // Le nom et le numéro déjà connus, pour ne pas les faire ressaisir.
+  const profile = user ? await getProfile() : null;
 
   const [products, promo, hoursToday, subCategories, following, lives, counts] = await Promise.all([
     supabase
@@ -313,7 +317,7 @@ export default async function ShopPage({
             </p>
           )}
 
-          <div className="mt-[2px] flex flex-none items-center gap-2">
+          <div className="mt-[2px] flex flex-none flex-wrap items-center gap-2">
             <span className="flex items-center gap-[6px] rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--color-brand)]">
               <span
                 className={`inline-block h-[6px] w-[6px] rounded-full ${
@@ -344,6 +348,33 @@ export default async function ShopPage({
                 whatsApp: t.common.whatsApp,
               }}
             />
+
+            {/*
+              Réserver, quand la boutique le propose.
+
+              Sous la barre de contact et non dedans : appeler, écrire et
+              réserver ne sont pas trois gestes du même poids. Les deux
+              premiers ouvrent une conversation, le troisième engage une
+              date et un nombre de personnes — il mérite sa propre ligne.
+
+              Un visiteur non connecté le voit aussi : lui cacher le bouton
+              jusqu'à la connexion, c'est lui cacher la raison de se
+              connecter. L'action l'enverra s'identifier, et la policy
+              d'insertion refuse de toute façon sans session.
+            */}
+            {shop.accepts_reservations && (
+              <div className="w-full">
+                <ReservationSheet
+                  shopId={shop.id}
+                  shopName={shop.name}
+                  defaults={{
+                    fullName: [profile?.first_name, profile?.last_name].filter(Boolean).join(" "),
+                    phone: profile?.phone ?? "",
+                  }}
+                  label="Réserver"
+                />
+              </div>
+            )}
           </div>
 
           {/*

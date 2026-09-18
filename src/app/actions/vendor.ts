@@ -265,6 +265,7 @@ export async function updateShopSettings(input: {
   longitude?: number | null;
   deliversInGafsa?: boolean;
   pickupInStore?: boolean;
+  acceptsReservations?: boolean;
   isOpenNow?: boolean;
 }) {
   const { supabase, shop, error } = await requireShopOwner();
@@ -293,6 +294,7 @@ export async function updateShopSettings(input: {
   if (input.longitude !== undefined) patch.longitude = input.longitude;
   if (input.deliversInGafsa !== undefined) patch.delivers_in_gafsa = input.deliversInGafsa;
   if (input.pickupInStore !== undefined) patch.pickup_in_store = input.pickupInStore;
+  if (input.acceptsReservations !== undefined) patch.accepts_reservations = input.acceptsReservations;
   if (input.isOpenNow !== undefined) patch.is_open_now = input.isOpenNow;
 
   if (Object.keys(patch).length === 0) return done();

@@ -91,6 +91,25 @@ const guirlandeLarge = (couleur) => `
   ${[150, 470, 790].map((x) => `<rect x="${x}" y="330" width="260" height="200" rx="26" fill="${couleur}" opacity="0.14"/><rect x="${x + 45}" y="385" width="170" height="145" rx="18" fill="${couleur}" opacity="0.18"/>`).join("")}
   <circle cx="600" cy="300" r="120" fill="${couleur}" opacity="0.1"/>`;
 
+/**
+ * La mer, en trois vagues et quelques poissons.
+ *
+ * Des formes, pas une photo : une photo de poisson achetée à une banque
+ * d'images coûte, se retrouve chez le concurrent, et vieillit mal. Le dessin
+ * dit « poissonnerie » en un coup d'œil et pèse vingt kilo-octets.
+ */
+const vagues = (couleur) => `
+  ${[0, 1, 2].map((i) => `<path d="M0 ${300 + i * 90} Q 150 ${250 + i * 90} 300 ${300 + i * 90} T 600 ${300 + i * 90} T 900 ${300 + i * 90} T 1200 ${300 + i * 90}" stroke="${couleur}" stroke-width="6" fill="none" opacity="${0.4 - i * 0.1}"/>`).join("")}
+  ${[[880, 230], [1010, 330], [790, 400]].map(([x, y], i) => {
+    const e = [1, 0.78, 0.6][i];
+    return `<g transform="translate(${x} ${y}) scale(${e})" opacity="${0.9 - i * 0.2}">
+      <path d="M0 0 q 60 -46 130 0 q -70 46 -130 0 Z" fill="${couleur}"/>
+      <path d="M130 0 l 40 -26 v 52 Z" fill="${couleur}"/>
+      <circle cx="32" cy="-6" r="6" fill="#0b2f4a"/>
+    </g>`;
+  }).join("")}
+  <circle cx="200" cy="170" r="130" fill="${couleur}" opacity="0.12"/>`;
+
 const AFFICHES = {
   "affiche-black-friday": affiche({
     fond: `<stop offset="0" stop-color="#241f2e"/><stop offset="1" stop-color="#0d0b10"/>`,
@@ -146,6 +165,13 @@ const AFFICHES = {
   "exemple-salle": visuel({
     fond: `<stop offset="0" stop-color="#8a4f86"/><stop offset="1" stop-color="#2e1b3f"/>`,
     motif: guirlandeLarge("#ffe2b8"),
+  }),
+
+  /* La bannière d'un partenaire, même règle : sans un mot. La carte de
+     l'accueil écrit déjà son nom et son accroche par-dessus. */
+  "partenaire-dar-elhout": visuel({
+    fond: `<stop offset="0" stop-color="#1f6f9e"/><stop offset="1" stop-color="#0b2f4a"/>`,
+    motif: vagues("#a8e0f5"),
   }),
 };
 

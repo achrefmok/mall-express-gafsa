@@ -48,6 +48,7 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/vendeur/produits", label: t.nav.products, icon: <GridIcon size={17} /> },
       { href: "/vendeur/commandes", label: t.nav.orders, icon: <BoxIcon size={17} /> },
       { href: "/vendeur/lives", label: t.nav.lives, icon: <LiveDot size={9} /> },
+      { href: "/vendeur/reservations", label: "Réservations", icon: <BoxIcon size={17} /> },
       { href: "/vendeur/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
     ],
     admin: [
@@ -56,6 +57,7 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/admin/membres", label: t.nav.members, icon: <UserIcon size={17} /> },
       { href: "/admin/signalements", label: t.nav.reports, icon: <FlagIcon size={17} /> },
       { href: "/admin/pharmacies", label: t.admin.pharmacies, icon: <SparkIcon size={17} /> },
+      { href: "/admin/partenaires", label: "Partenaires", icon: <StoreIcon size={17} /> },
       { href: "/admin/free-shop", label: "Free Shop", icon: <HeartIcon size={17} /> },
       { href: "/admin/black-friday", label: "Black Friday", icon: <SparkIcon size={17} /> },
       { href: "/admin/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },

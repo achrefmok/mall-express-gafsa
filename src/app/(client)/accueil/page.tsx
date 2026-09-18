@@ -11,6 +11,7 @@ import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
+import { PartnersRail, type PartenaireAccueil } from "@/components/home/partners-rail";
 import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
 import { categoryIcon } from "@/components/ui/category-icons";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
@@ -89,6 +90,7 @@ export default async function HomePage() {
     shopsByCategory,
     etatBf,
     offresBf,
+    partenaires,
   ] = await Promise.all([
     getMallStatus(),
     getCategories(),
@@ -207,6 +209,25 @@ export default async function HomePage() {
     */
     lireEtatBlackFriday(),
     lireOffresActives(10),
+    /*
+      Les partenaires mis en avant.
+
+      Le drapeau est posé par l'administration seule — un déclencheur
+      empêche un commerçant de se l'attribuer —, et le rang décide de
+      l'ordre. Sans rang, le plus récemment approuvé vient d'abord.
+    */
+    supabase
+      .from("shops")
+      .select(
+        `id, slug, name, name_ar, logo_url, banner_url, cover_url,
+         partner_tagline, partner_tagline_ar, accepts_reservations,
+         category:categories!shops_category_id_fkey(hue)`,
+      )
+      .eq("status", "approved")
+      .eq("is_partner", true)
+      .order("partner_rank", { ascending: true, nullsFirst: false })
+      .order("approved_at", { ascending: false })
+      .limit(8),
   ]);
 
   /* Combien de boutiques approuvées derrière chaque catégorie. */
@@ -385,6 +406,23 @@ export default async function HomePage() {
           chercher en faisant défiler est une section qu'on rate.
         */}
         <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
+
+        {/*
+          ─── Nos partenaires ─────────────────────────────────────────
+
+          Les commerces qui soutiennent l'application. La section disparaît
+          quand il n'y en a aucun : un titre suivi du vide fait croire à une
+          panne, et cette place vaut mieux que ça.
+        */}
+        {(partenaires.data ?? []).length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={280} titre={t.home.partners} />
+            <PartnersRail
+              partenaires={(partenaires.data ?? []) as unknown as PartenaireAccueil[]}
+              locale={locale}
+            />
+          </section>
+        )}
 
         {/*
           ─── 3 · Catégories ──────────────────────────────────────────

@@ -506,3 +506,41 @@ export async function setAppLogo(logoUrl: string | null) {
   revalidateTag("brand");
   return done();
 }
+
+/**
+ * Faire — ou défaire — un partenaire.
+ *
+ * Le drapeau vaut une place sur l'accueil : il n'appartient donc pas au
+ * commerçant, et un déclencheur de base (`guard_shop_partenaire`) le lui
+ * refuse même s'il écrit directement. Cette action est le seul chemin.
+ *
+ * Le rang ordonne les partenaires entre eux ; laissé vide, c'est le plus
+ * récemment approuvé qui passe devant.
+ */
+export async function definirPartenaire(input: {
+  shopId: string;
+  isPartner: boolean;
+  rank?: number | null;
+  tagline?: string | null;
+  taglineAr?: string | null;
+}) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase
+    .from("shops")
+    .update({
+      is_partner: input.isPartner,
+      partner_rank: input.rank ?? null,
+      partner_tagline: input.tagline?.trim() || null,
+      partner_tagline_ar: input.taglineAr?.trim() || null,
+    })
+    .eq("id", input.shopId);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/admin/partenaires");
+  revalidatePath("/accueil");
+  revalidatePath("/");
+  return done();
+}

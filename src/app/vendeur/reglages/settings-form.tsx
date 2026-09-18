@@ -88,6 +88,7 @@ export function ShopSettingsForm({
   const [selected, setSelected] = useState<string[]>(selectedCategoryIds);
   const [delivers, setDelivers] = useState(shop.delivers_in_gafsa);
   const [pickup, setPickup] = useState(shop.pickup_in_store);
+  const [reservations, setReservations] = useState(shop.accepts_reservations);
   const [openNow, setOpenNow] = useState(shop.is_open_now);
   const [preview, setPreview] = useState(false);
 
@@ -129,6 +130,7 @@ export function ShopSettingsForm({
           longitude: position?.lng ?? null,
           deliversInGafsa: delivers,
           pickupInStore: pickup,
+          acceptsReservations: reservations,
           isOpenNow: openNow,
         }),
         updateShopHours(hours),
@@ -502,6 +504,18 @@ export function ShopSettingsForm({
               </KeyValueRow>
               <KeyValueRow label={t.vendor.pickupStore}>
                 <Switch checked={pickup} onChange={setPickup} label={t.vendor.pickupStore} />
+              </KeyValueRow>
+              {/*
+                Coupé, le bouton « Réserver » disparaît de la fiche et la base
+                refuse toute nouvelle demande : un commerçant parti en congé ne
+                doit pas trouver dix demandes en attente au retour.
+              */}
+              <KeyValueRow label="Accepter les réservations">
+                <Switch
+                  checked={reservations}
+                  onChange={setReservations}
+                  label="Accepter les réservations"
+                />
               </KeyValueRow>
             </div>
           </Card>
