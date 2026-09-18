@@ -214,7 +214,17 @@ const nextConfig: NextConfig = {
     c'est un vrai 308, et le référencement est transféré vers « / ».
   */
   async redirects() {
-    return [{ source: "/presentation", destination: "/", permanent: true }];
+    return [
+      { source: "/presentation", destination: "/", permanent: true },
+      /*
+        Les bons plans sont devenus le Free Shop. L'ancienne adresse a été
+        partagée dans des conversations, épinglée, indexée : elle doit encore
+        mener quelque part. Un 308 déclaré ici transfère aussi le
+        référencement, ce qu'une redirection de composant ne fait pas.
+      */
+      { source: "/bons-plans", destination: "/free-shop", permanent: true },
+      { source: "/bons-plans/:chemin*", destination: "/free-shop/:chemin*", permanent: true },
+    ];
   },
 
   async headers() {

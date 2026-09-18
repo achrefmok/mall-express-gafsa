@@ -9,7 +9,7 @@ const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" }> = 
   { prefix: "/panier", role: "client" },
   { prefix: "/commandes", role: "client" },
   { prefix: "/profil", role: "client" },
-  { prefix: "/bons-plans/nouveau", role: "client" },
+  { prefix: "/free-shop/nouveau", role: "client" },
 ];
 
 /**

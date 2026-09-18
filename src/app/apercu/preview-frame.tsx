@@ -25,7 +25,7 @@ const ECRANS = [
   { chemin: "/marketplace", nom: "Marketplace" },
   { chemin: "/boutiques", nom: "Boutiques" },
   { chemin: "/lives", nom: "Lives" },
-  { chemin: "/bons-plans", nom: "Bons plans" },
+  { chemin: "/free-shop", nom: "Bons plans" },
   { chemin: "/services", nom: "Services" },
   { chemin: "/taxi", nom: "Taxi" },
   { chemin: "/sos", nom: "SOS" },

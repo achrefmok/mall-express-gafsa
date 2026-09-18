@@ -29,7 +29,7 @@ export async function generateMetadata({
   return {
     title: data.title,
     description: data.body ?? undefined,
-    alternates: { canonical: `/bons-plans/${id}` },
+    alternates: { canonical: `/free-shop/${id}` },
   };
 }
 
@@ -78,7 +78,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <TopBar title={t.deals.title} back="/bons-plans" />
+      <TopBar title={t.deals.title} back="/free-shop" />
 
       <div className="no-sb flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-2 pb-6">
         <Card className="flex flex-none flex-col overflow-hidden p-0">

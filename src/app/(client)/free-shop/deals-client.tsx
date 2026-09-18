@@ -99,7 +99,7 @@ export function DealCard({
 
   function cast(value: 1 | -1) {
     if (!signedIn) {
-      router.push("/connexion?suite=/bons-plans");
+      router.push("/connexion?suite=/free-shop");
       return;
     }
     if (isAuthor) {
@@ -131,7 +131,7 @@ export function DealCard({
 
   function onReport() {
     if (!signedIn) {
-      router.push("/connexion?suite=/bons-plans");
+      router.push("/connexion?suite=/free-shop");
       return;
     }
     startTransition(async () => {
@@ -238,7 +238,7 @@ export function DealCard({
             {down}
           </button>
 
-          <Link href={`/bons-plans/${deal.id}`} className="text-[0.65625rem] text-[var(--color-muted)]">
+          <Link href={`/free-shop/${deal.id}`} className="text-[0.65625rem] text-[var(--color-muted)]">
             {format(t.deals.commentsCount, { n: deal.comments_count })}
           </Link>
 

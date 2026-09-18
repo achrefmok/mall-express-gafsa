@@ -37,7 +37,7 @@ export function DealComments({
     event.preventDefault();
 
     if (!signedIn) {
-      router.push(`/connexion?suite=/bons-plans/${dealId}`);
+      router.push(`/connexion?suite=/free-shop/${dealId}`);
       return;
     }
 

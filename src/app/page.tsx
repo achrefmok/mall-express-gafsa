@@ -525,7 +525,7 @@ export default async function PresentationPage() {
               ["/accueil", "Accueil"],
               ["/marketplace", "Marketplace"],
               ["/lives", "Lives"],
-              ["/bons-plans", "Bons plans"],
+              ["/free-shop", "Bons plans"],
               ["/services", "Services"],
               ["/confidentialite", "Confidentialité"],
             ].map(([href, label]) => (

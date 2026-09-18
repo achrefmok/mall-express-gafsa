@@ -34,7 +34,7 @@ export function DealVoteBar({
 
   function cast(value: 1 | -1) {
     if (!signedIn) {
-      router.push(`/connexion?suite=/bons-plans/${dealId}`);
+      router.push(`/connexion?suite=/free-shop/${dealId}`);
       return;
     }
     if (isAuthor) {
@@ -105,7 +105,7 @@ export function DealVoteBar({
           disabled={reported}
           onClick={() => {
             if (!signedIn) {
-              router.push(`/connexion?suite=/bons-plans/${dealId}`);
+              router.push(`/connexion?suite=/free-shop/${dealId}`);
               return;
             }
             startTransition(async () => {

@@ -1,8 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { FREESHOP_PAR_MOIS, FREESHOP_PHOTOS_MAX } from "@/lib/free-shop";
 import { done, fail, ok, readableError, requireAdmin, requireProfile } from "./_helpers";
 
+/**
+ * Publier sur Free Shop.
+ *
+ * Les deux limites — quatre photos, trois publications par mois — sont
+ * posées en base. Ce qui est vérifié ici l'est pour la forme du message,
+ * pas pour la sécurité : un formulaire se contourne, un déclencheur non.
+ */
 export async function createDeal(input: {
   title: string;
   body?: string;
@@ -11,6 +19,9 @@ export async function createDeal(input: {
   shopId?: string;
   categoryId?: string;
   locationLabel?: string;
+  price?: number | null;
+  phone?: string;
+  whatsapp?: string;
   expiresAt: string;
 }) {
   const { supabase, profile, error } = await requireProfile();
@@ -23,6 +34,11 @@ export async function createDeal(input: {
   if (Number.isNaN(expires.getTime())) return fail("Date de validité invalide");
   if (expires.getTime() <= Date.now()) return fail("La date de validité doit être dans le futur");
 
+  const images = (input.images ?? []).slice(0, FREESHOP_PHOTOS_MAX);
+
+  const prix = input.price ?? null;
+  if (prix !== null && (!Number.isFinite(prix) || prix < 0)) return fail("Prix invalide");
+
   const { data, error: insertError } = await supabase
     .from("deals")
     .insert({
@@ -30,19 +46,89 @@ export async function createDeal(input: {
       title,
       body: input.body?.trim() || null,
       body_ar: input.bodyAr?.trim() || null,
-      images: input.images ?? [],
+      images,
       shop_id: input.shopId || null,
       category_id: input.categoryId || null,
       location_label: input.locationLabel?.trim() || null,
+      price: prix,
+      phone: input.phone?.trim() || null,
+      whatsapp: input.whatsapp?.trim() || null,
       expires_at: expires.toISOString(),
     })
     .select("id")
     .single();
 
-  if (insertError) return fail(readableError(insertError));
+  if (insertError) {
+    /*
+      Le déclencheur `freeshop_limite_mensuelle` lève ce nom-là. Sans cette
+      traduction, l'auteur lirait « new row violates check constraint », qui
+      ne lui dit ni ce qu'il a atteint, ni quand il pourra republier.
+    */
+    if (insertError.message.includes("FREESHOP_LIMITE_MOIS")) {
+      return fail(
+        `Vous avez atteint votre limite de ${FREESHOP_PAR_MOIS} publications Free Shop pour ce mois. Vous pourrez publier à nouveau le mois prochain.`,
+      );
+    }
+    if (insertError.message.includes("deals_quatre_photos")) {
+      return fail(`Quatre photos au maximum par publication.`);
+    }
+    return fail(readableError(insertError));
+  }
 
-  revalidatePath("/bons-plans");
+  revalidatePath("/free-shop");
   return ok({ id: data.id });
+}
+
+/**
+ * Le quota du mois, tel que l'écran doit l'annoncer.
+ *
+ * Lu par la même fonction que celle qui décide — `freeshop_quota` compte
+ * exactement ce que compte le déclencheur. Deux comptages séparés auraient
+ * fini par diverger, et l'écran aurait annoncé « 2/3 » devant un refus.
+ */
+export async function freeShopQuota(): Promise<{ utilisees: number; plafond: number }> {
+  const { supabase, profile } = await requireProfile();
+  if (!profile) return { utilisees: 0, plafond: FREESHOP_PAR_MOIS };
+
+  const { data } = await supabase.rpc("freeshop_quota");
+  const ligne = Array.isArray(data) ? data[0] : null;
+
+  return {
+    utilisees: ligne?.utilisees ?? 0,
+    plafond: ligne?.plafond ?? FREESHOP_PAR_MOIS,
+  };
+}
+
+/**
+ * La décision de l'administration sur une publication.
+ *
+ * Passe par la fonction de base plutôt que par un `update` : elle seule
+ * pose la date, l'auteur de la décision et le motif d'un seul geste, et
+ * elle refuse un refus sans motif — le membre doit lire pourquoi.
+ */
+export async function modererPublication(
+  dealId: string,
+  decision: "approved" | "rejected",
+  motif?: string,
+) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase.rpc("freeshop_moderer", {
+    p_deal: dealId,
+    p_decision: decision,
+    p_motif: motif?.trim() || null,
+  });
+
+  if (e) {
+    if (e.message.includes("FREESHOP_MOTIF")) return fail("Indiquez le motif du refus");
+    return fail(readableError(e));
+  }
+
+  revalidatePath("/admin/free-shop");
+  revalidatePath("/free-shop");
+  revalidatePath("/accueil");
+  return done();
 }
 
 /**
@@ -74,7 +160,7 @@ export async function voteDeal(dealId: string, value: 1 | -1, current: number | 
     }
   }
 
-  revalidatePath("/bons-plans");
+  revalidatePath("/free-shop");
   return done();
 }
 
@@ -91,7 +177,7 @@ export async function commentDeal(dealId: string, body: string) {
 
   if (e) return fail(readableError(e));
 
-  revalidatePath(`/bons-plans/${dealId}`);
+  revalidatePath(`/free-shop/${dealId}`);
   return done();
 }
 
@@ -118,7 +204,7 @@ export async function deleteDeal(dealId: string) {
   const { error: e } = await supabase.from("deals").delete().eq("id", dealId);
   if (e) return fail(readableError(e));
 
-  revalidatePath("/bons-plans");
+  revalidatePath("/free-shop");
   return done();
 }
 
@@ -145,6 +231,6 @@ export async function moderateDeal(dealId: string, decision: "remove" | "keep") 
   if (e) return fail(readableError(e));
 
   revalidatePath("/admin");
-  revalidatePath("/bons-plans");
+  revalidatePath("/free-shop");
   return done();
 }

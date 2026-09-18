@@ -66,7 +66,7 @@ export function SiteMenu() {
         { href: "/marketplace", label: t.nav.marketplace },
         { href: "/boutiques", label: t.shops.title },
         { href: "/lives", label: t.nav.lives },
-        { href: "/bons-plans", label: t.nav.deals },
+        { href: "/free-shop", label: t.nav.deals },
       ],
     },
     {

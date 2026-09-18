@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { createDeal } from "@/app/actions/deals";
+import { FREESHOP_PHOTOS_MAX } from "@/lib/free-shop";
 import { uploadImage } from "@/lib/upload";
 import { cx, monogram } from "@/lib/format";
+import { format as interpoler } from "@/lib/i18n/format";
 import { Card, Chip, Divider, KeyValueRow, Switch } from "@/components/ui/primitives";
 import { CameraIcon, CloseIcon, ImageIcon, PlusIcon } from "@/components/ui/icons";
 import type { AppLocale } from "@/types/database";
@@ -38,15 +40,26 @@ function tonightAt22(): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/** Écran 12 — publier un bon plan. */
+/**
+ * Publier sur Free Shop.
+ *
+ * Deux limites encadrent la publication, et l'écran les dit avant de les
+ * appliquer : quatre photos, trois publications par mois. Les annoncer au
+ * refus seulement, c'est faire remplir un formulaire pour rien.
+ *
+ * Ce que cet écran affiche n'est jamais ce qui décide : la base compte et
+ * refuse de son côté. Le compteur est une courtoisie, pas un verrou.
+ */
 export function NewDealForm({
   shops,
   categories,
   locale,
+  quota,
 }: {
   shops: ShopOption[];
   categories: CategoryOption[];
   locale: AppLocale;
+  quota: { utilisees: number; plafond: number };
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -60,6 +73,9 @@ export function NewDealForm({
   const [shopPickerOpen, setShopPickerOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(tonightAt22);
+  const [price, setPrice] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -100,16 +116,21 @@ export function NewDealForm({
         shopId: shopId ?? undefined,
         categoryId: categoryId ?? undefined,
         locationLabel: selectedShop?.mall_level != null ? `Niveau ${selectedShop.mall_level}` : undefined,
+        // Une virgule décimale est ce qu'on tape ici ; `Number` ne la lit pas.
+        price: price.trim() ? Number(price.replace(",", ".")) : null,
+        phone,
+        whatsapp,
         // datetime-local est en heure locale : on repasse en ISO.
         expiresAt: new Date(expiresAt).toISOString(),
       });
 
-      if (result.ok) router.push("/bons-plans");
+      if (result.ok) router.push("/free-shop");
       else setError(result.error);
     });
   }
 
-  const canPublish = title.trim().length >= 3 && !pending && !uploading;
+  const quotaAtteint = quota.utilisees >= quota.plafond;
+  const canPublish = title.trim().length >= 3 && !pending && !uploading && !quotaAtteint;
 
   return (
     <>
@@ -136,6 +157,23 @@ export function NewDealForm({
       </header>
 
       <div className="col-reading no-sb flex flex-1 flex-col gap-[14px] overflow-y-auto px-4 pt-[14px] pb-6">
+        {/* ─── Le quota du mois ──────────────────────────────────────── */}
+        <div
+          className={cx(
+            "flex-none rounded-[14px] px-3 py-[10px] text-[0.6875rem] leading-[1.5]",
+            quotaAtteint
+              ? "bg-[rgba(224,85,111,0.12)] text-[var(--color-live)]"
+              : "bg-[rgba(109,75,143,0.08)] text-[var(--color-muted)]",
+          )}
+        >
+          <span className="font-bold">
+            {interpoler(t.deals.quota, { n: quota.utilisees, max: quota.plafond })}
+          </span>
+          <span className="block">
+            {quotaAtteint ? t.deals.quotaReached : t.deals.moderationNotice}
+          </span>
+        </div>
+
         {/* ─── Zones de dépôt photo ──────────────────────────────────── */}
         <div className="flex flex-none gap-[10px]">
           <button
@@ -176,6 +214,11 @@ export function NewDealForm({
           hidden
           onChange={(event) => void onFiles(event.target.files)}
         />
+
+        <p className="flex-none text-[0.65625rem] text-[var(--color-muted)]">
+          {interpoler(t.deals.photos, { n: images.length, max: FREESHOP_PHOTOS_MAX })}
+          {images.length >= FREESHOP_PHOTOS_MAX && ` — ${t.deals.photosFull}`}
+        </p>
 
         {(images.length > 0 || uploading) && (
           <div className="no-sb flex flex-none gap-2 overflow-x-auto">
@@ -240,6 +283,54 @@ export function NewDealForm({
           <KeyValueRow label={<span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.writeInArabic}</span>}>
             <Switch checked={inArabic} onChange={setInArabic} label={t.deals.writeInArabic} />
           </KeyValueRow>
+        </Card>
+
+        {/* ─── Prix et contact ──────────────────────────────────────── */}
+        <Card className="flex flex-none flex-col gap-[10px] p-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.price}</span>
+            <span className="flex items-center gap-2">
+              {/* Un prix se lit de gauche à droite, même en arabe. */}
+              <input
+                value={price}
+                onChange={(event) => setPrice(event.target.value.replace(/[^0-9.,]/g, "").slice(0, 9))}
+                inputMode="decimal"
+                dir="ltr"
+                placeholder="0"
+                className="w-24 bg-transparent text-[0.78125rem] font-bold text-[var(--color-ink)] outline-none placeholder:font-normal placeholder:text-[var(--color-faint)]"
+              />
+              <span className="text-[0.6875rem] font-semibold text-[var(--color-muted)]">DT</span>
+            </span>
+            <span className="text-[0.59375rem] text-[var(--color-faint)]">{t.deals.priceHint}</span>
+          </label>
+
+          <Divider />
+
+          <label className="flex flex-col gap-1">
+            <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.phone}</span>
+            <input
+              value={phone}
+              onChange={(event) => setPhone(event.target.value.slice(0, 20))}
+              inputMode="tel"
+              dir="ltr"
+              placeholder="20 000 000"
+              className="bg-transparent text-[0.71875rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.deals.whatsapp}</span>
+            <input
+              value={whatsapp}
+              onChange={(event) => setWhatsapp(event.target.value.slice(0, 20))}
+              inputMode="tel"
+              dir="ltr"
+              placeholder="20 000 000"
+              className="bg-transparent text-[0.71875rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
+            />
+          </label>
+
+          <span className="text-[0.59375rem] text-[var(--color-faint)]">{t.deals.contactHint}</span>
         </Card>
 
         {/* ─── Boutique, catégorie, échéance ────────────────────────── */}

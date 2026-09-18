@@ -149,7 +149,7 @@ const serwist = new Serwist({
           url.pathname.startsWith("/produit/") ||
           url.pathname.startsWith("/boutique/") ||
           url.pathname.startsWith("/services") ||
-          url.pathname.startsWith("/bons-plans")),
+          url.pathname.startsWith("/free-shop")),
       /*
         « Réseau d'abord », et non « périmé puis rafraîchi ».
 

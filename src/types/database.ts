@@ -17,7 +17,8 @@ import type { SosTrade } from "@/lib/sos";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type UserRole = "client" | "vendor" | "admin";
+/** `dahmani_admin` n'administre que Lelma3ardh : voir `is_dahmani_admin()`. */
+export type UserRole = "client" | "vendor" | "admin" | "dahmani_admin";
 export type ShopStatus = "pending" | "approved" | "rejected" | "suspended";
 export type OrderStatus = "pending" | "to_prepare" | "ready" | "shipped" | "delivered" | "cancelled";
 export type PaymentMethod = "cod" | "call" | "online";
@@ -25,6 +26,9 @@ export type DeliveryMethod = "delivery" | "pickup";
 export type LiveStatus = "scheduled" | "live" | "ended" | "cancelled";
 export type LiveSource = "camera" | "facebook" | "hls";
 export type DealStatus = "active" | "expired" | "removed";
+/** Free Shop : toute publication attend l'administration avant d'être publique. */
+export type ModerationStatus = "pending" | "approved" | "rejected";
+export type ReservationStatus = "pending" | "accepted" | "refused" | "done" | "cancelled";
 export type ReportTarget = "deal" | "product" | "shop" | "deal_comment" | "live_comment" | "user";
 export type ReportStatus = "open" | "resolved" | "dismissed";
 export type CityInfoKind = "works" | "transport" | "admin_procedure";
@@ -222,6 +226,11 @@ export interface Database {
           pickup_in_store: boolean;
           is_open_now: boolean;
           is_featured: boolean;
+          is_partner: boolean;
+          partner_rank: number | null;
+          partner_tagline: string | null;
+          partner_tagline_ar: string | null;
+          accepts_reservations: boolean;
           rating_sum: number;
           rating_count: number;
           followers_count: number;
@@ -986,6 +995,13 @@ export interface Database {
           location_label: string | null;
           expires_at: string;
           status: DealStatus;
+          price: number | null;
+          phone: string | null;
+          whatsapp: string | null;
+          moderation: ModerationStatus;
+          rejection_reason: string | null;
+          moderated_at: string | null;
+          moderated_by: string | null;
           is_verified: boolean;
           verified_at: string | null;
           upvotes: number;
@@ -1003,6 +1019,124 @@ export interface Database {
           FK<"deals_author_id_fkey", ["author_id"], "profiles">,
           FK<"deals_shop_id_fkey", ["shop_id"], "shops">,
           FK<"deals_category_id_fkey", ["category_id"], "categories">,
+        ];
+      };
+
+      /* ─── reservations ───────────────────────────────────────────── */
+      reservations: {
+        Row: {
+          id: string;
+          shop_id: string;
+          user_id: string;
+          product_id: string | null;
+          full_name: string;
+          phone: string;
+          party_size: number;
+          desired_at: string;
+          note: string | null;
+          status: ReservationStatus;
+          refusal_reason: string | null;
+          handled_at: string | null;
+          handled_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          shop_id: string;
+          user_id: string;
+          full_name: string;
+          phone: string;
+          desired_at: string;
+        } & Partial<Database["public"]["Tables"]["reservations"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["reservations"]["Row"]>;
+        Relationships: [
+          FK<"reservations_shop_id_fkey", ["shop_id"], "shops">,
+          FK<"reservations_user_id_fkey", ["user_id"], "profiles">,
+          FK<"reservations_product_id_fkey", ["product_id"], "products">,
+        ];
+      };
+
+      /* ─── expos ──────────────────────────────────────────────────── */
+      expos: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          name_ar: string | null;
+          description: string | null;
+          description_ar: string | null;
+          place: string | null;
+          cover_url: string | null;
+          starts_on: string;
+          ends_on: string;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { slug: string; name: string; starts_on: string; ends_on: string } & Partial<
+          Database["public"]["Tables"]["expos"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["expos"]["Row"]>;
+        Relationships: [];
+      };
+
+      /* ─── expo_exhibitors ────────────────────────────────────────── */
+      expo_exhibitors: {
+        Row: {
+          id: string;
+          expo_id: string;
+          slug: string;
+          name: string;
+          name_ar: string | null;
+          description: string | null;
+          description_ar: string | null;
+          logo_url: string | null;
+          cover_url: string | null;
+          images: string[];
+          stand_no: string | null;
+          phone: string | null;
+          whatsapp: string | null;
+          facebook_url: string | null;
+          instagram: string | null;
+          address: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          status: ShopStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { expo_id: string; slug: string; name: string } & Partial<
+          Database["public"]["Tables"]["expo_exhibitors"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["expo_exhibitors"]["Row"]>;
+        Relationships: [FK<"expo_exhibitors_expo_id_fkey", ["expo_id"], "expos">];
+      };
+
+      /* ─── expo_products ──────────────────────────────────────────── */
+      expo_products: {
+        Row: {
+          id: string;
+          exhibitor_id: string;
+          name: string;
+          name_ar: string | null;
+          description: string | null;
+          description_ar: string | null;
+          images: string[];
+          price: number | null;
+          compare_at_price: number | null;
+          category_id: string | null;
+          is_available: boolean;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { exhibitor_id: string; name: string } & Partial<
+          Database["public"]["Tables"]["expo_products"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["expo_products"]["Row"]>;
+        Relationships: [
+          FK<"expo_products_exhibitor_id_fkey", ["exhibitor_id"], "expo_exhibitors">,
+          FK<"expo_products_category_id_fkey", ["category_id"], "categories">,
         ];
       };
 
@@ -1528,6 +1662,15 @@ export interface Database {
       };
       set_member_role: { Args: { target: string; new_role: UserRole }; Returns: undefined };
       my_shop_id: { Args: Record<PropertyKey, never>; Returns: string | null };
+      is_dahmani_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      freeshop_quota: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{ utilisees: number; plafond: number }>;
+      };
+      freeshop_moderer: {
+        Args: { p_deal: string; p_decision: ModerationStatus; p_motif?: string | null };
+        Returns: undefined;
+      };
       owns_shop: { Args: { target_shop_id: string }; Returns: boolean };
       slugify: { Args: { input: string }; Returns: string };
       search_catalog: {
@@ -1554,6 +1697,8 @@ export interface Database {
       live_status: LiveStatus;
       live_source: LiveSource;
       deal_status: DealStatus;
+      moderation_status: ModerationStatus;
+      reservation_status: ReservationStatus;
       report_target: ReportTarget;
       report_status: ReportStatus;
       city_info_kind: CityInfoKind;

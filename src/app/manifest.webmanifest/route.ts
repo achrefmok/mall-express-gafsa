@@ -85,7 +85,7 @@ export async function GET() {
       {
         name: "Bons plans",
         short_name: "Bons plans",
-        url: "/bons-plans",
+        url: "/free-shop",
         icons: [{ src: `/brand-icon/192.png?v=${version}`, sizes: "192x192" }],
       },
       {

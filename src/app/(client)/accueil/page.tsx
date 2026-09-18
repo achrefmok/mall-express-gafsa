@@ -422,7 +422,7 @@ export default async function HomePage() {
         {(promo.data || (shopPromos.data ?? []).length > 0) && (
           <section className="flex flex-col gap-3">
             <EnteteSection hue={25} titre={t.home.promos}>
-              <Link href="/bons-plans" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
+              <Link href="/free-shop" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
                 {t.common.seeAll} →
               </Link>
             </EnteteSection>

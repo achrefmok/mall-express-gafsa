@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Bons plans de Gafsa — partagés par les habitants",
   description:
     "Les bons plans repérés en ville par la communauté : promotions, offres non affichées, réductions du jour. Confirmés par trois membres.",
-  alternates: { canonical: "/bons-plans" },
+  alternates: { canonical: "/free-shop" },
 };
 
 export const dynamic = "force-dynamic";
@@ -99,7 +99,7 @@ export default async function DealsPage({
       {/* ─── Composeur ─────────────────────────────────────────────────── */}
       <div className="flex-none px-4 pb-3">
         <Link
-          href="/bons-plans/nouveau"
+          href="/free-shop/nouveau"
           className="flex items-center gap-[10px] rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[11px_12px] shadow-[var(--shadow-card)]"
         >
           <Avatar
@@ -139,7 +139,7 @@ export default async function DealsPage({
         )}
       </div>
 
-      <Fab href="/bons-plans/nouveau">+ {t.deals.newDeal}</Fab>
+      <Fab href="/free-shop/nouveau">+ {t.deals.newDeal}</Fab>
     </>
   );
 }
