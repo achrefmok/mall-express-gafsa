@@ -53,6 +53,15 @@ export function cartePourBoutique(p: PartenaireAccueil, locale: AppLocale): Cart
 }
 
 /**
+ * Combien de partenaires tiennent sur l'accueil.
+ *
+ * Une rangée qu'il faut faire glisser six fois n'est pas parcourue : on
+ * s'arrête à la troisième carte. Au-delà de quatre, le lien « tout voir »
+ * fait mieux le travail.
+ */
+export const PARTENAIRES_ACCUEIL = 4;
+
+/**
  * Les partenaires de G-Mall, sur l'accueil.
  *
  * ────────────────────────────────────────────────────────────────────────
@@ -79,7 +88,22 @@ export function cartePourBoutique(p: PartenaireAccueil, locale: AppLocale): Cart
  * bandeau les distingue — violet pour le mall, ambre pour le marché — parce
  * qu'on ne commande pas de la même façon des deux côtés.
  */
-export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
+export function PartnersRail({
+  cartes,
+  taille = "grande",
+}: {
+  cartes: CartePartenaire[];
+  /*
+    « moyenne » sur l'accueil, « grande » sur la page des partenaires.
+
+    La carte pleine taille prenait les trois quarts de l'écran : on voyait
+    un partenaire et un bout du suivant, sans deviner qu'il y en avait
+    d'autres. Plus étroite, elle en montre deux — et deux cartes côte à
+    côte disent « ceci est une liste », ce qu'une seule ne dit pas.
+  */
+  taille?: "moyenne" | "grande";
+}) {
+  const large = taille === "grande";
   if (cartes.length === 0) return null;
 
   return (
@@ -87,11 +111,16 @@ export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
       {cartes.map((c) => (
         <article
           key={c.cle}
-          className="flex w-[290px] flex-none flex-col overflow-hidden rounded-[22px] bg-[var(--color-surface-solid)] shadow-[0_10px_28px_rgba(36,31,46,0.1)]"
+          className={
+            "flex flex-none flex-col overflow-hidden bg-[var(--color-surface-solid)] " +
+            (large
+              ? "w-[290px] rounded-[22px] shadow-[0_10px_28px_rgba(36,31,46,0.1)]"
+              : "w-[216px] rounded-[18px] shadow-[0_7px_20px_rgba(36,31,46,0.08)]")
+          }
         >
-          <Link href={c.href} className="relative block aspect-[16/9]">
+          <Link href={c.href} className={large ? "relative block aspect-[16/9]" : "relative block aspect-[3/2]"}>
             {c.image ? (
-              <Image src={c.image} alt="" fill sizes="290px" className="object-cover" />
+              <Image src={c.image} alt="" fill sizes={large ? "290px" : "216px"} className="object-cover" />
             ) : (
               <span
                 className={
@@ -110,11 +139,13 @@ export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
             </span>
           </Link>
 
-          <div className="flex flex-col gap-[10px] p-3">
+          <div className={large ? "flex flex-col gap-[10px] p-3" : "flex flex-col gap-2 p-[10px]"}>
             <div className="flex items-center gap-[10px]">
               <span
                 className={
-                  "flex h-[38px] w-[38px] flex-none items-center justify-center overflow-hidden rounded-[13px] text-[0.625rem] font-bold " +
+                  (large
+                    ? "flex h-[38px] w-[38px] flex-none items-center justify-center overflow-hidden rounded-[13px] text-[0.625rem] font-bold "
+                    : "flex h-[30px] w-[30px] flex-none items-center justify-center overflow-hidden rounded-[10px] text-[0.5625rem] font-bold ") +
                   (c.teinte === "expo"
                     ? "bg-[rgba(138,90,31,0.14)] text-[#8a5a1f]"
                     : "bg-[var(--color-app)] text-[var(--color-muted)]")
@@ -130,7 +161,11 @@ export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
               <span className="min-w-0 flex-1">
                 <Link
                   href={c.href}
-                  className="block truncate text-[0.8125rem] font-bold text-[var(--color-ink)]"
+                  className={
+                    large
+                      ? "block truncate text-[0.8125rem] font-bold text-[var(--color-ink)]"
+                      : "block truncate text-[0.71875rem] font-bold text-[var(--color-ink)]"
+                  }
                 >
                   {c.nom}
                 </Link>
@@ -143,7 +178,7 @@ export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
             </div>
 
             <div className="flex flex-wrap gap-[6px]">
-              {c.liens.map((lien) => (
+              {(large ? c.liens : c.liens.slice(-1)).map((lien) => (
                 <Link
                   key={lien.href + lien.libelle}
                   href={lien.href}

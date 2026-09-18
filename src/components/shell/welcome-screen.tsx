@@ -12,17 +12,25 @@ const SESSION_KEY = "meg-splash-session";
 const LOGO_CACHE_KEY = "meg-logo-url";
 const LOGO_PAR_DEFAUT = "/brand/app-icon.png";
 
-/** Visible 1,25 s, puis fondu de 0,38 s : un peu plus de 1,6 s en tout. */
-const DUREE_AFFICHAGE = 1250;
-const DUREE_FONDU = 380;
+/**
+ * Visible 4,6 s, puis fondu de 0,4 s : cinq secondes en tout.
+ *
+ * C'est long pour un écran d'ouverture — et c'est voulu : il porte désormais
+ * les sponsors, qui ont besoin d'être vus, pas entrevus. Deux garde-fous
+ * empêchent que ces cinq secondes deviennent un péage : un toucher l'efface
+ * à l'instant, et la page se charge derrière lui pendant qu'il joue, si bien
+ * que l'application est prête quand il s'en va.
+ */
+const DUREE_AFFICHAGE = 4600;
+const DUREE_FONDU = 400;
 
 /**
  * L'écran d'ouverture, à chaque lancement de l'application.
  *
- * Logo → apparition douce → léger rebond d'échelle → l'application. Il dure un
- * peu plus d'une seconde et demie, et il ne retient rien : la page se charge
- * derrière lui pendant qu'il joue, un toucher l'efface tout de suite, et il se
- * saute entièrement quand le système demande moins d'animations.
+ * Logo → apparition douce → léger rebond d'échelle → le nom → les sponsors →
+ * l'application. Il dure cinq secondes et il ne retient rien : la page se
+ * charge derrière lui pendant qu'il joue, un toucher l'efface tout de suite,
+ * et il se saute entièrement quand le système demande moins d'animations.
  *
  * Une fois par lancement, pas à chaque page : `sessionStorage` survit à la
  * navigation et aux rechargements d'un même lancement, et disparaît quand
@@ -117,6 +125,36 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
           {t.brand.first}{t.brand.second}
         </p>
         <p className="text-[0.75rem] leading-[1.5] text-white/75">{t.welcome.tagline}</p>
+      </div>
+
+      {/*
+        La ligne des sponsors.
+
+        Quatre emplacements, vides tant que personne n'a payé pour eux. Les
+        laisser visibles n'est pas un oubli : un écran d'ouverture qui montre
+        d'un coup quatre logos le jour où ils arrivent surprend ; un cadre qui
+        attend depuis toujours se remplit sans que personne ne le remarque.
+        Et un annonceur voit où il ira avant de signer.
+
+        Le mot reste au singulier et en petit : cet écran appartient à
+        l'application, pas à ses sponsors.
+      */}
+      <div
+        className="flex flex-col items-center gap-[10px]"
+        style={{ animation: "splash-texte 560ms cubic-bezier(0.22, 0.61, 0.36, 1) 520ms both" }}
+      >
+        <p className="text-[0.5625rem] font-bold tracking-[0.18em] text-white/55 uppercase">
+          Sponsorisé par
+        </p>
+        <div className="flex items-center gap-[10px]">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              aria-hidden
+              className="h-[42px] w-[42px] rounded-[13px] border border-white/20 bg-white/10"
+            />
+          ))}
+        </div>
       </div>
 
       <style>{`

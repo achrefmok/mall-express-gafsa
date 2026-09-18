@@ -12,6 +12,7 @@ import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
 import {
+  PARTENAIRES_ACCUEIL,
   PartnersRail,
   cartePourBoutique,
   type CartePartenaire,
@@ -458,8 +459,20 @@ export default async function HomePage() {
         */}
         {cartesPartenaires.length > 0 && (
           <section className="flex flex-col gap-3">
-            <EnteteSection hue={280} titre={t.home.partners} />
-            <PartnersRail cartes={cartesPartenaires} />
+            <EnteteSection hue={280} titre={t.home.partners}>
+              {/*
+                Quatre au plus ici, la page des partenaires pour le reste.
+
+                Une rangée qu'on fait glisser six fois n'est pas parcourue :
+                on s'arrête à la troisième carte. Quatre tiennent dans deux
+                gestes, et le lien dit qu'il y en a d'autres — ce qu'une
+                rangée sans fin ne dit jamais.
+              */}
+              <Link href="/partenaires" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
+                {t.common.seeAll} →
+              </Link>
+            </EnteteSection>
+            <PartnersRail cartes={cartesPartenaires.slice(0, PARTENAIRES_ACCUEIL)} taille="moyenne" />
           </section>
         )}
 
@@ -686,50 +699,6 @@ export default async function HomePage() {
                     <span dir="ltr" className="text-[0.65625rem] font-bold text-[var(--color-brand)]">
                       {annonce.price != null ? formatPrice(annonce.price, locale) : t.deals.free}
                     </span>
-                  </span>
-                </Link>
-              ))}
-            </Rail>
-          </section>
-        )}
-
-        {/*
-          ─── 8 · Société Dahmani — Lelma3ardh ────────────────────────────
-
-          Les stands de l'exposition, qui restent ouverts quand le marché
-          ferme. L'ambre les distingue du violet du mall : on n'y commande
-          pas, et leur donner l'apparence d'une boutique ferait chercher un
-          panier qui n'existe pas.
-        */}
-        {(exposants.data ?? []).length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={35} titre="Société Dahmani — Lelma3ardh">
-              <Link
-                href="/lelma3ardh"
-                className="text-[0.6875rem] font-bold text-[var(--color-brand)]"
-              >
-                {t.common.seeAll} →
-              </Link>
-            </EnteteSection>
-
-            <Rail gap={10} className="px-4">
-              {(exposants.data ?? []).map((x) => (
-                <Link
-                  key={x.id}
-                  href={`/lelma3ardh/${x.slug}`}
-                  className="w-[136px] flex-none overflow-hidden rounded-[18px] bg-[var(--color-surface-solid)]"
-                >
-                  <span className="relative block aspect-square bg-[rgba(138,90,31,0.1)]">
-                    {x.cover_url ? (
-                      <Image src={x.cover_url} alt="" fill sizes="136px" className="object-cover" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-[0.75rem] font-bold text-[rgba(138,90,31,0.5)]">
-                        {monogram(x.name)}
-                      </span>
-                    )}
-                  </span>
-                  <span className="block truncate px-[9px] py-[8px] text-[0.65625rem] font-bold text-[var(--color-ink)]">
-                    {locale === "ar" ? (x.name_ar ?? x.name) : x.name}
                   </span>
                 </Link>
               ))}
