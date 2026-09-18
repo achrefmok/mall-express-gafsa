@@ -91,6 +91,8 @@ export default async function HomePage() {
     etatBf,
     offresBf,
     partenaires,
+    freeShop,
+    exposants,
   ] = await Promise.all([
     getMallStatus(),
     getCategories(),
@@ -228,6 +230,24 @@ export default async function HomePage() {
       .order("partner_rank", { ascending: true, nullsFirst: false })
       .order("approved_at", { ascending: false })
       .limit(8),
+    /*
+      Free Shop : les dernières annonces validées. La policy écarte déjà
+      celles qui attendent ou ont été refusées ; le filtre ci-dessous ne
+      sert qu'à ne pas rapporter les expirées.
+    */
+    supabase
+      .from("deals")
+      .select("id, title, images, price")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(8),
+    /* Les stands publiés, toutes éditions confondues. */
+    supabase
+      .from("expo_exhibitors")
+      .select("id, slug, name, name_ar, cover_url")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   /* Combien de boutiques approuvées derrière chaque catégorie. */
@@ -408,7 +428,81 @@ export default async function HomePage() {
         <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
 
         {/*
-          ─── Nos partenaires ─────────────────────────────────────────
+          ─── 3 · En direct, et les boutiques ───────────────────────────────────────
+
+          Toujours là, en direct ou non : un commerçant diffuse une heure par
+          semaine, et sans ce rail l'accueil ne montrait aucun visage de
+          commerce le reste du temps. L'anneau framboise et l'étiquette
+          disent qui est à l'antenne.
+        */}
+        {withLiveFirst.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection
+              hue="var(--color-brand)"
+              titre={anyLive ? t.home.liveNow : t.home.partners}
+            >
+              {anyLive && (
+                <span className="text-[0.6875rem] font-semibold text-[var(--color-muted)]">
+                  {format(t.accueil.liveCount, {
+                    n: withLiveFirst.filter((s) => s.lives?.some((l) => l.status === "live")).length,
+                  })}
+                </span>
+              )}
+            </EnteteSection>
+
+            <Rail gap={14} className="px-4">
+              {withLiveFirst.map((shop) => {
+                const live = shop.lives?.find((l) => l.status === "live");
+                return (
+                  <Link
+                    key={shop.id}
+                    href={live ? `/lives/${live.id}` : `/boutique/${shop.slug}`}
+                    className="w-[66px] flex-none text-center"
+                  >
+                    <span
+                      className="relative flex h-[66px] w-[66px] items-center justify-center rounded-full p-[3px]"
+                      style={{
+                        background: live
+                          ? "linear-gradient(135deg, var(--color-live), var(--color-brand-strong))"
+                          : "var(--color-outline)",
+                      }}
+                    >
+                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--color-app)] bg-[var(--color-surface-solid)] text-[0.625rem] font-bold text-[var(--color-muted)]">
+                        {shop.logo_url ? (
+                          <Image
+                            src={shop.logo_url}
+                            alt=""
+                            width={58}
+                            height={58}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          monogram(shop.name)
+                        )}
+                      </span>
+                      {live && (
+                        <span className="absolute -bottom-[3px] start-1/2 -translate-x-1/2 rounded-full bg-[var(--color-live-fill)] px-[7px] py-[3px] text-[0.4375rem] font-bold tracking-[0.12em] text-white rtl:translate-x-1/2">
+                          LIVE
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-[9px] block truncate text-[0.65625rem] font-bold text-[var(--color-ink)]">
+                      {shop.name}
+                    </span>
+                    {shop.followers_count > 0 && (
+                      <span className="block truncate text-[0.59375rem] text-[var(--color-muted)]">
+                        {shop.followers_count} {t.shop.followers}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </Rail>
+          </section>
+        )}
+
+        {/*
+          ─── 4 · Nos partenaires ─────────────────────────────────────────
 
           Les commerces qui soutiennent l'application. La section disparaît
           quand il n'y en a aucun : un titre suivi du vide fait croire à une
@@ -425,7 +519,7 @@ export default async function HomePage() {
         )}
 
         {/*
-          ─── 3 · Catégories ──────────────────────────────────────────
+          ─── 5 · Catégories ──────────────────────────────────────────
 
           La photo occupe toute la carte, le nom se lit sur un voile en bas :
           une catégorie se reconnaît à son image avant de se lire, et une part
@@ -456,7 +550,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ─── 4 · Promotions du moment ───────────────────────────────── */}
+        {/* ─── 6 · Promotions du moment ───────────────────────────────── */}
         {(promo.data || (shopPromos.data ?? []).length > 0) && (
           <section className="flex flex-col gap-3">
             <EnteteSection hue={25} titre={t.home.promos}>
@@ -609,7 +703,97 @@ export default async function HomePage() {
         )}
 
         {/*
-          ─── 5 · La sélection, ou le direct ──────────────────────────
+          ─── 7 · Free Shop ───────────────────────────────────────────────
+
+          Les annonces des membres, approuvées. Trois seulement : c'est un
+          aperçu qui donne envie d'ouvrir la section, pas la section. La
+          policy de lecture écarte déjà tout ce qui n'est pas validé — il
+          n'y a donc rien à filtrer ici, et rien à oublier de filtrer.
+        */}
+        {(freeShop.data ?? []).length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={0} titre={t.deals.title}>
+              <Link href="/free-shop" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
+                {t.common.seeAll} →
+              </Link>
+            </EnteteSection>
+
+            <Rail gap={10} className="px-4">
+              {(freeShop.data ?? []).map((annonce) => (
+                <Link
+                  key={annonce.id}
+                  href={`/free-shop/${annonce.id}`}
+                  className="w-[168px] flex-none overflow-hidden rounded-[18px] bg-[var(--color-surface-solid)]"
+                >
+                  <span className="relative block aspect-[4/3] bg-[var(--color-app)]">
+                    {annonce.images[0] ? (
+                      <Image src={annonce.images[0]} alt="" fill sizes="168px" className="object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-[0.625rem] text-[var(--color-faint)]">
+                        {t.deals.title}
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex flex-col gap-[2px] px-[10px] py-[9px]">
+                    <span className="truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
+                      {annonce.title}
+                    </span>
+                    <span dir="ltr" className="text-[0.65625rem] font-bold text-[var(--color-brand)]">
+                      {annonce.price != null ? formatPrice(annonce.price, locale) : t.deals.free}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </Rail>
+          </section>
+        )}
+
+        {/*
+          ─── 8 · Société Dahmani — Lelma3ardh ────────────────────────────
+
+          Les stands de l'exposition, qui restent ouverts quand le marché
+          ferme. L'ambre les distingue du violet du mall : on n'y commande
+          pas, et leur donner l'apparence d'une boutique ferait chercher un
+          panier qui n'existe pas.
+        */}
+        {(exposants.data ?? []).length > 0 && (
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue={35} titre="Société Dahmani — Lelma3ardh">
+              <Link
+                href="/lelma3ardh"
+                className="text-[0.6875rem] font-bold text-[var(--color-brand)]"
+              >
+                {t.common.seeAll} →
+              </Link>
+            </EnteteSection>
+
+            <Rail gap={10} className="px-4">
+              {(exposants.data ?? []).map((x) => (
+                <Link
+                  key={x.id}
+                  href={`/lelma3ardh/${x.slug}`}
+                  className="w-[136px] flex-none overflow-hidden rounded-[18px] bg-[var(--color-surface-solid)]"
+                >
+                  <span className="relative block aspect-square bg-[rgba(138,90,31,0.1)]">
+                    {x.cover_url ? (
+                      <Image src={x.cover_url} alt="" fill sizes="136px" className="object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-[0.75rem] font-bold text-[rgba(138,90,31,0.5)]">
+                        {monogram(x.name)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="block truncate px-[9px] py-[8px] text-[0.65625rem] font-bold text-[var(--color-ink)]">
+                    {locale === "ar" ? (x.name_ar ?? x.name) : x.name}
+                  </span>
+                </Link>
+              ))}
+            </Rail>
+          </section>
+        )}
+
+        {/*
+          ─── 9 · La sélection, ou le direct ──────────────────────────
 
           L'une ou l'autre, jamais les deux. Un direct est un rendez-vous :
           tant qu'il en existe un, rien ne doit lui disputer cette place. Le
@@ -639,81 +823,7 @@ export default async function HomePage() {
         )}
 
         {/*
-          ─── 6 · Les boutiques ───────────────────────────────────────
-
-          Toujours là, en direct ou non : un commerçant diffuse une heure par
-          semaine, et sans ce rail l'accueil ne montrait aucun visage de
-          commerce le reste du temps. L'anneau framboise et l'étiquette
-          disent qui est à l'antenne.
-        */}
-        {withLiveFirst.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection
-              hue="var(--color-brand)"
-              titre={anyLive ? t.home.liveNow : t.home.partners}
-            >
-              {anyLive && (
-                <span className="text-[0.6875rem] font-semibold text-[var(--color-muted)]">
-                  {format(t.accueil.liveCount, {
-                    n: withLiveFirst.filter((s) => s.lives?.some((l) => l.status === "live")).length,
-                  })}
-                </span>
-              )}
-            </EnteteSection>
-
-            <Rail gap={14} className="px-4">
-              {withLiveFirst.map((shop) => {
-                const live = shop.lives?.find((l) => l.status === "live");
-                return (
-                  <Link
-                    key={shop.id}
-                    href={live ? `/lives/${live.id}` : `/boutique/${shop.slug}`}
-                    className="w-[66px] flex-none text-center"
-                  >
-                    <span
-                      className="relative flex h-[66px] w-[66px] items-center justify-center rounded-full p-[3px]"
-                      style={{
-                        background: live
-                          ? "linear-gradient(135deg, var(--color-live), var(--color-brand-strong))"
-                          : "var(--color-outline)",
-                      }}
-                    >
-                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--color-app)] bg-[var(--color-surface-solid)] text-[0.625rem] font-bold text-[var(--color-muted)]">
-                        {shop.logo_url ? (
-                          <Image
-                            src={shop.logo_url}
-                            alt=""
-                            width={58}
-                            height={58}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          monogram(shop.name)
-                        )}
-                      </span>
-                      {live && (
-                        <span className="absolute -bottom-[3px] start-1/2 -translate-x-1/2 rounded-full bg-[var(--color-live-fill)] px-[7px] py-[3px] text-[0.4375rem] font-bold tracking-[0.12em] text-white rtl:translate-x-1/2">
-                          LIVE
-                        </span>
-                      )}
-                    </span>
-                    <span className="mt-[9px] block truncate text-[0.65625rem] font-bold text-[var(--color-ink)]">
-                      {shop.name}
-                    </span>
-                    {shop.followers_count > 0 && (
-                      <span className="block truncate text-[0.59375rem] text-[var(--color-muted)]">
-                        {shop.followers_count} {t.shop.followers}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </Rail>
-          </section>
-        )}
-
-        {/*
-          ─── 7 · Services pratiques ──────────────────────────────────
+          ─── 10 · Services pratiques ──────────────────────────────────
 
           Des chips de deux lignes sur deux rangées, plutôt que des pastilles
           rondes : le nom seul ne disait pas l'essentiel — une pharmacie de
@@ -765,7 +875,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ─── 8 · Invitation commerçants ─────────────────────────────── */}
+        {/* ─── 11 · Invitation commerçants ─────────────────────────────── */}
         <div className="relative mx-4 overflow-hidden rounded-[24px] bg-[image:var(--gradient-brand)] p-[18px] text-white shadow-[0_12px_30px_rgba(109,75,143,0.26)]">
           <span
             aria-hidden

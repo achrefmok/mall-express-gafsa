@@ -3,9 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
 /** Préfixes réservés, avec le rôle minimal exigé. */
-const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" }> = [
+const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "dahmani" }> = [
   { prefix: "/vendeur", role: "vendor" },
   { prefix: "/admin", role: "admin" },
+  /*
+    L'espace de Société Dahmani. Il vit hors de `/admin` exprès : un
+    administrateur Dahmani n'est pas un administrateur de l'application, et
+    le mettre sous le même préfixe aurait fait dépendre la séparation d'une
+    exception dans la garde — le genre d'exception qu'un jour on oublie.
+  */
+  { prefix: "/lelma3ardh/gestion", role: "dahmani" },
   { prefix: "/panier", role: "client" },
   { prefix: "/commandes", role: "client" },
   { prefix: "/profil", role: "client" },
@@ -97,7 +104,21 @@ export async function updateSession(request: NextRequest) {
         .single();
 
       const role = profile?.role ?? "client";
-      const allowed = guard.role === "vendor" ? role === "vendor" || role === "admin" : role === "admin";
+      /*
+        Qui passe :
+          · vendeur — un vendeur, ou un administrateur qui vient inspecter ;
+          · dahmani — l'administration Dahmani, ou celle de l'application,
+            qui garde tous les droits ;
+          · admin — l'administration de l'application, et elle seule.
+            `dahmani_admin` est explicitement dehors : c'est là toute la
+            raison d'être de ce rôle.
+      */
+      const allowed =
+        guard.role === "vendor"
+          ? role === "vendor" || role === "admin"
+          : guard.role === "dahmani"
+            ? role === "dahmani_admin" || role === "admin"
+            : role === "admin";
 
       if (!allowed) {
         const home = request.nextUrl.clone();

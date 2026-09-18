@@ -36,7 +36,8 @@
     "db:concurrence": "node scripts/check-concurrence.mjs",
     "db:black-friday": "node scripts/check-black-friday.mjs",
     "db:free-shop": "node scripts/check-free-shop.mjs",
-    "db:reservations": "node scripts/check-reservations.mjs"
+    "db:reservations": "node scripts/check-reservations.mjs",
+    "db:lelma3ardh": "node scripts/check-lelma3ardh.mjs"
   },
   "dependencies": {
     "@sentry/node": "^10.71.0",
