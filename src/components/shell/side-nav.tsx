@@ -49,6 +49,14 @@ export function SideNav({
   if (role === "admin") {
     spaces.push({ href: spaceHref("/admin"), label: t.account.adminSpace, variant: "admin" });
   }
+  /*
+    Lelma3ardh garde la navigation cliente : son écran de gestion vit dans
+    l'espace client, et lui inventer une quatrième variante de barre aurait
+    fait une barre à une seule entrée.
+  */
+  if (role === "dahmani_admin" || role === "admin") {
+    spaces.push({ href: spaceHref("/lelma3ardh/gestion"), label: "Lelma3ardh", variant: "client" });
+  }
 
   return (
     <div className="hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:border-e lg:border-[var(--color-hairline)] lg:px-5 lg:py-7">

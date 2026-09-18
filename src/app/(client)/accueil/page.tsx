@@ -11,7 +11,12 @@ import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
-import { PartnersRail, type PartenaireAccueil } from "@/components/home/partners-rail";
+import {
+  PartnersRail,
+  cartePourBoutique,
+  type CartePartenaire,
+  type PartenaireAccueil,
+} from "@/components/home/partners-rail";
 import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
 import { categoryIcon } from "@/components/ui/category-icons";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
@@ -82,7 +87,6 @@ export default async function HomePage() {
     counts,
     profile,
     sponsored,
-    liveShops,
     promo,
     shopPromos,
     catalogue,
@@ -93,6 +97,7 @@ export default async function HomePage() {
     partenaires,
     freeShop,
     exposants,
+    expoAccueil,
   ] = await Promise.all([
     getMallStatus(),
     getCategories(),
@@ -115,14 +120,6 @@ export default async function HomePage() {
       .order("position")
       .limit(6),
 
-    // Boutiques en direct d'abord, puis les plus suivies — la rangée
-    // d'avatars ne doit jamais être vide.
-    supabase
-      .from("shops")
-      .select("id, name, slug, logo_url, followers_count, lives(id, status)")
-      .eq("status", "approved")
-      .order("followers_count", { ascending: false })
-      .limit(10),
 
     supabase
       .from("products")
@@ -130,6 +127,7 @@ export default async function HomePage() {
       .eq("is_online", true)
       .eq("is_draft", false)
       .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
       .not("compare_at_price", "is", null)
       .order("sold_count", { ascending: false })
       .limit(1)
@@ -182,6 +180,7 @@ export default async function HomePage() {
       .eq("is_online", true)
       .eq("is_draft", false)
       .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
       .gt("stock", 0)
       .order("sold_count", { ascending: false })
       .limit(12),
@@ -248,7 +247,46 @@ export default async function HomePage() {
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .limit(10),
+    /* L'édition la plus récente, pour la carte de la rangée. */
+    supabase
+      .from("expos")
+      .select("id, name, place, cover_url, starts_on, ends_on")
+      .eq("is_published", true)
+      .order("starts_on", { ascending: false })
+      .limit(1),
   ]);
+
+  /*
+    La rangée des partenaires : les boutiques, puis l'exposition.
+
+    Lelma3ardh n'est pas une boutique et n'a pas de ligne dans `shops` — sa
+    carte est donc composée ici, à partir de l'édition en cours. Elle vient
+    en dernier : un commerce qu'on peut visiter aujourd'hui passe avant un
+    marché qui a ses dates.
+  */
+  const cartesPartenaires: CartePartenaire[] = [
+    ...((partenaires.data ?? []) as unknown as PartenaireAccueil[]).map((p) =>
+      cartePourBoutique(p, locale),
+    ),
+  ];
+
+  const editionEnCours = expoAccueil.data?.[0];
+  if (editionEnCours && (exposants.data ?? []).length > 0) {
+    cartesPartenaires.push({
+      cle: editionEnCours.id,
+      href: "/lelma3ardh",
+      nom: "Société Dahmani — Lelma3ardh",
+      accroche: `${(exposants.data ?? []).length} exposants · ${editionEnCours.place ?? "Gafsa"}`,
+      image: editionEnCours.cover_url,
+      logo: null,
+      monogramme: "SD",
+      teinte: "expo",
+      liens: [
+        { href: "/lelma3ardh", libelle: "Voir les stands" },
+        { href: "/lelma3ardh?vue=produits", libelle: "Voir les produits", accent: true },
+      ],
+    });
+  }
 
   /* Combien de boutiques approuvées derrière chaque catégorie. */
   const shopCount = (shopsByCategory.data ?? []).reduce<Record<string, number>>((acc, row) => {
@@ -264,22 +302,6 @@ export default async function HomePage() {
     }, {}),
   );
 
-  const shops = liveShops.data ?? [];
-  const withLiveFirst = [...shops].sort((a, b) => {
-    const aLive = a.lives?.some((l) => l.status === "live") ? 1 : 0;
-    const bLive = b.lives?.some((l) => l.status === "live") ? 1 : 0;
-    return bLive - aLive;
-  });
-
-  /*
-    Y a-t-il vraiment un direct à l'antenne ?
-
-    Le rail affiche toutes les boutiques, celles qui diffusent en tête. Sans
-    aucun direct, il ne restait qu'une bande de pastilles grises sous un titre
-    qui promettait « en direct maintenant » — le genre de section qu'on apprend
-    à ignorer.
-  */
-  const anyLive = shops.some((shop) => shop.lives?.some((l) => l.status === "live"));
 
   /*
     Trois articles pour prendre la place, en préférant les boutiques à la une.
@@ -428,93 +450,16 @@ export default async function HomePage() {
         <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
 
         {/*
-          ─── 3 · En direct, et les boutiques ───────────────────────────────────────
-
-          Toujours là, en direct ou non : un commerçant diffuse une heure par
-          semaine, et sans ce rail l'accueil ne montrait aucun visage de
-          commerce le reste du temps. L'anneau framboise et l'étiquette
-          disent qui est à l'antenne.
-        */}
-        {withLiveFirst.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection
-              hue="var(--color-brand)"
-              titre={anyLive ? t.home.liveNow : t.home.partners}
-            >
-              {anyLive && (
-                <span className="text-[0.6875rem] font-semibold text-[var(--color-muted)]">
-                  {format(t.accueil.liveCount, {
-                    n: withLiveFirst.filter((s) => s.lives?.some((l) => l.status === "live")).length,
-                  })}
-                </span>
-              )}
-            </EnteteSection>
-
-            <Rail gap={14} className="px-4">
-              {withLiveFirst.map((shop) => {
-                const live = shop.lives?.find((l) => l.status === "live");
-                return (
-                  <Link
-                    key={shop.id}
-                    href={live ? `/lives/${live.id}` : `/boutique/${shop.slug}`}
-                    className="w-[66px] flex-none text-center"
-                  >
-                    <span
-                      className="relative flex h-[66px] w-[66px] items-center justify-center rounded-full p-[3px]"
-                      style={{
-                        background: live
-                          ? "linear-gradient(135deg, var(--color-live), var(--color-brand-strong))"
-                          : "var(--color-outline)",
-                      }}
-                    >
-                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--color-app)] bg-[var(--color-surface-solid)] text-[0.625rem] font-bold text-[var(--color-muted)]">
-                        {shop.logo_url ? (
-                          <Image
-                            src={shop.logo_url}
-                            alt=""
-                            width={58}
-                            height={58}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          monogram(shop.name)
-                        )}
-                      </span>
-                      {live && (
-                        <span className="absolute -bottom-[3px] start-1/2 -translate-x-1/2 rounded-full bg-[var(--color-live-fill)] px-[7px] py-[3px] text-[0.4375rem] font-bold tracking-[0.12em] text-white rtl:translate-x-1/2">
-                          LIVE
-                        </span>
-                      )}
-                    </span>
-                    <span className="mt-[9px] block truncate text-[0.65625rem] font-bold text-[var(--color-ink)]">
-                      {shop.name}
-                    </span>
-                    {shop.followers_count > 0 && (
-                      <span className="block truncate text-[0.59375rem] text-[var(--color-muted)]">
-                        {shop.followers_count} {t.shop.followers}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </Rail>
-          </section>
-        )}
-
-        {/*
           ─── 4 · Nos partenaires ─────────────────────────────────────────
 
           Les commerces qui soutiennent l'application. La section disparaît
           quand il n'y en a aucun : un titre suivi du vide fait croire à une
           panne, et cette place vaut mieux que ça.
         */}
-        {(partenaires.data ?? []).length > 0 && (
+        {cartesPartenaires.length > 0 && (
           <section className="flex flex-col gap-3">
             <EnteteSection hue={280} titre={t.home.partners} />
-            <PartnersRail
-              partenaires={(partenaires.data ?? []) as unknown as PartenaireAccueil[]}
-              locale={locale}
-            />
+            <PartnersRail cartes={cartesPartenaires} />
           </section>
         )}
 
@@ -793,14 +738,17 @@ export default async function HomePage() {
         )}
 
         {/*
-          ─── 9 · La sélection, ou le direct ──────────────────────────
+          ─── 9 · La sélection ────────────────────────────────────────
 
-          L'une ou l'autre, jamais les deux. Un direct est un rendez-vous :
-          tant qu'il en existe un, rien ne doit lui disputer cette place. Le
-          reste du temps — c'est-à-dire presque toujours — la place revient à
-          ce que les boutiques mises en avant ont à vendre.
+          Ce que les boutiques mises en avant ont à vendre.
+
+          Elle s'effaçait autrefois devant un direct à l'antenne, parce que
+          la rangée des boutiques annonçait ce direct juste au-dessus. Cette
+          rangée n'est plus là : se taire pour un rendez-vous que l'accueil
+          n'annonce plus n'aurait laissé qu'un trou. Les directs gardent leur
+          onglet, qui les montre tous.
         */}
-        {!anyLive && highlights.length > 0 && (
+        {highlights.length > 0 && (
           <section className="flex flex-col gap-3">
             <EnteteSection hue={300} titre={t.home.featured} />
             <Rail gap={10} className="px-4">

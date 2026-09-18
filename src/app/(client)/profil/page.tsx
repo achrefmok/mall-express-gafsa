@@ -172,6 +172,22 @@ export default async function ProfilePage() {
             <ChevronRightIcon size={14} />
           </Link>
         )}
+        {/*
+          L'administration Lelma3ardh a son entrée ici, comme les autres.
+
+          Elle n'en avait aucune : le rôle existait, l'écran aussi, mais rien
+          dans l'application n'y menait — il fallait connaître l'adresse par
+          cœur. Un espace qu'on ne trouve pas est un espace qui n'existe pas.
+        */}
+        {(profile.role === "dahmani_admin" || profile.role === "admin") && (
+          <Link
+            href="/lelma3ardh/gestion"
+            className="flex items-center gap-[10px] rounded-[18px] bg-[linear-gradient(135deg,#8a5a1f,#3d2608)] p-3 text-white"
+          >
+            <span className="flex-1 text-[0.78125rem] font-bold">Gestion Lelma3ardh</span>
+            <ChevronRightIcon size={14} />
+          </Link>
+        )}
         {profile.role === "client" && (
           <BecomeVendorModal categories={categories} label={t.account.becomeVendor} />
         )}

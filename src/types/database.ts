@@ -231,6 +231,7 @@ export interface Database {
           partner_tagline: string | null;
           partner_tagline_ar: string | null;
           accepts_reservations: boolean;
+          list_in_marketplace: boolean;
           rating_sum: number;
           rating_count: number;
           followers_count: number;

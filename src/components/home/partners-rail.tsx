@@ -17,6 +17,41 @@ export interface PartenaireAccueil {
   category: { hue: number } | null;
 }
 
+/** Une carte de la rangée : une boutique partenaire, ou un espace entier. */
+export interface CartePartenaire {
+  cle: string;
+  href: string;
+  nom: string;
+  accroche: string | null;
+  image: string | null;
+  logo: string | null;
+  monogramme: string;
+  /** L'ambre de Lelma3ardh, le violet du mall : deux mondes, deux teintes. */
+  teinte: "mall" | "expo";
+  liens: Array<{ href: string; libelle: string; accent?: boolean }>;
+}
+
+/** Une boutique partenaire, telle que la rangée l'attend. */
+export function cartePourBoutique(p: PartenaireAccueil, locale: AppLocale): CartePartenaire {
+  return {
+    cle: p.id,
+    href: `/boutique/${p.slug}`,
+    nom: locale === "ar" ? (p.name_ar ?? p.name) : p.name,
+    accroche: locale === "ar" ? (p.partner_tagline_ar ?? p.partner_tagline) : p.partner_tagline,
+    image: p.banner_url ?? p.cover_url,
+    logo: p.logo_url,
+    monogramme: monogram(p.name),
+    teinte: "mall",
+    liens: [
+      { href: `/boutique/${p.slug}?onglet=products`, libelle: "Voir les produits" },
+      { href: `/boutique/${p.slug}?onglet=promos`, libelle: "Voir les promotions" },
+      ...(p.accepts_reservations
+        ? [{ href: `/boutique/${p.slug}`, libelle: "Réserver", accent: true }]
+        : []),
+    ],
+  };
+}
+
 /**
  * Les partenaires de G-Mall, sur l'accueil.
  *
@@ -32,120 +67,101 @@ export interface PartenaireAccueil {
  * La carte emprunte donc le vocabulaire du reste de l'application — mêmes
  * arrondis, mêmes ombres, même typographie — et se distingue par trois choses
  * discrètes : elle est plus grande, elle porte une image pleine largeur, et
- * elle annonce ce qu'elle est d'un mot, en petit. C'est la même différence
- * qu'entre une vitrine soignée et un homme-sandwich.
+ * elle annonce ce qu'elle est d'un mot, en petit.
  *
- * Les trois boutons mènent aux onglets qui existent déjà sur la fiche de la
- * boutique — produits, promotions — plutôt qu'à des pages nouvelles : ce sont
- * les mêmes données, et une seconde page à tenir à jour finit par diverger.
+ * ────────────────────────────────────────────────────────────────────────
+ * Une boutique et un espace, dans la même rangée
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Dar Elhout est un commerce, Lelma3ardh une exposition entière. Les mettre
+ * côte à côte n'est pas un abus : du point de vue du visiteur, ce sont deux
+ * partenaires qui lui proposent quelque chose à parcourir. Seule la teinte du
+ * bandeau les distingue — violet pour le mall, ambre pour le marché — parce
+ * qu'on ne commande pas de la même façon des deux côtés.
  */
-export function PartnersRail({
-  partenaires,
-  locale,
-}: {
-  partenaires: PartenaireAccueil[];
-  locale: AppLocale;
-}) {
-  if (partenaires.length === 0) return null;
+export function PartnersRail({ cartes }: { cartes: CartePartenaire[] }) {
+  if (cartes.length === 0) return null;
 
   return (
     <div className="no-sb flex gap-3 overflow-x-auto px-4 pb-1">
-      {partenaires.map((p) => {
-        const nom = locale === "ar" ? (p.name_ar ?? p.name) : p.name;
-        const accroche =
-          locale === "ar" ? (p.partner_tagline_ar ?? p.partner_tagline) : p.partner_tagline;
-        const image = p.banner_url ?? p.cover_url;
+      {cartes.map((c) => (
+        <article
+          key={c.cle}
+          className="flex w-[290px] flex-none flex-col overflow-hidden rounded-[22px] bg-[var(--color-surface-solid)] shadow-[0_10px_28px_rgba(36,31,46,0.1)]"
+        >
+          <Link href={c.href} className="relative block aspect-[16/9]">
+            {c.image ? (
+              <Image src={c.image} alt="" fill sizes="290px" className="object-cover" />
+            ) : (
+              <span
+                className={
+                  c.teinte === "expo"
+                    ? "block h-full w-full bg-[linear-gradient(135deg,#b07a2a,#3d2608)]"
+                    : "block h-full w-full bg-[image:var(--gradient-brand)]"
+                }
+              />
+            )}
 
-        return (
-          <article
-            key={p.id}
-            className="flex w-[290px] flex-none flex-col overflow-hidden rounded-[22px] bg-[var(--color-surface-solid)] shadow-[0_10px_28px_rgba(36,31,46,0.1)]"
-          >
-            <Link href={`/boutique/${p.slug}`} className="relative block aspect-[16/9]">
-              {image ? (
-                <Image
-                  src={image}
-                  alt=""
-                  fill
-                  sizes="290px"
-                  className="object-cover"
-                />
-              ) : (
-                <span
-                  className="cat-surface flex h-full w-full items-center justify-center"
-                  style={{ "--hue": p.category?.hue ?? 300 } as React.CSSProperties}
-                />
-              )}
-
-              {/* Le voile porte le mot « partenaire » sans le crier. */}
-              <span className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.55),transparent)] px-3 pt-8 pb-[10px]">
-                <span className="text-[0.5rem] font-bold tracking-[0.18em] text-white/80 uppercase">
-                  Partenaire
-                </span>
+            {/* Le voile porte le mot « partenaire » sans le crier. */}
+            <span className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.55),transparent)] px-3 pt-8 pb-[10px]">
+              <span className="text-[0.5rem] font-bold tracking-[0.18em] text-white/80 uppercase">
+                {c.teinte === "expo" ? "Partenaire · exposition" : "Partenaire"}
               </span>
-            </Link>
+            </span>
+          </Link>
 
-            <div className="flex flex-col gap-[10px] p-3">
-              <div className="flex items-center gap-[10px]">
-                <span className="flex h-[38px] w-[38px] flex-none items-center justify-center overflow-hidden rounded-[13px] bg-[var(--color-app)] text-[0.625rem] font-bold text-[var(--color-muted)]">
-                  {p.logo_url ? (
-                    <Image src={p.logo_url} alt="" width={38} height={38} className="h-full w-full object-cover" />
-                  ) : (
-                    monogram(p.name)
-                  )}
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <Link
-                    href={`/boutique/${p.slug}`}
-                    className="block truncate text-[0.8125rem] font-bold text-[var(--color-ink)]"
-                  >
-                    {nom}
-                  </Link>
-                  {accroche && (
-                    <span className="block truncate text-[0.625rem] text-[var(--color-muted)]">
-                      {accroche}
-                    </span>
-                  )}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-[6px]">
-                <Bouton href={`/boutique/${p.slug}?onglet=products`}>Voir les produits</Bouton>
-                <Bouton href={`/boutique/${p.slug}?onglet=promos`}>Voir les promotions</Bouton>
-                {p.accepts_reservations && (
-                  <Bouton href={`/boutique/${p.slug}`} accent>
-                    Réserver
-                  </Bouton>
+          <div className="flex flex-col gap-[10px] p-3">
+            <div className="flex items-center gap-[10px]">
+              <span
+                className={
+                  "flex h-[38px] w-[38px] flex-none items-center justify-center overflow-hidden rounded-[13px] text-[0.625rem] font-bold " +
+                  (c.teinte === "expo"
+                    ? "bg-[rgba(138,90,31,0.14)] text-[#8a5a1f]"
+                    : "bg-[var(--color-app)] text-[var(--color-muted)]")
+                }
+              >
+                {c.logo ? (
+                  <Image src={c.logo} alt="" width={38} height={38} className="h-full w-full object-cover" />
+                ) : (
+                  c.monogramme
                 )}
-              </div>
-            </div>
-          </article>
-        );
-      })}
-    </div>
-  );
-}
+              </span>
 
-function Bouton({
-  href,
-  children,
-  accent,
-}: {
-  href: string;
-  children: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        accent
-          ? "rounded-full bg-[var(--color-brand)] px-[11px] py-[6px] text-[0.625rem] font-bold text-white"
-          : "rounded-full border border-[var(--color-outline)] px-[11px] py-[6px] text-[0.625rem] font-bold text-[var(--color-ink)]"
-      }
-    >
-      {children}
-    </Link>
+              <span className="min-w-0 flex-1">
+                <Link
+                  href={c.href}
+                  className="block truncate text-[0.8125rem] font-bold text-[var(--color-ink)]"
+                >
+                  {c.nom}
+                </Link>
+                {c.accroche && (
+                  <span className="block truncate text-[0.625rem] text-[var(--color-muted)]">
+                    {c.accroche}
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-[6px]">
+              {c.liens.map((lien) => (
+                <Link
+                  key={lien.href + lien.libelle}
+                  href={lien.href}
+                  className={
+                    lien.accent
+                      ? `rounded-full px-[11px] py-[6px] text-[0.625rem] font-bold text-white ${
+                          c.teinte === "expo" ? "bg-[#8a5a1f]" : "bg-[var(--color-brand)]"
+                        }`
+                      : "rounded-full border border-[var(--color-outline)] px-[11px] py-[6px] text-[0.625rem] font-bold text-[var(--color-ink)]"
+                  }
+                >
+                  {lien.libelle}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }

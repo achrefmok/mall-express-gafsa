@@ -110,6 +110,56 @@ const vagues = (couleur) => `
   }).join("")}
   <circle cx="200" cy="170" r="130" fill="${couleur}" opacity="0.12"/>`;
 
+/**
+ * Le souk : des tentes, des lanternes, une allée.
+ *
+ * Pour Lelma3ardh. Un marché se reconnaît à ses toiles en zigzag bien avant
+ * qu'on lise son nom — c'est ce que cette image emprunte, en trois formes.
+ */
+const souk = (couleur) => `
+  ${[0, 1, 2, 3].map((i) => {
+    const x = 120 + i * 260;
+    return `<g opacity="${0.9 - i * 0.12}">
+      <path d="M${x} 250 L${x + 110} 190 L${x + 220} 250 Z" fill="${couleur}" opacity="0.5"/>
+      ${[0, 1, 2, 3].map((k) => `<path d="M${x + k * 55} 250 q 27 26 55 0" stroke="${couleur}" stroke-width="4" fill="none" opacity="0.8"/>`).join("")}
+      <rect x="${x + 10}" y="250" width="200" height="230" rx="12" fill="${couleur}" opacity="0.13"/>
+      <rect x="${x + 42}" y="320" width="136" height="160" rx="10" fill="${couleur}" opacity="0.2"/>
+    </g>`;
+  }).join("")}
+  ${[220, 480, 740, 1000].map((x) => `<g opacity="0.85"><line x1="${x}" y1="60" x2="${x}" y2="110" stroke="${couleur}" stroke-width="3"/><path d="M${x - 22} 110 h44 l-10 46 h-24 Z" fill="${couleur}" opacity="0.6"/><circle cx="${x}" cy="168" r="7" fill="${couleur}"/></g>`).join("")}
+  <rect x="0" y="520" width="1200" height="80" fill="${couleur}" opacity="0.08"/>`;
+
+/** Un tapis tissé : bandes et losanges, le vocabulaire du mergoum. */
+const tissage = (couleur) => `
+  ${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="0" y="${60 + i * 90}" width="1200" height="${i % 2 ? 26 : 12}" fill="${couleur}" opacity="${i % 2 ? 0.18 : 0.3}"/>`).join("")}
+  ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<path d="M${90 + i * 145} 300 l 52 -52 l 52 52 l -52 52 Z" fill="${couleur}" opacity="0.42"/>`).join("")}
+  ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<path d="M${90 + i * 145} 300 l 26 -26 l 26 26 l -26 26 Z" fill="#3d2608" opacity="0.3"/>`).join("")}`;
+
+/** Le terroir : un palmier, des régimes de dattes, une colline. */
+const palmeraie = (couleur) => `
+  <path d="M0 600 q 300 -140 600 -40 q 300 100 600 -30 V600 Z" fill="${couleur}" opacity="0.14"/>
+  ${[300, 620, 940].map((x, i) => {
+    const e = [1, 0.82, 0.68][i];
+    return `<g transform="translate(${x} 520) scale(${e})" opacity="${0.95 - i * 0.18}">
+      <rect x="-9" y="-260" width="18" height="260" rx="9" fill="${couleur}" opacity="0.75"/>
+      ${[-70, -35, 0, 35, 70].map((a) => `<path d="M0 -260 q ${a * 2} -70 ${a * 3} -10" stroke="${couleur}" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8"/>`).join("")}
+      ${[-28, 0, 28].map((d) => `<circle cx="${d}" cy="-236" r="13" fill="${couleur}"/>`).join("")}
+    </g>`;
+  }).join("")}`;
+
+/** Le cuir : un sac, une ceinture, une couture en pointillé. */
+const maroquinerie = (couleur) => `
+  <g transform="translate(760 150)" opacity="0.9">
+    <path d="M40 90 h300 a26 26 0 0 1 26 28 l 22 240 a30 30 0 0 1 -30 32 H22 a30 30 0 0 1 -30 -32 l 22 -240 A26 26 0 0 1 40 90 Z" fill="${couleur}" opacity="0.55"/>
+    <path d="M120 90 V54 a70 70 0 0 1 140 0 V90" stroke="${couleur}" stroke-width="20" fill="none" stroke-linecap="round"/>
+    <path d="M20 160 H360" stroke="#3d2608" stroke-width="5" stroke-dasharray="14 12" opacity="0.45"/>
+  </g>
+  <g transform="translate(90 330)" opacity="0.8">
+    <rect x="0" y="0" width="520" height="56" rx="14" fill="${couleur}" opacity="0.45"/>
+    <rect x="430" y="-12" width="90" height="80" rx="16" fill="${couleur}" opacity="0.7"/>
+    <path d="M20 28 H420" stroke="#3d2608" stroke-width="5" stroke-dasharray="12 14" opacity="0.4"/>
+  </g>`;
+
 const AFFICHES = {
   "affiche-black-friday": affiche({
     fond: `<stop offset="0" stop-color="#241f2e"/><stop offset="1" stop-color="#0d0b10"/>`,
@@ -172,6 +222,28 @@ const AFFICHES = {
   "partenaire-dar-elhout": visuel({
     fond: `<stop offset="0" stop-color="#1f6f9e"/><stop offset="1" stop-color="#0b2f4a"/>`,
     motif: vagues("#a8e0f5"),
+  }),
+
+  /* Lelma3ardh et ses trois premiers stands. L'ambre les relie entre eux
+     et les sépare du violet du mall : on n'y commande pas. */
+  "lelma3ardh": visuel({
+    fond: `<stop offset="0" stop-color="#b07a2a"/><stop offset="1" stop-color="#3d2608"/>`,
+    motif: souk("#ffe0ad"),
+  }),
+
+  "expo-atelier-jasmin": visuel({
+    fond: `<stop offset="0" stop-color="#9d4a3c"/><stop offset="1" stop-color="#3d1a14"/>`,
+    motif: tissage("#ffd9b0"),
+  }),
+
+  "expo-terroir-gafsa": visuel({
+    fond: `<stop offset="0" stop-color="#8a7320"/><stop offset="1" stop-color="#2f2a09"/>`,
+    motif: palmeraie("#ffe9a8"),
+  }),
+
+  "expo-cuir-el-bahja": visuel({
+    fond: `<stop offset="0" stop-color="#8a5a2b"/><stop offset="1" stop-color="#33200d"/>`,
+    motif: maroquinerie("#f0c98f"),
   }),
 };
 

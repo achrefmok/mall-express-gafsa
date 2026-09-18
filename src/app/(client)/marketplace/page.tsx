@@ -48,6 +48,7 @@ export default async function MarketplacePage({
     .eq("is_online", true)
     .eq("is_draft", false)
     .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
     .order("sold_count", { ascending: false })
     .limit(40);
 
