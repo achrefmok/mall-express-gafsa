@@ -23,6 +23,45 @@ export interface CaseRoue {
 const TEINTES = ["#6d4b8f", "#8a5fb0", "#5a3a78", "#9a6fc0", "#4a2f66", "#7d54a0"];
 
 /**
+ * L'angle du texte, retourné dans la moitié basse de la roue.
+ *
+ * Une part située entre 90° et 270° a son texte la tête en bas si on le fait
+ * simplement suivre le rayon. Un demi-tour le remet à l'endroit, et le lecteur
+ * n'a pas à incliner son téléphone.
+ */
+function angleTexte(angle: number): number {
+  const a = ((angle % 360) + 360) % 360;
+  return a > 90 && a < 270 ? a + 180 : a;
+}
+
+/**
+ * Deux lignes plutôt qu'une coupure.
+ *
+ * « Plateau grillé offert » tronqué en « Plateau grillé o » fait douter de ce
+ * qu'on gagne. On coupe au dernier espace qui tient, et on tronque seulement
+ * si un seul mot dépasse.
+ */
+function surDeuxLignes(texte: string, largeur = 14): string[] {
+  const mots = texte.trim().split(/\s+/);
+  const lignes: string[] = [];
+  let courante = "";
+
+  for (const mot of mots) {
+    const essai = courante ? `${courante} ${mot}` : mot;
+    if (essai.length <= largeur) {
+      courante = essai;
+    } else {
+      if (courante) lignes.push(courante);
+      courante = mot;
+    }
+    if (lignes.length === 2) break;
+  }
+  if (courante && lignes.length < 2) lignes.push(courante);
+
+  return lignes.map((l) => (l.length > largeur + 4 ? `${l.slice(0, largeur + 3)}…` : l));
+}
+
+/**
  * La roue de la chance.
  *
  * ────────────────────────────────────────────────────────────────────────
@@ -150,17 +189,35 @@ export function RoueDeLaChance({
                   stroke="#ffffff"
                   strokeWidth="1.5"
                 />
+                {/*
+                  Le texte suit sa part, et se retourne dans la moitié basse.
+
+                  Sans ce demi-tour, les cases du bas se lisent la tête en bas :
+                  on incline le téléphone pour les déchiffrer, et une roue qu'on
+                  déchiffre n'est plus une roue.
+
+                  Deux lignes plutôt qu'une coupure : « Plateau grillé offert »
+                  tronqué en « Plateau grillé o » fait douter de ce qu'on gagne.
+                */}
                 <text
-                  x={100 + 62 * Math.cos(milieu)}
-                  y={100 + 62 * Math.sin(milieu)}
+                  x={100 + 60 * Math.cos(milieu)}
+                  y={100 + 60 * Math.sin(milieu)}
                   fill="#ffffff"
-                  fontSize="8"
+                  fontSize="6.6"
                   fontWeight="700"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  transform={`rotate(${i * part + part / 2} ${100 + 62 * Math.cos(milieu)} ${100 + 62 * Math.sin(milieu)})`}
+                  transform={`rotate(${angleTexte(i * part + part / 2)} ${100 + 60 * Math.cos(milieu)} ${100 + 60 * Math.sin(milieu)})`}
                 >
-                  {libelle(c).slice(0, 16)}
+                  {surDeuxLignes(libelle(c)).map((ligne, n, lignes) => (
+                    <tspan
+                      key={ligne + n}
+                      x={100 + 60 * Math.cos(milieu)}
+                      dy={n === 0 ? `${-((lignes.length - 1) * 3.6)}` : "7.2"}
+                    >
+                      {ligne}
+                    </tspan>
+                  ))}
                 </text>
               </g>
             );

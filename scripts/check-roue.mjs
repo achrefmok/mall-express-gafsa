@@ -161,10 +161,15 @@ async function main() {
   const lots = await rest("wheel_prizes?select=id,label", jetonMarchand, {
     method: "POST",
     headers: { Prefer: "return=representation" },
+    /*
+      Les mêmes clés partout : PostgREST refuse une insertion groupée dont
+      les objets n ont pas la même forme (PGRST102). D où le `stock: null`
+      explicite là où il n y a pas de limite.
+    */
     body: JSON.stringify([
-      { wheel_id: wheelId, label: "Perdu", weight: 0, is_win: false, position: 0 },
+      { wheel_id: wheelId, label: "Perdu", weight: 0, is_win: false, stock: null, position: 0 },
       { wheel_id: wheelId, label: "Le seul lot", weight: 10, is_win: true, stock: 1, position: 1 },
-      { wheel_id: wheelId, label: "Jamais tiré", weight: 0, is_win: true, position: 2 },
+      { wheel_id: wheelId, label: "Jamais tiré", weight: 0, is_win: true, stock: null, position: 2 },
     ]),
   });
   check("il ajoute ses lots", lots.ok, true);
@@ -180,7 +185,7 @@ async function main() {
   check(
     "et rien d'autre que leur libellé",
     Object.keys(cases.corps?.[0] ?? {}).sort(),
-    ["id", "is_win", "label", "label_ar", "position"],
+    ["id", "is_win", "label", "label_ar", "rang"],
   );
 
   /* ─── 3 · Le tirage ───────────────────────────────────────────────── */
@@ -205,11 +210,11 @@ async function main() {
     true,
   );
 
-  const stockApres = await rest(
-    `wheel_prizes?wheel_id=eq.${wheelId}&label=eq.${encodeURIComponent('"Le seul lot"')}&select=stock`,
-    SERVICE,
-  );
-  check("le stock a été décrémenté", stockApres.corps?.[0]?.stock, 0);
+  /* Le libellé contient des espaces : on filtre en mémoire plutôt que de
+     bricoler un `eq.` que PostgREST interprète de travers. */
+  const apresStock = await rest(`wheel_prizes?wheel_id=eq.${wheelId}&select=id,label,stock`, SERVICE);
+  const leLot = (apresStock.corps ?? []).find((p) => p.label === "Le seul lot");
+  check("le stock a été décrémenté", leLot?.stock, 0);
 
   /* ─── 4 · S'inscrire un tour à la main ────────────────────────────── */
   console.log(`\n${C.bold}La triche directe${C.reset}`);
@@ -239,10 +244,19 @@ async function main() {
   /* ─── 6 · Roue fermée ─────────────────────────────────────────────── */
   console.log(`\n${C.bold}Roue fermée${C.reset}`);
 
-  await rest(`wheel_prizes?wheel_id=eq.${wheelId}&label=eq.${encodeURIComponent('"Perdu"')}`, jetonMarchand, {
-    method: "PATCH",
-    body: JSON.stringify({ weight: 5 }),
-  });
+  /*
+    On redonne du poids à la case perdante avant de couper la roue : sinon le
+    refus qui suit pourrait venir d'une roue vide plutôt que d'une roue
+    fermée, et le contrôle ne prouverait pas ce qu'il annonce.
+  */
+  const perdu = (apresStock.corps ?? []).find((p) => p.label === "Perdu");
+  if (perdu) {
+    await rest(`wheel_prizes?id=eq.${perdu.id}`, jetonMarchand, {
+      method: "PATCH",
+      body: JSON.stringify({ weight: 5 }),
+    });
+  }
+
   await rest(`shop_wheels?id=eq.${wheelId}`, jetonMarchand, {
     method: "PATCH",
     body: JSON.stringify({ is_active: false }),
