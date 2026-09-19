@@ -16,6 +16,7 @@ import { BackButton } from "@/components/shell/back";
 import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
 import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { AvantDebut } from "@/components/ui/avant-debut";
+import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 
 /**
@@ -111,7 +112,8 @@ export default async function ShopPage({
   // Le nom et le numéro déjà connus, pour ne pas les faire ressaisir.
   const profile = user ? await getProfile() : null;
 
-  const [products, promo, hoursToday, subCategories, following, lives, counts] = await Promise.all([
+  const [products, promo, hoursToday, subCategories, following, lives, counts, roue] =
+    await Promise.all([
     supabase
       .from("products")
       .select("id, name, price, compare_at_price, images, stock, category:categories(hue)")
@@ -161,7 +163,25 @@ export default async function ShopPage({
       .limit(5),
 
     getTopBarCounts(),
+
+    /*
+      La roue de la boutique, si elle en a une.
+
+      La policy de lecture n'en rend une que si elle est ouverte — active,
+      dans sa fenêtre, boutique approuvée — ou si c'est le commerçant qui
+      regarde. Il n'y a donc rien à filtrer ici, et rien à oublier.
+    */
+    supabase
+      .from("shop_wheels")
+      .select("id, title, title_ar, is_active")
+      .eq("shop_id", shop.id)
+      .maybeSingle(),
   ]);
+
+  /* Les cases sans leurs poids ni leurs stocks : la fonction les retire. */
+  const casesRoue = roue.data
+    ? ((await supabase.rpc("roue_lots_publics", { p_wheel: roue.data.id })).data ?? [])
+    : [];
 
   const rating = formatRating(shop.rating_sum, shop.rating_count);
 
@@ -475,6 +495,26 @@ export default async function ShopPage({
                 </p>
               </div>
             </div>
+          )}
+
+          {/*
+            La roue, avant les produits et après la promotion.
+
+            C'est une raison de rester, pas une raison de venir : elle ne
+            doit pas couvrir ce que la boutique vend, mais celui qui a fait
+            le chemin jusqu'ici mérite de la voir sans chercher.
+          */}
+          {roue.data && roue.data.is_active && casesRoue.length > 0 && (
+            <RoueDeLaChance
+              wheelId={roue.data.id}
+              titre={
+                (locale === "ar" ? roue.data.title_ar : roue.data.title) ??
+                roue.data.title
+              }
+              cases={casesRoue as unknown as CaseRoue[]}
+              locale={locale}
+              connecte={Boolean(user)}
+            />
           )}
 
           {onglet === "lives" ? (

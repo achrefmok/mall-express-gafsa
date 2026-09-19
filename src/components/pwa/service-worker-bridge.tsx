@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { useInstallPrompt } from "./use-install-prompt";
 import { WelcomeScreen } from "@/components/shell/welcome-screen";
+import { InvitationRoue } from "@/components/roue/invitation-roue";
 
 /**
  * Trois responsabilités, volontairement réunies dans un seul composant monté
@@ -20,6 +21,8 @@ export function ServiceWorkerBridge({ logo }: { logo?: string | null }) {
       {/* Monté ici plutôt que dans une coque : il doit couvrir l'écran quelle
           que soit la page d'entrée, y compris une fiche produit partagée. */}
       <WelcomeScreen logo={logo} />
+      {/* Après l écran d ouverture, et une fois par jour seulement. */}
+      <InvitationRoue />
       <OfflineBanner />
       <InstallPrompt />
     </>

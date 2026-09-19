@@ -1023,6 +1023,68 @@ export interface Database {
         ];
       };
 
+      /* ─── shop_wheels ────────────────────────────────────────────── */
+      shop_wheels: {
+        Row: {
+          id: string;
+          shop_id: string;
+          title: string;
+          title_ar: string | null;
+          is_active: boolean;
+          starts_at: string;
+          ends_at: string | null;
+          spins_per_day: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { shop_id: string } & Partial<Database["public"]["Tables"]["shop_wheels"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["shop_wheels"]["Row"]>;
+        Relationships: [FK<"shop_wheels_shop_id_fkey", ["shop_id"], "shops">];
+      };
+
+      /* ─── wheel_prizes ───────────────────────────────────────────── */
+      wheel_prizes: {
+        Row: {
+          id: string;
+          wheel_id: string;
+          label: string;
+          label_ar: string | null;
+          weight: number;
+          is_win: boolean;
+          stock: number | null;
+          position: number;
+          created_at: string;
+        };
+        Insert: { wheel_id: string; label: string } & Partial<
+          Database["public"]["Tables"]["wheel_prizes"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["wheel_prizes"]["Row"]>;
+        Relationships: [FK<"wheel_prizes_wheel_id_fkey", ["wheel_id"], "shop_wheels">];
+      };
+
+      /* ─── wheel_spins ────────────────────────────────────────────── */
+      wheel_spins: {
+        Row: {
+          id: string;
+          wheel_id: string;
+          user_id: string;
+          prize_id: string | null;
+          code: string;
+          claimed_at: string | null;
+          claimed_by: string | null;
+          created_at: string;
+        };
+        Insert: { wheel_id: string; user_id: string; code: string } & Partial<
+          Database["public"]["Tables"]["wheel_spins"]["Row"]
+        >;
+        Update: Partial<Database["public"]["Tables"]["wheel_spins"]["Row"]>;
+        Relationships: [
+          FK<"wheel_spins_wheel_id_fkey", ["wheel_id"], "shop_wheels">,
+          FK<"wheel_spins_user_id_fkey", ["user_id"], "profiles">,
+          FK<"wheel_spins_prize_id_fkey", ["prize_id"], "wheel_prizes">,
+        ];
+      };
+
       /* ─── reservations ───────────────────────────────────────────── */
       reservations: {
         Row: {
@@ -1664,6 +1726,38 @@ export interface Database {
       set_member_role: { Args: { target: string; new_role: UserRole }; Returns: undefined };
       my_shop_id: { Args: Record<PropertyKey, never>; Returns: string | null };
       is_dahmani_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      roue_lots_publics: {
+        Args: { p_wheel: string };
+        Returns: Array<{
+          id: string;
+          label: string;
+          label_ar: string | null;
+          is_win: boolean;
+          position: number;
+        }>;
+      };
+      roue_tourner: {
+        Args: { p_wheel: string };
+        Returns: Array<{
+          prize_id: string;
+          label: string;
+          label_ar: string | null;
+          is_win: boolean;
+          code: string;
+        }>;
+      };
+      roues_ouvertes: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{
+          wheel_id: string;
+          title: string;
+          title_ar: string | null;
+          shop_name: string;
+          shop_slug: string;
+          shop_logo: string | null;
+          deja_joue: boolean;
+        }>;
+      };
       freeshop_quota: {
         Args: Record<PropertyKey, never>;
         Returns: Array<{ utilisees: number; plafond: number }>;

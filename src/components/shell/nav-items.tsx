@@ -49,6 +49,7 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/vendeur/commandes", label: t.nav.orders, icon: <BoxIcon size={17} /> },
       { href: "/vendeur/lives", label: t.nav.lives, icon: <LiveDot size={9} /> },
       { href: "/vendeur/reservations", label: "Réservations", icon: <BoxIcon size={17} /> },
+      { href: "/vendeur/roue", label: "Roue", icon: <SparkIcon size={17} /> },
       { href: "/vendeur/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
     ],
     admin: [
