@@ -93,6 +93,8 @@ export async function enregistrerLot(input: {
   weight: number;
   isWin: boolean;
   stock?: number | null;
+  imageUrl?: string | null;
+  productId?: string | null;
   position?: number;
 }) {
   const { supabase, shop, error } = await requireShopOwner();
@@ -108,6 +110,8 @@ export async function enregistrerLot(input: {
     weight: Math.min(Math.max(Math.round(input.weight), 0), 10_000),
     is_win: input.isWin,
     stock: input.stock == null ? null : Math.max(Math.round(input.stock), 0),
+    image_url: input.imageUrl ?? null,
+    product_id: input.productId ?? null,
     position: input.position ?? 0,
   };
 
@@ -120,6 +124,101 @@ export async function enregistrerLot(input: {
   revalidatePath("/vendeur/roue");
   revalidatePath(`/boutique/${shop.slug}`);
   return done();
+}
+
+/**
+ * Les trois façons d'ajouter une case, en un geste.
+ *
+ * ────────────────────────────────────────────────────────────────────
+ * Pourquoi des raccourcis plutôt qu'un formulaire
+ * ────────────────────────────────────────────────────────────────────
+ *
+ * Composer six cases à la main, c'est six fois : écrire un libellé,
+ * choisir un poids, décider d'un stock, dire si c'est gagnant. La plupart
+ * des commerçants abandonnent à la troisième — et ceux qui finissent ont
+ * écrit des noms qui ne correspondent à rien de leur catalogue.
+ *
+ * Les valeurs par défaut ci-dessous ne sont pas arbitraires :
+ *
+ *   · un produit part à un exemplaire et au poids 5. Un article offert est
+ *     ce qui coûte le plus cher au commerçant : il doit sortir rarement, et
+ *     la case disparaît une fois gagnée — c'est ce qu'on veut de « trois
+ *     articles » qui deviennent « deux articles » ;
+ *   · une remise part au poids 20 et sans stock : elle ne coûte que sur
+ *     une vente, et il n'y a aucune raison de la limiter ;
+ *   · une case perdante part au poids 40. Deux d'entre elles suffisent à
+ *     faire d'une distribution un jeu.
+ *
+ * Tout reste modifiable ensuite. Ce sont des points de départ, pas des
+ * règles.
+ */
+export async function ajouterCase(input: {
+  wheelId: string;
+  kind: "produit" | "remise" | "perdu" | "photo";
+  position: number;
+  /** Pour « produit ». */
+  productId?: string;
+  productName?: string;
+  productImage?: string | null;
+  /** Pour « remise ». */
+  percent?: number;
+  /** Pour « photo ». */
+  label?: string;
+  imageUrl?: string | null;
+}) {
+  const { shop } = await requireShopOwner();
+  if (!shop) return fail("Boutique introuvable");
+
+  if (input.kind === "produit") {
+    if (!input.productId || !input.productName) return fail("Choisissez un produit");
+    return enregistrerLot({
+      wheelId: input.wheelId,
+      label: input.productName,
+      weight: 5,
+      isWin: true,
+      stock: 1,
+      imageUrl: input.productImage ?? null,
+      productId: input.productId,
+      position: input.position,
+    });
+  }
+
+  if (input.kind === "remise") {
+    const pourcent = Math.min(Math.max(Math.round(input.percent ?? 10), 1), 90);
+    return enregistrerLot({
+      wheelId: input.wheelId,
+      label: `−${pourcent} % sur le panier`,
+      labelAr: `‏−${pourcent}٪ على السلّة`,
+      weight: 20,
+      isWin: true,
+      stock: null,
+      position: input.position,
+    });
+  }
+
+  if (input.kind === "photo") {
+    const libelle = input.label?.trim();
+    if (!libelle) return fail("Nommez le lot");
+    return enregistrerLot({
+      wheelId: input.wheelId,
+      label: libelle,
+      weight: 5,
+      isWin: true,
+      stock: 1,
+      imageUrl: input.imageUrl ?? null,
+      position: input.position,
+    });
+  }
+
+  return enregistrerLot({
+    wheelId: input.wheelId,
+    label: "Perdu, retentez demain",
+    labelAr: "حظّ أوفر غدًا",
+    weight: 40,
+    isWin: false,
+    stock: null,
+    position: input.position,
+  });
 }
 
 export async function supprimerLot(id: string) {

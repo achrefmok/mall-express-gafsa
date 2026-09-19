@@ -10,6 +10,7 @@ export interface CaseRoue {
   label: string;
   label_ar: string | null;
   is_win: boolean;
+  image_url: string | null;
   /**
    * L'ordre voulu par le commerçant.
    *
@@ -102,9 +103,12 @@ export function RoueDeLaChance({
   connecte: boolean;
 }) {
   const [angle, setAngle] = useState(0);
-  const [resultat, setResultat] = useState<{ label: string; code: string; gagne: boolean } | null>(
-    null,
-  );
+  const [resultat, setResultat] = useState<{
+    label: string;
+    code: string;
+    gagne: boolean;
+    image: string | null;
+  } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [tourne, setTourne] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -147,6 +151,7 @@ export function RoueDeLaChance({
           label: locale === "ar" ? (r.data.label_ar ?? r.data.label) : r.data.label,
           code: r.data.code,
           gagne: r.data.is_win,
+          image: r.data.image_url,
         });
       }, 3200);
     });
@@ -233,6 +238,22 @@ export function RoueDeLaChance({
             (resultat.gagne ? "bg-[rgba(31,122,61,0.1)]" : "bg-[var(--color-app)]")
           }
         >
+          {/*
+            La photo du lot, quand il en a une.
+
+            « Plateau grillé offert » écrit en toutes lettres est une promesse ;
+            la photo du plateau en est une preuve — et c'est elle qu'on montre
+            au comptoir en même temps que le code.
+          */}
+          {resultat.gagne && resultat.image && (
+            /* eslint-disable-next-line @next/next/no-img-element -- photo du lot, servie telle quelle */
+            <img
+              src={resultat.image}
+              alt=""
+              className="h-20 w-20 rounded-[16px] object-cover shadow-[0_6px_18px_rgba(36,31,46,0.16)]"
+            />
+          )}
+
           <p
             className={
               "text-[0.8125rem] font-bold " +

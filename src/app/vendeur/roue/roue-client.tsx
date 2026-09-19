@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
+  ajouterCase,
   enregistrerLot,
   enregistrerRoue,
   marquerLotRemis,
   supprimerLot,
 } from "@/app/actions/roue";
-import { cx, timeAgo } from "@/lib/format";
+import { uploadImage } from "@/lib/upload";
+import { cx, formatPrice, timeAgo } from "@/lib/format";
 import { Button, Card, Divider, EmptyState, KeyValueRow, Switch, Tag, fieldClass } from "@/components/ui/primitives";
 import type { AppLocale } from "@/types/database";
 
@@ -31,7 +33,15 @@ export interface LotVendeur {
   weight: number;
   is_win: boolean;
   stock: number | null;
+  image_url: string | null;
   position: number;
+}
+
+export interface ProduitBoutique {
+  id: string;
+  name: string;
+  price: number;
+  images: string[];
 }
 
 export interface TourJoue {
@@ -63,11 +73,13 @@ export function RoueVendeur({
   roue,
   lots,
   tours,
+  produits,
   locale,
 }: {
   roue: RoueVendeurRow | null;
   lots: LotVendeur[];
   tours: TourJoue[];
+  produits: ProduitBoutique[];
   locale: AppLocale;
 }) {
   const router = useRouter();
@@ -163,7 +175,13 @@ export function RoueVendeur({
             />
           ))}
 
-          <FormulaireLot wheelId={roue.id} position={lots.length} onFini={() => router.refresh()} />
+          <Composeur
+            wheelId={roue.id}
+            position={lots.length}
+            produits={produits}
+            locale={locale}
+            onFini={() => router.refresh()}
+          />
 
           {/* ─── Les tours joués ─────────────────────────────────────── */}
           <p className="mt-2 text-[0.6875rem] font-bold text-[var(--color-ink)]">
@@ -178,6 +196,195 @@ export function RoueVendeur({
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Ajouter une case, en un geste.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Trois portes, parce qu'il y a trois intentions
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * « J'offre un de mes articles », « je fais une remise », « il faut bien
+ * perdre parfois ». Un formulaire unique obligeait à traduire chacune de
+ * ces trois phrases en libellé, poids, stock et case à cocher — et la
+ * plupart des commerçants abandonnaient avant la sixième case.
+ *
+ * Le produit choisi apporte son nom et sa photo : plus rien à taper, et le
+ * lot correspond vraiment à quelque chose du catalogue. Il part à un
+ * exemplaire — c'est ce qui fait que « trois articles » devient « deux
+ * articles » dès le premier gagné, la case disparaissant de la roue.
+ */
+function Composeur({
+  wheelId,
+  position,
+  produits,
+  locale,
+  onFini,
+}: {
+  wheelId: string;
+  position: number;
+  produits: ProduitBoutique[];
+  locale: AppLocale;
+  onFini: () => void;
+}) {
+  const [ouvert, setOuvert] = useState<"produit" | "remise" | "photo" | null>(null);
+  const [libelle, setLibelle] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const fichier = useRef<HTMLInputElement>(null);
+
+  const poser = (args: Parameters<typeof ajouterCase>[0]) =>
+    startTransition(async () => {
+      setErreur(null);
+      const r = await ajouterCase(args);
+      if (r.ok) {
+        setOuvert(null);
+        setLibelle("");
+        setPhoto(null);
+        onFini();
+      } else setErreur(r.error);
+    });
+
+  async function choisirPhoto(liste: FileList | null) {
+    const f = liste?.[0];
+    if (!f) return;
+    setEnvoi(true);
+    try {
+      const { publicUrl } = await uploadImage("shop-assets", f);
+      setPhoto(publicUrl);
+    } catch (cause) {
+      setErreur(cause instanceof Error ? cause.message : "Envoi impossible");
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-none flex-col gap-2 border-dashed p-3">
+      <p className="text-[0.6875rem] font-bold text-[var(--color-ink)]">Ajouter une case</p>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button size="sm" onClick={() => setOuvert(ouvert === "produit" ? null : "produit")}>
+          Un produit
+        </Button>
+        <Button size="sm" onClick={() => setOuvert(ouvert === "remise" ? null : "remise")}>
+          Une remise
+        </Button>
+        <Button size="sm" onClick={() => setOuvert(ouvert === "photo" ? null : "photo")}>
+          Une photo
+        </Button>
+        <Button
+          size="sm"
+          disabled={pending}
+          onClick={() => poser({ wheelId, kind: "perdu", position })}
+        >
+          Case perdante
+        </Button>
+      </div>
+
+      {ouvert === "produit" && (
+        produits.length === 0 ? (
+          <p className={ETIQ}>Aucun produit en ligne à offrir.</p>
+        ) : (
+          <div className="no-sb max-h-56 overflow-y-auto rounded-[12px] border border-[var(--color-hairline)]">
+            {produits.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  poser({
+                    wheelId,
+                    kind: "produit",
+                    position,
+                    productId: p.id,
+                    productName: p.name,
+                    productImage: p.images[0] ?? null,
+                  })
+                }
+                className="flex w-full items-center gap-2 px-2 py-2 text-start"
+              >
+                <span className="h-9 w-9 flex-none overflow-hidden rounded-[10px] bg-[var(--color-app)]">
+                  {p.images[0] && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- vignette locale */
+                    <img src={p.images[0]} alt="" className="h-full w-full object-cover" />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[0.6875rem] font-semibold text-[var(--color-ink)]">
+                  {p.name}
+                </span>
+                <span dir="ltr" className="flex-none text-[0.65625rem] font-bold text-[var(--color-brand)]">
+                  {formatPrice(p.price, locale)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )
+      )}
+
+      {ouvert === "remise" && (
+        <div className="flex flex-wrap gap-2">
+          {[5, 10, 15, 20, 30].map((pourcent) => (
+            <button
+              key={pourcent}
+              type="button"
+              disabled={pending}
+              onClick={() => poser({ wheelId, kind: "remise", position, percent: pourcent })}
+              className="rounded-full border border-[var(--color-outline)] px-3 py-[7px] text-[0.6875rem] font-bold text-[var(--color-ink)]"
+            >
+              −{pourcent} %
+            </button>
+          ))}
+        </div>
+      )}
+
+      {ouvert === "photo" && (
+        <div className="flex flex-col gap-2">
+          <input
+            value={libelle}
+            onChange={(e) => setLibelle(e.target.value.slice(0, 40))}
+            placeholder="Ce qu'on gagne — « Un café », « Un porte-clés »…"
+            className={CHAMP}
+          />
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fichier.current?.click()}
+              disabled={envoi}
+              className="h-14 w-14 flex-none rounded-[12px] border-[1.5px] border-dashed border-[var(--color-outline)] text-[var(--color-brand)]"
+            >
+              {envoi ? "…" : photo ? "✓" : "+"}
+            </button>
+            {photo && (
+              /* eslint-disable-next-line @next/next/no-img-element -- vignette locale */
+              <img src={photo} alt="" className="h-14 w-14 rounded-[12px] object-cover" />
+            )}
+            <input
+              ref={fichier}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => void choisirPhoto(e.target.files)}
+            />
+          </div>
+
+          <Button
+            size="sm"
+            disabled={pending || envoi || !libelle.trim()}
+            onClick={() => poser({ wheelId, kind: "photo", position, label: libelle, imageUrl: photo })}
+          >
+            Ajouter
+          </Button>
+        </div>
+      )}
+
+      {erreur && <p className="text-[0.625rem] text-[var(--color-live)]">{erreur}</p>}
+    </Card>
   );
 }
 
@@ -232,6 +439,10 @@ function FormulaireLot({
   return (
     <Card className={cx("flex flex-none flex-col gap-2 p-3", !lot && "border-dashed")}>
       <div className="flex items-center gap-2">
+        {lot?.image_url && (
+          /* eslint-disable-next-line @next/next/no-img-element -- vignette locale */
+          <img src={lot.image_url} alt="" className="h-9 w-9 flex-none rounded-[10px] object-cover" />
+        )}
         <input
           value={libelle}
           onChange={(e) => setLibelle(e.target.value.slice(0, 40))}

@@ -4,7 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
-import { RoueVendeur, type LotVendeur, type RoueVendeurRow, type TourJoue } from "./roue-client";
+import {
+  RoueVendeur,
+  type LotVendeur,
+  type ProduitBoutique,
+  type RoueVendeurRow,
+  type TourJoue,
+} from "./roue-client";
 
 export const metadata: Metadata = {
   title: "Roue de la chance",
@@ -33,11 +39,11 @@ export default async function VendorWheelPage() {
     .eq("shop_id", shop.id)
     .maybeSingle();
 
-  const [lots, tours] = await Promise.all([
+  const [lots, tours, produits] = await Promise.all([
     roue
       ? supabase
           .from("wheel_prizes")
-          .select("id, label, label_ar, weight, is_win, stock, position")
+          .select("id, label, label_ar, weight, is_win, stock, image_url, position")
           .eq("wheel_id", roue.id)
           .order("position")
       : Promise.resolve({ data: [] }),
@@ -52,6 +58,21 @@ export default async function VendorWheelPage() {
           .order("created_at", { ascending: false })
           .limit(60)
       : Promise.resolve({ data: [] }),
+
+    /*
+      Le catalogue, pour composer une case sans rien retaper.
+
+      Les produits en ligne seulement : offrir un article qu'on ne vend
+      plus mettrait le commerçant dans l'embarras au moment de le remettre.
+    */
+    supabase
+      .from("products")
+      .select("id, name, price, images")
+      .eq("shop_id", shop.id)
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .order("name")
+      .limit(200),
   ]);
 
   return (
@@ -61,6 +82,7 @@ export default async function VendorWheelPage() {
         roue={(roue ?? null) as RoueVendeurRow | null}
         lots={(lots.data ?? []) as unknown as LotVendeur[]}
         tours={(tours.data ?? []) as unknown as TourJoue[]}
+        produits={(produits.data ?? []) as unknown as ProduitBoutique[]}
         locale={locale}
       />
     </>

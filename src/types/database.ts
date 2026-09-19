@@ -1052,6 +1052,8 @@ export interface Database {
           weight: number;
           is_win: boolean;
           stock: number | null;
+          image_url: string | null;
+          product_id: string | null;
           position: number;
           created_at: string;
         };
@@ -1059,7 +1061,10 @@ export interface Database {
           Database["public"]["Tables"]["wheel_prizes"]["Row"]
         >;
         Update: Partial<Database["public"]["Tables"]["wheel_prizes"]["Row"]>;
-        Relationships: [FK<"wheel_prizes_wheel_id_fkey", ["wheel_id"], "shop_wheels">];
+        Relationships: [
+          FK<"wheel_prizes_wheel_id_fkey", ["wheel_id"], "shop_wheels">,
+          FK<"wheel_prizes_product_id_fkey", ["product_id"], "products">,
+        ];
       };
 
       /* ─── wheel_spins ────────────────────────────────────────────── */
@@ -1733,6 +1738,7 @@ export interface Database {
           label: string;
           label_ar: string | null;
           is_win: boolean;
+          image_url: string | null;
           rang: number;
         }>;
       };
@@ -1743,6 +1749,7 @@ export interface Database {
           label: string;
           label_ar: string | null;
           is_win: boolean;
+          image_url: string | null;
           code: string;
         }>;
       };

@@ -180,13 +180,24 @@ async function main() {
   const poids = await rest(`wheel_prizes?wheel_id=eq.${wheelId}&select=weight,stock`, jetonClient);
   check("il ne lit ni les poids ni les stocks", poids.corps?.length ?? 0, 0);
 
+  /*
+    La roue ne montre que ce qui peut sortir.
+
+    Deux des trois cases sont à poids zéro : elles ne seront jamais tirées,
+    et les dessiner ferait une roue qui ment — on peut s'arrêter dessus sans
+    rien gagner. Le commerçant, lui, les garde sous les yeux : c'est à lui de
+    leur redonner du poids.
+  */
   const cases = await rpc("roue_lots_publics", jetonClient, { p_wheel: wheelId });
-  check("il voit les trois cases", cases.corps?.length, 3);
+  check("il ne voit que la case tirable", cases.corps?.length, 1);
   check(
-    "et rien d'autre que leur libellé",
+    "et rien d'autre que son libellé et sa photo",
     Object.keys(cases.corps?.[0] ?? {}).sort(),
-    ["id", "is_win", "label", "label_ar", "rang"],
+    ["id", "image_url", "is_win", "label", "label_ar", "rang"],
   );
+
+  const vuesDuComptoir = await rpc("roue_lots_publics", jetonMarchand, { p_wheel: wheelId });
+  check("le commerçant voit les trois", vuesDuComptoir.corps?.length, 3);
 
   /* ─── 3 · Le tirage ───────────────────────────────────────────────── */
   console.log(`\n${C.bold}Le tirage${C.reset}`);
@@ -215,6 +226,19 @@ async function main() {
   const apresStock = await rest(`wheel_prizes?wheel_id=eq.${wheelId}&select=id,label,stock`, SERVICE);
   const leLot = (apresStock.corps ?? []).find((p) => p.label === "Le seul lot");
   check("le stock a été décrémenté", leLot?.stock, 0);
+
+  /*
+    Le cœur de « trois articles qui deviennent deux ».
+
+    Le lot était à un exemplaire : gagné, il est épuisé, et sa case sort de
+    la roue du client. Sans cela, la roue continuerait d'afficher un article
+    qu'on ne peut plus gagner.
+  */
+  const apresLeTour = await rpc("roue_lots_publics", jetonClient, { p_wheel: wheelId });
+  check("la case gagnée quitte la roue", apresLeTour.corps?.length, 0);
+
+  const toujoursAuComptoir = await rpc("roue_lots_publics", jetonMarchand, { p_wheel: wheelId });
+  check("le commerçant la garde, pour la réapprovisionner", toujoursAuComptoir.corps?.length, 3);
 
   /* ─── 4 · S'inscrire un tour à la main ────────────────────────────── */
   console.log(`\n${C.bold}La triche directe${C.reset}`);
