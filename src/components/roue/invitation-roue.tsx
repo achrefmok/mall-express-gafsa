@@ -5,8 +5,18 @@ import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-/** Une invitation par jour, pas une par navigation. */
-const CLE_JOUR = "meg-roue-invitation";
+/**
+ * Les roues déjà proposées, et le jour où elles l'ont été.
+ *
+ * Une simple date suffisait, et c'était le défaut : le premier jour où un
+ * commerçant ouvrait sa roue, on l'annonçait — puis plus rien de la
+ * journée, même si trois autres boutiques en ouvraient une. La deuxième
+ * roue n'existait pour personne.
+ */
+const CLE_VUES = "meg-roues-proposees";
+
+/** Une seule invitation par lancement : deux d'affilée sont un péage. */
+const CLE_SESSION = "meg-roue-session";
 
 /** Après l'écran d'ouverture : cinq secondes, plus le temps de se poser. */
 const DELAI = 6200;
@@ -22,18 +32,42 @@ interface RoueOuverte {
 
 const aujourdhui = () => new Date().toISOString().slice(0, 10);
 
+/** Ce qui a déjà été proposé, et quand. Les entrées d'hier sont oubliées. */
+function lireVues(): Record<string, string> {
+  try {
+    const brut = JSON.parse(localStorage.getItem(CLE_VUES) ?? "{}") as Record<string, string>;
+    const jour = aujourdhui();
+    // Seul le jour courant compte : le reste ne sert qu'à faire grossir le stockage.
+    return Object.fromEntries(Object.entries(brut).filter(([, j]) => j === jour));
+  } catch {
+    return {};
+  }
+}
+
+function ecrireVues(vues: Record<string, string>) {
+  try {
+    localStorage.setItem(CLE_VUES, JSON.stringify(vues));
+  } catch {}
+}
+
 /**
  * « La boutique X a une roue de la chance ».
  *
  * ────────────────────────────────────────────────────────────────────────
- * Une fois par jour, et seulement si le tour est jouable
+ * Une roue par lancement, chacune une fois par jour
  * ────────────────────────────────────────────────────────────────────────
  *
- * Une fenêtre qui s'ouvre à chaque lancement devient un péage : on apprend à
- * la fermer sans la lire, et le commerçant qui paie les lots n'a plus de
- * public. Elle ne s'ouvre donc qu'une fois par jour — la même cadence que le
- * quota de la roue — et jamais pour quelqu'un qui a déjà joué : `deja_joue`
- * est calculé en base, dans la même fonction qui liste les roues.
+ * Une fenêtre qui s'ouvre à chaque page devient un péage : on apprend à la
+ * fermer sans la lire, et le commerçant qui paie les lots n'a plus de public.
+ * Elle ne s'ouvre donc qu'une fois par lancement de l'application.
+ *
+ * Mais une fois par **jour**, comme c'était écrit d'abord, était pire : le
+ * premier commerçant à ouvrir sa roue prenait la journée, et la deuxième roue
+ * n'existait pour personne. Chaque roue a donc sa propre mémoire — proposée
+ * une fois par jour, la suivante au lancement d'après.
+ *
+ * Jamais pour quelqu'un qui a déjà joué : `deja_joue` est calculé en base,
+ * dans la même fonction qui liste les roues.
  *
  * Elle attend aussi que l'écran d'ouverture soit parti. Deux surfaces
  * empilées au lancement donnent l'impression que l'application ne sait pas ce
@@ -52,8 +86,13 @@ export function InvitationRoue() {
   useEffect(() => {
     let vivant = true;
 
+    /*
+      Déjà invité pendant ce lancement : on n'insiste pas. `sessionStorage`
+      meurt avec l'application fermée, donc la prochaine ouverture pourra
+      proposer la roue suivante.
+    */
     try {
-      if (localStorage.getItem(CLE_JOUR) === aujourdhui()) return;
+      if (sessionStorage.getItem(CLE_SESSION) === "1") return;
     } catch {
       // Stockage indisponible : on montre une fois, sans mémoire.
     }
@@ -64,12 +103,22 @@ export function InvitationRoue() {
           const { data } = await createClient().rpc("roues_ouvertes");
           if (!vivant) return;
 
-          const jouable = (data ?? []).find((r) => !r.deja_joue);
+          const vues = lireVues();
+          const jour = aujourdhui();
+
+          /*
+            Une roue jouable, et pas déjà proposée aujourd'hui. Le même jour,
+            une roue nouvelle passe donc devant celle d'hier ; le lendemain,
+            toutes redeviennent proposables — une par lancement.
+          */
+          const jouable = (data ?? []).find((r) => !r.deja_joue && vues[r.wheel_id] !== jour);
           if (!jouable) return;
 
           setRoue(jouable as RoueOuverte);
+
           try {
-            localStorage.setItem(CLE_JOUR, aujourdhui());
+            sessionStorage.setItem(CLE_SESSION, "1");
+            ecrireVues({ ...vues, [jouable.wheel_id]: jour });
           } catch {}
         } catch {
           // Réseau absent : pas d'invitation, et rien à signaler.
