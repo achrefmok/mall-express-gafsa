@@ -6,17 +6,27 @@ import { useI18n } from "@/lib/i18n/provider";
 import { upsertPromotion } from "@/app/actions/vendor";
 import { cx, formatDateTime } from "@/lib/format";
 import { Button, Card, Divider, EmptyState, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
+import { AvantDebut } from "@/components/ui/avant-debut";
 import type { AppLocale, Promotion } from "@/types/database";
 
 const FIELD =
   fieldClass({ size: "sm", solid: true });
 const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const enChamp = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+/** Début par défaut : tout de suite. La veille au soir, on choisit demain. */
+function maintenant(): string {
+  return enChamp(new Date());
+}
+
 /** Échéance par défaut : dans deux semaines. */
 function inTwoWeeks(): string {
   const date = new Date(Date.now() + 14 * 86_400_000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T20:00`;
+  date.setHours(20, 0, 0, 0);
+  return enChamp(date);
 }
 
 export function PromotionsManager({
@@ -32,6 +42,7 @@ export function PromotionsManager({
   const [title, setTitle] = useState("");
   const [titleAr, setTitleAr] = useState("");
   const [percent, setPercent] = useState("30");
+  const [startsAt, setStartsAt] = useState(maintenant);
   const [endsAt, setEndsAt] = useState(inTwoWeeks);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -44,6 +55,7 @@ export function PromotionsManager({
         title,
         titleAr,
         percentOff: Number.parseInt(percent, 10) || 0,
+        startsAt: new Date(startsAt).toISOString(),
         endsAt: new Date(endsAt).toISOString(),
       });
 
@@ -105,6 +117,23 @@ export function PromotionsManager({
               className={FIELD}
             />
           </label>
+          {/*
+            Le début, et non plus seulement la fin.
+
+            Une promotion se prépare la veille : elle attend son heure sans
+            que personne ait à se relever. L'accueil ne la montre qu'une
+            fois commencée, et la fiche de la boutique l'annonce avec son
+            compte à rebours.
+          */}
+          <label className="flex flex-1 flex-col gap-1">
+            <span className={LABEL}>Démarre le</span>
+            <input
+              type="datetime-local"
+              value={startsAt}
+              onChange={(e) => setStartsAt(e.target.value)}
+              className={FIELD}
+            />
+          </label>
           <label className="flex flex-1 flex-col gap-1">
             <span className={LABEL}>Jusqu&apos;au</span>
             <input
@@ -138,6 +167,7 @@ function PromotionRow({ promotion, locale }: { promotion: Promotion; locale: App
   const [pending, startTransition] = useTransition();
 
   const expired = new Date(promotion.ends_at).getTime() <= Date.now();
+  const aVenir = new Date(promotion.starts_at).getTime() > Date.now();
 
   return (
     <Card className={cx("flex flex-none flex-col gap-2 p-3", expired && "opacity-60")}>
@@ -150,7 +180,13 @@ function PromotionRow({ promotion, locale }: { promotion: Promotion; locale: App
             {promotion.title}
           </p>
           <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
-            {expired ? t.deals.expired : `${t.deals.validUntil} ${formatDateTime(promotion.ends_at, locale)}`}
+            {expired ? (
+              t.deals.expired
+            ) : aVenir ? (
+              <AvantDebut debut={promotion.starts_at} />
+            ) : (
+              `${t.deals.validUntil} ${formatDateTime(promotion.ends_at, locale)}`
+            )}
           </p>
         </div>
       </div>
@@ -170,6 +206,9 @@ function PromotionRow({ promotion, locale }: { promotion: Promotion; locale: App
                 title: promotion.title,
                 titleAr: promotion.title_ar ?? undefined,
                 percentOff: promotion.percent_off,
+                // Sans elle, une promotion programmée démarrerait à l instant
+                // où on touche l interrupteur.
+                startsAt: promotion.starts_at,
                 endsAt: promotion.ends_at,
                 isActive: next,
               });

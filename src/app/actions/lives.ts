@@ -119,6 +119,9 @@ export async function createLive(input: {
     return fail("L'URL du flux doit se terminer par .m3u8");
   }
 
+  const debutPrevu = input.scheduledAt ? new Date(input.scheduledAt) : new Date();
+  if (Number.isNaN(debutPrevu.getTime())) return fail("Date de rendez-vous invalide");
+
   const { data, error: insertError } = await supabase
     .from("lives")
     .insert({
@@ -130,10 +133,18 @@ export async function createLive(input: {
       hls_url: input.source === "hls" ? input.hlsUrl!.trim() : null,
       pinned_product_id: input.pinnedProductId || null,
       live_percent_off: input.percentOff && input.percentOff > 0 ? input.percentOff : null,
+      /*
+        L'offre court à partir du direct, pas de sa création.
+
+        Comptée depuis maintenant, une offre de dix minutes posée sur un
+        direct programmé dans deux heures était éteinte avant l'ouverture
+        de l'antenne : le commerçant annonçait une remise que personne ne
+        pouvait prendre.
+      */
       offer_ends_at: input.offerMinutes
-        ? new Date(Date.now() + input.offerMinutes * 60_000).toISOString()
+        ? new Date(debutPrevu.getTime() + input.offerMinutes * 60_000).toISOString()
         : null,
-      scheduled_at: input.scheduledAt || new Date().toISOString(),
+      scheduled_at: debutPrevu.toISOString(),
       status: "scheduled",
     })
     .select("id")

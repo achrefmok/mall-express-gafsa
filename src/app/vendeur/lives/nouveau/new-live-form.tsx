@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { createLive } from "@/app/actions/lives";
 import { cx, formatPrice } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
-import { Button, Card, Divider, fieldClass } from "@/components/ui/primitives";
+import { Button, Card, Divider, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
 import { MAX_VIEWERS } from "@/lib/live/webrtc";
 import type { LiveSource } from "@/types/database";
 
@@ -18,6 +18,15 @@ const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
  * Programmation d'un direct. Le choix de la source est le point structurant :
  * il décide de qui transporte la vidéo, et donc du plafond d'audience.
  */
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Dans deux heures : le délai qui laisse le temps de prévenir. */
+function dansDeuxHeures(): string {
+  const d = new Date(Date.now() + 2 * 3_600_000);
+  d.setMinutes(0, 0, 0);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:00`;
+}
+
 export function NewLiveForm({
   products,
   shopApproved,
@@ -36,6 +45,8 @@ export function NewLiveForm({
   const [pinnedProductId, setPinnedProductId] = useState<string | null>(null);
   const [percentOff, setPercentOff] = useState("30");
   const [offerMinutes, setOfferMinutes] = useState("10");
+  const [programme, setProgramme] = useState(false);
+  const [debut, setDebut] = useState(dansDeuxHeures);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -70,6 +81,8 @@ export function NewLiveForm({
         pinnedProductId: pinnedProductId ?? undefined,
         percentOff: Number.parseInt(percentOff, 10) || undefined,
         offerMinutes: Number.parseInt(offerMinutes, 10) || undefined,
+        // Sans date, le direct est créé pour maintenant : c'est le cas courant.
+        scheduledAt: programme ? new Date(debut).toISOString() : undefined,
       });
 
       if (result.ok) router.push(`/vendeur/lives/${result.data.id}`);
@@ -107,6 +120,34 @@ export function NewLiveForm({
               className={FIELD}
             />
           </label>
+
+          {/*
+            Programmer, plutôt que de lancer maintenant.
+
+            Un direct annoncé deux heures à l'avance réunit un public ; un
+            direct lancé sans prévenir parle à ceux qui passaient par là. Le
+            rendez-vous s'affiche alors sur la fiche de la boutique avec son
+            compte à rebours, et le commerçant ouvre l'antenne à l'heure dite
+            — rien ne démarre tout seul, personne ne veut être filmé par
+            surprise.
+          */}
+          <Divider />
+
+          <KeyValueRow label={<span className={LABEL}>Programmer le direct</span>}>
+            <Switch checked={programme} onChange={setProgramme} label="Programmer le direct" />
+          </KeyValueRow>
+
+          {programme && (
+            <label className="flex flex-col gap-1">
+              <span className={LABEL}>Rendez-vous</span>
+              <input
+                type="datetime-local"
+                value={debut}
+                onChange={(e) => setDebut(e.target.value)}
+                className={FIELD}
+              />
+            </label>
+          )}
         </Card>
 
         {/* ─── Source vidéo ──────────────────────────────────────────── */}

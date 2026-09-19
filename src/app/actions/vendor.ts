@@ -357,11 +357,21 @@ export async function updateShopCategories(categoryIds: string[]) {
   return done();
 }
 
+/**
+ * Créer ou modifier une promotion.
+ *
+ * `startsAt` permet de la préparer la veille : elle est enregistrée,
+ * visible du commerçant, et n'apparaît chez les clients qu'à l'heure dite
+ * — l'accueil filtre déjà sur `starts_at`, et la fiche de la boutique
+ * l'annonce avec un compte à rebours. Préparer une vente à 23 h pour le
+ * lendemain matin ne devrait pas demander de se relever.
+ */
 export async function upsertPromotion(input: {
   id?: string;
   title: string;
   titleAr?: string;
   percentOff: number;
+  startsAt?: string;
   endsAt: string;
   isActive?: boolean;
 }) {
@@ -372,12 +382,18 @@ export async function upsertPromotion(input: {
     return fail("La remise doit être comprise entre 1 % et 90 %");
   }
 
+  const debut = input.startsAt ? new Date(input.startsAt) : new Date();
+  const fin = new Date(input.endsAt);
+  if (Number.isNaN(debut.getTime()) || Number.isNaN(fin.getTime())) return fail("Dates invalides");
+  if (fin <= debut) return fail("La fin doit venir après le début");
+
   const payload = {
     shop_id: shop.id,
     title: input.title.trim(),
     title_ar: input.titleAr?.trim() || null,
     percent_off: input.percentOff,
-    ends_at: new Date(input.endsAt).toISOString(),
+    starts_at: debut.toISOString(),
+    ends_at: fin.toISOString(),
     is_active: input.isActive ?? true,
   };
 

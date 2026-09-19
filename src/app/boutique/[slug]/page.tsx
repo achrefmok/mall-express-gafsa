@@ -15,6 +15,7 @@ import { CartIcon, PinIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
 import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
 import { ReservationSheet } from "@/components/partners/reservation-sheet";
+import { AvantDebut } from "@/components/ui/avant-debut";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 
 /**
@@ -456,8 +457,21 @@ export default async function ShopPage({
                 <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">
                   {locale === "ar" && promo.data.title_ar ? promo.data.title_ar : promo.data.title}
                 </p>
+                {/*
+                  À venir, elle annonce son décompte ; commencée, sa date de
+                  fin. Une promotion préparée pour demain n'a aucune raison
+                  de rester cachée jusqu'au matin : l'annoncer fait revenir,
+                  et c'est le seul intérêt de la programmer.
+                */}
                 <p className="text-[0.65625rem] text-[var(--color-muted)]">
-                  {t.deals.validUntil} {new Date(promo.data.ends_at).toLocaleDateString("fr-FR")}
+                  {new Date(promo.data.starts_at).getTime() > Date.now() ? (
+                    <AvantDebut debut={promo.data.starts_at} />
+                  ) : (
+                    <>
+                      {t.deals.validUntil}{" "}
+                      {new Date(promo.data.ends_at).toLocaleDateString("fr-FR")}
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -473,7 +487,19 @@ export default async function ShopPage({
                   href={`/lives/${live.id}`}
                   className="flex items-center gap-2 rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
                 >
-                  <span className="min-w-0 flex-1 truncate text-[0.71875rem] font-semibold">{live.title}</span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[0.71875rem] font-semibold">{live.title}</span>
+                    {/* « Dans 2 h 14 » plutôt qu'une heure : la question
+                        qu'on se pose devant un rendez-vous annoncé est
+                        « ai-je le temps d'aller faire autre chose ? ». */}
+                    {live.status === "scheduled" && live.scheduled_at && (
+                      <AvantDebut
+                        debut={live.scheduled_at}
+                        prefixe="Commence dans"
+                        className="truncate text-[0.625rem] text-[var(--color-muted)]"
+                      />
+                    )}
+                  </span>
                   <Tag tone={live.status === "live" ? "live" : "tinted"}>
                     {live.status === "live" ? t.live.onAir : t.live.scheduled}
                   </Tag>
