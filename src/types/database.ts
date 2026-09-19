@@ -1733,7 +1733,7 @@ export interface Database {
           label: string;
           label_ar: string | null;
           is_win: boolean;
-          position: number;
+          rang: number;
         }>;
       };
       roue_tourner: {

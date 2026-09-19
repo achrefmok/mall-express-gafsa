@@ -10,7 +10,13 @@ export interface CaseRoue {
   label: string;
   label_ar: string | null;
   is_win: boolean;
-  position: number;
+  /**
+   * L'ordre voulu par le commerçant.
+   *
+   * La colonne s'appelle `position` dans la table, `rang` ici : `position` est
+   * un mot réservé de PostgreSQL, refusé dans la signature d'une fonction.
+   */
+  rang: number;
 }
 
 /** Les teintes des parts, alternées : lisibles, et sans dépendre des lots. */

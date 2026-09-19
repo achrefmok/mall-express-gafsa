@@ -174,8 +174,17 @@ create policy wheel_spins_update on public.wheel_spins
 
 /* ─── 5 · Les cases, telles que le client peut les voir ───────────────── */
 
+/*
+  La colonne rendue s'appelle `rang`, et non `position`.
+
+  `position` est un mot réservé de PostgreSQL — la fonction `position(x in y)`
+  du standard SQL. Il passe comme nom de colonne dans une table, il est refusé
+  dans la signature d'une fonction. Le quoter marcherait ; le renommer évite
+  qu'un jour quelqu'un retire les guillemets sans savoir pourquoi ils étaient
+  là. La colonne de la table, elle, garde son nom.
+*/
 create or replace function public.roue_lots_publics(p_wheel uuid)
-returns table (id uuid, label text, label_ar text, is_win boolean, position integer)
+returns table (id uuid, label text, label_ar text, is_win boolean, rang integer)
 language sql
 stable
 security definer
@@ -344,5 +353,14 @@ create trigger trg_shop_wheels_touch before update on public.shop_wheels
   for each row execute function public.touch_updated_at();
 
 grant select on public.shop_wheels, public.wheel_spins to anon, authenticated;
+
+/*
+  Le commerçant lit ses lots depuis son écran, avec leurs poids et leurs
+  stocks : il lui faut donc le droit de table. Ce n'est pas une ouverture —
+  la policy d'écriture, qui couvre aussi la lecture, ne rend les lignes qu'au
+  propriétaire de la roue. Sans ce droit, son propre écran se voyait refuser
+  la lecture, et les clients n'y gagnaient rien.
+*/
+grant select on public.wheel_prizes to authenticated;
 grant insert, update, delete on public.shop_wheels, public.wheel_prizes to authenticated;
 grant update on public.wheel_spins to authenticated;
