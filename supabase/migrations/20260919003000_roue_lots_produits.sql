@@ -40,8 +40,16 @@ create index if not exists wheel_prizes_produit_idx
 
 /* ─── Les cases visibles du client ────────────────────────────────────────
    Épuisées ou sans poids, elles sortent de la roue. Le commerçant garde les
-   siennes sous les yeux : c'est lui qui remet du stock. */
-create or replace function public.roue_lots_publics(p_wheel uuid)
+   siennes sous les yeux : c'est lui qui remet du stock.
+
+   `drop` avant `create` : les deux fonctions gagnent une colonne de sortie,
+   et PostgreSQL refuse qu'un `create or replace` change le type rendu — même
+   pour y ajouter un champ. Rien d'autre ne les appelle depuis la base (ni
+   vue, ni policy, ni déclencheur) : les supprimer un instant ne casse aucune
+   dépendance, et les droits sont réaccordés juste après. */
+drop function if exists public.roue_lots_publics(uuid);
+
+create function public.roue_lots_publics(p_wheel uuid)
 returns table (
   id uuid,
   label text,
@@ -76,7 +84,9 @@ grant execute on function public.roue_lots_publics(uuid) to anon, authenticated;
    L'écran de résultat montre ce qu'on vient de gagner. « Plateau grillé
    offert » écrit en toutes lettres est une promesse ; la photo du plateau en
    est une preuve. */
-create or replace function public.roue_tourner(p_wheel uuid)
+drop function if exists public.roue_tourner(uuid);
+
+create function public.roue_tourner(p_wheel uuid)
 returns table (prize_id uuid, label text, label_ar text, is_win boolean, image_url text, code text)
 language plpgsql
 security definer
