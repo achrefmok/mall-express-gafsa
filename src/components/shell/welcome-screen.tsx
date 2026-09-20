@@ -25,6 +25,85 @@ const DUREE_AFFICHAGE = 4600;
 const DUREE_FONDU = 400;
 
 /**
+ * Le décor de l'écran d'ouverture.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Trois couches, et aucune ne doit se remarquer
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Un aplat dégradé est plat, au sens propre : rien n'y accroche la lumière,
+ * et l'écran a l'air d'un fond d'attente. Trois couches très pâles suffisent
+ * à lui donner de la profondeur sans jamais réclamer l'attention.
+ *
+ *   · deux nappes de lumière, floutées et à peine visibles, qui dérivent
+ *     lentement sur des trajets et des durées différents ;
+ *   · deux arcs fins, posés hors cadre, qui rappellent la courbure du logo
+ *     sans qu'on puisse dire ce qu'ils représentent ;
+ *   · deux ondes qui s'écartent du centre, comme si le logo venait d'être
+ *     posé sur une surface.
+ *
+ * Tout est en dégradés CSS et en SVG : aucune image à charger sur un écran
+ * qui doit s'afficher avant tout le reste. Et tout est `aria-hidden` — un
+ * lecteur d'écran n'a rien à y lire.
+ *
+ * Pas de `blur()` sur les nappes, et c'est mesuré : avec un flou de 70 px,
+ * l'écran était identique à l'œil. Un dégradé radial qui s'éteint dans le
+ * transparent est déjà flou par nature — le filtre ne faisait que payer une
+ * passe de rendu de plus, précisément pendant que l'application démarre
+ * derrière, sur le téléphone le plus lent du parc.
+ *
+ * Le repère des opacités : au-delà de 0,08 sur le blanc, une forme cesse
+ * d'être une texture et devient un objet — on cherche alors à la nommer.
+ */
+function Decor() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* ─── Les nappes de lumière ────────────────────────────────────── */}
+      <span
+        className="absolute -top-[18vmax] -left-[12vmax] h-[62vmax] w-[62vmax] rounded-full opacity-70"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(196,160,236,0.30), rgba(196,160,236,0.06) 55%, transparent 72%)",
+          animation: "splash-derive-a 19s ease-in-out infinite",
+        }}
+      />
+      <span
+        className="absolute -right-[16vmax] -bottom-[20vmax] h-[58vmax] w-[58vmax] rounded-full opacity-60"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(224,85,111,0.22), rgba(224,85,111,0.05) 55%, transparent 72%)",
+          animation: "splash-derive-b 23s ease-in-out infinite",
+        }}
+      />
+
+      {/* ─── Les arcs, coupés par le cadre ────────────────────────────── */}
+      <svg
+        viewBox="0 0 390 844"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full"
+      >
+        <circle cx="332" cy="150" r="172" fill="none" stroke="#ffffff" strokeOpacity="0.07" strokeWidth="1.2" />
+        <circle cx="332" cy="150" r="232" fill="none" stroke="#ffffff" strokeOpacity="0.045" strokeWidth="1" />
+        <circle cx="46" cy="706" r="196" fill="none" stroke="#ffffff" strokeOpacity="0.055" strokeWidth="1.2" />
+      </svg>
+
+      {/* ─── Les ondes, sous le logo ──────────────────────────────────── */}
+      <span className="absolute inset-0 flex items-center justify-center">
+        {[0, 1].map((i) => (
+          <span
+            key={i}
+            className="absolute h-[210px] w-[210px] rounded-full border border-white/25"
+            style={{
+              animation: `splash-onde 4.4s cubic-bezier(0.22, 0.61, 0.36, 1) ${i * 2.2}s infinite`,
+            }}
+          />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/**
  * L'écran d'ouverture, à chaque lancement de l'application.
  *
  * Logo → apparition douce → léger rebond d'échelle → le nom → les sponsors →
@@ -96,17 +175,31 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
     <div
       role="presentation"
       onClick={dismiss}
-      className="fixed inset-0 z-[95] flex flex-col items-center justify-center gap-5 bg-[image:var(--gradient-brand)]"
+      className="fixed inset-0 z-[95] flex flex-col items-center justify-center gap-5 overflow-hidden bg-[image:var(--gradient-brand)]"
       style={{ opacity: leaving ? 0 : 1, transition: `opacity ${DUREE_FONDU}ms ease-out` }}
     >
+      <Decor />
+
       <span
         className="relative flex items-center justify-center"
         style={{ animation: "splash-logo 820ms cubic-bezier(0.22, 0.61, 0.36, 1) both" }}
       >
-        {/* Le halo détache le logo du dégradé, sans ajouter d image à charger. */}
+        {/*
+          Deux halos plutôt qu'un.
+
+          Le premier, large et très pâle, décolle le logo du fond. Le second,
+          serré et un peu plus dense, lui donne une arête lumineuse — c'est ce
+          second cercle qui fait la différence entre « une image posée sur un
+          dégradé » et « un objet éclairé ».
+        */}
         <span
           aria-hidden
-          className="absolute h-[230px] w-[230px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.2),transparent_68%)]"
+          className="absolute h-[280px] w-[280px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.16),transparent_70%)]"
+          style={{ animation: "splash-souffle 5.2s ease-in-out infinite" }}
+        />
+        <span
+          aria-hidden
+          className="absolute h-[186px] w-[186px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.22),transparent_62%)]"
         />
         {/* eslint-disable-next-line @next/next/no-img-element -- logo servi tel quel, avant tout le reste */}
         <img
@@ -118,7 +211,7 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
       </span>
 
       <div
-        className="flex flex-col items-center gap-1 px-8 text-center"
+        className="relative flex flex-col items-center gap-1 px-8 text-center"
         style={{ animation: "splash-texte 560ms cubic-bezier(0.22, 0.61, 0.36, 1) 240ms both" }}
       >
         <p className="text-[1.3125rem] font-extrabold tracking-[-0.02em] text-white">
@@ -140,7 +233,7 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
         l'application, pas à ses sponsors.
       */}
       <div
-        className="flex flex-col items-center gap-[10px]"
+        className="relative flex flex-col items-center gap-[10px]"
         style={{ animation: "splash-texte 560ms cubic-bezier(0.22, 0.61, 0.36, 1) 520ms both" }}
       >
         <p className="text-[0.5625rem] font-bold tracking-[0.18em] text-white/55 uppercase">
@@ -166,6 +259,30 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
         @keyframes splash-texte {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: none; }
+        }
+        @keyframes splash-souffle {
+          0%, 100% { opacity: 0.75; transform: scale(1); }
+          50%      { opacity: 1;    transform: scale(1.06); }
+        }
+        /*
+          Les nappes de lumière dérivent sur des trajets différents et des
+          durées premières entre elles : elles ne se recroisent donc jamais
+          au même endroit, et l'œil ne trouve pas la boucle.
+        */
+        @keyframes splash-derive-a {
+          0%   { transform: translate3d(0, 0, 0) scale(1); }
+          50%  { transform: translate3d(6%, -4%, 0) scale(1.1); }
+          100% { transform: translate3d(0, 0, 0) scale(1); }
+        }
+        @keyframes splash-derive-b {
+          0%   { transform: translate3d(0, 0, 0) scale(1.05); }
+          50%  { transform: translate3d(-5%, 5%, 0) scale(1); }
+          100% { transform: translate3d(0, 0, 0) scale(1.05); }
+        }
+        @keyframes splash-onde {
+          0%   { opacity: 0;    transform: scale(0.6); }
+          22%  { opacity: 0.14; }
+          100% { opacity: 0;    transform: scale(1.75); }
         }
       `}</style>
     </div>,
