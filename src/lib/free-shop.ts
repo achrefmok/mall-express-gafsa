@@ -1,5 +1,5 @@
 /**
- * Les deux limites du Free Shop, écrites une fois.
+ * Les deux limites du G-Shop, écrites une fois.
  *
  * Elles vivent ici et non dans `actions/deals.ts` : un fichier « use server »
  * n'exporte que des fonctions asynchrones, et un écran qui a besoin du chiffre

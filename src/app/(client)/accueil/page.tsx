@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { ComponentType } from "react";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getCategories, getMallStatus, getProfile, getTopBarCounts } from "@/lib/queries";
@@ -19,7 +20,7 @@ import {
   type PartenaireAccueil,
 } from "@/components/home/partners-rail";
 import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
-import { categoryIcon } from "@/components/ui/category-icons";
+import { categoryIcon, serviceIcon } from "@/components/ui/category-icons";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
@@ -231,7 +232,7 @@ export default async function HomePage() {
       .order("approved_at", { ascending: false })
       .limit(8),
     /*
-      Free Shop : les dernières annonces validées. La policy écarte déjà
+      G-Shop : les dernières annonces validées. La policy écarte déjà
       celles qui attendent ou ont été refusées ; le filtre ci-dessous ne
       sert qu'à ne pas rapporter les expirées.
     */
@@ -661,7 +662,7 @@ export default async function HomePage() {
         )}
 
         {/*
-          ─── 7 · Free Shop ───────────────────────────────────────────────
+          ─── 7 · G-Shop ───────────────────────────────────────────────
 
           Les annonces des membres, approuvées. Trois seulement : c'est un
           aperçu qui donne envie d'ouvrir la section, pas la section. La
@@ -775,6 +776,7 @@ export default async function HomePage() {
                   detail={service.info}
                   imageUrl={service.image_url}
                   monogramme={service.monogram}
+                  Dessin={serviceIcon(service.kind) ?? undefined}
                   hue={service.hue}
                 />
               ))}
@@ -874,6 +876,7 @@ function ChipService({
   imageUrl,
   monogramme,
   emoji,
+  Dessin,
   hue = 300,
   sombre = false,
 }: {
@@ -883,6 +886,14 @@ function ChipService({
   imageUrl?: string | null;
   monogramme?: string;
   emoji?: string;
+  /*
+    Le dessin passe avant le monogramme.
+
+    Une pharmacie de garde se cherche à minuit, un louage se rattrape à la
+    minute : ce sont des pastilles qu'on balaie du regard, pas qu'on lit. Une
+    croix et un minibus se trouvent plus vite qu'un « PH » et un « LO ».
+  */
+  Dessin?: ComponentType<{ size?: number; className?: string }>;
   hue?: number;
   /** Le Black Friday, qui n'emprunte à aucune teinte de catégorie. */
   sombre?: boolean;
@@ -912,6 +923,8 @@ function ChipService({
             height={42}
             className="fade-in-img h-full w-full object-cover"
           />
+        ) : Dessin ? (
+          <Dessin size={21} />
         ) : (
           (emoji ?? <span className="text-[0.8125rem] font-bold">{monogramme}</span>)
         )}

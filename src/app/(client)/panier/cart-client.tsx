@@ -7,7 +7,7 @@ import { format } from "@/lib/i18n/format";
 import { placeOrder, removeFromCart, setCartQuantity } from "@/app/actions/cart";
 import { cx, formatPrice } from "@/lib/format";
 import { Button, Card, Divider, Placeholder, fieldClass } from "@/components/ui/primitives";
-import { MinusIcon, PlusIcon } from "@/components/ui/icons";
+import { CloseIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 import type { AppLocale, DeliveryMethod, PaymentMethod } from "@/types/database";
 
 interface Item {
@@ -269,6 +269,27 @@ function CartShopGroup({
               <PlusIcon size={12} />
             </button>
           </div>
+
+          {/*
+            Retirer l'article, d'un seul geste.
+
+            « Moins » jusqu'à zéro marchait, mais demandait trois touchers
+            pour trois exemplaires — et rien ne disait que cela supprimerait
+            la ligne. Une croix le dit.
+
+            Elle reste discrète et à l'écart des commandes de quantité : une
+            croix trop proche du « moins » se touche par erreur, et un
+            article disparu sans qu'on l'ait voulu fait perdre confiance au
+            panier entier.
+          */}
+          <button
+            type="button"
+            onClick={() => changeQuantity(item, 0)}
+            aria-label={format(t.cart.remove, { name: item.product.name })}
+            className="flex h-8 w-8 flex-none items-center justify-center text-[var(--color-faint)]"
+          >
+            <CloseIcon size={12} />
+          </button>
         </div>
       ))}
 

@@ -28,7 +28,7 @@ const fr = {
     home: "Accueil",
     marketplace: "Marketplace",
     lives: "Lives",
-    deals: "Free Shop",
+    deals: "G-Shop",
     services: "Services",
     profile: "Profil",
     notifications: "Notifications",
@@ -435,14 +435,14 @@ const fr = {
   },
 
   shops: {
-    title: "Boutiques vérifiées",
-    verified: "vérifiée",
+    title: "Boutiques du mall",
+    verified: "sur la carte",
     directions: "Itinéraire",
     onMap: "Située sur la carte",
     noPosition:
       "Aucune boutique n'a encore publié sa position. Les commerçants la renseignent depuis leurs réglages.",
     noPositionShort: "Position non renseignée",
-    none: "Aucune boutique vérifiée",
+    none: "Aucune boutique",
     noneBody: "Les boutiques apparaissent ici une fois leur dossier approuvé par l'administration.",
   },
 
@@ -583,10 +583,10 @@ const fr = {
   },
 
   deals: {
-    title: "Free Shop",
+    title: "G-Shop",
     tabs: { popular: "Populaires", recent: "Récents", nearby: "Près de moi", expiring: "Expire aujourd'hui" },
     composer: "Publiez gratuitement un produit, une offre, un service…",
-    newDeal: "Publier sur Free Shop",
+    newDeal: "Publier sur G-Shop",
     newTitle: "Nouvelle publication",
     worksLabel: "Ça marche",
     verified: "Vérifié",
@@ -604,7 +604,7 @@ const fr = {
     cannotVoteOwn: "Vous ne pouvez pas confirmer votre propre publication",
     titlePlaceholder: "Votre annonce en une phrase",
     bodyPlaceholder: "Précisez l'état, la taille, où retirer, ce qu'il faut demander…",
-    /* Free Shop : la publication d'un membre, encadrée. */
+    /* G-Shop : la publication d'un membre, encadrée. */
     price: "Prix",
     priceHint: "Laissez vide si c'est à donner ou à négocier",
     phone: "Téléphone",
@@ -614,7 +614,7 @@ const fr = {
     photosFull: "Quatre photos au maximum.",
     quota: "Publications ce mois : {n}/{max}",
     quotaReached:
-      "Vous avez atteint votre limite de 3 publications Free Shop pour ce mois. Vous pourrez publier à nouveau le mois prochain.",
+      "Vous avez atteint votre limite de 3 publications G-Shop pour ce mois. Vous pourrez publier à nouveau le mois prochain.",
     moderationNotice: "Votre publication passe d'abord par l'administration. Elle sera visible une fois validée.",
     pending: "En attente de validation",
     approved: "Publiée",
@@ -748,6 +748,9 @@ const fr = {
     perShop: "Une commande par boutique",
     decrease: "Retirer un {name}",
     increase: "Ajouter un {name}",
+    remove: "Retirer {name} du panier",
+    clear: "Vider le panier",
+    clearConfirm: "Vider tout le panier ?",
     yourDetails: "Vos coordonnées",
   },
 
@@ -960,7 +963,7 @@ const ar: Dictionary = {
     home: "الرئيسية",
     marketplace: "السوق",
     lives: "مباشر",
-    deals: "Free Shop",
+    deals: "G-Shop",
     services: "خدمات",
     profile: "حسابي",
     notifications: "الإشعارات",
@@ -1358,7 +1361,7 @@ const ar: Dictionary = {
 
   shops: {
     title: "متاجر موثّقة",
-    verified: "موثّق",
+    verified: "على الخريطة",
     directions: "المسار",
     onMap: "محدّد على الخريطة",
     noPosition: "لم ينشر أي متجر موقعه بعد. يحدّده التجّار من إعداداتهم.",
@@ -1501,10 +1504,10 @@ const ar: Dictionary = {
   },
 
   deals: {
-    title: "Free Shop",
+    title: "G-Shop",
     tabs: { popular: "الأكثر رواجًا", recent: "الأحدث", nearby: "قريب مني", expiring: "ينتهي اليوم" },
     composer: "انشر مجانًا منتجًا أو عرضًا أو خدمة…",
-    newDeal: "النشر في Free Shop",
+    newDeal: "النشر في G-Shop",
     newTitle: "منشور جديد",
     worksLabel: "يعمل فعلاً",
     verified: "موثّق",
@@ -1522,7 +1525,7 @@ const ar: Dictionary = {
     cannotVoteOwn: "لا يمكنك تأكيد عرضك الخاص",
     titlePlaceholder: "العرض في جملة واحدة",
     bodyPlaceholder: "وضّح أين ومتى وما الذي يجب طلبه…",
-    /* Free Shop */
+    /* G-Shop */
     price: "السعر",
     priceHint: "اتركه فارغًا إذا كان مجانيًا أو قابلاً للتفاوض",
     phone: "الهاتف",
@@ -1532,7 +1535,7 @@ const ar: Dictionary = {
     photosFull: "أربع صور كحدّ أقصى.",
     quota: "منشورات هذا الشهر: {n}/{max}",
     quotaReached:
-      "بلغت حدّ 3 منشورات في Free Shop لهذا الشهر. يمكنك النشر من جديد الشهر القادم.",
+      "بلغت حدّ 3 منشورات في G-Shop لهذا الشهر. يمكنك النشر من جديد الشهر القادم.",
     moderationNotice: "يمرّ منشورك على الإدارة أولاً. سيظهر بعد الموافقة عليه.",
     pending: "في انتظار الموافقة",
     approved: "منشور",
@@ -1666,6 +1669,9 @@ const ar: Dictionary = {
     perShop: "طلب لكل متجر",
     decrease: "إنقاص {name}",
     increase: "إضافة {name}",
+    remove: "إزالة {name} من السلة",
+    clear: "تفريغ السلة",
+    clearConfirm: "تفريغ السلة بالكامل؟",
     yourDetails: "بياناتك",
   },
 

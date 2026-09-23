@@ -43,10 +43,60 @@ const BY_SLUG: Record<string, IconComponent> = {
   electronique: DeviceIcon,
   cafes: CupIcon,
   services: GridIcon,
+
+  /* Les familles venues après : mêmes règles, même grille. */
+  sante: StethoscopeIcon,
+  "medecin-generaliste": StethoscopeIcon,
+  dentiste: StethoscopeIcon,
+  specialiste: StethoscopeIcon,
+  laboratoire: StethoscopeIcon,
+  "kine-soins": StethoscopeIcon,
+
+  immobilier: BuildingIcon,
+  "location-appartement": BuildingIcon,
+  "location-maison": HomeIcon,
+  "vente-appartement": BuildingIcon,
+  "vente-maison": HomeIcon,
+  terrain: BuildingIcon,
+  "local-commercial": StoreIcon,
+
+  enseignement: CapIcon,
+  "ecole-privee": CapIcon,
+  "cours-particuliers": CapIcon,
+  "centre-formation": CapIcon,
+  langues: CapIcon,
+  informatique: DeviceIcon,
+  "auto-ecole": CarIcon,
+
+  "voitures-motos": CarIcon,
+  "equipement-maison": SofaIcon,
+  autres: GridIcon,
+
+  "fete-evenements": PartyIcon,
+  "sport-loisirs": BallIcon,
 };
 
 export function categoryIcon(slug: string): IconComponent | null {
   return BY_SLUG[slug] ?? null;
+}
+
+/**
+ * L'icône d'un service pratique.
+ *
+ * Taxi, louage, pharmacie, prière : quatre pastilles qu'on cherche du regard
+ * dans l'urgence — une pharmacie de garde à minuit, un louage qu'on ne veut
+ * pas rater. Une lettre dans un rond ne se trouve pas à cette vitesse ; une
+ * voiture, un minibus et une croix, si.
+ */
+const PAR_SERVICE: Record<string, IconComponent> = {
+  taxi: CarIcon,
+  louage: VanIcon,
+  pharmacy: PharmacyIcon,
+  prayer: MosqueIcon,
+};
+
+export function serviceIcon(kind: string): IconComponent | null {
+  return PAR_SERVICE[kind] ?? null;
 }
 
 /* ─── Dessins propres aux catégories ─────────────────────────────────────
@@ -105,6 +155,114 @@ function BallIcon(p: IconProps) {
       <circle cx="10" cy="10" r="6.5" />
       <path d="M10 3.5 12.4 8l-2.4 3-2.4-3L10 3.5Z" />
       <path d="M3.9 8.6 7.6 11m4.8 0 3.7-2.4M7.6 11l1.2 4.4m2.4-4.4-1.2 4.4" />
+    </Svg>
+  );
+}
+
+/** Un stéthoscope : les cabinets médicaux. */
+function StethoscopeIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5 3.5v4a3.2 3.2 0 0 0 6.4 0v-4" />
+      <path d="M3.6 3.5h2.8M10 3.5h2.8" />
+      <path d="M8.2 10.7v1.6a3.6 3.6 0 0 0 7.2 0v-1.2" />
+      <circle cx="15.4" cy="8.6" r="1.9" />
+    </Svg>
+  );
+}
+
+/** Un immeuble : l'immobilier — la maison est déjà prise par « Maison ». */
+function BuildingIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3.5 16.5V6.2L9 3.5l5.5 2.7v10.3" />
+      <path d="M2.5 16.5h15" />
+      <path d="M6.4 8.2h1.6M10 8.2h1.6M6.4 11.4h1.6M10 11.4h1.6" />
+      <path d="M7.8 16.5v-2.6h2.4v2.6" />
+    </Svg>
+  );
+}
+
+/** Une toque : l'enseignement et la formation. */
+function CapIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M10 4 2.8 7.4 10 10.8l7.2-3.4L10 4Z" />
+      <path d="M5.6 9v3.8c0 1.2 2 2.2 4.4 2.2s4.4-1 4.4-2.2V9" />
+      <path d="M17.2 7.4v4" />
+    </Svg>
+  );
+}
+
+/** Une voiture : les véhicules, et le taxi. */
+function CarIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3.2 12.4h13.6v2.4a.8.8 0 0 1-.8.8h-1.2a.8.8 0 0 1-.8-.8v-.8H6v.8a.8.8 0 0 1-.8.8H4a.8.8 0 0 1-.8-.8v-2.4Z" />
+      <path d="M4.4 12.4 5.8 7.6a1.4 1.4 0 0 1 1.3-1h5.8a1.4 1.4 0 0 1 1.3 1l1.4 4.8" />
+      <path d="M6 14.4h8" />
+      <circle cx="6.4" cy="12.4" r=".1" />
+      <circle cx="13.6" cy="12.4" r=".1" />
+    </Svg>
+  );
+}
+
+/** Un minibus : le louage, qui part quand il est plein. */
+function VanIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M2.8 6.6h9.4v7.2H2.8z" />
+      <path d="M12.2 8.8h2.6l2.4 2.6v2.4h-5z" />
+      <path d="M2.8 13.8h14.4" />
+      <circle cx="6.2" cy="15.2" r="1.3" />
+      <circle cx="14.2" cy="15.2" r="1.3" />
+      <path d="M5 9h2.2M9 9h2" />
+    </Svg>
+  );
+}
+
+/** Une croix dans un cercle : la pharmacie. */
+function PharmacyIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="10" cy="10" r="6.8" />
+      <path d="M10 6.4v7.2M6.4 10h7.2" />
+    </Svg>
+  );
+}
+
+/** Un dôme et un minaret : l'heure de la prière. */
+function MosqueIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5.4 16.5v-5.2a4.6 4.6 0 0 1 9.2 0v5.2" />
+      <path d="M3.6 16.5h12.8" />
+      <path d="M16.4 16.5V7.2" />
+      <path d="M16.4 7.2a1.2 1.2 0 1 0-.1 0" />
+      <path d="M10 6.7V4.6" />
+    </Svg>
+  );
+}
+
+/** Un canapé : les équipements pour la maison. */
+function SofaIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 10.4V7.8a1.6 1.6 0 0 1 1.6-1.6h8.8A1.6 1.6 0 0 1 16 7.8v2.6" />
+      <path d="M2.8 10.4a1.6 1.6 0 0 1 3.2 0v1.8h8v-1.8a1.6 1.6 0 0 1 3.2 0v3.4H2.8z" />
+      <path d="M4.6 13.8v1.6M15.4 13.8v1.6" />
+    </Svg>
+  );
+}
+
+/** Un ballon de fête : les fêtes et les événements. */
+function PartyIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M10 3.2a4 4 0 0 1 4 4c0 2.6-2.2 4.8-4 5.6-1.8-.8-4-3-4-5.6a4 4 0 0 1 4-4Z" />
+      <path d="M10 12.8v1.4" />
+      <path d="M10 14.2c-1 .8-1 1.8 0 2.6" />
+      <path d="M15.4 4.4 16.6 3M16.8 8.2h1.6M4.2 4.4 3 3" />
     </Svg>
   );
 }

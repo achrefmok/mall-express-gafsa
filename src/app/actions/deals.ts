@@ -5,7 +5,7 @@ import { FREESHOP_PAR_MOIS, FREESHOP_PHOTOS_MAX } from "@/lib/free-shop";
 import { done, fail, ok, readableError, requireAdmin, requireProfile } from "./_helpers";
 
 /**
- * Publier sur Free Shop.
+ * Publier sur G-Shop.
  *
  * Les deux limites — quatre photos, trois publications par mois — sont
  * posées en base. Ce qui est vérifié ici l'est pour la forme du message,
@@ -66,7 +66,7 @@ export async function createDeal(input: {
     */
     if (insertError.message.includes("FREESHOP_LIMITE_MOIS")) {
       return fail(
-        `Vous avez atteint votre limite de ${FREESHOP_PAR_MOIS} publications Free Shop pour ce mois. Vous pourrez publier à nouveau le mois prochain.`,
+        `Vous avez atteint votre limite de ${FREESHOP_PAR_MOIS} publications G-Shop pour ce mois. Vous pourrez publier à nouveau le mois prochain.`,
       );
     }
     if (insertError.message.includes("deals_quatre_photos")) {

@@ -100,6 +100,28 @@ export async function removeFromCart(itemId: string) {
   return done();
 }
 
+/**
+ * Vider le panier.
+ *
+ * Sans elle, il fallait toucher « moins » jusqu'à zéro sur chaque ligne :
+ * un panier de six articles à trois exemplaires demandait dix-huit
+ * touchers pour repartir de rien.
+ *
+ * Le filtre sur `user_id` n'est pas une politesse — c'est ce qui empêche
+ * une suppression de masse chez quelqu'un d'autre si la policy venait un
+ * jour à être relâchée.
+ */
+export async function viderPanier() {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase.from("cart_items").delete().eq("user_id", profile.id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/panier");
+  return done();
+}
+
 export async function toggleFavorite(productId: string, isFavorite: boolean) {
   const { supabase, profile, error } = await requireProfile();
   if (!profile) return fail(error);

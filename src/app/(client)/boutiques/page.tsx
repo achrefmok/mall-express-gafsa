@@ -5,9 +5,9 @@ import { TopBar } from "@/components/shell/top-bar";
 import { ShopsMap, type ShopPin } from "@/components/shops/shops-map";
 
 export const metadata: Metadata = {
-  title: "Boutiques vérifiées de Gafsa",
+  title: "Les boutiques du mall de Gafsa",
   description:
-    "La carte des boutiques vérifiées du mall de Gafsa : où elles se trouvent, leur local, et l'itinéraire pour s'y rendre.",
+    "La carte des boutiques du mall de Gafsa : où elles se trouvent, leur local, et l'itinéraire pour s'y rendre.",
   alternates: { canonical: "/boutiques" },
 };
 

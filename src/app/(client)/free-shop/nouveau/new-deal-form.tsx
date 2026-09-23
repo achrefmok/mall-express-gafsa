@@ -41,7 +41,7 @@ function tonightAt22(): string {
 }
 
 /**
- * Publier sur Free Shop.
+ * Publier sur G-Shop.
  *
  * Deux limites encadrent la publication, et l'écran les dit avant de les
  * appliquer : quatre photos, trois publications par mois. Les annoncer au

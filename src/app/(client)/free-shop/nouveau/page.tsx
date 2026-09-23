@@ -7,7 +7,7 @@ import { freeShopQuota } from "@/app/actions/deals";
 import { NewDealForm } from "./new-deal-form";
 
 export const metadata: Metadata = {
-  title: "Publier sur Free Shop",
+  title: "Publier sur G-Shop",
   robots: { index: false, follow: false },
 };
 

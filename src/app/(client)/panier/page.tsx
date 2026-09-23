@@ -8,6 +8,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { EmptyState, ButtonLink } from "@/components/ui/primitives";
 import { CartIcon } from "@/components/ui/icons";
 import { CartGroups } from "./cart-client";
+import { ViderPanier } from "./vider-panier";
 
 export const metadata: Metadata = {
   title: "Panier",
@@ -86,9 +87,14 @@ export default async function CartPage() {
           />
         ) : (
           <>
-            {groups.length > 1 && (
-              <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.cart.perShop}</p>
-            )}
+            <div className="flex items-center justify-between gap-2">
+              {groups.length > 1 ? (
+                <p className="text-[0.65625rem] text-[var(--color-muted)]">{t.cart.perShop}</p>
+              ) : (
+                <span />
+              )}
+              <ViderPanier />
+            </div>
             <CartGroups
               locale={locale}
               defaultPhone={profile.phone ?? ""}

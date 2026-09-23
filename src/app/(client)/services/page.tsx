@@ -181,7 +181,7 @@ export default async function ServicesPage() {
         </Link>
 
         {/*
-          ─── Boutiques vérifiées ──────────────────────────────────────
+          ─── Les boutiques ────────────────────────────────────────────
 
           Chercher où aller est un besoin de service, pas de catalogue : on
           ouvre cet écran en sachant ce qu'on veut, pas en flânant.

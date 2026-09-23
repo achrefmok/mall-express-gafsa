@@ -6,14 +6,14 @@ import { EmptyState } from "@/components/ui/primitives";
 import { FreeShopModeration, type PublicationAModerer } from "./free-shop-client";
 
 export const metadata: Metadata = {
-  title: "Free Shop",
+  title: "G-Shop",
   robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";
 
 /**
- * La modération du Free Shop.
+ * La modération du G-Shop.
  *
  * Toute publication d'un membre attend ici avant d'être publique. Le tri par
  * défaut montre les publications en attente, les plus anciennes d'abord :
@@ -45,7 +45,7 @@ export default async function AdminFreeShopPage() {
 
   return (
     <>
-      <TopBar title="Free Shop" />
+      <TopBar title="G-Shop" />
 
       {publications.length === 0 ? (
         <EmptyState

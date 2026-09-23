@@ -26,7 +26,7 @@ export type DeliveryMethod = "delivery" | "pickup";
 export type LiveStatus = "scheduled" | "live" | "ended" | "cancelled";
 export type LiveSource = "camera" | "facebook" | "hls";
 export type DealStatus = "active" | "expired" | "removed";
-/** Free Shop : toute publication attend l'administration avant d'être publique. */
+/** G-Shop : toute publication attend l'administration avant d'être publique. */
 export type ModerationStatus = "pending" | "approved" | "rejected";
 export type ReservationStatus = "pending" | "accepted" | "refused" | "done" | "cancelled";
 export type ReportTarget = "deal" | "product" | "shop" | "deal_comment" | "live_comment" | "user";
