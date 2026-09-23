@@ -29,6 +29,8 @@ export type DealStatus = "active" | "expired" | "removed";
 /** G-Shop : toute publication attend l'administration avant d'être publique. */
 export type ModerationStatus = "pending" | "approved" | "rejected";
 export type ReservationStatus = "pending" | "accepted" | "refused" | "done" | "cancelled";
+export type LouageStatut = "ouvert" | "complet" | "parti" | "annule";
+export type LouagePlaceStatut = "reservee" | "annulee";
 export type ReportTarget = "deal" | "product" | "shop" | "deal_comment" | "live_comment" | "user";
 export type ReportStatus = "open" | "resolved" | "dismissed";
 export type CityInfoKind = "works" | "transport" | "admin_procedure";
@@ -1023,6 +1025,60 @@ export interface Database {
         ];
       };
 
+      /* ─── louage_departures ──────────────────────────────────────── */
+      louage_departures: {
+        Row: {
+          id: string;
+          driver_id: string;
+          driver_name: string;
+          phone: string;
+          destination: string;
+          departure_point: string | null;
+          seats_total: number;
+          departs_at: string;
+          price_per_seat: number | null;
+          note: string | null;
+          status: LouageStatut;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          driver_id: string;
+          driver_name: string;
+          phone: string;
+          destination: string;
+          seats_total: number;
+          departs_at: string;
+        } & Partial<Database["public"]["Tables"]["louage_departures"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["louage_departures"]["Row"]>;
+        Relationships: [FK<"louage_departures_driver_id_fkey", ["driver_id"], "profiles">];
+      };
+
+      /* ─── louage_seats ───────────────────────────────────────────── */
+      louage_seats: {
+        Row: {
+          id: string;
+          departure_id: string;
+          user_id: string;
+          full_name: string;
+          phone: string;
+          seats: number;
+          status: LouagePlaceStatut;
+          created_at: string;
+        };
+        Insert: {
+          departure_id: string;
+          user_id: string;
+          full_name: string;
+          phone: string;
+        } & Partial<Database["public"]["Tables"]["louage_seats"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["louage_seats"]["Row"]>;
+        Relationships: [
+          FK<"louage_seats_departure_id_fkey", ["departure_id"], "louage_departures">,
+          FK<"louage_seats_user_id_fkey", ["user_id"], "profiles">,
+        ];
+      };
+
       /* ─── shop_wheels ────────────────────────────────────────────── */
       shop_wheels: {
         Row: {
@@ -1731,6 +1787,27 @@ export interface Database {
       set_member_role: { Args: { target: string; new_role: UserRole }; Returns: undefined };
       my_shop_id: { Args: Record<PropertyKey, never>; Returns: string | null };
       is_dahmani_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      louage_a_venir: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{
+          id: string;
+          destination: string;
+          departure_point: string | null;
+          driver_name: string;
+          phone: string;
+          departs_at: string;
+          price_per_seat: number | null;
+          note: string | null;
+          seats_total: number;
+          seats_left: number;
+          mine: boolean;
+        }>;
+      };
+      louage_reserver: {
+        Args: { p_departure: string; p_seats: number; p_name: string; p_phone: string };
+        Returns: Array<{ seat_id: string; seats_left: number }>;
+      };
+      louage_annuler_place: { Args: { p_seat: string }; Returns: undefined };
       roue_lots_publics: {
         Args: { p_wheel: string };
         Returns: Array<{
@@ -1801,6 +1878,8 @@ export interface Database {
       deal_status: DealStatus;
       moderation_status: ModerationStatus;
       reservation_status: ReservationStatus;
+      louage_statut: LouageStatut;
+      louage_place_statut: LouagePlaceStatut;
       report_target: ReportTarget;
       report_status: ReportStatus;
       city_info_kind: CityInfoKind;

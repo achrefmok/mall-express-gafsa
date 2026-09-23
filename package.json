@@ -38,7 +38,8 @@
     "db:free-shop": "node scripts/check-free-shop.mjs",
     "db:reservations": "node scripts/check-reservations.mjs",
     "db:lelma3ardh": "node scripts/check-lelma3ardh.mjs",
-    "db:roue": "node scripts/check-roue.mjs"
+    "db:roue": "node scripts/check-roue.mjs",
+    "db:louage": "node scripts/check-louage.mjs"
   },
   "dependencies": {
     "@sentry/node": "^10.71.0",
