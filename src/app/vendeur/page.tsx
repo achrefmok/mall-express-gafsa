@@ -3,12 +3,12 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMyShop } from "@/lib/queries";
+import { getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { formatCount, formatPrice, monogram, timeAgo } from "@/lib/format";
 import { lireEtatBlackFriday } from "@/lib/black-friday-server";
-import { Card, Placeholder, Tag } from "@/components/ui/primitives";
+import { Card, EmptyState, Placeholder, Tag } from "@/components/ui/primitives";
 import {
   BoxIcon,
   CameraIcon,
@@ -76,9 +76,33 @@ const SEUIL_STOCK_FAIBLE = 3;
 
 export default async function VendorDashboard() {
   const shop = await getMyShop();
-  if (!shop) redirect("/vendeur/creer");
-
   const { t, locale } = await getT();
+
+  if (!shop) {
+    // Un administrateur en visite n'a pas de boutique à lui : le layout l'a
+    // déjà laissé passer (voir src/lib/supabase/middleware.ts), donc ici on
+    // ne redirige vers /vendeur/creer que pour un vrai vendeur sans boutique.
+    const profile = await getProfile();
+    if (profile?.role === "admin") {
+      return (
+        <div className="flex flex-1 items-center justify-center px-4">
+          <EmptyState
+            title={t.vendeur.adminNoShopTitle}
+            body={t.vendeur.adminNoShopBody}
+            action={
+              <Link
+                href="/admin/boutiques"
+                className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-[0.8125rem] font-bold text-white"
+              >
+                {t.vendeur.adminNoShopAction}
+              </Link>
+            }
+          />
+        </div>
+      );
+    }
+    redirect("/vendeur/creer");
+  }
   const supabase = await createClient();
 
   const maintenant = new Date();

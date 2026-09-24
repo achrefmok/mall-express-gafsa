@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+/** Écrans où l'invitation n'a rien à faire : elle intercepterait un formulaire. */
+const ROUTES_EXCLUES = ["/connexion", "/inscription"];
 
 /**
  * Les roues déjà proposées, et le jour où elles l'ont été.
@@ -139,12 +143,18 @@ function RouetteAnimee() {
  * avoir vu sa vitrine.
  */
 export function InvitationRoue() {
+  const pathname = usePathname();
+  const exclu = ROUTES_EXCLUES.includes(pathname);
   const [roue, setRoue] = useState<RoueOuverte | null>(null);
   const [monte, setMonte] = useState(false);
 
   useEffect(() => setMonte(true), []);
 
   useEffect(() => {
+    // Ne pas même armer le minuteur sur un écran d'authentification : la
+    // roue ne doit jamais venir intercepter un formulaire de connexion.
+    if (exclu) return;
+
     let vivant = true;
 
     /*
@@ -191,9 +201,9 @@ export function InvitationRoue() {
       vivant = false;
       clearTimeout(minuterie);
     };
-  }, []);
+  }, [exclu]);
 
-  if (!monte || !roue) return null;
+  if (!monte || !roue || exclu) return null;
 
   return createPortal(
     <div

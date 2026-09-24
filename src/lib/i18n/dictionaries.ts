@@ -941,6 +941,8 @@ const fr = {
     pharmacies: "Pharmacies de garde",
     askMissingDoc: "Document manquant",
     rejectReason: "Motif",
+    shopStatusPending: "En attente",
+    shopStatusRejected: "Refusée",
   },
 
   // Black Friday, louage, espace chauffeur, avis : voir dictionaries-nouveautes.ts.
@@ -1857,6 +1859,8 @@ const ar: Dictionary = {
     pharmacies: "صيدليات المناوبة",
     askMissingDoc: "وثيقة ناقصة",
     rejectReason: "السبب",
+    shopStatusPending: "في الانتظار",
+    shopStatusRejected: "مرفوضة",
   },
 
   ...nouveautesAr,

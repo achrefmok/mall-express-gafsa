@@ -56,6 +56,25 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   /*
+    Next.js précharge silencieusement les liens visibles (`<Link>` sans
+    `prefetch={false}`) : chaque tuile du menu déclenche une requête vers cet
+    intergiciel, en plus de celle de la page qu'on regarde. Deux jetons de
+    rafraîchissement Supabase sont à usage unique — si la revalidation du
+    jeton ci-dessus tombe pile sur cette fenêtre-là, un préchargement peut
+    voir `user` à `null` alors que la session, elle, est valide.
+    Next met en cache la réponse du préchargement, redirection comprise : un
+    utilisateur qui clique juste après tombe sur `/connexion` sans y être
+    pour autant déconnecté.
+
+    Une requête de préchargement ne doit donc jamais décider seule d'une
+    redirection d'authentification — la vraie navigation, elle, refera la
+    demande sans l'en-tête et sera revalidée sur un jeton à jour.
+  */
+  if (request.headers.get("next-router-prefetch") === "1") {
+    return response;
+  }
+
+  /*
     Déjà connecté : les écrans de connexion et d'inscription n'ont plus
     d'objet. Les pages le vérifiaient déjà, mais leur `redirect()` part après
     le rendu de la coque — statut 200 et charge RSC. Ici, c'est un vrai 307.

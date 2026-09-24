@@ -91,6 +91,12 @@ export const nouveautesFr = {
     hoursEdit: "Modifier",
     level: "Niveau",
 
+    /* Un administrateur en visite, sans boutique à lui */
+    adminNoShopTitle: "Aucune boutique à inspecter",
+    adminNoShopBody:
+      "Votre compte administrateur n'est rattaché à aucune boutique — c'est normal. Ouvrez une fiche depuis la liste des boutiques.",
+    adminNoShopAction: "Voir les boutiques",
+
     /* Les chiffres */
     week: "Sept derniers jours",
     vsLastWeek: "vs semaine passée",
@@ -435,6 +441,10 @@ export const nouveautesAr: Nouveautes = {
     hoursMissing: "أوقات العمل غير محدّدة",
     hoursEdit: "تعديل",
     level: "الطابق",
+
+    adminNoShopTitle: "لا يوجد متجر للمعاينة",
+    adminNoShopBody: "حسابك كمسؤول غير مرتبط بأي متجر — هذا أمر طبيعي. افتح بطاقة متجر من القائمة.",
+    adminNoShopAction: "عرض المتاجر",
 
     week: "آخر سبعة أيام",
     vsLastWeek: "مقارنة بالأسبوع الماضي",
