@@ -25,7 +25,6 @@ import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
-import { lireLogo } from "@/lib/brand";
 import { avecBlackFriday, lireEtatBlackFriday, lireOffresActives } from "@/lib/black-friday-server";
 import { SectionBlackFriday } from "@/components/black-friday/home-section";
 
@@ -320,13 +319,6 @@ export default async function HomePage() {
 
   const discount = promo.data ? percentOff(promo.data.price, promo.data.compare_at_price) : null;
 
-  /*
-    Le logo choisi dans l'administration, sinon celui livré avec l'application.
-    Lecture mise en cache une minute par `lireMarque` : elle ne coûte rien à la
-    page.
-  */
-  const logoApp = (await lireLogo()) ?? "/brand/app-icon.png";
-
   return (
     <>
       {/*
@@ -355,14 +347,9 @@ export default async function HomePage() {
 
         <div className="relative flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-[7px]">
-              <span className="relative h-[26px] w-[26px] flex-none overflow-hidden rounded-[9px] bg-white/15 ring-1 ring-white/25">
-                <Image src={logoApp} alt="" fill sizes="26px" className="object-cover" />
-              </span>
-              <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/70 uppercase">
-                {t.marketplace.eyebrow}
-              </p>
-            </div>
+            <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/70 uppercase">
+              {t.marketplace.eyebrow}
+            </p>
             <h1 className="mt-[7px] truncate text-[1.6875rem] leading-[1.05] font-extrabold tracking-[-0.02em]">
               {profile?.first_name
                 ? format(t.home.greeting, { name: profile.first_name })
