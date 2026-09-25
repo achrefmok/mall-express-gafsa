@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sharp from "sharp";
-import { COULEURS_MARQUE, lireLogo } from "@/lib/brand";
+import { lireLogo } from "@/lib/brand";
 
 /**
  * L'icône de l'application, fabriquée depuis le logo de l'administration.
@@ -89,9 +89,11 @@ type Fond = string | { r: number; g: number; b: number };
  * logo et la vignette paraît d'une seule pièce.
  *
  * Un logo détouré — coin transparent — n'a pas de fond à reprendre : celui-là
- * reçoit le violet de la marque, faute de quoi il disparaîtrait sur un écran
- * d'accueil clair.
+ * reçoit un blanc franc, la couleur qu'une icône d'application porte le plus
+ * souvent derrière un dessin détouré.
  */
+const BLANC: Fond = { r: 255, g: 255, b: 255 };
+
 async function fondDuLogo(source: Buffer): Promise<Fond> {
   try {
     const { width = 0, height = 0 } = await sharp(source).metadata();
@@ -104,10 +106,10 @@ async function fondDuLogo(source: Buffer): Promise<Fond> {
       .raw()
       .toBuffer({ resolveWithObject: true });
 
-    if (data[3] < 200) return COULEURS_MARQUE.violet;
+    if (data[3] < 200) return BLANC;
     return { r: data[0], g: data[1], b: data[2] };
   } catch {
-    return COULEURS_MARQUE.violet;
+    return BLANC;
   }
 }
 
