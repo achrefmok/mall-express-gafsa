@@ -8,7 +8,6 @@ import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { cx, formatPrice, monogram, percentOff } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
-import { AccessibilityBar } from "@/components/shell/accessibility-bar";
 import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
 import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
@@ -20,8 +19,8 @@ import {
   type PartenaireAccueil,
 } from "@/components/home/partners-rail";
 import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
-import { categoryIcon, serviceIcon } from "@/components/ui/category-icons";
-import { BellIcon, CartIcon } from "@/components/ui/icons";
+import { PawIcon, ToolIcon, categoryIcon, serviceIcon } from "@/components/ui/category-icons";
+import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
@@ -74,8 +73,8 @@ const LIEN_SERVICE: Record<string, string> = {
 
 /** Les raccourcis qui ne sont pas des services pratiques en base. */
 const RACCOURCIS = [
-  { cle: "animaux", nom: "Animaux", emoji: "🐾", hue: 190, href: "/marketplace?categorie=animaux" },
-  { cle: "sos", nom: "SOS", emoji: "🛠", hue: 20, href: "/sos" },
+  { cle: "animaux", nom: "Animaux", hue: 190, href: "/marketplace?categorie=animaux" },
+  { cle: "sos", nom: "SOS", hue: 20, href: "/sos" },
 ] as const;
 
 export default async function HomePage() {
@@ -99,6 +98,7 @@ export default async function HomePage() {
     freeShop,
     exposants,
     expoAccueil,
+    livesRail,
   ] = await Promise.all([
     getMallStatus(),
     getCategories(),
@@ -255,6 +255,23 @@ export default async function HomePage() {
       .eq("is_published", true)
       .order("starts_on", { ascending: false })
       .limit(1),
+
+    /*
+      Les boutiques en direct ou sur le point de l'être, à la place de la
+      barre d'accessibilité — déjà doublée par la bascule de langue de
+      l'en-tête et par /profil/reglages.
+
+      `status` avant `scheduled_at` : un direct en cours passe toujours
+      devant un direct programmé, quelle que soit l'heure de l'un ou l'autre.
+    */
+    supabase
+      .from("lives")
+      .select("id, status, scheduled_at, shop:shops!inner(name, slug, logo_url, status)")
+      .in("status", ["live", "scheduled"])
+      .eq("shops.status", "approved")
+      .order("status")
+      .order("scheduled_at", { ascending: true })
+      .limit(12),
   ]);
 
   /*
@@ -276,15 +293,15 @@ export default async function HomePage() {
     cartesPartenaires.push({
       cle: editionEnCours.id,
       href: "/lelma3ardh",
-      nom: "Société Dahmani — Lelma3ardh",
-      accroche: `${(exposants.data ?? []).length} exposants · ${editionEnCours.place ?? "Gafsa"}`,
+      nom: "شركة الدهماني للمعارض",
+      accroche: `${(exposants.data ?? []).length} عارض · ${editionEnCours.place ?? "قفصة"}`,
       image: editionEnCours.cover_url,
       logo: null,
       monogramme: "SD",
       teinte: "expo",
       liens: [
-        { href: "/lelma3ardh", libelle: "Voir les stands" },
-        { href: "/lelma3ardh?vue=produits", libelle: "Voir les produits", accent: true },
+        { href: "/lelma3ardh", libelle: "مشاهدة الأجنحة" },
+        { href: "/lelma3ardh?vue=produits", libelle: "مشاهدة المنتجات", accent: true },
       ],
     });
   }
@@ -301,6 +318,24 @@ export default async function HomePage() {
       acc[service.kind] ??= service;
       return acc;
     }, {}),
+  );
+
+  /*
+    Une pastille par boutique, pas par direct.
+
+    Une boutique peut avoir un direct en cours et un autre programmé ; la
+    requête est triée `status` avant `scheduled_at`, donc le premier direct
+    rencontré pour une boutique est toujours le plus pertinent — en direct
+    s'il y en a un, sinon le plus proche à venir.
+  */
+  const boutiquesEnDirect = Object.values(
+    (livesRail.data ?? []).reduce<Record<string, { id: string; status: string; shop: { name: string; slug: string; logo_url: string | null } }>>(
+      (acc, live) => {
+        acc[live.shop.slug] ??= { id: live.id, status: live.status, shop: live.shop };
+        return acc;
+      },
+      {},
+    ),
   );
 
 
@@ -409,7 +444,51 @@ export default async function HomePage() {
       </div>
 
       <div className="no-sb flex flex-1 flex-col gap-7 overflow-y-auto pt-4 pb-5">
-        <AccessibilityBar />
+        {/*
+          ─── Boutiques en direct ────────────────────────────────────────
+
+          À la place de la barre d'accessibilité : le réglage du texte et du
+          mode simplifié vit déjà dans /profil/reglages, et la bascule de
+          langue reste dans l'en-tête. Ici, ce que l'accueil peut montrer et
+          que rien d'autre ne montre en un coup d'œil — qui diffuse maintenant,
+          qui s'apprête à le faire.
+        */}
+        {boutiquesEnDirect.length > 0 && (
+          <div className="no-sb flex flex-none gap-3 overflow-x-auto px-4">
+            {boutiquesEnDirect.map((live) => (
+              <Link
+                key={live.shop.slug}
+                href={`/lives/${live.id}`}
+                aria-label={`${live.shop.name} — ${live.status === "live" ? t.live.onAir : t.live.scheduled}`}
+                className="press flex flex-none flex-col items-center gap-1"
+              >
+                <span
+                  className={cx(
+                    "relative flex h-[54px] w-[54px] items-center justify-center rounded-full p-[2px]",
+                    live.status === "live"
+                      ? "bg-[var(--color-live-fill)]"
+                      : "bg-[var(--color-brand)]/40",
+                  )}
+                >
+                  <Avatar
+                    src={live.shop.logo_url}
+                    initials={monogram(live.shop.name)}
+                    size={50}
+                    className="ring-2 ring-[var(--color-app)]"
+                  />
+                  {live.status === "live" && (
+                    <span className="absolute -bottom-[1px] end-0 flex h-[16px] items-center rounded-full bg-[var(--color-live-fill)] px-[5px] ring-2 ring-[var(--color-app)]">
+                      <LiveDot size={6} />
+                    </span>
+                  )}
+                </span>
+                <span className="max-w-[58px] truncate text-[0.59375rem] font-semibold text-[var(--color-muted)]">
+                  {live.shop.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/*
           ─── 1 · Affiches sponsorisées ───────────────────────────────
@@ -773,7 +852,7 @@ export default async function HomePage() {
                   key={r.cle}
                   href={r.href}
                   nom={r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
-                  emoji={r.emoji}
+                  Dessin={r.cle === "animaux" ? PawIcon : ToolIcon}
                   hue={r.hue}
                 />
               ))}

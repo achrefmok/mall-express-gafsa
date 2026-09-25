@@ -93,6 +93,7 @@ const PAR_SERVICE: Record<string, IconComponent> = {
   louage: VanIcon,
   pharmacy: PharmacyIcon,
   prayer: MosqueIcon,
+  transporteur: TruckIcon,
 };
 
 export function serviceIcon(kind: string): IconComponent | null {
@@ -287,6 +288,43 @@ function CupIcon(p: IconProps) {
     </Svg>
   );
 }
+
+/** Un camion : le transporteur, qui déplace plus qu'un louage ne le fait. */
+function TruckIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M2.5 6.2h8.4v7.4H2.5z" />
+      <path d="M10.9 8.8h2.8l2.8 2.9v2.9h-5.6z" />
+      <path d="M2.5 13.6h14.8" />
+      <circle cx="6" cy="15.2" r="1.3" />
+      <circle cx="14.4" cy="15.2" r="1.3" />
+    </Svg>
+  );
+}
+
+/** Une patte : les animaux. */
+function PawIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="10" cy="13" r="3.4" />
+      <circle cx="5.3" cy="8.6" r="1.7" />
+      <circle cx="9.3" cy="5.6" r="1.7" />
+      <circle cx="13.7" cy="5.6" r="1.7" />
+      <circle cx="14.7" cy="8.6" r="1.7" />
+    </Svg>
+  );
+}
+
+/** Une clé plate : le dépannage, SOS. */
+function ToolIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M13.2 3.4a3.4 3.4 0 0 0-4.4 4.3L3.6 12.9a1.6 1.6 0 0 0 2.3 2.3l5.2-5.2a3.4 3.4 0 0 0 4.3-4.4l-2.1 2.1-1.9-.5-.5-1.9 2.1-2.1Z" />
+    </Svg>
+  );
+}
+
+export { PawIcon, ToolIcon };
 
 /* Réexportés pour que l'appelant n'importe qu'un seul module. */
 export { BoxIcon, HeartIcon, StoreIcon, UserIcon };

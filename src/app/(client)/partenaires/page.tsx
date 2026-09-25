@@ -66,15 +66,15 @@ export default async function PartenairesPage() {
     cartes.push({
       cle: enCours.id,
       href: "/lelma3ardh",
-      nom: "Société Dahmani — Lelma3ardh",
-      accroche: `${(exposants.data ?? []).length} exposants · ${enCours.place ?? "Gafsa"}`,
+      nom: "شركة الدهماني للمعارض",
+      accroche: `${(exposants.data ?? []).length} عارض · ${enCours.place ?? "قفصة"}`,
       image: enCours.cover_url,
       logo: null,
       monogramme: "SD",
       teinte: "expo",
       liens: [
-        { href: "/lelma3ardh", libelle: "Voir les stands" },
-        { href: "/lelma3ardh?vue=produits", libelle: "Voir les produits", accent: true },
+        { href: "/lelma3ardh", libelle: "مشاهدة الأجنحة" },
+        { href: "/lelma3ardh?vue=produits", libelle: "مشاهدة المنتجات", accent: true },
       ],
     });
   }
