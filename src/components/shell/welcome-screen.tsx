@@ -206,7 +206,7 @@ export function WelcomeScreen({ logo: logoServeur }: { logo?: string | null }) {
           src={logo}
           alt=""
           onError={() => setLogo(LOGO_PAR_DEFAUT)}
-          className="relative h-[148px] w-[148px] rounded-[40px] object-cover shadow-[0_24px_54px_rgba(0,0,0,0.36)]"
+          className="relative h-[148px] w-[148px] object-contain drop-shadow-[0_16px_30px_rgba(0,0,0,0.32)]"
         />
       </span>
 
