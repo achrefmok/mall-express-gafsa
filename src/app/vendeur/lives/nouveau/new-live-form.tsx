@@ -20,12 +20,29 @@ const LABEL = "text-[0.625rem] text-[var(--color-muted)]";
  */
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
+function dateLocaleISO(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/** Dans N minutes, arrondi à la minute : pour les raccourcis « dans 30 min », etc. */
+function dansMinutes(n: number): string {
+  return dateLocaleISO(new Date(Date.now() + n * 60_000));
+}
+
 /** Dans deux heures : le délai qui laisse le temps de prévenir. */
 function dansDeuxHeures(): string {
   const d = new Date(Date.now() + 2 * 3_600_000);
   d.setMinutes(0, 0, 0);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:00`;
+  return dateLocaleISO(d);
 }
+
+/** Les raccourcis proposés au-dessus du champ de date. */
+const RACCOURCIS_DELAI = [
+  { minutes: 15, label: "15 min" },
+  { minutes: 30, label: "30 min" },
+  { minutes: 60, label: "1 h" },
+  { minutes: 120, label: "2 h" },
+] as const;
 
 export function NewLiveForm({
   products,
@@ -138,15 +155,30 @@ export function NewLiveForm({
           </KeyValueRow>
 
           {programme && (
-            <label className="flex flex-col gap-1">
-              <span className={LABEL}>Rendez-vous</span>
-              <input
-                type="datetime-local"
-                value={debut}
-                onChange={(e) => setDebut(e.target.value)}
-                className={FIELD}
-              />
-            </label>
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-[6px]">
+                {RACCOURCIS_DELAI.map((r) => (
+                  <button
+                    key={r.minutes}
+                    type="button"
+                    onClick={() => setDebut(dansMinutes(r.minutes))}
+                    className="rounded-full border border-[var(--color-outline)] px-[11px] py-[6px] text-[0.65625rem] font-bold text-[var(--color-brand)]"
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex flex-col gap-1">
+                <span className={LABEL}>Rendez-vous</span>
+                <input
+                  type="datetime-local"
+                  value={debut}
+                  onChange={(e) => setDebut(e.target.value)}
+                  className={FIELD}
+                />
+              </label>
+            </div>
           )}
         </Card>
 

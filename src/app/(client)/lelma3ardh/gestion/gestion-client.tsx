@@ -32,6 +32,7 @@ export interface ExpoGeree {
   starts_on: string;
   ends_on: string;
   is_published: boolean;
+  cover_url: string | null;
 }
 
 export interface ExposantGere {
@@ -161,6 +162,7 @@ function FormulaireExpo({ expo, onFini }: { expo?: ExpoGeree; onFini?: () => voi
   const [debut, setDebut] = useState(expo?.starts_on ?? jour(new Date()));
   const [fin, setFin] = useState(expo?.ends_on ?? jour(new Date(Date.now() + 3 * 86_400_000)));
   const [publiee, setPubliee] = useState(expo?.is_published ?? true);
+  const [couverture, setCouverture] = useState<string[]>(expo?.cover_url ? [expo.cover_url] : []);
   const [erreur, setErreur] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -176,6 +178,7 @@ function FormulaireExpo({ expo, onFini }: { expo?: ExpoGeree; onFini?: () => voi
         startsOn: debut,
         endsOn: fin,
         isPublished: publiee,
+        coverUrl: couverture[0] ?? null,
       });
       if (r.ok) {
         onFini?.();
@@ -227,6 +230,13 @@ function FormulaireExpo({ expo, onFini }: { expo?: ExpoGeree; onFini?: () => voi
           <input type="date" value={fin} onChange={(e) => setFin(e.target.value)} className={CHAMP} />
         </label>
       </div>
+
+      {/*
+        La photo de couverture : celle que montrent l'accueil et la page
+        « Nos partenaires » sur la carte de l'édition en cours. Une seule
+        suffit — c'est une vignette, pas une galerie.
+      */}
+      <Photos images={couverture} setImages={setCouverture} max={1} />
 
       <div className="flex items-center justify-between">
         <span className={ETIQ}>Visible du public</span>

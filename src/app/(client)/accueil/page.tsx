@@ -20,7 +20,7 @@ import {
 } from "@/components/home/partners-rail";
 import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
 import { PawIcon, ToolIcon, categoryIcon, serviceIcon } from "@/components/ui/category-icons";
-import { BellIcon, CartIcon, LiveDot } from "@/components/ui/icons";
+import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
@@ -329,14 +329,35 @@ export default async function HomePage() {
     s'il y en a un, sinon le plus proche à venir.
   */
   const boutiquesEnDirect = Object.values(
-    (livesRail.data ?? []).reduce<Record<string, { id: string; status: string; shop: { name: string; slug: string; logo_url: string | null } }>>(
-      (acc, live) => {
-        acc[live.shop.slug] ??= { id: live.id, status: live.status, shop: live.shop };
-        return acc;
-      },
-      {},
-    ),
+    (livesRail.data ?? []).reduce<
+      Record<
+        string,
+        {
+          id: string;
+          status: string;
+          scheduledAt: string | null;
+          shop: { name: string; slug: string; logo_url: string | null };
+        }
+      >
+    >((acc, live) => {
+      acc[live.shop.slug] ??= {
+        id: live.id,
+        status: live.status,
+        scheduledAt: live.scheduled_at,
+        shop: live.shop,
+      };
+      return acc;
+    }, {}),
   );
+
+  /** « 35 min », « 2 h », « 3 j » — le délai avant un direct programmé. */
+  function delaiAvantDirect(scheduledAt: string): string {
+    const minutes = Math.max(1, Math.round((new Date(scheduledAt).getTime() - Date.now()) / 60_000));
+    if (minutes < 60) return format(t.live.startsInMin, { n: minutes });
+    const heures = Math.round(minutes / 60);
+    if (heures < 24) return format(t.live.startsInHour, { n: heures });
+    return format(t.live.startsInDay, { n: Math.round(heures / 24) });
+  }
 
 
   /*
@@ -454,40 +475,60 @@ export default async function HomePage() {
           qui s'apprête à le faire.
         */}
         {boutiquesEnDirect.length > 0 && (
-          <div className="no-sb flex flex-none gap-3 overflow-x-auto px-4">
-            {boutiquesEnDirect.map((live) => (
-              <Link
-                key={live.shop.slug}
-                href={`/lives/${live.id}`}
-                aria-label={`${live.shop.name} — ${live.status === "live" ? t.live.onAir : t.live.scheduled}`}
-                className="press flex flex-none flex-col items-center gap-1"
-              >
-                <span
-                  className={cx(
-                    "relative flex h-[54px] w-[54px] items-center justify-center rounded-full p-[2px]",
-                    live.status === "live"
-                      ? "bg-[var(--color-live-fill)]"
-                      : "bg-[var(--color-brand)]/40",
-                  )}
+          <section className="flex flex-col gap-3">
+            <EnteteSection hue="var(--color-live-fill)" titre={t.live.railTitle} />
+
+            <div className="no-sb flex flex-none gap-4 overflow-x-auto px-4">
+              {boutiquesEnDirect.map((live) => (
+                <Link
+                  key={live.shop.slug}
+                  href={`/lives/${live.id}`}
+                  aria-label={`${live.shop.name} — ${live.status === "live" ? t.live.onAir : t.live.scheduled}`}
+                  className="press flex flex-none flex-col items-center gap-2"
                 >
-                  <Avatar
-                    src={live.shop.logo_url}
-                    initials={monogram(live.shop.name)}
-                    size={50}
-                    className="ring-2 ring-[var(--color-app)]"
-                  />
-                  {live.status === "live" && (
-                    <span className="absolute -bottom-[1px] end-0 flex h-[16px] items-center rounded-full bg-[var(--color-live-fill)] px-[5px] ring-2 ring-[var(--color-app)]">
-                      <LiveDot size={6} />
+                  {/*
+                    L'anneau à la manière d'une story : dégradé tournant pour
+                    « programmé », plein et pulsé pour « en direct » — le
+                    même repère que sur Instagram ou Facebook, déjà connu
+                    sans explication.
+                  */}
+                  <span
+                    className={cx(
+                      "relative flex h-[62px] w-[62px] flex-none items-center justify-center rounded-full p-[3px]",
+                      live.status === "live" && "animate-live-dot",
+                    )}
+                    style={{
+                      background:
+                        live.status === "live"
+                          ? "var(--color-live-fill)"
+                          : "conic-gradient(from 180deg, var(--color-brand), var(--color-live-fill), var(--color-brand-strong), var(--color-brand))",
+                    }}
+                  >
+                    <Avatar
+                      src={live.shop.logo_url}
+                      initials={monogram(live.shop.name)}
+                      size={56}
+                      className="ring-[3px] ring-[var(--color-app)]"
+                    />
+
+                    {/* Le badge chevauche le bas de l'anneau, comme la mention « LIVE ». */}
+                    <span
+                      className={cx(
+                        "absolute -bottom-[7px] flex h-[17px] items-center justify-center rounded-full px-[7px] text-[0.5rem] font-extrabold whitespace-nowrap text-white ring-2 ring-[var(--color-app)]",
+                        live.status === "live" ? "bg-[var(--color-live-fill)]" : "bg-[var(--color-brand)]",
+                      )}
+                    >
+                      {live.status === "live" ? t.live.onAir : delaiAvantDirect(live.scheduledAt!)}
                     </span>
-                  )}
-                </span>
-                <span className="max-w-[58px] truncate text-[0.59375rem] font-semibold text-[var(--color-muted)]">
-                  {live.shop.name}
-                </span>
-              </Link>
-            ))}
-          </div>
+                  </span>
+
+                  <span className="max-w-[64px] truncate text-[0.625rem] font-semibold text-[var(--color-muted)]">
+                    {live.shop.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         {/*

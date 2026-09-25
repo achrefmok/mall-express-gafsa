@@ -39,7 +39,7 @@ export default async function GestionLelma3ardhPage() {
   const [expos, exposants, produits] = await Promise.all([
     supabase
       .from("expos")
-      .select("id, slug, name, name_ar, description, place, starts_on, ends_on, is_published")
+      .select("id, slug, name, name_ar, description, place, starts_on, ends_on, is_published, cover_url")
       .order("starts_on", { ascending: false })
       .limit(50),
 

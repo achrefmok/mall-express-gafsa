@@ -56,6 +56,7 @@ export async function enregistrerExpo(input: {
   startsOn: string;
   endsOn: string;
   isPublished?: boolean;
+  coverUrl?: string | null;
 }) {
   const { supabase, error } = await exigerDahmani();
   if (!supabase) return fail(error);
@@ -72,6 +73,7 @@ export async function enregistrerExpo(input: {
     starts_on: input.startsOn,
     ends_on: input.endsOn,
     is_published: input.isPublished ?? true,
+    cover_url: input.coverUrl ?? null,
   };
 
   const { data, error: e } = input.id
@@ -86,6 +88,9 @@ export async function enregistrerExpo(input: {
 
   revalidatePath("/lelma3ardh");
   revalidatePath("/lelma3ardh/gestion");
+  // La photo de couverture alimente aussi la carte partenaire de l'accueil.
+  revalidatePath("/accueil");
+  revalidatePath("/partenaires");
   return ok({ id: data.id });
 }
 
