@@ -1598,6 +1598,7 @@ export interface Database {
       };
       end_live: { Args: { target_live: string }; Returns: undefined };
       set_live_viewers: { Args: { target_live: string; count_now: number }; Returns: undefined };
+      bump_live_viewers: { Args: { target_live: string; delta: number }; Returns: undefined };
       approve_shop: { Args: { target_shop: string }; Returns: undefined };
       reject_shop: {
         Args: { target_shop: string; reason: string; missing_doc?: string | null };

@@ -52,14 +52,17 @@ export function LiveProducts({
   /*
     Un article ajouté pendant la diffusion doit apparaître ici sans
     rechargement : c'est tout l'intérêt de le présenter pendant qu'on en parle.
-    La table est publiée en temps réel pour cette seule raison.
 
-    On recharge la liste entière plutôt que d'insérer la ligne reçue : la
-    notification ne porte que la liaison, pas l'article, et une seconde requête
-    au moment d'un ajout coûte moins qu'un état à moitié rempli.
+    Un canal Realtime tenait ce fil à jour, mais une connexion ouverte par
+    spectateur — pour une feuille que la plupart n'ouvrent même pas — pesait
+    sur la ressource la plus étroite du palier gratuit Supabase. Un sondage
+    toutes les cinq secondes coûte une requête légère au lieu d'une connexion
+    permanente, et l'écart ne se voit pas sur une liste qu'on consulte à son
+    rythme pendant qu'on regarde.
   */
   useEffect(() => {
     const supabase = createClient();
+    let vivant = true;
 
     const reload = async () => {
       const { data } = await supabase
@@ -67,6 +70,8 @@ export function LiveProducts({
         .select("position, product:products(id, name, price, images, stock, is_online, is_draft)")
         .eq("live_id", liveId)
         .order("position");
+
+      if (!vivant) return;
 
       const fresh = (data ?? [])
         .map((row) => row.product)
@@ -76,17 +81,11 @@ export function LiveProducts({
       setProducts(fresh);
     };
 
-    const channel = supabase
-      .channel(`live-products:${liveId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "live_products", filter: `live_id=eq.${liveId}` },
-        () => void reload(),
-      )
-      .subscribe();
-
+    void reload();
+    const minuterie = setInterval(reload, 5_000);
     return () => {
-      void supabase.removeChannel(channel);
+      vivant = false;
+      clearInterval(minuterie);
     };
   }, [liveId]);
 

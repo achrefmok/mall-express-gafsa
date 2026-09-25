@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useI18n } from "@/lib/i18n/provider";
 import { format } from "@/lib/i18n/format";
 import { createClient } from "@/lib/supabase/client";
-import { postLiveComment, reportViewerCount, toggleLiveLike } from "@/app/actions/lives";
+import { bumpLiveViewers, pollLive, postLiveComment, toggleLiveLike } from "@/app/actions/lives";
 import { placeOrder } from "@/app/actions/cart";
 import { countdown, cx, formatCount, formatPrice, shortName } from "@/lib/format";
 import { LiveVideo } from "./live-video";
@@ -137,64 +137,45 @@ export function LiveRoom({
     return () => clearInterval(timer);
   }, [live.offer_ends_at]);
 
-  /* ─── Canal temps réel : commentaires, état du live, présence ──────── */
+  /*
+    ─── Sondage : commentaires, état du direct, spectateurs ────────────
+
+    Un canal Realtime par spectateur coûtait une connexion permanente —
+    la ressource la plus étroite du palier gratuit Supabase, partagée avec
+    le reste de l'application (messages, taxi, commandes vendeur). Cinq
+    secondes d'attente pour voir un commentaire arriver ne se remarque
+    pas ; cent connexions Realtime ouvertes en même temps, si.
+  */
+  const depuisRef = useRef(new Date().toISOString());
+
   useEffect(() => {
-    const channel = supabase
-      .channel(`live-room:${live.id}`, {
-        config: { presence: { key: viewerId ?? crypto.randomUUID() } },
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "live_comments",
-          filter: `live_id=eq.${live.id}`,
-        },
-        async ({ new: row }) => {
-          const inserted = row as { id: string; body: string; created_at: string; user_id: string };
+    let vivant = true;
 
-          // L'événement Postgres ne porte pas la jointure : on va chercher
-          // l'auteur pour afficher un nom plutôt qu'un identifiant.
-          const { data: author } = await supabase
-            .from("profiles")
-            .select("first_name, last_name")
-            .eq("id", inserted.user_id)
-            .maybeSingle();
+    async function sonder() {
+      const result = await pollLive(live.id, depuisRef.current);
+      if (!vivant || !result.ok) return;
 
-          setComments((current) =>
-            current.some((c) => c.id === inserted.id)
-              ? current
-              : [...current.slice(-60), { ...inserted, author }],
-          );
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "lives", filter: `id=eq.${live.id}` },
-        ({ new: row }) => {
-          const updated = row as LiveRoomProps["live"];
-          setLive((current) => ({ ...current, ...updated, shop: current.shop }));
-          setLikes(updated.likes_count);
+      const { live: updated, comments: nouveaux } = result.data;
 
-          // Le vendeur a changé le produit épinglé pendant le direct.
-          if (
-            (row as { pinned_product_id: string | null }).pinned_product_id !== (pinned?.id ?? null)
-          ) {
-            void refreshPinned((row as { pinned_product_id: string | null }).pinned_product_id);
-          }
-        },
-      )
-      .on("presence", { event: "sync" }, () => {
-        const count = Object.keys(channel.presenceState()).length;
-        setViewers(count);
-      });
+      if (updated) {
+        setLive((current) => ({ ...current, ...updated }));
+        setLikes(updated.likes_count);
+        setViewers(updated.viewers_count);
 
-    void channel.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await channel.track({ joined_at: new Date().toISOString() });
+        if (updated.pinned_product_id !== (pinned?.id ?? null)) {
+          void refreshPinned(updated.pinned_product_id);
+        }
       }
-    });
+
+      if (nouveaux.length > 0) {
+        depuisRef.current = nouveaux[nouveaux.length - 1]!.created_at;
+        setComments((current) => {
+          const connus = new Set(current.map((c) => c.id));
+          const ajouts = nouveaux.filter((c) => !connus.has(c.id));
+          return ajouts.length > 0 ? [...current.slice(-60), ...ajouts].slice(-60) : current;
+        });
+      }
+    }
 
     async function refreshPinned(productId: string | null) {
       if (!productId) {
@@ -206,24 +187,25 @@ export function LiveRoom({
         .select("id, name, price, images, stock")
         .eq("id", productId)
         .maybeSingle();
-      setPinned(data);
+      if (vivant) setPinned(data);
     }
 
+    void sonder();
+    const minuterie = setInterval(sonder, 5_000);
     return () => {
-      void supabase.removeChannel(channel);
+      vivant = false;
+      clearInterval(minuterie);
     };
-  }, [supabase, live.id, viewerId, pinned?.id]);
+  }, [live.id, pinned?.id, supabase]);
 
-  /* ─── Remontée périodique du compteur vers la base ─────────────────── */
+  /* ─── Présence, en entrée et en sortie plutôt qu'en continu ─────────── */
   useEffect(() => {
-    if (live.status !== "live") return;
+    if (!viewerId) return;
 
-    const push = () => void reportViewerCount(live.id, viewers);
-    push();
-
-    const timer = setInterval(push, 20_000);
-    return () => clearInterval(timer);
-  }, [live.id, live.status, viewers]);
+    void bumpLiveViewers(live.id, 1);
+    return () => void bumpLiveViewers(live.id, -1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- un direct ne change pas d'identifiant en cours de montage
+  }, [viewerId]);
 
   /* ─── Fil de commentaires : garder le dernier visible ──────────────── */
   useEffect(() => {

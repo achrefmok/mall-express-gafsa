@@ -67,13 +67,54 @@ export async function toggleLiveLike(liveId: string, liked: boolean) {
   return done();
 }
 
-/** Remontée du compteur de spectateurs depuis le canal Presence. */
-export async function reportViewerCount(liveId: string, count: number) {
+/**
+ * Signale une arrivée (`delta: 1`) ou un départ (`delta: -1`) du direct.
+ *
+ * Remplace l'ancien `reportViewerCount`, qui rapportait la taille du canal
+ * Presence de ce client — fiable, mais qui exigeait une connexion Realtime
+ * ouverte par spectateur pendant tout le direct. Le compteur est maintenant
+ * tenu à jour par ces deux appels, silencieux comme le précédent : un
+ * spectateur anonyme ne compte pas, ce n'était déjà pas le cas avant.
+ */
+export async function bumpLiveViewers(liveId: string, delta: 1 | -1) {
   const { supabase, profile } = await requireProfile();
-  if (!profile) return done(); // silencieux : ce n'est qu'un compteur
+  if (!profile) return done();
 
-  await supabase.rpc("set_live_viewers", { target_live: liveId, count_now: count });
+  await supabase.rpc("bump_live_viewers", { target_live: liveId, delta });
   return done();
+}
+
+/**
+ * Un sondage, à la place du canal Realtime.
+ *
+ * Renvoie en un aller-retour ce que l'écran de direct doit rafraîchir
+ * toutes les quelques secondes : l'état du direct (spectateurs, mentions
+ * « j'aime », produit épinglé, achats) et les commentaires arrivés depuis
+ * le dernier sondage. Une requête au lieu de deux, et surtout : aucune
+ * connexion tenue ouverte entre deux appels.
+ */
+export async function pollLive(liveId: string, sinceIso: string) {
+  // `requireProfile` rend toujours un client — connecté ou non, la lecture
+  // d'un direct et de ses commentaires reste publique.
+  const { supabase } = await requireProfile();
+
+  const [{ data: live }, { data: comments }] = await Promise.all([
+    supabase
+      .from("lives")
+      .select("status, likes_count, pinned_product_id, viewers_count, purchases_count")
+      .eq("id", liveId)
+      .maybeSingle(),
+    supabase
+      .from("live_comments")
+      .select("id, body, created_at, author:profiles(first_name, last_name)")
+      .eq("live_id", liveId)
+      .eq("is_hidden", false)
+      .gt("created_at", sinceIso)
+      .order("created_at", { ascending: true })
+      .limit(60),
+  ]);
+
+  return ok({ live, comments: comments ?? [] });
 }
 
 /* ─── Côté vendeur ─────────────────────────────────────────────────────── */
