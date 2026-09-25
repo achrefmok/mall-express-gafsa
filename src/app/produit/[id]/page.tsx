@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
@@ -38,22 +39,47 @@ import { identifiantProduit } from "./resoudre";
 */
 export const dynamic = "force-dynamic";
 
+/**
+ * La fiche produit et sa boutique, mises en cache vingt secondes.
+ *
+ * La restructuration décrite ci-dessus reste à faire pour que la page entière
+ * se serve du cache ; en l'attendant, la lecture qui coûte le plus — le
+ * produit, sa boutique, sa catégorie — peut déjà l'être, sans toucher au
+ * favori ni à la langue qui, eux, doivent rester lus à chaque visite. Un
+ * client sans cookies : la même fiche, pour tout le monde, vingt secondes de
+ * suite.
+ */
+const ficheProduit = unstable_cache(
+  async (productId: string) => {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from("products")
+      .select(
+        `*,
+         shop:shops!inner(id, name, slug, logo_url, phone, mall_level, mall_unit, status, pickup_in_store, rating_sum, rating_count),
+         category:categories(hue, name_fr, name_ar)`,
+      )
+      .eq("id", productId)
+      .maybeSingle();
+    return data;
+  },
+  ["produit-fiche"],
+  { revalidate: 20 },
+);
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
 
   const productId = await identifiantProduit(id);
   if (!productId) return { title: "Produit introuvable" };
 
-  const { data } = await supabase
-    .from("products")
-    .select("id, name, description, price, images, shop:shops(name)")
-    .eq("id", productId)
-    .maybeSingle();
+  // Même lecture mise en cache que le corps de la page : la métadonnée et le
+  // rendu se partagent la même requête au lieu de la doubler à chaque visite.
+  const data = await ficheProduit(productId);
 
   if (!data) return { title: "Produit introuvable" };
 
@@ -98,28 +124,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const productId = await identifiantProduit(id);
   if (!productId) notFound();
 
-  const { data: product } = await supabase
-    .from("products")
-    /*
-      `*` plutôt qu'une liste de colonnes, et ce n'est pas de la paresse.
+  /*
+    `*` plutôt qu'une liste de colonnes, et ce n'est pas de la paresse.
 
-      Nommer `variant_images` dans le `select` rend la page tributaire d'une
-      migration : tant que la colonne n'existe pas, PostgREST refuse la requête
-      entière, `product` vaut `null`, et la fiche répond « introuvable ». Toute
-      la boutique tombe pour une colonne facultative — ce qui s'est produit
-      exactement, avant que ce commentaire ne soit écrit.
+    Nommer `variant_images` dans le `select` rend la page tributaire d'une
+    migration : tant que la colonne n'existe pas, PostgREST refuse la requête
+    entière, `product` vaut `null`, et la fiche répond « introuvable ». Toute
+    la boutique tombe pour une colonne facultative — ce qui s'est produit
+    exactement, avant que ce commentaire ne soit écrit.
 
-      Avec `*`, la colonne remonte quand elle existe et manque simplement
-      sinon. Le code la lit avec un repli, et la fonctionnalité s'active d'elle-
-      même une fois la migration passée. Le surcoût est d'une seule ligne lue.
-    */
-    .select(
-      `*,
-       shop:shops!inner(id, name, slug, logo_url, phone, mall_level, mall_unit, status, pickup_in_store, rating_sum, rating_count),
-       category:categories(hue, name_fr, name_ar)`,
-    )
-    .eq("id", productId)
-    .maybeSingle();
+    Avec `*`, la colonne remonte quand elle existe et manque simplement
+    sinon. Le code la lit avec un repli, et la fonctionnalité s'active d'elle-
+    même une fois la migration passée. Le surcoût est d'une seule ligne lue.
+  */
+  const product = await ficheProduit(productId);
 
   if (!product || product.shop?.status !== "approved") notFound();
 

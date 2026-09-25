@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import { getCategories, getMallStatus, getSessionUser, getTopBarCounts } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
@@ -19,6 +20,46 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
+
+/**
+ * La grille de produits, mise en cache trente secondes.
+ *
+ * La page reste `force-dynamic` : le compteur du panier, les notifications et
+ * le cœur des favoris viennent de la session, et une session se lit dans les
+ * cookies — la seule chose qui rendrait ce point discutable serait de la
+ * mémoïser aussi, ce qu'on se garde bien de faire.
+ *
+ * Mais la grille elle-même — quarante produits, triés par ventes — est
+ * identique pour tout le monde à la même catégorie près. La demander à
+ * Supabase à chaque visite, y compris deux fois dans la même seconde un jour
+ * d'affluence, ne change jamais la réponse pendant trente secondes. Un client
+ * sans cookies (`createStaticClient`) et une clé de cache par catégorie : la
+ * page reste dynamique, la requête la plus coûteuse ne l'est plus.
+ */
+const produitsMarketplace = unstable_cache(
+  async (categoryIds: string[] | null) => {
+    const supabase = createStaticClient();
+
+    let query = supabase
+      .from("products")
+      .select(
+        "id, name, price, compare_at_price, images, stock, shop:shops!inner(name, slug, status), category:categories(hue)",
+      )
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
+      .order("sold_count", { ascending: false })
+      .limit(40);
+
+    if (categoryIds) query = query.in("category_id", categoryIds);
+
+    const { data } = await query;
+    return data ?? [];
+  },
+  ["marketplace-products"],
+  { revalidate: 30 },
+);
 
 export default async function MarketplacePage({
   searchParams,
@@ -40,18 +81,7 @@ export default async function MarketplacePage({
 
   const activeCategory = categories.find((c) => c.slug === activeSlug) ?? null;
 
-  let query = supabase
-    .from("products")
-    .select(
-      "id, name, price, compare_at_price, images, stock, shop:shops!inner(name, slug, status), category:categories(hue)",
-    )
-    .eq("is_online", true)
-    .eq("is_draft", false)
-    .eq("shops.status", "approved")
-      .eq("shops.list_in_marketplace", true)
-    .order("sold_count", { ascending: false })
-    .limit(40);
-
+  let categoryIds: string[] | null = null;
   if (activeCategory) {
     // Une catégorie parente doit ramener aussi ses sous-catégories.
     const { data: children } = await supabase
@@ -59,13 +89,12 @@ export default async function MarketplacePage({
       .select("id")
       .eq("parent_id", activeCategory.id);
 
-    const ids = [activeCategory.id, ...(children ?? []).map((c) => c.id)];
-    query = query.in("category_id", ids);
+    categoryIds = [activeCategory.id, ...(children ?? []).map((c) => c.id)];
   }
 
-  const { data: lus } = await query;
+  const lus = await produitsMarketplace(categoryIds);
   // Le prix Black Friday sur chaque carte, en une requête pour la grille.
-  const products = await avecBlackFriday(lus ?? []);
+  const products = await avecBlackFriday(lus);
 
   /*
     Les favoris de la personne, en une requête.
