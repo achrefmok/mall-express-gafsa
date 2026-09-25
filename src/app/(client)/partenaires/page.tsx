@@ -66,7 +66,7 @@ export default async function PartenairesPage() {
     cartes.push({
       cle: enCours.id,
       href: "/lelma3ardh",
-      nom: "شركة الدهماني للمعارض",
+      nom: "شركة الدحماني — للمعارض",
       accroche: `${(exposants.data ?? []).length} عارض · ${enCours.place ?? "قفصة"}`,
       image: enCours.cover_url,
       logo: null,
