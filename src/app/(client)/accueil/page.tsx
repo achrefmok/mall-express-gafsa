@@ -293,7 +293,7 @@ export default async function HomePage() {
     cartesPartenaires.push({
       cle: editionEnCours.id,
       href: "/lelma3ardh",
-      nom: "شركة الدحماني — للمعارض",
+      nom: "شركة الدهماني — للمعارض",
       accroche: `${(exposants.data ?? []).length} عارض · ${editionEnCours.place ?? "قفصة"}`,
       image: editionEnCours.cover_url,
       logo: null,
