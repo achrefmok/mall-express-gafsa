@@ -137,7 +137,7 @@ const isShareLink = (url: string) => SHARE_PATH.test(new URL(url).pathname);
   à usurper l'identité de qui que ce soit.
 */
 const RESOLVER_HEADERS = {
-  "user-agent": "MallExpressGafsaBot/1.0 (+https://mall-express-gafsa.vercel.app)",
+  "user-agent": "MallExpressGafsaBot/1.0 (+https://g-mall.tn)",
   accept: "text/html,application/xhtml+xml",
 } as const;
 
