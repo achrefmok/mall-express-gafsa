@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { done, fail, ok, readableError, requireProfile } from "./_helpers";
+import { done, fail, ok, readableError, requireExhibitor, requireProfile } from "./_helpers";
+import { createAdminClient } from "@/lib/supabase/server";
+import { signaler } from "@/lib/signal";
 
 /**
  * Société Dahmani — Lelma3ardh.
@@ -43,6 +45,11 @@ function slugifier(texte: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 60);
+}
+
+/** Un mot de passe qu'on ne demande à personne de retenir : il est affiché une fois, puis copié. */
+function genererMotDePasse(): string {
+  return `${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}A9!`;
 }
 
 /* ─── Les éditions ────────────────────────────────────────────────────── */
@@ -95,6 +102,82 @@ export async function enregistrerExpo(input: {
 }
 
 /* ─── Les exposants ───────────────────────────────────────────────────── */
+
+/**
+ * Prénom, nom, un bouton — le compte suit tout seul.
+ *
+ * Trois écritures, dans un ordre qui compte : le compte d'authentification
+ * d'abord (le stand a besoin de son identifiant), puis le rôle — jamais
+ * accordé par le déclencheur `handle_new_user`, qui n'accepte que « client »
+ * ou « vendor » depuis les métadonnées d'un client —, puis le stand
+ * lui-même, déjà rattaché à ce compte et déjà approuvé : c'est
+ * l'administration qui vient de le créer, il n'y a personne d'autre à qui
+ * demander une validation.
+ *
+ * Un échec en cours de route retire ce qui a déjà été posé plutôt que de
+ * laisser un compte sans stand ou un rôle sans compte.
+ */
+export async function creerExposantAvecCompte(input: { expoId: string; prenom: string; nom: string }) {
+  const { profile, error } = await exigerDahmani();
+  if (!profile) return fail(error);
+
+  const prenom = input.prenom.trim();
+  const nom = input.nom.trim();
+  if (!prenom || !nom) return fail("Prénom et nom requis");
+
+  const admin = createAdminClient();
+
+  const identifiant = `${slugifier(prenom)}-${slugifier(nom)}-${Date.now().toString(36)}`;
+  const email = `${identifiant}@exposant.lelma3ardh.gafsa.tn`;
+  const password = genererMotDePasse();
+
+  const { data: cree, error: authError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { first_name: prenom, last_name: nom, role: "client" },
+  });
+
+  if (authError || !cree.user) {
+    signaler(authError, { ou: "création d'un compte exposant", quoi: { prenom, nom } });
+    return fail("Impossible de créer le compte");
+  }
+
+  const userId = cree.user.id;
+
+  const { error: roleError } = await admin
+    .from("profiles")
+    .update({ role: "exhibitor" })
+    .eq("id", userId);
+
+  if (roleError) {
+    await admin.auth.admin.deleteUser(userId);
+    signaler(roleError, { ou: "attribution du rôle exposant", quoi: { userId } });
+    return fail("Impossible d'attribuer le rôle — rien n'a été créé");
+  }
+
+  const { data: stand, error: standError } = await admin
+    .from("expo_exhibitors")
+    .insert({
+      expo_id: input.expoId,
+      slug: identifiant,
+      name: `${prenom} ${nom}`,
+      status: "approved",
+      user_id: userId,
+    })
+    .select("id")
+    .single();
+
+  if (standError || !stand) {
+    await admin.auth.admin.deleteUser(userId);
+    signaler(standError, { ou: "création du stand lié au compte exposant", quoi: { userId } });
+    return fail("Impossible de créer le stand — rien n'a été créé");
+  }
+
+  revalidatePath("/lelma3ardh/gestion");
+  revalidatePath("/lelma3ardh");
+  return ok({ email, password, exhibitorId: stand.id as string });
+}
 
 export async function enregistrerExposant(input: {
   id?: string;
@@ -224,5 +307,201 @@ export async function supprimerProduitExpo(id: string) {
 
   revalidatePath("/lelma3ardh");
   revalidatePath("/lelma3ardh/gestion");
+  return done();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Espace exposant — un titulaire de stand agissant pour son propre compte.
+
+   `requireExhibitor()` relit la fiche du stand à chaque appel plutôt que de
+   faire confiance à un identifiant reçu du client : le stand qu'un exposant
+   peut toucher est celui que la base lui connaît, jamais celui qu'une
+   requête prétend viser. La politique RLS `expo_products_owner_write`
+   referme la même porte une seconde fois, côté base — la vérification ici
+   n'est donc pas la seule barrière, mais la première, avec un message
+   clair plutôt qu'un code d'erreur PostgREST.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Les informations que le titulaire d'un stand peut changer lui-même. */
+export async function modifierMonStand(input: {
+  nameAr?: string;
+  description?: string;
+  descriptionAr?: string;
+  standNo?: string;
+  phone?: string;
+  whatsapp?: string;
+  facebookUrl?: string;
+  instagram?: string;
+  address?: string;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
+  images?: string[];
+}) {
+  const { supabase, exhibitor, error } = await requireExhibitor();
+  if (!exhibitor) return fail(error);
+
+  const { error: e } = await supabase!
+    .from("expo_exhibitors")
+    .update({
+      name_ar: input.nameAr?.trim() || null,
+      description: input.description?.trim() || null,
+      description_ar: input.descriptionAr?.trim() || null,
+      stand_no: input.standNo?.trim() || null,
+      phone: input.phone?.trim() || null,
+      whatsapp: input.whatsapp?.trim() || null,
+      facebook_url: input.facebookUrl?.trim() || null,
+      instagram: input.instagram?.trim() || null,
+      address: input.address?.trim() || null,
+      logo_url: input.logoUrl ?? null,
+      cover_url: input.coverUrl ?? null,
+      images: (input.images ?? []).slice(0, 8),
+    })
+    // Ceinture et bretelles : même si `requireExhibitor` avait mal lu la
+    // fiche, cette ligne ne peut viser que le stand qu'il vient de relire.
+    .eq("id", exhibitor.id);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath(`/lelma3ardh/${exhibitor.slug}`);
+  revalidatePath("/exposant");
+  return done();
+}
+
+export async function creerProduitExposant(input: {
+  name: string;
+  nameAr?: string;
+  description?: string;
+  price?: number | null;
+  compareAtPrice?: number | null;
+  images?: string[];
+}) {
+  const { supabase, exhibitor, error } = await requireExhibitor();
+  if (!exhibitor) return fail(error);
+
+  const nom = input.name.trim();
+  if (nom.length < 2) return fail("Nommez le produit");
+
+  const prix = input.price ?? null;
+  const barre = input.compareAtPrice ?? null;
+  if (prix !== null && prix < 0) return fail("Prix invalide");
+  if (barre !== null && prix !== null && barre <= prix) {
+    return fail("Le prix barré doit être supérieur au prix de vente");
+  }
+
+  const { data, error: e } = await supabase!
+    .from("expo_products")
+    .insert({
+      exhibitor_id: exhibitor.id,
+      name: nom,
+      name_ar: input.nameAr?.trim() || null,
+      description: input.description?.trim() || null,
+      price: prix,
+      compare_at_price: barre,
+      images: (input.images ?? []).slice(0, 6),
+      is_available: true,
+    })
+    .select("id")
+    .single();
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/exposant");
+  revalidatePath(`/lelma3ardh/${exhibitor.slug}`);
+  return ok({ id: data.id });
+}
+
+export async function modifierProduitExposant(input: {
+  id: string;
+  name: string;
+  nameAr?: string;
+  description?: string;
+  price?: number | null;
+  compareAtPrice?: number | null;
+  images?: string[];
+  isAvailable?: boolean;
+}) {
+  const { supabase, exhibitor, error } = await requireExhibitor();
+  if (!exhibitor) return fail(error);
+
+  const nom = input.name.trim();
+  if (nom.length < 2) return fail("Nommez le produit");
+
+  const prix = input.price ?? null;
+  const barre = input.compareAtPrice ?? null;
+  if (prix !== null && prix < 0) return fail("Prix invalide");
+  if (barre !== null && prix !== null && barre <= prix) {
+    return fail("Le prix barré doit être supérieur au prix de vente");
+  }
+
+  // Le produit visé doit être le sien — vérifié ici, en plus de la politique
+  // RLS qui referme la même porte côté base.
+  const { data: existant } = await supabase!
+    .from("expo_products")
+    .select("exhibitor_id")
+    .eq("id", input.id)
+    .maybeSingle();
+
+  if (!existant || existant.exhibitor_id !== exhibitor.id) return fail("Produit introuvable");
+
+  const { error: e } = await supabase!
+    .from("expo_products")
+    .update({
+      name: nom,
+      name_ar: input.nameAr?.trim() || null,
+      description: input.description?.trim() || null,
+      price: prix,
+      compare_at_price: barre,
+      images: (input.images ?? []).slice(0, 6),
+      is_available: input.isAvailable ?? true,
+    })
+    .eq("id", input.id);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/exposant");
+  revalidatePath(`/lelma3ardh/${exhibitor.slug}`);
+  return done();
+}
+
+export async function basculerProduitExposant(id: string, disponible: boolean) {
+  const { supabase, exhibitor, error } = await requireExhibitor();
+  if (!exhibitor) return fail(error);
+
+  const { data: existant } = await supabase!
+    .from("expo_products")
+    .select("exhibitor_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!existant || existant.exhibitor_id !== exhibitor.id) return fail("Produit introuvable");
+
+  const { error: e } = await supabase!
+    .from("expo_products")
+    .update({ is_available: disponible })
+    .eq("id", id);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/exposant");
+  return done();
+}
+
+export async function supprimerProduitExposant(id: string) {
+  const { supabase, exhibitor, error } = await requireExhibitor();
+  if (!exhibitor) return fail(error);
+
+  const { data: existant } = await supabase!
+    .from("expo_products")
+    .select("exhibitor_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!existant || existant.exhibitor_id !== exhibitor.id) return fail("Produit introuvable");
+
+  const { error: e } = await supabase!.from("expo_products").delete().eq("id", id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/exposant");
+  revalidatePath(`/lelma3ardh/${exhibitor.slug}`);
   return done();
 }

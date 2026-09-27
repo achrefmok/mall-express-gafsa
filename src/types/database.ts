@@ -18,7 +18,7 @@ import type { SosTrade } from "@/lib/sos";
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 /** `dahmani_admin` n'administre que Lelma3ardh : voir `is_dahmani_admin()`. */
-export type UserRole = "client" | "vendor" | "admin" | "dahmani_admin";
+export type UserRole = "client" | "vendor" | "admin" | "dahmani_admin" | "exhibitor";
 export type ShopStatus = "pending" | "approved" | "rejected" | "suspended";
 export type OrderStatus = "pending" | "to_prepare" | "ready" | "shipped" | "delivered" | "cancelled";
 export type PaymentMethod = "cod" | "call" | "online";
@@ -1226,6 +1226,7 @@ export interface Database {
           latitude: number | null;
           longitude: number | null;
           status: ShopStatus;
+          user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1787,6 +1788,7 @@ export interface Database {
       };
       set_member_role: { Args: { target: string; new_role: UserRole }; Returns: undefined };
       my_shop_id: { Args: Record<PropertyKey, never>; Returns: string | null };
+      my_exhibitor_id: { Args: Record<PropertyKey, never>; Returns: string | null };
       is_dahmani_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       louage_a_venir: {
         Args: Record<PropertyKey, never>;
@@ -1852,6 +1854,7 @@ export interface Database {
         Returns: undefined;
       };
       owns_shop: { Args: { target_shop_id: string }; Returns: boolean };
+      owns_exhibitor: { Args: { target_exhibitor_id: string }; Returns: boolean };
       slugify: { Args: { input: string }; Returns: string };
       search_catalog: {
         Args: { q: string; limit_count?: number };

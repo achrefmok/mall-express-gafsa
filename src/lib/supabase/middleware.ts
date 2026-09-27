@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
 /** Préfixes réservés, avec le rôle minimal exigé. */
-const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "dahmani" }> = [
+const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "dahmani" | "exhibitor" }> = [
   { prefix: "/vendeur", role: "vendor" },
   { prefix: "/admin", role: "admin" },
   /*
@@ -13,6 +13,13 @@ const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "da
     exception dans la garde — le genre d'exception qu'un jour on oublie.
   */
   { prefix: "/lelma3ardh/gestion", role: "dahmani" },
+  /*
+    L'espace du titulaire d'un stand — son propre rôle, distinct du vendeur
+    et de l'administration Dahmani qui l'a créé. Même raisonnement que pour
+    « dahmani » juste au-dessus : un exposant n'est ni vendeur ni membre de
+    l'administration, et ne doit hériter d'aucun des deux par accident.
+  */
+  { prefix: "/exposant", role: "exhibitor" },
   { prefix: "/panier", role: "client" },
   { prefix: "/commandes", role: "client" },
   { prefix: "/profil", role: "client" },
@@ -128,6 +135,8 @@ export async function updateSession(request: NextRequest) {
           · vendeur — un vendeur, ou un administrateur qui vient inspecter ;
           · dahmani — l'administration Dahmani, ou celle de l'application,
             qui garde tous les droits ;
+          · exhibitor — le titulaire d'un stand, ou l'une des deux
+            administrations qui vient inspecter ;
           · admin — l'administration de l'application, et elle seule.
             `dahmani_admin` est explicitement dehors : c'est là toute la
             raison d'être de ce rôle.
@@ -137,7 +146,9 @@ export async function updateSession(request: NextRequest) {
           ? role === "vendor" || role === "admin"
           : guard.role === "dahmani"
             ? role === "dahmani_admin" || role === "admin"
-            : role === "admin";
+            : guard.role === "exhibitor"
+              ? role === "exhibitor" || role === "dahmani_admin" || role === "admin"
+              : role === "admin";
 
       if (!allowed) {
         const home = request.nextUrl.clone();

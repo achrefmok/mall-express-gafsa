@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
+  creerExposantAvecCompte,
   enregistrerExpo,
   enregistrerExposant,
   enregistrerProduitExpo,
@@ -12,6 +13,7 @@ import {
 } from "@/app/actions/lelma3ardh";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
+import { useI18n } from "@/lib/i18n/provider";
 import { Button, Card, Chip, EmptyState, Switch, Tag, fieldClass } from "@/components/ui/primitives";
 import type { ShopStatus } from "@/types/database";
 
@@ -263,23 +265,24 @@ function ListeExposants({
   exposants: ExposantGere[];
   produits: ProduitGere[];
 }) {
+  const { t } = useI18n();
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [nouveau, setNouveau] = useState(false);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-[0.65625rem] font-bold text-[var(--color-ink)]">Exposants</span>
+        <span className="text-[0.65625rem] font-bold text-[var(--color-ink)]">{t.dahmani.exhibitors}</span>
         <button
           type="button"
           onClick={() => setNouveau((v) => !v)}
           className="text-[0.625rem] font-bold text-[var(--color-brand)]"
         >
-          {nouveau ? "Fermer" : "+ Exposant"}
+          {nouveau ? t.dahmani.close : `+ ${t.dahmani.addExhibitor}`}
         </button>
       </div>
 
-      {nouveau && <FormulaireExposant expoId={expoId} onFini={() => setNouveau(false)} />}
+      {nouveau && <FormulaireExposantRapide expoId={expoId} onFini={() => setNouveau(false)} />}
 
       {exposants.map((x) => (
         <div key={x.id} className="rounded-[14px] border border-[var(--color-hairline)] p-[10px]">
@@ -312,6 +315,109 @@ function ListeExposants({
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Prénom, nom, un bouton — le compte suit tout seul.
+ *
+ * L'ancien formulaire détaillé (téléphone, réseaux, photos…) reste
+ * disponible en ouvrant un exposant déjà créé : il sert à compléter une
+ * fiche, pas à en démarrer une. Démarrer, désormais, ne demande que
+ * l'identité — tout le reste, l'exposant le renseigne lui-même depuis son
+ * propre espace, une fois connecté.
+ */
+function FormulaireExposantRapide({ expoId, onFini }: { expoId: string; onFini: () => void }) {
+  const { t } = useI18n();
+  const router = useRouter();
+
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [identifiants, setIdentifiants] = useState<{ email: string; password: string } | null>(null);
+  const [copie, setCopie] = useState(false);
+
+  function envoyer() {
+    setErreur(null);
+    startTransition(async () => {
+      const r = await creerExposantAvecCompte({ expoId, prenom, nom });
+      if (r.ok) {
+        setIdentifiants({ email: r.data.email, password: r.data.password });
+        router.refresh();
+      } else {
+        setErreur(r.error);
+      }
+    });
+  }
+
+  async function copier() {
+    const texte = `${t.dahmani.email} : ${identifiants!.email}\n${t.dahmani.password} : ${identifiants!.password}`;
+    try {
+      await navigator.clipboard.writeText(texte);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {
+      // Presse-papiers indisponible : les identifiants restent lisibles à l'écran.
+    }
+  }
+
+  if (identifiants) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[14px] bg-[var(--color-brand-tint)] p-[12px]">
+        <p className="text-[0.75rem] font-bold text-[var(--color-ink)]">
+          ✅ {t.dahmani.exhibitorCreated}
+        </p>
+        <div className="rounded-[10px] bg-[var(--color-surface-solid)] p-[10px] text-[0.6875rem]">
+          <p>
+            <b>{t.dahmani.email}</b> : <span dir="ltr">{identifiants.email}</span>
+          </p>
+          <p>
+            <b>{t.dahmani.password}</b> : <span dir="ltr">{identifiants.password}</span>
+          </p>
+        </div>
+        <p className="text-[0.625rem] text-[var(--color-muted)]">{t.dahmani.createdHint}</p>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={copier} className="flex-1">
+            {copie ? t.dahmani.copied : t.dahmani.copyCredentials}
+          </Button>
+          <a
+            href={`mailto:?subject=${encodeURIComponent(t.dahmani.exhibitorCreated)}&body=${encodeURIComponent(
+              `${t.dahmani.email} : ${identifiants.email}\n${t.dahmani.password} : ${identifiants.password}`,
+            )}`}
+            className="flex-1 rounded-[16px] border border-[var(--color-outline)] py-[7px] text-center text-[0.65625rem] font-semibold text-[var(--color-muted)]"
+          >
+            {t.dahmani.sendCredentials}
+          </a>
+        </div>
+        <button
+          type="button"
+          onClick={onFini}
+          className="text-center text-[0.625rem] font-semibold text-[var(--color-muted)]"
+        >
+          {t.dahmani.close}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-[14px] bg-[var(--color-app)] p-[10px]">
+      <label className="flex flex-col gap-1">
+        <span className={ETIQ}>{t.dahmani.firstName}</span>
+        <input value={prenom} onChange={(e) => setPrenom(e.target.value.slice(0, 60))} className={CHAMP} />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className={ETIQ}>{t.dahmani.lastName}</span>
+        <input value={nom} onChange={(e) => setNom(e.target.value.slice(0, 60))} className={CHAMP} />
+      </label>
+
+      {erreur && <p className="text-[0.625rem] text-[var(--color-live)]">{erreur}</p>}
+
+      <Button onClick={envoyer} disabled={pending || !prenom.trim() || !nom.trim()}>
+        {pending ? t.common.loading : t.dahmani.saveExhibitor}
+      </Button>
     </div>
   );
 }

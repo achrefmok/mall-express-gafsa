@@ -76,6 +76,21 @@ export async function requireShopOwner() {
   return { supabase, profile, shop, error: null };
 }
 
+/** Le titulaire d'un stand Lelma3ardh, avec sa fiche. */
+export async function requireExhibitor() {
+  const { supabase, profile, error } = await requireProfile();
+  if (!profile) return { supabase, profile: null, exhibitor: null, error: error! };
+
+  const { data: exhibitor } = await supabase
+    .from("expo_exhibitors")
+    .select("*")
+    .eq("user_id", profile.id)
+    .maybeSingle();
+
+  if (!exhibitor) return { supabase, profile, exhibitor: null, error: "Aucun stand associé" };
+  return { supabase, profile, exhibitor, error: null };
+}
+
 export async function requireAdmin() {
   const { supabase, profile, error } = await requireProfile();
   if (!profile) return { supabase, profile: null, error: error! };
