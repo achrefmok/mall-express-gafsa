@@ -36,7 +36,11 @@ export function SpaceSwitcher({ role, hasShop = false }: { role: UserRole; hasSh
     ? "vendor"
     : pathname.startsWith("/admin")
       ? "admin"
-      : "client";
+      : pathname.startsWith("/exposant")
+        ? "exhibitor"
+        : pathname.startsWith("/lelma3ardh/gestion")
+          ? "dahmani"
+          : "client";
 
   const spaces: Array<{ key: string; href: string; label: string }> = [
     { key: "client", href: spaceHref("/accueil"), label: t.account.clientSpace },
@@ -44,6 +48,12 @@ export function SpaceSwitcher({ role, hasShop = false }: { role: UserRole; hasSh
 
   if ((role === "vendor" || role === "admin") && hasShop) {
     spaces.push({ key: "vendor", href: spaceHref("/vendeur"), label: t.vendor.myShop });
+  }
+  if (role === "exhibitor" || role === "admin" || role === "dahmani_admin") {
+    spaces.push({ key: "exhibitor", href: spaceHref("/exposant"), label: t.dahmani.myStand });
+  }
+  if (role === "dahmani_admin" || role === "admin") {
+    spaces.push({ key: "dahmani", href: spaceHref("/lelma3ardh/gestion"), label: t.dahmani.standManagement });
   }
   if (role === "admin") {
     spaces.push({ key: "admin", href: spaceHref("/admin"), label: t.account.adminSpace });

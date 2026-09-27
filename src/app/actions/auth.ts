@@ -184,6 +184,8 @@ export async function signIn(email: string, password: string, next?: string) {
       .single();
     if (profile?.role === "vendor") destination = "/vendeur";
     if (profile?.role === "admin") destination = "/admin";
+    if (profile?.role === "exhibitor") destination = "/exposant";
+    if (profile?.role === "dahmani_admin") destination = "/lelma3ardh/gestion";
   }
 
   redirect(destination);
