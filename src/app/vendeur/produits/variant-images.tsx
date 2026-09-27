@@ -16,7 +16,7 @@ import { colorName } from "@/lib/color-names";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
 import { Button, Divider } from "@/components/ui/primitives";
-import { ImageIcon } from "@/components/ui/icons";
+import { CameraIcon, ImageIcon } from "@/components/ui/icons";
 import type { VariantImages } from "@/types/database";
 
 /**
@@ -302,6 +302,29 @@ export function VariantImageEditor({
                       </button>
                     </span>
                   ))}
+
+                  <label
+                    className={cx(
+                      "press flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-[12px] border border-dashed border-[var(--color-outline)] text-[var(--color-muted)]",
+                      occupe && "pointer-events-none opacity-50",
+                    )}
+                    title={t.common.takePhoto}
+                  >
+                    {/* `capture` ouvre directement l'appareil photo sur mobile. */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      className="sr-only"
+                      disabled={occupe}
+                      onChange={(event) => {
+                        void onPick(color, event.target.files);
+                        event.target.value = "";
+                      }}
+                    />
+                    <CameraIcon size={14} />
+                  </label>
 
                   <label
                     className={cx(

@@ -13,6 +13,7 @@ import {
   supprimerProduitExposant,
 } from "@/app/actions/lelma3ardh";
 import { uploadImage } from "@/lib/upload";
+import { CameraIcon, ImageIcon } from "@/components/ui/icons";
 import { Button, Card, SectionTitle, Tag, fieldClass } from "@/components/ui/primitives";
 import { SignOutButton } from "@/app/(client)/profil/profile-client";
 
@@ -446,7 +447,8 @@ function PhotoUnique({
   label: string;
 }) {
   const { t } = useI18n();
-  const champ = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
+  const galerie = useRef<HTMLInputElement>(null);
   const [envoi, setEnvoi] = useState(false);
 
   async function choisir(fichiers: FileList | null) {
@@ -473,14 +475,34 @@ function PhotoUnique({
         </span>
         <button
           type="button"
-          onClick={() => champ.current?.click()}
+          onClick={() => camera.current?.click()}
           disabled={envoi}
-          className="rounded-[12px] border border-[var(--color-outline)] px-3 py-2 text-[0.625rem] font-semibold text-[var(--color-brand)] disabled:opacity-50"
+          className="flex items-center gap-1 rounded-[12px] border border-[var(--color-outline)] px-3 py-2 text-[0.625rem] font-semibold text-[var(--color-brand)] disabled:opacity-50"
         >
-          {envoi ? "…" : images[0] ? t.dahmani.replacePhoto : t.dahmani.choosePhoto}
+          <CameraIcon size={15} />
+          {t.common.takePhoto}
         </button>
+        <button
+          type="button"
+          onClick={() => galerie.current?.click()}
+          disabled={envoi}
+          className="flex items-center gap-1 rounded-[12px] border border-[var(--color-outline)] px-3 py-2 text-[0.625rem] font-semibold text-[var(--color-brand)] disabled:opacity-50"
+        >
+          <ImageIcon size={15} />
+          {envoi ? "…" : images[0] ? t.dahmani.replacePhoto : t.common.gallery}
+        </button>
+
+        {/* `capture` ouvre directement l'appareil photo sur mobile. */}
         <input
-          ref={champ}
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => void choisir(e.target.files)}
+        />
+        <input
+          ref={galerie}
           type="file"
           accept="image/*"
           hidden
@@ -501,7 +523,8 @@ function PhotosProduit({
   max: number;
 }) {
   const { t } = useI18n();
-  const champ = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
+  const galerie = useRef<HTMLInputElement>(null);
   const [envoi, setEnvoi] = useState(false);
 
   async function ajouter(fichiers: FileList | null) {
@@ -542,19 +565,41 @@ function PhotosProduit({
         ))}
 
         {images.length < max && (
-          <button
-            type="button"
-            onClick={() => champ.current?.click()}
-            disabled={envoi}
-            className="h-14 w-14 flex-none rounded-[10px] border-[1.5px] border-dashed border-[var(--color-outline)] text-[0.875rem] text-[var(--color-brand)] disabled:opacity-50"
-          >
-            {envoi ? "…" : "+"}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => camera.current?.click()}
+              disabled={envoi}
+              title={t.common.takePhoto}
+              className="flex h-14 w-14 flex-none items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[var(--color-outline)] text-[var(--color-brand)] disabled:opacity-50"
+            >
+              {envoi ? "…" : <CameraIcon size={17} />}
+            </button>
+            <button
+              type="button"
+              onClick={() => galerie.current?.click()}
+              disabled={envoi}
+              title={t.common.gallery}
+              className="flex h-14 w-14 flex-none items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[var(--color-outline)] text-[var(--color-brand)] disabled:opacity-50"
+            >
+              {envoi ? "…" : <ImageIcon size={17} />}
+            </button>
+          </>
         )}
       </div>
 
+      {/* `capture` ouvre directement l'appareil photo sur mobile. */}
       <input
-        ref={champ}
+        ref={camera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        hidden
+        onChange={(e) => void ajouter(e.target.files)}
+      />
+      <input
+        ref={galerie}
         type="file"
         accept="image/*"
         multiple

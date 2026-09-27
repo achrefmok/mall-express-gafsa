@@ -13,6 +13,7 @@ import { cx, monogram } from "@/lib/format";
 import { format } from "@/lib/i18n/format";
 import { TopBar } from "@/components/shell/top-bar";
 import { Button, Card, Chip, Divider, KeyValueRow, Placeholder, SectionTitle, Switch, fieldClass } from "@/components/ui/primitives";
+import { CameraIcon } from "@/components/ui/icons";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
 import { ReplayVendorTour } from "@/components/tour/tours";
@@ -96,7 +97,9 @@ export function ShopSettingsForm({
   const [pending, startTransition] = useTransition();
 
   const logoInput = useRef<HTMLInputElement>(null);
+  const logoCameraInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
+  const bannerCameraInput = useRef<HTMLInputElement>(null);
 
   async function onUpload(kind: "logo" | "banner", file: File | undefined) {
     if (!file) return;
@@ -220,11 +223,28 @@ export function ShopSettingsForm({
             </div>
             <button
               type="button"
+              onClick={() => logoCameraInput.current?.click()}
+              aria-label={t.common.takePhoto}
+              className="flex-none text-[var(--color-brand)]"
+            >
+              <CameraIcon size={17} />
+            </button>
+            <button
+              type="button"
               onClick={() => logoInput.current?.click()}
               className="flex-none whitespace-nowrap text-[0.65625rem] font-semibold text-[var(--color-brand)]"
             >
               {t.common.change}
             </button>
+            {/* `capture` ouvre directement l'appareil photo sur mobile. */}
+            <input
+              ref={logoCameraInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(event) => void onUpload("logo", event.target.files?.[0])}
+            />
             <input
               ref={logoInput}
               type="file"
@@ -241,13 +261,32 @@ export function ShopSettingsForm({
             ) : (
               <Placeholder label="bannière de la boutique" className="h-24 w-full" />
             )}
-            <button
-              type="button"
-              onClick={() => bannerInput.current?.click()}
-              className="w-full py-2 text-[0.65625rem] font-semibold text-[var(--color-brand)]"
-            >
-              {t.vendor.editBanner}
-            </button>
+            <div className="flex">
+              <button
+                type="button"
+                onClick={() => bannerCameraInput.current?.click()}
+                aria-label={t.common.takePhoto}
+                className="flex flex-none items-center justify-center px-3 text-[var(--color-brand)]"
+              >
+                <CameraIcon size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => bannerInput.current?.click()}
+                className="w-full py-2 text-[0.65625rem] font-semibold text-[var(--color-brand)]"
+              >
+                {t.vendor.editBanner}
+              </button>
+            </div>
+            {/* `capture` ouvre directement l'appareil photo sur mobile. */}
+            <input
+              ref={bannerCameraInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(event) => void onUpload("banner", event.target.files?.[0])}
+            />
             <input
               ref={bannerInput}
               type="file"

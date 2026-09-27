@@ -7,7 +7,7 @@ import { upsertProduct } from "@/app/actions/vendor";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
 import { Button, Card, Chip, Divider, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
-import { ImageIcon, PlusIcon } from "@/components/ui/icons";
+import { CameraIcon, ImageIcon, PlusIcon } from "@/components/ui/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { VariantImageEditor } from "./variant-images";
 import type { AppLocale, Category, Product } from "@/types/database";
@@ -60,6 +60,7 @@ export function ProductEditor({
   const [pending, startTransition] = useTransition();
 
   const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
 
   async function onFiles(list: FileList | null) {
     if (!list?.length) return;
@@ -166,17 +167,39 @@ export function ProductEditor({
             {uploading && <div className="skeleton h-20 w-20 flex-none rounded-[14px]" />}
 
             {images.length < 6 && !uploading && (
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                aria-label={t.common.add}
-                className="flex h-20 w-20 flex-none flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] text-[var(--color-brand)]"
-              >
-                <ImageIcon size={16} />
-                <span className="text-[0.5625rem] font-bold">{t.common.add}</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => cameraInput.current?.click()}
+                  aria-label={t.common.takePhoto}
+                  className="flex h-20 w-20 flex-none flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] text-[var(--color-brand)]"
+                >
+                  <CameraIcon size={16} />
+                  <span className="text-[0.5625rem] font-bold">{t.common.takePhoto}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  aria-label={t.common.gallery}
+                  className="flex h-20 w-20 flex-none flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[rgba(109,75,143,0.4)] text-[var(--color-brand)]"
+                >
+                  <ImageIcon size={16} />
+                  <span className="text-[0.5625rem] font-bold">{t.common.gallery}</span>
+                </button>
+              </>
             )}
           </div>
+
+          {/* `capture` ouvre directement l'appareil photo sur mobile. */}
+          <input
+            ref={cameraInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            hidden
+            onChange={(event) => void onFiles(event.target.files)}
+          />
           <input
             ref={fileInput}
             type="file"
