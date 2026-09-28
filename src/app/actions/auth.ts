@@ -207,6 +207,9 @@ export async function signInWithProvider(
 
   const next = String(formData.get("suite") ?? "");
   const callback = new URL("/auth/callback", base);
+  // Inscription commerçant : le fournisseur ne sait rien de la boutique. Le
+  // retour d'OAuth s'en souvient et mène à la création de boutique.
+  if (formData.get("role") === "vendor") callback.searchParams.set("role", "vendor");
   if (next.startsWith("/") && !next.startsWith("//")) {
     callback.searchParams.set("suite", next);
   }

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 /**
  * Point d'atterrissage OAuth et confirmation d'e-mail.
@@ -28,6 +28,32 @@ export async function GET(request: NextRequest) {
     const url = new URL("/connexion", origin);
     url.searchParams.set("erreur", "Lien expiré ou déjà utilisé");
     return NextResponse.redirect(url);
+  }
+
+  /*
+    Commerçant inscrit par Google ou Facebook.
+
+    Le déclencheur handle_new_user lit le rôle dans les métadonnées d'un
+    signUp par e-mail ; un fournisseur tiers n'en envoie aucune, et le compte
+    naît client. On le promeut ici, à deux conditions : le compte vient d'être
+    créé (un client ancien ne se change pas en commerçant par un paramètre
+    d'adresse), et il est encore client. Le commerçant choisit ensuite le nom de
+    sa boutique sur /vendeur/creer — comme après une inscription sans boutique.
+  */
+  if (searchParams.get("role") === "vendor") {
+    const {
+      data: { user: nouveau },
+    } = await supabase.auth.getUser();
+
+    const recent = nouveau && Date.now() - new Date(nouveau.created_at).getTime() < 15 * 60_000;
+    if (nouveau && recent) {
+      const admin = createAdminClient();
+      const { data: p } = await admin.from("profiles").select("role").eq("id", nouveau.id).maybeSingle();
+      if (p?.role === "client") {
+        await admin.from("profiles").update({ role: "vendor" }).eq("id", nouveau.id);
+        return NextResponse.redirect(new URL("/vendeur/creer", origin));
+      }
+    }
   }
 
   // Redirection interne uniquement : un `suite` absolu permettrait à un tiers

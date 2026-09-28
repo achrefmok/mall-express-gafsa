@@ -249,6 +249,7 @@ export function SignUpScreen({
             .filter(({ provider }) => providers.includes(provider))
             .map(({ provider, label }) => (
             <form key={provider} action={signInWithProvider.bind(null, provider)}>
+              {role === "vendor" && <input type="hidden" name="role" value="vendor" />}
               <button
                 type="submit"
                 className="w-full rounded-[16px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 py-3 text-[0.75rem] font-semibold text-[var(--color-ink)]"

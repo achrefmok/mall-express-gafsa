@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/queries";
+import { createClient } from "@/lib/supabase/server";
 import { enabledOAuthProviders } from "@/lib/auth/providers";
 import { APP_SPACE } from "@/lib/space";
 import { SignUpScreen } from "./sign-up-screen";
@@ -32,7 +33,21 @@ export default async function SignUpPage({
 
   const params = await searchParams;
 
-  const forcedRole = APP_SPACE === "vendor" ? "vendor" : APP_SPACE === "client" ? "client" : null;
+  /*
+    Tant que G-Mall n'est pas ouvert au public, seuls les commerçants
+    s'inscrivent : le choix « client » disparaît et l'écran se verrouille sur
+    le parcours commerçant. À l'ouverture, le choix revient sans rien toucher.
+  */
+  const supabase = await createClient();
+  const { data: acces } = await supabase
+    .from("app_access")
+    .select("public_access")
+    .eq("id", true)
+    .maybeSingle();
+  const clientsFermes = !(acces?.public_access ?? false);
+
+  const forcedRole =
+    APP_SPACE === "vendor" || clientsFermes ? "vendor" : APP_SPACE === "client" ? "client" : null;
 
   const askedForVendor = params.role === "vendeur" || params.role === "vendor";
 
