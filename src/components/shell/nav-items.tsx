@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n/provider";
+import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import {
   BoxIcon,
   FlagIcon,
@@ -65,7 +66,9 @@ export function useNavItems(variant: NavVariant): NavItem[] {
     ],
   };
 
-  return sets[variant];
+  return LIVES_DANS_LES_MENUS
+    ? sets[variant]
+    : sets[variant].filter((item) => !item.href.endsWith("/lives"));
 }
 
 /** Un onglet est actif sur sa page, et sur ses sous-pages s'il n'est pas exact. */

@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import { getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
@@ -345,7 +346,7 @@ export default async function VendorDashboard() {
     });
   }
 
-  if (prochainDirect.data?.scheduled_at) {
+  if (LIVES_DANS_LES_MENUS && prochainDirect.data?.scheduled_at) {
     aTraiter.push({
       cle: "direct",
       titre: format(t.vendeur.todoLive, {
@@ -671,6 +672,7 @@ export default async function VendorDashboard() {
         </section>
 
         {/* ─── 3 · Prochain direct ────────────────────────────────────── */}
+        {LIVES_DANS_LES_MENUS && (
         <section className="flex flex-col gap-[10px]">
           <div className="flex items-center gap-2">
             <span aria-hidden className="h-[9px] w-[9px] flex-none rounded-full bg-[var(--color-live)]" />
@@ -717,6 +719,7 @@ export default async function VendorDashboard() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ─── 4 · Raccourcis ─────────────────────────────────────────── */}
         <section className="flex flex-col gap-[10px]">
@@ -794,16 +797,20 @@ export default async function VendorDashboard() {
               libelle={t.bf.title}
               valeur={bfOuvert ? format(t.vendeur.promosActive, { n: offresBf }) : undefined}
             />
-            <LigneAction
-              href="/vendeur/lives/nouveau"
-              icone={<LiveDot size={9} />}
-              libelle={t.vendor.startLive}
-            />
-            <LigneAction
-              href="/vendeur/lives/partage"
-              icone={<CameraIcon size={16} />}
-              libelle={t.vendeur.facebookRelay}
-            />
+            {LIVES_DANS_LES_MENUS && (
+              <>
+                <LigneAction
+                  href="/vendeur/lives/nouveau"
+                  icone={<LiveDot size={9} />}
+                  libelle={t.vendor.startLive}
+                />
+                <LigneAction
+                  href="/vendeur/lives/partage"
+                  icone={<CameraIcon size={16} />}
+                  libelle={t.vendeur.facebookRelay}
+                />
+              </>
+            )}
             <LigneAction
               href="/vendeur/reglages#horaires"
               icone={<BoxIcon size={16} />}

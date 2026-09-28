@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { MenuIcon } from "@/components/ui/icons";
+import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 
 /**
  * Le menu du site, derrière le bouton de la barre de recherche.
@@ -65,7 +66,7 @@ export function SiteMenu() {
       entries: [
         { href: "/marketplace", label: t.nav.marketplace },
         { href: "/boutiques", label: t.shops.title },
-        { href: "/lives", label: t.nav.lives },
+        ...(LIVES_DANS_LES_MENUS ? [{ href: "/lives", label: t.nav.lives }] : []),
         { href: "/free-shop", label: t.nav.deals },
       ],
     },

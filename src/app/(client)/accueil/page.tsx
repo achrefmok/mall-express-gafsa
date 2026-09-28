@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCategories, getMallStatus, getProfile, getTopBarCounts } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
+import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import { cx, formatPrice, monogram, percentOff } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
 import { ProductCard } from "@/components/cards/product-card";
@@ -474,7 +475,7 @@ export default async function HomePage() {
           que rien d'autre ne montre en un coup d'œil — qui diffuse maintenant,
           qui s'apprête à le faire.
         */}
-        {boutiquesEnDirect.length > 0 && (
+        {LIVES_DANS_LES_MENUS && boutiquesEnDirect.length > 0 && (
           <section className="flex flex-col gap-3">
             <EnteteSection hue="var(--color-live-fill)" titre={t.live.railTitle} />
 
