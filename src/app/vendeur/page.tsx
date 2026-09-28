@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LIVES_DANS_LES_MENUS } from "@/lib/features";
+import { SignOutButton } from "@/app/(client)/profil/profile-client";
 import { getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
@@ -825,6 +826,8 @@ export default async function VendorDashboard() {
             />
           </div>
         </section>
+
+        <SignOutButton />
 
         {/* ─── 6 · Profil de boutique ─────────────────────────────────── */}
         <section className="rounded-[20px] bg-[var(--color-surface-solid)] p-4 shadow-[0_6px_18px_rgba(60,40,90,0.08)]">

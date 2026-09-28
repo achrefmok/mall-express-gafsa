@@ -17,6 +17,7 @@ import { CameraIcon } from "@/components/ui/icons";
 import { FacebookLink, type FacebookLinkStatus } from "./facebook-link";
 import type { AppLocale, Category, Shop } from "@/types/database";
 import { ReplayVendorTour } from "@/components/tour/tours";
+import { SignOutButton } from "@/app/(client)/profil/profile-client";
 
 interface DayHours {
   weekday: number;
@@ -563,6 +564,8 @@ export function ShopSettingsForm({
         {/* Même service pour le vendeur : cinq écrans à retenir, dont la
             diffusion en direct qu'il n'utilisera pas toutes les semaines. */}
         <ReplayVendorTour />
+
+        <SignOutButton />
 
         {feedback && (
           <p

@@ -6,6 +6,7 @@ import { createMyShop } from "@/app/actions/vendor";
 import { useI18n } from "@/lib/i18n/provider";
 import { cx } from "@/lib/format";
 import { TopBar } from "@/components/shell/top-bar";
+import { SignOutButton } from "@/app/(client)/profil/profile-client";
 import { Button, Card, SectionTitle, fieldClass } from "@/components/ui/primitives";
 import type { Category } from "@/types/database";
 
@@ -129,6 +130,10 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
           cinq produits avant sa validation par l&apos;administration.
         </p>
       </form>
+
+      <div className="px-4 pb-6">
+        <SignOutButton />
+      </div>
     </>
   );
 }
