@@ -508,6 +508,29 @@ export async function setAppLogo(logoUrl: string | null) {
 }
 
 /**
+ * Ouvre ou referme l'accès public — un seul interrupteur, lu par
+ * l'intergiciel à chaque requête (voir `src/lib/supabase/middleware.ts`).
+ *
+ * Aucun cache à purger : contrairement au logo, cette valeur n'est jamais
+ * mise en mémoire — la fermeture doit être instantanée, y compris pour un
+ * visiteur déjà en train de naviguer.
+ */
+export async function definirAccesPublic(ouvert: boolean) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const { error: e } = await supabase
+    .from("app_access")
+    .update({ public_access: ouvert, updated_at: new Date().toISOString() })
+    .eq("id", true);
+
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/", "layout");
+  return done();
+}
+
+/**
  * Faire — ou défaire — un partenaire.
  *
  * Le drapeau vaut une place sur l'accueil : il n'appartient donc pas au

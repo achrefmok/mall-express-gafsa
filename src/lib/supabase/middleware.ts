@@ -3,6 +3,30 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
 /** Préfixes réservés, avec le rôle minimal exigé. */
+/*
+  Accès public : ce que personne n'a besoin de connexion pour atteindre,
+  même quand `app_access.public_access` vaut faux — la page de
+  préparation elle-même, les écrans de connexion (un commerçant doit
+  pouvoir entrer), les callbacks d'authentification, les pages légales
+  qu'un magasin d'applications exige de trouver, et tout `/api/…`, dont
+  chaque route porte déjà sa propre garde (jeton de cron, secret de
+  webhook) — les doubler ici n'ajouterait rien.
+*/
+const EXEMPTS_ACCES_PUBLIC = [
+  "/preparation",
+  "/connexion",
+  "/inscription",
+  "/auth",
+  "/confidentialite",
+  "/suppression-donnees",
+  "/hors-ligne",
+  "/api",
+];
+
+function exemptAccesPublic(pathname: string): boolean {
+  return EXEMPTS_ACCES_PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "dahmani" | "exhibitor" }> = [
   { prefix: "/vendeur", role: "vendor" },
   { prefix: "/admin", role: "admin" },
@@ -95,6 +119,62 @@ export async function updateSession(request: NextRequest) {
     target.pathname = suite?.startsWith("/") && !suite.startsWith("//") ? suite : "/accueil";
     target.search = "";
     return NextResponse.redirect(target);
+  }
+
+  /*
+    Mode préparation : tant que `public_access` vaut faux, l'application
+    n'est pas un marché à visiter, c'est un chantier. Chacun n'y voit que ce
+    qu'il a à y faire :
+      · un commerçant reste dans `/vendeur` — gérer sa boutique, pas
+        parcourir celle des autres ;
+      · un exposant reste dans `/exposant`, et l'administration Dahmani dans
+        `/lelma3ardh/gestion`, même raisonnement ;
+      · seule l'administration de l'application voit tout, y compris le
+        côté client — c'est la prévisualisation avant lancement dont parle
+        la spécification, pas un privilège de plus.
+    Un visiteur anonyme ou un compte client, lui, n'a nulle part où aller :
+    direction `/preparation`.
+  */
+  if (!exemptAccesPublic(pathname)) {
+    const { data: reglages } = await supabase
+      .from("app_access")
+      .select("public_access")
+      .eq("id", true)
+      .maybeSingle();
+
+    const public_access = reglages?.public_access ?? false;
+
+    if (!public_access) {
+      let role: string | null = null;
+      if (user) {
+        const { data: profil } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+        role = profil?.role ?? "client";
+      }
+
+      if (role !== "admin") {
+        const espace: Record<string, string> = {
+          vendor: "/vendeur",
+          exhibitor: "/exposant",
+          dahmani_admin: "/lelma3ardh/gestion",
+        };
+        const racine = role ? espace[role] : undefined;
+        const dansSonEspace = racine !== undefined && (pathname === racine || pathname.startsWith(`${racine}/`));
+        // Réglages personnels et déconnexion : communs à tout compte connecté,
+        // qu'il ait ou non un espace dédié pendant la préparation.
+        const pageCommune = pathname === "/profil" || pathname.startsWith("/profil/");
+
+        if (!dansSonEspace && !pageCommune) {
+          const cible = request.nextUrl.clone();
+          cible.pathname = racine ?? "/preparation";
+          cible.search = "";
+          return NextResponse.redirect(cible);
+        }
+      }
+    }
   }
 
   const guard = GUARDED.find(

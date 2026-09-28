@@ -960,6 +960,13 @@ export interface Database {
         Relationships: [];
       };
 
+      app_access: {
+        Row: { id: boolean; public_access: boolean; updated_at: string };
+        Insert: { id?: boolean; public_access?: boolean; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["app_access"]["Row"]>;
+        Relationships: [];
+      };
+
       /* ─── push_subscriptions ─────────────────────────────────────────
          Un enregistrement par appareil et par navigateur : la même personne
          sur son téléphone et sur son ordinateur en a deux, et doit être

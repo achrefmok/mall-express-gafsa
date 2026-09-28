@@ -10,6 +10,7 @@ import { Card, Divider, KeyValueRow, SectionTitle } from "@/components/ui/primit
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { SignOutButton } from "@/app/(client)/profil/profile-client";
 import { LogoManager } from "@/components/admin/logo-manager";
+import { PublicAccessManager } from "@/components/admin/public-access-manager";
 
 export const metadata: Metadata = {
   title: "Réglages de la plateforme",
@@ -23,7 +24,7 @@ export default async function AdminSettingsPage() {
   const [profile, { t }] = await Promise.all([getProfile(), getT()]);
   const supabase = await createClient();
 
-  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers, pendingProviders, brand] =
+  const [shops, pending, users, vendors, products, deals, lives, categories, sponsors, alerts, reports, unverifiedRelays, pendingDrivers, pendingProviders, brand, acces] =
     await Promise.all([
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -67,6 +68,7 @@ export default async function AdminSettingsPage() {
           .select("id", { count: "exact", head: true })
           .eq("is_approved", false),
       supabase.from("app_brand").select("app_logo_url").eq("id", true).maybeSingle(),
+      supabase.from("app_access").select("public_access").eq("id", true).maybeSingle(),
     ]);
 
   const links = [
@@ -145,6 +147,11 @@ export default async function AdminSettingsPage() {
               </Card>
             ))}
           </div>
+        </section>
+
+        <section className="flex flex-none flex-col gap-2">
+          <SectionTitle>{t.preparation.settingsTitle}</SectionTitle>
+          <PublicAccessManager current={acces.data?.public_access ?? false} />
         </section>
 
         <section className="flex flex-none flex-col gap-2">

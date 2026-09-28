@@ -408,6 +408,23 @@ export const nouveautesFr = {
     choosePhoto: "Choisir",
     replacePhoto: "Remplacer",
   },
+
+  /* Mode préparation : /preparation, et le bouton d'accès public en admin. */
+  preparation: {
+    title: "G-Mall est actuellement en préparation.",
+    body: "Lancement public prochainement.",
+    vendorLink: "Vous êtes commerçant ou administrateur ?",
+    signIn: "Se connecter",
+    settingsTitle: "Accès public",
+    settingsBody:
+      "Tant qu'il est fermé, seuls les commerçants, les exposants et l'administration entrent — le temps de préparer les boutiques.",
+    statusOpen: "🟢 G-Mall est ouvert au public",
+    statusClosed: "🔒 G-Mall est en préparation",
+    openAction: "🔒 Ouvrir G-Mall au public",
+    closeAction: "🟢 Fermer l'accès public",
+    confirmOpen: "Ouvrir G-Mall à tous les visiteurs maintenant ?",
+    confirmClose: "Refermer l'accès et ramener les visiteurs sur la page de préparation ?",
+  },
 };
 
 export type Nouveautes = typeof nouveautesFr;
@@ -794,5 +811,20 @@ export const nouveautesAr: Nouveautes = {
     createdHint: "دوّنوا بيانات الدخول هذه — لن تُعرض كلمة المرور مرة أخرى.",
     choosePhoto: "اختيار",
     replacePhoto: "استبدال",
+  },
+
+  preparation: {
+    title: "تطبيق جي-مول قيد التحضير حاليًا.",
+    body: "الإطلاق العام قريبًا.",
+    vendorLink: "هل أنت تاجر أو مسؤول؟",
+    signIn: "تسجيل الدخول",
+    settingsTitle: "الوصول العام",
+    settingsBody: "طالما هو مغلق، لا يدخل إلا التجار والعارضون والإدارة — لتحضير المتاجر.",
+    statusOpen: "🟢 جي-مول مفتوح للعموم",
+    statusClosed: "🔒 جي-مول قيد التحضير",
+    openAction: "🔒 فتح جي-مول للعموم",
+    closeAction: "🟢 إغلاق الوصول العام",
+    confirmOpen: "فتح جي-مول لكل الزوار الآن؟",
+    confirmClose: "إغلاق الوصول وإعادة الزوار إلى صفحة التحضير؟",
   },
 };
