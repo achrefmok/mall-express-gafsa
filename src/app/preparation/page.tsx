@@ -109,6 +109,16 @@ export default async function PreparationPage() {
             >
               {t.launchPage.haveAccount}
             </Link>
+            {/*
+              Un code reçu de l'administration : la boutique existe déjà,
+              il ne reste qu'à l'activer. Voir src/app/actions/activation.ts.
+            */}
+            <Link
+              href="/activer"
+              className="press w-full py-2 text-center text-[0.71875rem] font-semibold text-white/70 underline underline-offset-2"
+            >
+              {t.launchPage.haveCode}
+            </Link>
           </div>
         </section>
 

@@ -199,7 +199,9 @@ export interface Database {
       shops: {
         Row: {
           id: string;
-          owner_id: string;
+          // En attente d'activation par code (voir shop_activation_codes),
+          // une boutique n'a pas encore de titulaire.
+          owner_id: string | null;
           slug: string;
           name: string;
           name_ar: string | null;
@@ -242,7 +244,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: { owner_id: string; slug: string; name: string } & Partial<
+        Insert: { slug: string; name: string } & Partial<
           Database["public"]["Tables"]["shops"]["Row"]
         >;
         Update: Partial<Database["public"]["Tables"]["shops"]["Row"]>;
@@ -965,6 +967,34 @@ export interface Database {
         Insert: { id?: boolean; public_access?: boolean; updated_at?: string };
         Update: Partial<Database["public"]["Tables"]["app_access"]["Row"]>;
         Relationships: [];
+      };
+      shop_activation_codes: {
+        Row: {
+          id: string;
+          shop_id: string;
+          code: string;
+          expires_at: string;
+          used_at: string | null;
+          used_by: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          code: string;
+          expires_at: string;
+          used_at?: string | null;
+          used_by?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["shop_activation_codes"]["Row"]>;
+        Relationships: [FK<"shop_activation_codes_shop_id_fkey", ["shop_id"], "shops">];
       };
 
       /* ─── push_subscriptions ─────────────────────────────────────────

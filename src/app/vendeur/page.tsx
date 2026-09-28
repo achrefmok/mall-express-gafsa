@@ -173,7 +173,10 @@ export default async function VendorDashboard() {
       .from("messages")
       .select("id, conversation:conversations!inner(shop_id)")
       .eq("conversation.shop_id", shop.id)
-      .neq("sender_id", shop.owner_id)
+      // `shop` vient de `getMyShop()`, filtré sur `owner_id = auth.uid()` :
+      // toujours renseigné ici, même si la colonne l'admet vide le temps
+      // qu'une boutique créée par code trouve son commerçant.
+      .neq("sender_id", shop.owner_id as string)
       .is("read_at", null)
       .limit(50),
 

@@ -73,6 +73,7 @@ export default async function AdminSettingsPage() {
 
   const links = [
     { href: "/admin/boutiques", label: t.admin.featureShop, value: `${shops.count ?? 0} approuvées` },
+    { href: "/admin/activation", label: t.activation.adminTitle, value: "" },
     { href: "/admin/sponsors", label: t.admin.sponsoredSlots, value: format(t.admin.activeCount, { n: sponsors.count ?? 0 }) },
     { href: "/admin/categories", label: t.admin.manageCategories, value: format(t.admin.categoriesCount, { n: categories.count ?? 0 }) },
     { href: "/admin/membres", label: t.nav.members, value: formatCount(users.count ?? 0) },

@@ -19,6 +19,7 @@ const ROUTES_EXCLUES = [
   "/connexion",
   "/inscription",
   "/mot-de-passe-oublie",
+  "/activer",
   "/preparation",
   "/vendeur",
   "/exposant",
