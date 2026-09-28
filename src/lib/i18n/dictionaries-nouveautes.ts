@@ -427,6 +427,17 @@ export const nouveautesFr = {
     confirmOpen: "Ouvrir G-Mall à tous les visiteurs maintenant ?",
     confirmClose: "Refermer l'accès et ramener les visiteurs sur la page de préparation ?",
   },
+  recovery: {
+    title: "Mot de passe oublié",
+    body: "Saisissez l'adresse e-mail de votre compte : nous vous envoyons un lien pour choisir un nouveau mot de passe.",
+    send: "Envoyer le lien",
+    sentTitle: "Lien envoyé",
+    sentBody: "Si un compte existe pour {email}, un e-mail vient de partir. Ouvrez le lien depuis ce même téléphone ou ordinateur, et pensez à regarder les courriers indésirables.",
+    noEmailTitle: "Vous ne savez plus quelle adresse e-mail vous avez utilisée ?",
+    noEmailBody: "Essayez « Continuer avec Facebook » ou « Continuer avec Google » sur l'écran de connexion si vous vous êtes inscrit ainsi. Sinon, contactez l'administration de G-Mall : elle retrouvera votre compte.",
+    back: "Retour à la connexion",
+    link: "Mot de passe ou e-mail oublié ?",
+  },
 };
 
 export type Nouveautes = typeof nouveautesFr;
@@ -830,5 +841,16 @@ export const nouveautesAr: Nouveautes = {
     closeAction: "🟢 إغلاق الوصول العام",
     confirmOpen: "فتح جي-مول لكل الزوار الآن؟",
     confirmClose: "إغلاق الوصول وإعادة الزوار إلى صفحة التحضير؟",
+  },
+  recovery: {
+    title: "نسيت كلمة المرور",
+    body: "أدخل البريد الإلكتروني لحسابك: سنرسل لك رابطًا لاختيار كلمة مرور جديدة.",
+    send: "إرسال الرابط",
+    sentTitle: "تم إرسال الرابط",
+    sentBody: "إذا كان هناك حساب للبريد {email} فقد أُرسلت رسالة إليه. افتح الرابط من نفس الهاتف أو الحاسوب، وتفقد البريد غير المرغوب فيه.",
+    noEmailTitle: "لا تتذكر أي بريد إلكتروني استعملت؟",
+    noEmailBody: "جرّب «المتابعة عبر فيسبوك» أو «المتابعة عبر غوغل» في شاشة الدخول إن كنت قد سجّلت بهما. وإلا فاتصل بإدارة جي-مول لتجد حسابك.",
+    back: "العودة إلى تسجيل الدخول",
+    link: "نسيت كلمة المرور أو البريد؟",
   },
 };

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { requestPasswordReset, signIn, signInWithProvider } from "@/app/actions/auth";
+import { signIn, signInWithProvider } from "@/app/actions/auth";
 import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 export function SignInScreen({
@@ -40,19 +40,6 @@ export function SignInScreen({
         next,
       );
       if (result && !result.ok) setError(result.error);
-    });
-  }
-
-  function onForgot(formData: FormData) {
-    const email = String(formData.get("email") ?? "").trim();
-    if (!email) {
-      setError(t.auth.email);
-      return;
-    }
-
-    startTransition(async () => {
-      await requestPasswordReset(email);
-      setNotice(t.auth.resetSent);
     });
   }
 
@@ -122,14 +109,12 @@ export function SignInScreen({
               {pending ? t.common.loading : t.auth.signIn}
             </Button>
 
-            <button
-              type="submit"
-              formAction={onForgot}
-              formNoValidate
-              className="py-2 text-center text-[0.65625rem] font-semibold text-[var(--color-muted)]"
+            <Link
+              href="/mot-de-passe-oublie"
+              className="py-2 text-center text-[0.71875rem] font-semibold text-[var(--color-brand)]"
             >
-              {t.auth.forgotPassword}
-            </button>
+              {t.recovery.link}
+            </Link>
           </form>
         </Card>
 

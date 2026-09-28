@@ -16,6 +16,7 @@ const EXEMPTS_ACCES_PUBLIC = [
   "/preparation",
   "/connexion",
   "/inscription",
+  "/mot-de-passe-oublie",
   "/auth",
   "/confidentialite",
   "/suppression-donnees",
