@@ -7,6 +7,7 @@ import { PageTransition } from "@/components/shell/page-transition";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SpaceSwitcher } from "@/components/shell/space-switcher";
 import { VendorTour } from "@/components/tour/tours";
+import { VendorWelcome } from "@/components/vendor/vendor-welcome";
 
 export default async function VendorLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
@@ -55,6 +56,7 @@ export default async function VendorLayout({ children }: { children: React.React
       <BottomNav variant="vendor" />
 
       <VendorTour />
+      <VendorWelcome />
     </AppShell>
   );
 }

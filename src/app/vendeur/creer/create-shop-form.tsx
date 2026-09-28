@@ -33,7 +33,7 @@ export function CreateShopForm({ categories }: { categories: Category[] }) {
       const result = await createMyShop({ name, categoryId, address, phone });
 
       if (result.ok) {
-        router.replace("/vendeur");
+        router.replace("/vendeur?bienvenue=1");
         router.refresh();
       } else {
         setError(result.error);

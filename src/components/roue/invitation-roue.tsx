@@ -6,8 +6,25 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-/** Écrans où l'invitation n'a rien à faire : elle intercepterait un formulaire. */
-const ROUTES_EXCLUES = ["/connexion", "/inscription"];
+/**
+ * Écrans où l'invitation n'a rien à faire : elle intercepterait un formulaire,
+ * ou dirigerait vers une boutique que le visiteur ne peut pas ouvrir.
+ *
+ * La page de préparation en est : tant que G-Mall n'est pas ouvert au public,
+ * proposer de tourner la roue d'une boutique à quelqu'un qui n'y entre pas
+ * est une promesse qu'on ne peut pas tenir. Les espaces de travail aussi — un
+ * commerçant qui prépare sa boutique n'a pas à être interrompu.
+ */
+const ROUTES_EXCLUES = [
+  "/connexion",
+  "/inscription",
+  "/mot-de-passe-oublie",
+  "/preparation",
+  "/vendeur",
+  "/exposant",
+  "/lelma3ardh/gestion",
+  "/admin",
+];
 
 /**
  * Les roues déjà proposées, et le jour où elles l'ont été.
@@ -144,7 +161,7 @@ function RouetteAnimee() {
  */
 export function InvitationRoue() {
   const pathname = usePathname();
-  const exclu = ROUTES_EXCLUES.includes(pathname);
+  const exclu = ROUTES_EXCLUES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
   const [roue, setRoue] = useState<RoueOuverte | null>(null);
   const [monte, setMonte] = useState(false);
 

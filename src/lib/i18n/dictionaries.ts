@@ -11,7 +11,7 @@ import { nouveautesAr, nouveautesFr } from "./dictionaries-nouveautes";
  */
 
 export const LOCALES = ["fr", "ar"] as const;
-export const DEFAULT_LOCALE: AppLocale = "fr";
+export const DEFAULT_LOCALE: AppLocale = "ar";
 
 export function isLocale(value: unknown): value is AppLocale {
   return value === "fr" || value === "ar";

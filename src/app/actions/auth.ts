@@ -115,7 +115,7 @@ export async function signUp(input: {
   // Confirmation désactivée sur le projet : la session arrive tout de suite.
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect(input.role === "vendor" ? "/vendeur" : "/");
+    redirect(input.role === "vendor" ? "/vendeur?bienvenue=1" : "/");
   }
 
   // Confirmation encore active côté projet. On la lève ici pour ce compte,
@@ -138,7 +138,7 @@ export async function signUp(input: {
   if (signInError) return ok({ email, awaitingEmail: true });
 
   revalidatePath("/", "layout");
-  redirect(input.role === "vendor" ? "/vendeur" : "/");
+  redirect(input.role === "vendor" ? "/vendeur?bienvenue=1" : "/");
 }
 
 /**
