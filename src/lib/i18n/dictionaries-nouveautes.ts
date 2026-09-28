@@ -415,6 +415,8 @@ export const nouveautesFr = {
     body: "Lancement public prochainement.",
     vendorLink: "Vous êtes commerçant ou administrateur ?",
     signIn: "Se connecter",
+    backToSpace: "← Retour à mon espace commerçant",
+    ownerPreview: "Aperçu : votre vitrine telle que les clients la verront",
     settingsTitle: "Accès public",
     settingsBody:
       "Tant qu'il est fermé, seuls les commerçants, les exposants et l'administration entrent — le temps de préparer les boutiques.",
@@ -818,6 +820,8 @@ export const nouveautesAr: Nouveautes = {
     body: "الإطلاق العام قريبًا.",
     vendorLink: "هل أنت تاجر أو مسؤول؟",
     signIn: "تسجيل الدخول",
+    backToSpace: "← العودة إلى فضائي كتاجر",
+    ownerPreview: "معاينة: واجهة متجرك كما سيراها الزبائن",
     settingsTitle: "الوصول العام",
     settingsBody: "طالما هو مغلق، لا يدخل إلا التجار والعارضون والإدارة — لتحضير المتاجر.",
     statusOpen: "🟢 جي-مول مفتوح للعموم",

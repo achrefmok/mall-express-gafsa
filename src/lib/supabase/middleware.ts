@@ -167,7 +167,25 @@ export async function updateSession(request: NextRequest) {
         // qu'il ait ou non un espace dédié pendant la préparation.
         const pageCommune = pathname === "/profil" || pathname.startsWith("/profil/");
 
-        if (!dansSonEspace && !pageCommune) {
+        /*
+          « Voir ma boutique » : un commerçant doit pouvoir constater ce que
+          les clients verront, sans pour autant parcourir le reste. Seule la
+          vitrine dont il est propriétaire s'ouvre — la comparaison se fait ici,
+          sur le jeton validé, et non sur un paramètre que l'appelant choisit.
+        */
+        let saVitrine = false;
+        if (role === "vendor" && user && pathname.startsWith("/boutique/")) {
+          const slug = pathname.split("/")[2];
+          const { data: boutique } = await supabase
+            .from("shops")
+            .select("id")
+            .eq("owner_id", user.id)
+            .eq("slug", slug)
+            .maybeSingle();
+          saVitrine = Boolean(boutique);
+        }
+
+        if (!dansSonEspace && !pageCommune && !saVitrine) {
           const cible = request.nextUrl.clone();
           cible.pathname = racine ?? "/preparation";
           cible.search = "";

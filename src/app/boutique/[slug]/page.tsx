@@ -112,6 +112,21 @@ export default async function ShopPage({
   // Le nom et le numéro déjà connus, pour ne pas les faire ressaisir.
   const profile = user ? await getProfile() : null;
 
+  // Le propriétaire regarde sa propre vitrine : on lui offre le chemin du
+  // retour vers son espace, où il poursuit ses réglages.
+  const estProprietaire = user
+    ? Boolean(
+        (
+          await supabase
+            .from("shops")
+            .select("id")
+            .eq("id", shop.id)
+            .eq("owner_id", user.id)
+            .maybeSingle()
+        ).data,
+      )
+    : false;
+
   const [products, promo, hoursToday, subCategories, following, lives, counts, roue] =
     await Promise.all([
     supabase
@@ -238,6 +253,16 @@ export default async function ShopPage({
       />
 
       <main id="contenu" className="no-sb relative flex flex-1 flex-col overflow-y-auto">
+        {estProprietaire && (
+          <Link
+            href="/vendeur"
+            className="sticky top-0 z-30 flex flex-none flex-col items-center gap-[2px] bg-[var(--color-brand)] px-4 py-[9px] text-center text-white"
+          >
+            <span className="text-[0.75rem] font-bold">{t.preparation.backToSpace}</span>
+            <span className="text-[0.625rem] text-white/80">{t.preparation.ownerPreview}</span>
+          </Link>
+        )}
+
         {/*
           Une porte de sortie sur la vitrine.
 
@@ -248,7 +273,7 @@ export default async function ShopPage({
         */}
         <div className="absolute z-20 p-3">
           <BackButton
-            fallback="/marketplace"
+            fallback={estProprietaire ? "/vendeur" : "/marketplace"}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,0.88)] text-[var(--color-ink)] shadow-[0_2px_8px_rgba(30,20,45,0.25)] backdrop-blur-sm"
           />
         </div>
