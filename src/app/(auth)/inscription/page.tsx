@@ -34,9 +34,17 @@ export default async function SignUpPage({
   const params = await searchParams;
 
   /*
-    Tant que G-Mall n'est pas ouvert au public, seuls les commerçants
-    s'inscrivent : le choix « client » disparaît et l'écran se verrouille sur
-    le parcours commerçant. À l'ouverture, le choix revient sans rien toucher.
+    Tant que G-Mall n'est pas ouvert au public, cet écran n'a plus lieu
+    d'être : un visiteur n'a rien à faire ici, et un commerçant n'entre que
+    par le code que l'administration lui a remis — voir /activer et
+    `src/app/actions/activation.ts`. Laisser l'inscription libre pendant la
+    préparation reviendrait à ouvrir une seconde porte à côté de celle
+    qu'on vient de fermer : n'importe qui pourrait s'inscrire comme
+    commerçant sans jamais être passé par l'administration.
+
+    La redirection se décide ici, sur le serveur, avant tout rendu — elle
+    tient donc même pour quelqu'un qui tape l'adresse à la main ou qui
+    appelle la page sans passer par le bouton « Créer ma boutique ».
   */
   const supabase = await createClient();
   const { data: acces } = await supabase
@@ -44,10 +52,10 @@ export default async function SignUpPage({
     .select("public_access")
     .eq("id", true)
     .maybeSingle();
-  const clientsFermes = !(acces?.public_access ?? false);
 
-  const forcedRole =
-    APP_SPACE === "vendor" || clientsFermes ? "vendor" : APP_SPACE === "client" ? "client" : null;
+  if (!(acces?.public_access ?? false)) redirect("/activer");
+
+  const forcedRole = APP_SPACE === "vendor" ? "vendor" : APP_SPACE === "client" ? "client" : null;
 
   const askedForVendor = params.role === "vendeur" || params.role === "vendor";
 

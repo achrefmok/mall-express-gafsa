@@ -97,8 +97,17 @@ export default async function PreparationPage() {
           </ol>
 
           <div className="mt-1 flex flex-col gap-2">
+            {/*
+              Tant que l'accès public est fermé, il n'y a plus d'inscription
+              libre : `/inscription` redirige elle-même vers `/activer` (voir
+              cette page et `signUp()`, qui referment la porte encore une
+              fois côté serveur si jamais quelqu'un appelait directement
+              l'action). Le bouton mène donc ici tout de suite, plutôt que de
+              faire décrire un détour à quelqu'un qui, de toute façon, tient
+              déjà son code en main.
+            */}
             <Link
-              href="/inscription"
+              href="/activer"
               className="press w-full rounded-[16px] bg-white py-3 text-center text-[0.8125rem] font-bold text-[var(--color-brand)]"
             >
               {t.launchPage.createShop}
@@ -108,16 +117,6 @@ export default async function PreparationPage() {
               className="press w-full rounded-[16px] py-3 text-center text-[0.8125rem] font-bold text-white ring-1 ring-white/40"
             >
               {t.launchPage.haveAccount}
-            </Link>
-            {/*
-              Un code reçu de l'administration : la boutique existe déjà,
-              il ne reste qu'à l'activer. Voir src/app/actions/activation.ts.
-            */}
-            <Link
-              href="/activer"
-              className="press w-full py-2 text-center text-[0.71875rem] font-semibold text-white/70 underline underline-offset-2"
-            >
-              {t.launchPage.haveCode}
             </Link>
           </div>
         </section>

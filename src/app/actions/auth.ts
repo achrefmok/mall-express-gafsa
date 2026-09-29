@@ -41,6 +41,21 @@ export async function signUp(input: {
   shopLocation?: string;
   referralCode?: string;
 }) {
+  /*
+    Filet de sécurité, pas la protection principale : `/inscription`
+    redirige déjà vers `/activer` tant que l'accès public est fermé. Cette
+    action est cependant son propre point d'entrée HTTP — un appel direct,
+    sans passer par la page, y arriverait quand même. C'est cette lecture-ci,
+    et non l'écran, qui décide vraiment si un compte se crée.
+  */
+  const verif = await createClient();
+  const { data: acces } = await verif.from("app_access").select("public_access").eq("id", true).maybeSingle();
+  if (!(acces?.public_access ?? false)) {
+    return fail(
+      "Les inscriptions sont réservées aux commerçants invités pendant la préparation. Utilisez le code d'activation reçu de l'administration.",
+    );
+  }
+
   const email = input.email.trim().toLowerCase();
   const password = input.password;
 

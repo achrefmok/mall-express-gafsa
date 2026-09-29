@@ -41,11 +41,21 @@ export async function GET(request: NextRequest) {
     sa boutique sur /vendeur/creer — comme après une inscription sans boutique.
   */
   if (searchParams.get("role") === "vendor") {
+    /*
+      Même verrou que `signUp()` côté e-mail : tant que l'accès public est
+      fermé, personne ne devient commerçant par ce chemin, quel que soit ce
+      que porte l'adresse de retour. `?role=vendor` vient normalement du
+      formulaire d'inscription — mais cette route est un point d'entrée HTTP
+      à part entière, joignable sans être jamais passé par cet écran.
+    */
+    const { data: acces } = await supabase.from("app_access").select("public_access").eq("id", true).maybeSingle();
+    const ouvert = acces?.public_access ?? false;
+
     const {
       data: { user: nouveau },
     } = await supabase.auth.getUser();
 
-    const recent = nouveau && Date.now() - new Date(nouveau.created_at).getTime() < 15 * 60_000;
+    const recent = ouvert && nouveau && Date.now() - new Date(nouveau.created_at).getTime() < 15 * 60_000;
     if (nouveau && recent) {
       const admin = createAdminClient();
       const { data: p } = await admin.from("profiles").select("role").eq("id", nouveau.id).maybeSingle();
