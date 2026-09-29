@@ -189,7 +189,26 @@ export function InvitationRoue() {
     const minuterie = setTimeout(() => {
       void (async () => {
         try {
-          const { data } = await createClient().rpc("roues_ouvertes");
+          const supabase = createClient();
+
+          /*
+            Tant que G-Mall n'est pas ouvert au public, cette invitation n'a
+            rien à proposer : elle mènerait vers une vitrine qu'un client ne
+            peut de toute façon pas atteindre. Sans ce contrôle, elle
+            restait visible pour l'administration ou un commerçant en train
+            de prévisualiser le côté client pendant la préparation — avant
+            même que quiconque n'ait vraiment lancé quoi que ce soit.
+            `app_access` se lit sans connexion (policy `app_access_public_select`),
+            donc ce contrôle vaut aussi pour un visiteur anonyme.
+          */
+          const { data: acces } = await supabase
+            .from("app_access")
+            .select("public_access")
+            .eq("id", true)
+            .maybeSingle();
+          if (!vivant || !(acces?.public_access ?? false)) return;
+
+          const { data } = await supabase.rpc("roues_ouvertes");
           if (!vivant) return;
 
           const vues = lireVues();
