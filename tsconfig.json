@@ -20,5 +20,15 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "design", "public/sw.js"]
+  /*
+    `remotion/` a son propre tsconfig.json (voisin de celui-ci) : ce dossier
+    est un outil à part, avec sa propre chaîne de rendu. Le mélanger à ce
+    programme-ci posait un problème réel, pas seulement une question de
+    frontière — `@react-three/fiber` étend globalement l'espace JSX pour
+    reconnaître `<mesh>`, `<group>` etc., et TypeScript applique cette
+    extension à tout le programme dès qu'un seul fichier l'importe. Sans
+    cette exclusion, un `<div>` ordinaire ailleurs dans l'application cesse
+    de type-vérifier.
+  */
+  "exclude": ["node_modules", "design", "public/sw.js", "remotion"]
 }
