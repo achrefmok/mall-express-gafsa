@@ -129,7 +129,14 @@ export function ProductCard({
 
   return (
     <div className="flex flex-col">
-      <div className="relative rounded-[24px] bg-[var(--color-surface-solid)] p-[7px] shadow-[0_10px_24px_rgba(60,40,90,0.09)]">
+      {/*
+        Le rayon se lit dans `--pc-rayon` / `--pc-rayon-interieur`, posées par
+        la page boutique selon le thème de la catégorie (voir
+        `src/lib/boutique-themes.ts`). Sans ancêtre qui les définit — partout
+        ailleurs dans l'application — les valeurs de repli reproduisent
+        exactement l'apparence d'avant : rien ne change pour ces écrans-là.
+      */}
+      <div className="relative rounded-[var(--pc-rayon,24px)] bg-[var(--color-surface-solid)] p-[7px] shadow-[0_10px_24px_rgba(60,40,90,0.09)]">
         {cover ? (
           /*
             Toucher la photo l'agrandit ; toucher le nom ouvre la fiche. Une
@@ -139,7 +146,7 @@ export function ProductCard({
           */
           <ImageZoom images={srcs} alt={product.name} className="block w-full cursor-zoom-in">
             <span
-              className="relative block w-full overflow-hidden rounded-[19px]"
+              className="relative block w-full overflow-hidden rounded-[var(--pc-rayon-interieur,19px)]"
               style={{ height: imageHeight }}
             >
               <Image
@@ -154,7 +161,7 @@ export function ProductCard({
         ) : (
           <Placeholder
             label="produit"
-            className="w-full rounded-[19px]"
+            className="w-full rounded-[var(--pc-rayon-interieur,19px)]"
             style={{ height: imageHeight }}
           />
         )}

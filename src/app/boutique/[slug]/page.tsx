@@ -18,6 +18,7 @@ import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { AvantDebut } from "@/components/ui/avant-debut";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
+import { rayonBadge, themeDepuisCategorie, variablesTheme } from "@/lib/boutique-themes";
 
 /**
  * Écran 6 — profil boutique, vue client.
@@ -101,7 +102,7 @@ export default async function ShopPage({
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count,
        is_partner, partner_tagline, partner_tagline_ar, accepts_reservations,
        followers_count, posts_count, views_count, status, latitude, longitude,
-       category:categories!shops_category_id_fkey(name_fr, name_ar, hue)`,
+       category:categories!shops_category_id_fkey(name_fr, name_ar, hue, slug)`,
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -211,6 +212,15 @@ export default async function ShopPage({
   */
   const enTete = shop.banner_url ?? shop.cover_url;
 
+  /*
+    L'ambiance visuelle vient de la catégorie principale de la boutique, pas
+    de la boutique elle-même : deux salons de coiffure partagent le même
+    thème « Beauté », chacun avec son propre nom, son logo et ses photos.
+    Voir `src/lib/boutique-themes.ts` pour la liste des thèmes et leur
+    origine — aucune catégorie n'y est inventée.
+  */
+  const theme = themeDepuisCategorie(shop.category?.slug);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Store",
@@ -246,7 +256,11 @@ export default async function ShopPage({
   const visible = await avecBlackFriday(lus, createStaticClient());
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1120px] lg:px-8 lg:py-6">
+    <div
+      className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1120px] lg:px-8 lg:py-6"
+      style={variablesTheme(theme)}
+      data-theme={theme.id}
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
@@ -298,6 +312,27 @@ export default async function ShopPage({
               sizes="(max-width: 520px) 100vw, 520px"
               className="object-cover"
             />
+            {/*
+              Le voile de l'ambiance : jamais opaque, jamais devant le texte
+              qui suit — juste de quoi teinter la photo du commerçant sans la
+              remplacer. Une boutique « Électronique » y gagne un motif de
+              grille très pâle en plus du dégradé, une boutique « Mode » n'a
+              que le dégradé.
+            */}
+            {theme.voileCouverture !== "none" && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{ backgroundImage: theme.voileCouverture }}
+              />
+            )}
+            {theme.motif !== "none" && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{ backgroundImage: theme.motif, backgroundSize: theme.motifTaille }}
+              />
+            )}
           </span>
         ) : (
           <Placeholder label="photo de couverture" className="h-[110px] w-full flex-none" />
@@ -314,7 +349,10 @@ export default async function ShopPage({
 
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-[1.1875rem] font-semibold text-[var(--color-ink)]">
+              <h1
+                className="text-[1.1875rem] font-semibold text-[var(--color-ink)]"
+                style={{ fontFamily: "var(--theme-police)" }}
+              >
                 {locale === "ar" && shop.name_ar ? shop.name_ar : shop.name}
               </h1>
               <p className="text-[0.6875rem] text-[var(--color-muted)]">
@@ -364,7 +402,10 @@ export default async function ShopPage({
           )}
 
           <div className="mt-[2px] flex flex-none flex-wrap items-center gap-2">
-            <span className="flex items-center gap-[6px] rounded-[12px] bg-[var(--color-brand-tint)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--color-brand)]">
+            <span
+              className="flex items-center gap-[6px] bg-[var(--theme-accent-doux)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--theme-accent-fort)]"
+              style={{ borderRadius: rayonBadge(theme) }}
+            >
               <span
                 className={`inline-block h-[6px] w-[6px] rounded-full ${
                   shop.is_open_now ? "bg-[var(--color-success)]" : "bg-[var(--color-faint)]"
