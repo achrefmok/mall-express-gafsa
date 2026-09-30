@@ -65,10 +65,15 @@ export function ShopTabs({
 }) {
   const { t } = useI18n();
 
+  /*
+    Pas d'onglet "Posts" : aucune table ne porte cette donnée, et
+    `shops.posts_count` n'est incrémenté nulle part — voir TODO.md. Un
+    onglet qui mène toujours à une grille de produits vide serait pire
+    qu'absent : il promettrait un contenu qui n'existe pas.
+  */
   const tabs = [
     { key: "products", label: t.shop.tabs.products },
     { key: "promos", label: t.shop.tabs.promos },
-    { key: "posts", label: t.shop.tabs.posts },
     { key: "lives", label: `${t.shop.tabs.lives}${liveCount > 0 ? ` (${liveCount})` : ""}` },
   ];
 

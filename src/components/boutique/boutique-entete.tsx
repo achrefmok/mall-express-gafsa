@@ -146,10 +146,12 @@ export function BoutiqueEnTete({
           <CountShopView shopId={shop.id} />
         </div>
 
+        {/*
+          Plus de statistique "posts" : aucune table ne porte cette donnée,
+          et `shops.posts_count` n'est incrémenté nulle part — c'est un
+          compteur mort, toujours à 0. Voir TODO.md.
+        */}
         <div className="mt-[2px] flex justify-between gap-3 text-[0.6875rem] text-[var(--color-muted)]">
-          <span className="whitespace-nowrap">
-            <b className="text-[var(--color-ink)]">{formatCount(shop.posts_count)}</b> {t.shop.posts}
-          </span>
           <span className="whitespace-nowrap">
             <b className="text-[var(--color-ink)]">{formatCount(shop.followers_count)}</b>{" "}
             {t.shop.followers}
