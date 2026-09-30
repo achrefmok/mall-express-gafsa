@@ -9,7 +9,7 @@ import { avecBlackFriday } from "@/lib/black-friday-server";
 import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
-import { themeDepuisCategorie, variablesTheme } from "@/lib/boutique-themes";
+import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
@@ -218,7 +218,8 @@ export default async function ShopPage({
     Voir `src/lib/boutique-themes.ts` pour la liste des thèmes et leur
     origine — aucune catégorie n'y est inventée.
   */
-  const theme = themeDepuisCategorie(shop.category?.slug);
+  const theme = resolveTheme(shop.category?.slug);
+  const reglesSombre = reglesModeSombreTheme(theme);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -255,15 +256,26 @@ export default async function ShopPage({
   const visible = await avecBlackFriday(lus, createStaticClient());
 
   return (
+    /*
+      Deux niveaux, pas un seul : le fond du thème doit couvrir toute la
+      largeur de l'écran, marges latérales comprises — sur un moniteur large,
+      le contenu reste borné à 1120px, mais le lavande générique de
+      `<body>` ne doit plus se voir de part et d'autre d'une boutique
+      « Alimentation ». Le niveau extérieur porte donc le fond et
+      `data-theme` (pour le mode sombre, voir `reglesModeSombreTheme`), le
+      niveau intérieur garde exactement la mise en page d'avant.
+    */
     <div
-      className="mx-auto flex min-h-dvh max-w-[520px] flex-col bg-[var(--color-app)] lg:max-w-[1120px] lg:px-8 lg:py-6"
+      className="min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
       style={variablesTheme(theme)}
       data-theme={theme.id}
     >
+      {reglesSombre && <style dangerouslySetInnerHTML={{ __html: reglesSombre }} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
+      <div className="mx-auto flex min-h-dvh max-w-[520px] flex-col lg:max-w-[1120px] lg:px-8 lg:py-6">
 
       <main id="contenu" className="no-sb relative flex flex-1 flex-col overflow-y-auto">
         {estProprietaire && (
@@ -323,6 +335,7 @@ export default async function ShopPage({
 
         <BoutiquePanierFlottant count={counts.cart} label={t.cart.title} />
       </main>
+      </div>
     </div>
   );
 }

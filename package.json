@@ -32,7 +32,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload && npm run check:url",
+    "check": "npm run check:links && npm run check:securite && npm run check:variants && npm run check:recolor && npm run check:taxi && npm run check:presence && npm run check:poster && npm run check:upload && npm run check:url && npm run check:theme-contrast",
     "db:concurrence": "node scripts/check-concurrence.mjs",
     "db:black-friday": "node scripts/check-black-friday.mjs",
     "db:free-shop": "node scripts/check-free-shop.mjs",
@@ -41,7 +41,8 @@
     "db:roue": "node scripts/check-roue.mjs",
     "db:louage": "node scripts/check-louage.mjs",
     "remotion": "remotion studio remotion/index.ts",
-    "remotion:render": "remotion render remotion/index.ts MyComposition out/video.mp4"
+    "remotion:render": "remotion render remotion/index.ts MyComposition out/video.mp4",
+    "check:theme-contrast": "tsx scripts/check-theme-contrast.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -77,6 +78,7 @@
     "eslint-config-next": "^15.5.23",
     "serwist": "^9.2.1",
     "tailwindcss": "^4.1.13",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.2",
     "vitest": "^4.1.11"
   },

@@ -87,18 +87,22 @@ export function BoutiqueEnTete({
             grille très pâle en plus du dégradé, une boutique « Mode » n'a
             que le dégradé.
           */}
-          {theme.voileCouverture !== "none" && (
+          {/*
+            `--theme-voile` porte déjà la bonne valeur pour le mode courant
+            (clair ou sombre) — posée par `variablesTheme()` et basculée par
+            `reglesModeSombreTheme()`, jamais choisie ici en JS : le serveur
+            ne sait pas dans quel mode le navigateur va afficher la page.
+          */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ backgroundImage: "var(--theme-voile)" }}
+          />
+          {theme.couverture.motif && (
             <span
               aria-hidden
               className="pointer-events-none absolute inset-0"
-              style={{ backgroundImage: theme.voileCouverture }}
-            />
-          )}
-          {theme.motif !== "none" && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{ backgroundImage: theme.motif, backgroundSize: theme.motifTaille }}
+              style={{ backgroundImage: theme.couverture.motif, backgroundSize: theme.couverture.motifTaille }}
             />
           )}
         </span>
