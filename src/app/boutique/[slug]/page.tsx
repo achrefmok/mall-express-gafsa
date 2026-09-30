@@ -1,28 +1,27 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient, createStaticClient } from "@/lib/supabase/server";
 import { getProfile, getSessionUser, getTopBarCounts } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
-import { format } from "@/lib/i18n/format";
-import { formatCount, formatRating, formatTime, monogram } from "@/lib/format";
-import { ProductCard } from "@/components/cards/product-card";
+import { formatRating } from "@/lib/format";
 import { avecBlackFriday } from "@/lib/black-friday-server";
-import { BoutonPartage } from "@/components/black-friday/share-button";
-import { Card, EmptyState, Placeholder, Rail, Tag } from "@/components/ui/primitives";
-import { CartIcon, PinIcon } from "@/components/ui/icons";
 import { BackButton } from "@/components/shell/back";
-import { CountShopView, FollowButton, ShopContact, ShopTabs } from "./shop-client";
-import { ReservationSheet } from "@/components/partners/reservation-sheet";
-import { AvantDebut } from "@/components/ui/avant-debut";
-import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
+import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
-import { rayonBadge, themeDepuisCategorie, variablesTheme } from "@/lib/boutique-themes";
+import { themeDepuisCategorie, variablesTheme } from "@/lib/boutique-themes";
+import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
+import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
+import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
 
 /**
  * Écran 6 — profil boutique, vue client.
  * Page publique indexable : c'est la vitrine en ligne du commerçant.
+ *
+ * Cette page ne fait plus que récupérer les données et composer trois
+ * morceaux (`BoutiqueEnTete`, `BoutiqueContenu`, `BoutiquePanierFlottant`) —
+ * une extraction pure, sans le moindre changement de classe ni de structure :
+ * voir le commit qui l'a introduite pour la comparaison avant/après.
  */
 
 export const revalidate = 300;
@@ -292,366 +291,37 @@ export default async function ShopPage({
           />
         </div>
 
-        {enTete ? (
-          /*
-            `fill` dans un cadre de hauteur fixe, et un `sizes` déclaré.
-
-            La couverture est recadrée : elle occupe toute la largeur sur une
-            hauteur imposée, quel que soit le format du fichier envoyé par le
-            commerçant. Déclarer 520 × 110 annonçait un rapport que le rendu ne
-            tenait pas, et sans `sizes` le navigateur supposait la pleine largeur
-            de l'écran — il téléchargeait donc une variante trop lourde pour un
-            bandeau de cent-dix pixels.
-          */
-          <span className="relative block h-[110px] w-full flex-none">
-            <Image
-              src={enTete}
-              alt=""
-              fill
-              priority
-              sizes="(max-width: 520px) 100vw, 520px"
-              className="object-cover"
-            />
-            {/*
-              Le voile de l'ambiance : jamais opaque, jamais devant le texte
-              qui suit — juste de quoi teinter la photo du commerçant sans la
-              remplacer. Une boutique « Électronique » y gagne un motif de
-              grille très pâle en plus du dégradé, une boutique « Mode » n'a
-              que le dégradé.
-            */}
-            {theme.voileCouverture !== "none" && (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{ backgroundImage: theme.voileCouverture }}
-              />
-            )}
-            {theme.motif !== "none" && (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{ backgroundImage: theme.motif, backgroundSize: theme.motifTaille }}
-              />
-            )}
-          </span>
-        ) : (
-          <Placeholder label="photo de couverture" className="h-[110px] w-full flex-none" />
-        )}
-
-        <div className="-mt-6 flex flex-none flex-col gap-2 px-4">
-          <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[var(--color-app)] bg-[var(--color-brand-fill)] text-[1.125rem] font-bold text-white">
-            {shop.logo_url ? (
-              <Image src={shop.logo_url} alt="" width={64} height={64} className="h-full w-full object-cover" />
-            ) : (
-              monogram(shop.name)
-            )}
-          </span>
-
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1
-                className="text-[1.1875rem] font-semibold text-[var(--color-ink)]"
-                style={{ fontFamily: "var(--theme-police)" }}
-              >
-                {locale === "ar" && shop.name_ar ? shop.name_ar : shop.name}
-              </h1>
-              <p className="text-[0.6875rem] text-[var(--color-muted)]">
-                {locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr}
-                {shop.mall_level !== null && ` · Niveau ${shop.mall_level}`}
-              </p>
-              <div className="mt-2">
-                <BoutonPartage
-                  chemin={`/boutique/${shop.slug}`}
-                  titre={shop.name}
-                  texte={`${shop.name} — ${t.brand.first}${t.brand.second}`}
-                  image={`/partage/boutique/${shop.slug}`}
-                />
-              </div>
-            </div>
-            <FollowButton shopId={shop.id} initiallyFollowing={following} />
-            {/*
-              La visite est comptée depuis le navigateur, et non pendant le rendu :
-              cette page est servie en cache cinq minutes (`revalidate = 300`), si
-              bien qu'un incrément côté serveur n'aurait compté qu'une visite par
-              intervalle, quel que soit le nombre de visiteurs réels.
-            */}
-            <CountShopView shopId={shop.id} />
-          </div>
-
-          <div className="mt-[2px] flex justify-between gap-3 text-[0.6875rem] text-[var(--color-muted)]">
-            <span className="whitespace-nowrap">
-              <b className="text-[var(--color-ink)]">{formatCount(shop.posts_count)}</b> {t.shop.posts}
-            </span>
-            <span className="whitespace-nowrap">
-              <b className="text-[var(--color-ink)]">{formatCount(shop.followers_count)}</b>{" "}
-              {t.shop.followers}
-            </span>
-            <span className="whitespace-nowrap">
-              <b className="text-[var(--color-ink)]">{formatCount(shop.views_count)}</b>{" "}
-              {t.common.views}
-            </span>
-            <span className="whitespace-nowrap">
-              <b className="text-[var(--color-ink)]">{rating}</b> ★ {t.shop.reviews}
-            </span>
-          </div>
-
-          {(shop.description || shop.description_ar) && (
-            <p className="text-[0.75rem] leading-[1.5] text-[var(--color-ink)]">
-              {locale === "ar" && shop.description_ar ? shop.description_ar : shop.description}
-            </p>
-          )}
-
-          <div className="mt-[2px] flex flex-none flex-wrap items-center gap-2">
-            <span
-              className="flex items-center gap-[6px] bg-[var(--theme-accent-doux)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--theme-accent-fort)]"
-              style={{ borderRadius: rayonBadge(theme) }}
-            >
-              <span
-                className={`inline-block h-[6px] w-[6px] rounded-full ${
-                  shop.is_open_now ? "bg-[var(--color-success)]" : "bg-[var(--color-faint)]"
-                }`}
-              />
-              {shop.is_open_now && hoursToday.data?.closes_at
-                ? format(t.shop.openUntil, { time: formatTime(hoursToday.data.closes_at) })
-                : t.shop.closed}
-            </span>
-
-            {/*
-              Trois portes vers le vendeur, et non plus une seule.
-
-              Le lien précédent choisissait à la place du visiteur : un numéro
-              renseigné menait à l'appel, et la messagerie du site devenait
-              alors inaccessible depuis la boutique — alors qu'elle est le seul
-              canal qui laisse une trace consultable des deux côtés. Un client
-              qui veut écrire à 23 h n'appelle pas ; un client pressé n'écrit pas.
-            */}
-            <ShopContact
-              shopId={shop.id}
-              shopName={shop.name}
-              phone={shop.phone}
-              labels={{
-                message: t.shop.askVendor,
-                call: t.taxi.call,
-                whatsApp: t.common.whatsApp,
-              }}
-            />
-
-            {/*
-              Réserver, quand la boutique le propose.
-
-              Sous la barre de contact et non dedans : appeler, écrire et
-              réserver ne sont pas trois gestes du même poids. Les deux
-              premiers ouvrent une conversation, le troisième engage une
-              date et un nombre de personnes — il mérite sa propre ligne.
-
-              Un visiteur non connecté le voit aussi : lui cacher le bouton
-              jusqu'à la connexion, c'est lui cacher la raison de se
-              connecter. L'action l'enverra s'identifier, et la policy
-              d'insertion refuse de toute façon sans session.
-            */}
-            {shop.accepts_reservations && (
-              <div className="w-full">
-                <ReservationSheet
-                  shopId={shop.id}
-                  shopName={shop.name}
-                  defaults={{
-                    fullName: [profile?.first_name, profile?.last_name].filter(Boolean).join(" "),
-                    phone: profile?.phone ?? "",
-                  }}
-                  label="Réserver"
-                />
-              </div>
-            )}
-          </div>
-
-          {/*
-            Où se trouve la boutique, et comment y aller.
-
-            La page disait « Niveau 1 » dans une ligne de texte gris, sous le
-            nom. Or c'est l'information qui décide du déplacement : quelqu'un
-            qui consulte une vitrine depuis chez lui veut savoir s'il peut y
-            passer. Elle prend donc une carte à elle, avec l'itinéraire au bout.
-
-            L'itinéraire s'ouvre dans l'application de cartographie du
-            téléphone : c'est elle qui connaît le trafic et qui parle pendant le
-            trajet. Sans coordonnées, la carte reste et se contente d'indiquer
-            le local — à l'intérieur d'un mall, « Niveau 1, local B12 » guide
-            mieux qu'un point sur une carte.
-          */}
-          {(shop.mall_unit || (shop.latitude !== null && shop.longitude !== null)) && (
-            <Card className="mt-1 flex items-center gap-[10px] p-[12px_13px]">
-              <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[var(--color-brand)]">
-                <PinIcon size={16} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[0.75rem] font-bold text-[var(--color-ink)]">
-                  {shop.mall_unit
-                    ? format(t.product.walkTime, {
-                        level: shop.mall_level ?? 0,
-                        unit: shop.mall_unit,
-                        min: 3,
-                      })
-                    : t.shop.findUs}
-                </p>
-                <p className="text-[0.625rem] leading-[1.35] text-[var(--color-muted)]">
-                  {locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr}
-                </p>
-              </div>
-              {shop.latitude !== null && shop.longitude !== null && (
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="press flex-none rounded-[16px] bg-[var(--color-brand-fill)] px-[13px] py-2 text-[0.65625rem] font-bold whitespace-nowrap text-white shadow-[0_8px_18px_rgba(109,75,143,0.26)]"
-                >
-                  {t.shop.guideMe}
-                </a>
-              )}
-            </Card>
-          )}
-        </div>
+        <BoutiqueEnTete
+          shop={shop}
+          theme={theme}
+          enTete={enTete}
+          rating={rating}
+          hoursCloseAt={hoursToday.data?.closes_at}
+          locale={locale}
+          t={t}
+          following={following}
+          reservationDefaults={{
+            fullName: [profile?.first_name, profile?.last_name].filter(Boolean).join(" "),
+            phone: profile?.phone ?? "",
+          }}
+        />
 
         <ShopTabs active={onglet} slug={shop.slug} liveCount={(lives.data ?? []).length} />
 
-        <div className="no-sb flex flex-1 flex-col gap-[14px] px-4 pt-3 pb-4">
-          {/* Chips de sous-catégories, chacune dans sa nuance */}
-          {(subCategories.data ?? []).length > 0 && (
-            <Rail className="flex-none" gap={8}>
-              <span className="flex-none whitespace-nowrap rounded-[14px] bg-[var(--color-brand-fill)] px-[13px] py-[6px] text-[0.65625rem] font-semibold text-white">
-                {t.common.all}
-              </span>
-              {subCategories.data!.map(({ category }) =>
-                category ? (
-                  <span
-                    key={category.id}
-                    className="cat-surface cat-ink flex-none whitespace-nowrap rounded-[14px] px-[13px] py-[6px] text-[0.65625rem] font-semibold"
-                    style={{ "--hue": category.hue } as React.CSSProperties}
-                  >
-                    {locale === "ar" ? category.name_ar : category.name_fr}
-                  </span>
-                ) : null,
-              )}
-            </Rail>
-          )}
+        <BoutiqueContenu
+          onglet={onglet}
+          subCategories={subCategories.data ?? []}
+          promo={promo.data}
+          roue={roue.data}
+          casesRoue={casesRoue}
+          lives={lives.data ?? []}
+          visible={visible}
+          locale={locale}
+          t={t}
+          userConnecte={Boolean(user)}
+        />
 
-          {promo.data && (
-            <div className="flex flex-none items-center gap-[10px] rounded-[18px] border border-[rgba(122,31,43,0.15)] bg-[var(--color-brand-tint)] p-[10px]">
-              <span className="flex-none rounded-[14px] bg-[var(--color-live-fill)] px-[9px] py-[6px] text-[0.6875rem] font-bold text-white">
-                −{promo.data.percent_off}%
-              </span>
-              <div className="min-w-0">
-                <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">
-                  {locale === "ar" && promo.data.title_ar ? promo.data.title_ar : promo.data.title}
-                </p>
-                {/*
-                  À venir, elle annonce son décompte ; commencée, sa date de
-                  fin. Une promotion préparée pour demain n'a aucune raison
-                  de rester cachée jusqu'au matin : l'annoncer fait revenir,
-                  et c'est le seul intérêt de la programmer.
-                */}
-                <p className="text-[0.65625rem] text-[var(--color-muted)]">
-                  {new Date(promo.data.starts_at).getTime() > Date.now() ? (
-                    <AvantDebut debut={promo.data.starts_at} />
-                  ) : (
-                    <>
-                      {t.deals.validUntil}{" "}
-                      {new Date(promo.data.ends_at).toLocaleDateString("fr-FR")}
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/*
-            La roue, avant les produits et après la promotion.
-
-            C'est une raison de rester, pas une raison de venir : elle ne
-            doit pas couvrir ce que la boutique vend, mais celui qui a fait
-            le chemin jusqu'ici mérite de la voir sans chercher.
-          */}
-          {roue.data && roue.data.is_active && casesRoue.length > 0 && (
-            <RoueDeLaChance
-              wheelId={roue.data.id}
-              titre={
-                (locale === "ar" ? roue.data.title_ar : roue.data.title) ??
-                roue.data.title
-              }
-              cases={casesRoue as unknown as CaseRoue[]}
-              locale={locale}
-              connecte={Boolean(user)}
-            />
-          )}
-
-          {onglet === "lives" ? (
-            (lives.data ?? []).length === 0 ? (
-              <EmptyState title={t.live.noneLive} />
-            ) : (
-              lives.data!.map((live) => (
-                <a
-                  key={live.id}
-                  href={`/lives/${live.id}`}
-                  className="flex items-center gap-2 rounded-[18px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]"
-                >
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[0.71875rem] font-semibold">{live.title}</span>
-                    {/* « Dans 2 h 14 » plutôt qu'une heure : la question
-                        qu'on se pose devant un rendez-vous annoncé est
-                        « ai-je le temps d'aller faire autre chose ? ». */}
-                    {live.status === "scheduled" && live.scheduled_at && (
-                      <AvantDebut
-                        debut={live.scheduled_at}
-                        prefixe="Commence dans"
-                        className="truncate text-[0.625rem] text-[var(--color-muted)]"
-                      />
-                    )}
-                  </span>
-                  <Tag tone={live.status === "live" ? "live" : "tinted"}>
-                    {live.status === "live" ? t.live.onAir : t.live.scheduled}
-                  </Tag>
-                </a>
-              ))
-            )
-          ) : visible.length === 0 ? (
-            <EmptyState title={t.common.empty} />
-          ) : (
-            <div className="grid grid-cols-2 gap-x-[10px] gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-              {visible.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={{ ...product, shop: null }}
-                  locale={locale}
-                  showShop={false}
-                  imageHeight={118}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/*
-          Le panier, à portée de pouce depuis la vitrine.
-
-          On ajoute plusieurs articles d'affilée dans une même boutique, et rien
-          ne menait ensuite à la caisse : il fallait quitter la page par la
-          flèche de retour, puis retrouver l'icône du panier ailleurs. Cette
-          page n'a pas de barre d'onglets — elle vit hors de la coque client —,
-          d'où un bouton flottant plutôt qu'un onglet.
-        */}
-        {counts.cart > 0 && (
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[520px]">
-            <Link
-              href="/panier"
-              aria-label={t.cart.title}
-              className="press pointer-events-auto absolute end-4 bottom-4 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-white shadow-[0_14px_28px_rgba(109,75,143,0.38)]"
-            >
-              <CartIcon size={21} />
-              <span className="absolute -top-[2px] -end-[2px] flex h-[20px] min-w-[20px] items-center justify-center rounded-full border-2 border-[var(--color-app)] bg-[var(--color-ink)] px-1 text-[0.59375rem] font-extrabold text-[var(--color-app)]">
-                {counts.cart > 99 ? "99+" : counts.cart}
-              </span>
-            </Link>
-          </div>
-        )}
+        <BoutiquePanierFlottant count={counts.cart} label={t.cart.title} />
       </main>
     </div>
   );
