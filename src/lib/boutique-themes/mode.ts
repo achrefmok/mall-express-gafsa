@@ -70,6 +70,7 @@ export const modeTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "Votre prochaine pièce préférée arrive bientôt.", ar: "قطعتك المفضلة القادمة تصل قريبًا" },
+    promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités de la boutique arrivent bientôt.", ar: "أخبار المتجر قادمة قريبًا" },
   },
   animations: "douce",

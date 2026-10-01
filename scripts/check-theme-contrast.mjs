@@ -74,6 +74,7 @@ const PAIRES = [
   { nom: "texte blanc/sombre sur accent (bouton plein)", de: "accentTexte", vers: "accent", seuil: 4.5 },
   { nom: "accent sur fond (titre, grand)", de: "accent", vers: "background", seuil: 3 },
   { nom: "accentFort sur accentDoux (badge)", de: "accentFort", vers: "accentDoux", seuil: 4.5, composite: true },
+  { nom: "accentFort sur surface (prix produit)", de: "accentFort", vers: "surface", seuil: 4.5 },
 ];
 
 function verifierMode(id, mode, palette) {

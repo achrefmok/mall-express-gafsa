@@ -70,6 +70,7 @@ export const alimentationTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "Le menu se prépare, revenez bientôt 🍽️", ar: "القائمة قيد التحضير، عودوا قريبًا" },
+    promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités du commerce arrivent bientôt.", ar: "أخبار المتجر قادمة قريبًا" },
   },
   animations: "rebond",

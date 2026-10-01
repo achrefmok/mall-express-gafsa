@@ -73,6 +73,7 @@ export const beauteTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "De nouveaux soins arrivent bientôt.", ar: "منتجات عناية جديدة قريبًا" },
+    promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités du studio arrivent bientôt.", ar: "أخبار المركز قادمة قريبًا" },
   },
   animations: "douce",

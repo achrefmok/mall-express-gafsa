@@ -111,7 +111,7 @@ export function BoutiqueEnTete({
       )}
 
       <div className="-mt-6 flex flex-none flex-col gap-2 px-4">
-        <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[var(--color-app)] bg-[var(--color-brand-fill)] text-[1.125rem] font-bold text-white">
+        <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[var(--color-app)] bg-[var(--theme-accent,var(--color-brand-fill))] text-[1.125rem] font-bold text-[var(--theme-accent-texte,white)]">
           {shop.logo_url ? (
             <Image src={shop.logo_url} alt="" width={64} height={64} className="h-full w-full object-cover" />
           ) : (
@@ -251,7 +251,7 @@ export function BoutiqueEnTete({
         */}
         {(shop.mall_unit || (shop.latitude !== null && shop.longitude !== null)) && (
           <Card className="mt-1 flex items-center gap-[10px] p-[12px_13px]">
-            <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[var(--color-brand)]">
+            <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--theme-accent-doux,var(--color-brand-tint))] text-[var(--theme-accent-fort,var(--color-brand))]">
               <PinIcon size={16} />
             </span>
             <div className="min-w-0 flex-1">
@@ -273,7 +273,7 @@ export function BoutiqueEnTete({
                 href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-                className="press flex-none rounded-[16px] bg-[var(--color-brand-fill)] px-[13px] py-2 text-[0.65625rem] font-bold whitespace-nowrap text-white shadow-[0_8px_18px_rgba(109,75,143,0.26)]"
+                className="press flex-none rounded-[16px] bg-[var(--theme-accent,var(--color-brand-fill))] px-[13px] py-2 text-[0.65625rem] font-bold whitespace-nowrap text-[var(--theme-accent-texte,white)] shadow-[0_8px_18px_rgba(109,75,143,0.26)]"
               >
                 {t.shop.guideMe}
               </a>

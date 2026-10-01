@@ -9,6 +9,7 @@ export type ThemeId =
   | "beaute"
   | "electronique"
   | "alimentation"
+  | "cafes"
   | "maison"
   | "sport"
   | "sante"
@@ -143,6 +144,7 @@ export interface ThemeBoutique {
   wheelStyle: StyleRoue;
   emptyState: {
     produits: TexteBilingue;
+    promos: TexteBilingue;
     /** Gardé même si l'onglet est masqué : la source fait défaut, pas le thème — voir TODO.md. */
     posts: TexteBilingue;
   };

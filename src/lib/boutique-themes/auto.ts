@@ -64,6 +64,7 @@ export const autoTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "De nouveaux véhicules arrivent bientôt.", ar: "مركبات جديدة قريبًا" },
+    promos: { fr: "Aucune offre en cours sur ce garage.", ar: "لا عروض حاليًا في هذا المرآب" },
     posts: { fr: "Les actualités du garage arrivent bientôt.", ar: "أخبار المرآب قادمة قريبًا" },
   },
   animations: "nette",

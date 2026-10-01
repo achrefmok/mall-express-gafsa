@@ -11,12 +11,20 @@ import { Amiri, Changa, El_Messiri, Lalezar, Reem_Kufi } from "next/font/google"
  * qui porte la classe — jamais le nom de la police lui-même : un thème ne
  * peut donc pas simplement écrire `"Amiri"` dans son `fontFamily`, il doit
  * référencer `var(--font-amiri)`. Voir chaque fichier de thème.
+ *
+ * `preload: false` sur chacune : `POLICES_THEMES` pose les cinq classes
+ * `.variable` sur le même élément racine, pour toute boutique quel que soit
+ * son thème (voir plus bas). Sans ce réglage, `next/font` poserait un
+ * `<link rel="preload">` bloquant pour les cinq polices sur CHAQUE page
+ * boutique, alors qu'un thème donné n'en affiche jamais qu'une seule —
+ * vérifié par capture réseau, voir le commit qui l'a introduit.
  */
 export const amiri = Amiri({
   subsets: ["latin", "arabic"],
   weight: ["400", "700"],
   variable: "--font-amiri",
   display: "swap",
+  preload: false,
 });
 
 export const changa = Changa({
@@ -24,6 +32,7 @@ export const changa = Changa({
   weight: ["600", "700"],
   variable: "--font-changa",
   display: "swap",
+  preload: false,
 });
 
 export const elMessiri = El_Messiri({
@@ -31,6 +40,7 @@ export const elMessiri = El_Messiri({
   weight: ["600"],
   variable: "--font-el-messiri",
   display: "swap",
+  preload: false,
 });
 
 export const lalezar = Lalezar({
@@ -38,6 +48,7 @@ export const lalezar = Lalezar({
   weight: ["400"],
   variable: "--font-lalezar",
   display: "swap",
+  preload: false,
 });
 
 export const reemKufi = Reem_Kufi({
@@ -45,6 +56,7 @@ export const reemKufi = Reem_Kufi({
   weight: ["500"],
   variable: "--font-reem-kufi",
   display: "swap",
+  preload: false,
 });
 
 /**

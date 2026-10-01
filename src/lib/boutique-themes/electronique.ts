@@ -64,6 +64,7 @@ export const electroniqueTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "De nouveaux produits tech arrivent bientôt.", ar: "منتجات تقنية جديدة قريبًا" },
+    promos: { fr: "Aucune promotion en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités de la boutique arrivent bientôt.", ar: "أخبار المتجر قادمة قريبًا" },
   },
   animations: "nette",

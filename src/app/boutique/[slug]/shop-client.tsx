@@ -46,7 +46,7 @@ export function FollowButton({
         "flex-none rounded-[16px] px-4 py-2 text-[0.6875rem] font-semibold transition-colors",
         following
           ? "border border-[var(--color-outline)] text-[var(--color-muted)]"
-          : "bg-[var(--color-brand-fill)] text-white",
+          : "bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)]",
       )}
     >
       {following ? t.shop.following : t.shop.follow}
@@ -90,7 +90,7 @@ export function ShopTabs({
             className={cx(
               "flex-1 py-[10px] text-center text-[0.71875rem]",
               current
-                ? "border-b-2 border-[var(--color-brand)] font-semibold text-[var(--color-brand)]"
+                ? "border-b-2 border-[var(--theme-accent-fort,var(--color-brand))] font-semibold text-[var(--theme-accent-fort,var(--color-brand))]"
                 : "text-[var(--color-muted)]",
             )}
           >

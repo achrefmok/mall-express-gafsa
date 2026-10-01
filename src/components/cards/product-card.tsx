@@ -178,7 +178,7 @@ export function ProductCard({
               "absolute start-[14px] bottom-[14px] rounded-[10px] px-2 py-[3px] font-bold text-white",
               bf
                 ? "bg-[#111] text-[0.625rem] font-extrabold shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-                : "bg-[var(--color-brand-fill)] text-[0.53125rem]",
+                : "bg-[var(--theme-accent,var(--color-brand-fill))] text-[0.53125rem]",
             )}
           >
             {bf && <span aria-hidden>🔥 </span>}
@@ -225,7 +225,7 @@ export function ProductCard({
           <Link
             href={lienProduit(product)}
             aria-label={`${t.product.addToCart} — ${product.name}`}
-            className="press absolute bottom-[-15px] start-1/2 flex h-[34px] w-[34px] -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-[var(--color-app)] bg-[var(--color-brand-fill)] text-white shadow-[0_10px_20px_rgba(109,75,143,0.36)] rtl:translate-x-1/2"
+            className="press absolute bottom-[-15px] start-1/2 flex h-[34px] w-[34px] -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-[var(--color-app)] bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)] shadow-[0_10px_20px_rgba(109,75,143,0.36)] rtl:translate-x-1/2"
           >
             <CartIcon size={14} />
           </Link>
@@ -248,7 +248,7 @@ export function ProductCard({
         <span
           className={cx(
             "mt-[2px] block text-[0.8125rem] font-extrabold",
-            bf ? "text-[var(--color-ink)]" : "text-[var(--color-brand)]",
+            bf ? "text-[var(--color-ink)]" : "text-[var(--theme-accent-fort,var(--color-brand))]",
           )}
         >
           {prixBarre && (

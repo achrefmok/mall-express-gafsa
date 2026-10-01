@@ -2,7 +2,7 @@ import { AvantDebut } from "@/components/ui/avant-debut";
 import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { ProductCard, type ProductCardData } from "@/components/cards/product-card";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
-import type { ThemeBoutique } from "@/lib/boutique-themes";
+import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -13,6 +13,15 @@ interface Live {
   scheduled_at: string | null;
 }
 
+interface Promotion {
+  id: string;
+  percent_off: number;
+  title: string;
+  title_ar: string | null;
+  starts_at: string;
+  ends_at: string;
+}
+
 /**
  * Puces de sous-catégories, promotion active, roue, puis l'onglet actif —
  * extrait de `page.tsx` sans changement de classe ni de structure.
@@ -21,6 +30,7 @@ export function BoutiqueContenu({
   onglet,
   subCategories,
   promo,
+  promotions,
   roue,
   casesRoue,
   lives,
@@ -39,6 +49,7 @@ export function BoutiqueContenu({
     starts_at: string;
     ends_at: string;
   } | null;
+  promotions: Promotion[];
   roue: { id: string; title: string; title_ar: string | null; is_active: boolean } | null;
   casesRoue: CaseRoue[];
   lives: Live[];
@@ -71,7 +82,7 @@ export function BoutiqueContenu({
       )}
 
       {promo && (
-        <div className="flex flex-none items-center gap-[10px] rounded-[18px] border border-[rgba(122,31,43,0.15)] bg-[var(--color-brand-tint)] p-[10px]">
+        <div className="flex flex-none items-center gap-[10px] rounded-[var(--theme-rayon-interieur,18px)] border border-[var(--theme-bordure,rgba(122,31,43,0.15))] bg-[var(--theme-surface,var(--color-brand-tint))] p-[10px]">
           <span className="flex-none rounded-[14px] bg-[var(--color-live-fill)] px-[9px] py-[6px] text-[0.6875rem] font-bold text-white">
             −{promo.percent_off}%
           </span>
@@ -143,6 +154,47 @@ export function BoutiqueContenu({
               </Tag>
             </a>
           ))
+        )
+      ) : onglet === "promos" ? (
+        promotions.length === 0 ? (
+          <EmptyState
+            title={locale === "ar" ? theme.emptyState.promos.ar : theme.emptyState.promos.fr}
+          />
+        ) : (
+          <div className="flex flex-col gap-[10px]">
+            {promotions.map((promotion) => {
+              const badgeFill = theme.promoStyle.accentPropre
+                ? "bg-[var(--theme-accent,var(--color-live-fill))]"
+                : "bg-[var(--color-live-fill)]";
+              return (
+                <div
+                  key={promotion.id}
+                  className="flex items-center gap-[10px] rounded-[var(--theme-rayon-interieur,18px)] border border-[var(--theme-bordure,rgba(122,31,43,0.15))] bg-[var(--theme-surface,var(--color-brand-tint))] p-[10px]"
+                >
+                  <span
+                    className={`flex-none px-[9px] py-[6px] text-[0.6875rem] font-bold text-white ${badgeFill}`}
+                    style={{ borderRadius: rayonBadge(theme) }}
+                  >
+                    −{promotion.percent_off}%
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[0.71875rem] font-semibold text-[var(--theme-texte,var(--color-ink))]">
+                      {locale === "ar" && promotion.title_ar ? promotion.title_ar : promotion.title}
+                    </p>
+                    <p className="text-[0.65625rem] text-[var(--theme-muted,var(--color-muted))]">
+                      {new Date(promotion.starts_at).getTime() > Date.now() ? (
+                        <AvantDebut debut={promotion.starts_at} />
+                      ) : (
+                        <>
+                          {t.deals.validUntil} {new Date(promotion.ends_at).toLocaleDateString("fr-FR")}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )
       ) : visible.length === 0 ? (
         <EmptyState

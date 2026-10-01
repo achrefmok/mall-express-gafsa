@@ -46,3 +46,16 @@ Confirmer avec l'équipe si ces deux familles seront un jour vendues via
 `products` comme aujourd'hui, ou si elles mériteraient leur propre table
 (une annonce immobilière n'a pas de stock ni de tailles) — ça change la
 forme de la migration ci-dessus.
+
+## Personnalisation du thème par le vendeur — non implémentée
+
+`ThemeBoutique.overridesAutorises` existe dans le système de types
+(`src/lib/boutique-themes/types.ts`) : une liste fermée de jetons qu'un
+commerçant pourrait un jour ajuster lui-même (aujourd'hui, seulement
+`"accent"`, pour chaque thème). Rien ne la lit ni ne l'écrit côté
+`/vendeur` — c'est un champ préparé pour plus tard, pas une fonctionnalité.
+À brancher le jour où le besoin est confirmé : probablement une colonne
+`shops.theme_overrides` (jsonb), validée côté serveur contre la liste
+`overridesAutorises` du thème résolu, jamais un objet libre — un vendeur ne
+doit pouvoir que teinter son thème, pas casser sa lisibilité ni sa
+structure.

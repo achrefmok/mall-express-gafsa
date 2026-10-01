@@ -70,6 +70,7 @@ export const defaultTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "Rien pour le moment.", ar: "لا شيء حاليًا" },
+    promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités de la boutique arrivent bientôt.", ar: "أخبار المتجر قادمة قريبًا" },
   },
   animations: "aucune",

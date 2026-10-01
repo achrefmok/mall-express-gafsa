@@ -73,6 +73,7 @@ export const santeTheme: ThemeBoutique = {
       fr: "Les prestations de ce cabinet seront bientôt en ligne.",
       ar: "خدمات هذا المركز قريبًا على الإنترنت",
     },
+    promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
     posts: { fr: "Les actualités du cabinet arrivent bientôt.", ar: "أخبار المركز قادمة قريبًا" },
   },
   animations: "douce",

@@ -8,6 +8,13 @@ import { beauteTheme } from "./beaute";
 import { electroniqueTheme } from "./electronique";
 import { autoTheme } from "./auto";
 import { feteTheme } from "./fete";
+import { sportTheme } from "./sport";
+import { maisonTheme } from "./maison";
+import { immobilierTheme } from "./immobilier";
+import { enseignementTheme } from "./enseignement";
+import { cafesTheme } from "./cafes";
+import { animauxTheme } from "./animaux";
+import { servicesTheme } from "./services";
 
 export type { ThemeBoutique, ThemeId, PaletteMode, ProductLayout } from "./types";
 
@@ -32,6 +39,13 @@ export const THEMES: Record<string, ThemeBoutique> = {
   electronique: electroniqueTheme,
   auto: autoTheme,
   fete: feteTheme,
+  sport: sportTheme,
+  maison: maisonTheme,
+  immobilier: immobilierTheme,
+  enseignement: enseignementTheme,
+  cafes: cafesTheme,
+  animaux: animauxTheme,
+  services: servicesTheme,
 };
 
 /**
@@ -65,7 +79,7 @@ const THEME_PAR_CATEGORIE: Record<string, ThemeId> = {
   informatique: "electronique",
   // Alimentation (les cafés en font partie)
   alimentation: "alimentation",
-  cafes: "alimentation",
+  cafes: "cafes",
   // Maison
   maison: "maison",
   "equipement-maison": "maison",

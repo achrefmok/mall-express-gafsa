@@ -72,6 +72,7 @@ export const feteTheme: ThemeBoutique = {
   },
   emptyState: {
     produits: { fr: "De nouvelles offres pour vos événements arrivent.", ar: "عروض جديدة لمناسباتكم قريبًا" },
+    promos: { fr: "Aucune offre en cours, revenez bientôt.", ar: "لا عروض حاليًا، عودوا قريبًا" },
     posts: { fr: "Les actualités arrivent bientôt.", ar: "الأخبار قادمة قريبًا" },
   },
   animations: "douce",

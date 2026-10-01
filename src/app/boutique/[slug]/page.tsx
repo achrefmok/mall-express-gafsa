@@ -128,7 +128,7 @@ export default async function ShopPage({
       )
     : false;
 
-  const [products, promo, hoursToday, subCategories, following, lives, counts, roue] =
+  const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue] =
     await Promise.all([
     supabase
       .from("products")
@@ -148,6 +148,19 @@ export default async function ShopPage({
       .order("percent_off", { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    /*
+      L'onglet Promos affiche toutes les offres en cours de la boutique, pas
+      seulement la plus forte remise mise en avant dans le bandeau ci-dessus.
+    */
+    supabase
+      .from("promotions")
+      .select("*")
+      .eq("shop_id", shop.id)
+      .eq("is_active", true)
+      .gte("ends_at", new Date().toISOString())
+      .order("percent_off", { ascending: false })
+      .limit(20),
 
     supabase
       .from("shop_hours")
@@ -332,6 +345,7 @@ export default async function ShopPage({
           onglet={onglet}
           subCategories={subCategories.data ?? []}
           promo={promo.data}
+          promotions={promotions.data ?? []}
           roue={roue.data}
           casesRoue={casesRoue}
           lives={lives.data ?? []}
