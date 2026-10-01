@@ -19,6 +19,8 @@ export type ThemeId =
   | "auto"
   | "animaux"
   | "services"
+  | "bijouterie"
+  | "parapharmacie"
   | "default";
 
 /**
@@ -47,6 +49,7 @@ export interface PaletteMode {
 export type ProductLayout =
   | "grid" // la grille actuelle — thème par défaut
   | "editorial" // grande photo, peu de texte (Mode)
+  | "beaute" // trois onglets internes — teint, parfum, soin (Beauté)
   | "menu" // photo, description courte, prix (Alimentation, Cafés)
   | "technical" // caractéristique clé visible (Électronique)
   | "showcase" // grande image, badges (Sport)
@@ -54,7 +57,9 @@ export type ProductLayout =
   | "vehicule" // marque/modèle/année/km si présents (Voitures)
   | "programme" // durée/niveau si présents (Enseignement)
   | "service" // prestation : prix + bouton contact/réservation mis en avant (Santé, Services)
-  | "catalog"; // salle/prestation événementielle (Fête)
+  | "catalog" // salle/prestation événementielle (Fête) — ou packs de besoins (Parapharmacie, dispatch sur l'id du thème, pas seulement cette valeur)
+  | "maison" // par pièce, avec repères sur une photo d'ambiance (Maison)
+  | "bijouterie"; // matière, taille de bague, gravure (Bijouterie)
 
 export type FormeBadge = "pilule" | "ruban" | "carre";
 

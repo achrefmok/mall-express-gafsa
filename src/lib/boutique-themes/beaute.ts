@@ -64,7 +64,7 @@ export const beauteTheme: ThemeBoutique = {
     motif: "radial-gradient(circle at 12% 10%, rgba(255,255,255,0.5), transparent 45%)",
     secours: "aplat",
   },
-  productLayout: "editorial",
+  productLayout: "beaute",
   promoStyle: { forme: "pilule", accentPropre: true },
   wheelStyle: {
     teintes: ["#a53f6c", "#c9598a", "#e0a3bb", "#8a3058", "#d4af6a", "#6d2a48"],

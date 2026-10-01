@@ -15,6 +15,8 @@ import { enseignementTheme } from "./enseignement";
 import { cafesTheme } from "./cafes";
 import { animauxTheme } from "./animaux";
 import { servicesTheme } from "./services";
+import { bijouterieTheme } from "./bijouterie";
+import { parapharmacieTheme } from "./parapharmacie";
 
 export type { ThemeBoutique, ThemeId, PaletteMode, ProductLayout } from "./types";
 
@@ -46,6 +48,8 @@ export const THEMES: Record<string, ThemeBoutique> = {
   cafes: cafesTheme,
   animaux: animauxTheme,
   services: servicesTheme,
+  bijouterie: bijouterieTheme,
+  parapharmacie: parapharmacieTheme,
 };
 
 /**
@@ -136,6 +140,9 @@ const THEME_PAR_CATEGORIE: Record<string, ThemeId> = {
   "animaux-veterinaire": "animaux",
   // Services, et tout ce qui ne rentre dans aucune famille ci-dessus
   services: "services",
+  // Bijouterie et Parapharmacie — créées sans boutique encore inscrite
+  bijouterie: "bijouterie",
+  parapharmacie: "parapharmacie",
   autres: "default",
 };
 

@@ -54,7 +54,7 @@ export const maisonTheme: ThemeBoutique = {
     },
     secours: "aplat",
   },
-  productLayout: "grid",
+  productLayout: "maison",
   promoStyle: { forme: "carre", accentPropre: false },
   wheelStyle: {
     teintes: ["#4f6e45", "#86b276", "#9db28f", "#2f4728", "#c4d4bc", "#6b8f5f"],

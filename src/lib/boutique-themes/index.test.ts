@@ -22,4 +22,9 @@ describe("resolveTheme", () => {
   it("sport et sport-loisirs : le même thème pour les deux", () => {
     expect(resolveTheme("sport").id).toBe(resolveTheme("sport-loisirs").id);
   });
+
+  it("bijouterie et parapharmacie : résolvent vers leur propre thème, pas vers le défaut", () => {
+    expect(resolveTheme("bijouterie").id).toBe("bijouterie");
+    expect(resolveTheme("parapharmacie").id).toBe("parapharmacie");
+  });
 });
