@@ -25,27 +25,68 @@ pointent toutes vers `sport-loisirs`. Le thème `sport` les traite comme une
 seule famille, mais la duplication en base reste — à fusionner un jour côté
 `categories` (migration à part, hors périmètre de ce travail).
 
-## Immobilier / Voitures — champs manquants sur `products`
+## Immobilier / Voitures — champs manquants sur `products`, mais la table générique existe déjà
 
-`products` ne porte que nom/description/prix/stock/images/colors/sizes.
-Aucun champ pour surface, nombre de pièces, localisation (Immobilier) ni
-marque, modèle, année, kilométrage (Voitures). Les `productLayout` dédiés à
-ces deux métiers se dégradent proprement vers l'équivalent d'une grille
-classique tant que ces champs n'existent pas — rien n'est inventé.
+`products` ne porte que nom/description/prix/stock/images/colors/sizes. Les
+`productLayout` dédiés à ces deux métiers (`showcase-fiche`, `vehicule`) se
+dégradent proprement vers l'équivalent d'une grille classique tant
+qu'aucune donnée structurée n'existe — rien n'est inventé.
 
-**Migration à envisager, non appliquée** (à valider avant de l'écrire) :
-une table `product_attributes` générique (`product_id`, `key`, `value`)
-plutôt que des colonnes dédiées à chaque métier sur `products` — évite
-d'alourdir la table principale pour des champs qui ne concernent qu'une
-poignée de catégories, et reste extensible à d'autres métiers de service
-sans nouvelle migration à chaque fois.
+**La table générique proposée ici a été construite** pendant le chantier
+"expérience par catégorie" (octobre 2026) — `product_attributes(product_id,
+key, value)`, voir `supabase/migrations/20261001002000_product_attributes.sql`
+— et sert déjà Électronique, Beauté, Maison, Bijouterie (voir plus bas).
+Immobilier (surface, pièces, localisation) et Voitures (marque, modèle,
+année, kilométrage) peuvent la réutiliser directement, sans nouvelle
+migration : il reste seulement à écrire leurs `productLayout` (aucun des
+deux n'est branché, les deux restent sur la grille par défaut) et à
+étendre `src/app/vendeur/produits/attribute-fields.tsx` avec leurs champs.
 
 ## Vérification à faire avant d'implémenter les thèmes Immobilier / Voitures
 
 Confirmer avec l'équipe si ces deux familles seront un jour vendues via
 `products` comme aujourd'hui, ou si elles mériteraient leur propre table
-(une annonce immobilière n'a pas de stock ni de tailles) — ça change la
-forme de la migration ci-dessus.
+(une annonce immobilière n'a pas de stock ni de tailles) — ça changerait
+la décision ci-dessus (`product_attributes` reste pertinent pour des
+champs descriptifs quoi qu'il en soit, mais pas pour un cycle de vie
+différent comme une annonce qui expire).
+
+## Migrations en attente de collage manuel (chantier "expérience par catégorie")
+
+Six migrations écrites pour ce chantier ne sont pas encore collées dans
+l'éditeur SQL Supabase (pas de CLI/psql sur ce projet — voir la mémoire du
+projet) :
+
+- `20261001002000_product_attributes.sql`
+- `20261001003000_product_variants_material.sql`
+- `20261001004000_product_packs.sql`
+- `20261001005000_categories_bijouterie_parapharmacie.sql`
+- `20261001006000_sous_categories_beaute.sql`
+
+Tant qu'elles ne sont pas collées, tout le code qui les lit ou les écrit
+tolère leur absence (`MIGRATION_ABSENTE`, voir `attributs-server.ts` et
+`actions/vendor.ts`) : aucune page ne casse, les nouvelles mises en page
+retombent simplement sur une grille simple, et le formulaire vendeur
+enregistre le produit même si ses champs par métier échouent.
+
+## Prix des packs — recalcul serveur à brancher au panier
+
+Décision prise : le pourcentage de remise d'un pack (`discount_percent`)
+est purement indicatif tant qu'il n'est qu'affiché. Le jour où un client
+pourra l'ajouter réellement à son panier, le prix facturé doit être
+recalculé côté serveur à partir des vrais prix des produits du pack — ne
+jamais faire confiance à un montant composé côté client. Pas encore
+implémenté : `ParapharmacieLayout` affiche les packs, mais aucun bouton
+"ajouter" n'existe encore dessus.
+
+## Gravure et taille de bague (Bijouterie) — outils cosmétiques, décision à revisiter si besoin
+
+Décision prise explicitement : ces deux outils ne sauvegardent rien
+aujourd'hui — un client qui veut une gravure précise contacte le bijoutier
+par la messagerie existante. Si le besoin se confirme, il faudra une
+colonne de personnalisation sur `cart_items`/`order_items` pour que la
+gravure saisie survive jusqu'à la commande que voit le commerçant — hors
+périmètre de ce chantier.
 
 ## Personnalisation du thème par le vendeur — non implémentée
 
