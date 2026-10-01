@@ -2,6 +2,7 @@ import { AvantDebut } from "@/components/ui/avant-debut";
 import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { ProductCard, type ProductCardData } from "@/components/cards/product-card";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
+import type { ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -27,6 +28,7 @@ export function BoutiqueContenu({
   locale,
   t,
   userConnecte,
+  theme,
 }: {
   onglet: string;
   subCategories: Array<{ category: { id: string; name_fr: string; name_ar: string; hue: number } | null }>;
@@ -44,6 +46,7 @@ export function BoutiqueContenu({
   locale: AppLocale;
   t: Dictionary;
   userConnecte: boolean;
+  theme: ThemeBoutique;
 }) {
   return (
     <div className="no-sb flex flex-1 flex-col gap-[14px] px-4 pt-3 pb-4">
@@ -142,7 +145,9 @@ export function BoutiqueContenu({
           ))
         )
       ) : visible.length === 0 ? (
-        <EmptyState title={t.common.empty} />
+        <EmptyState
+          title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr}
+        />
       ) : (
         <div className="grid grid-cols-2 gap-x-[10px] gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
           {visible.map((product) => (

@@ -47,12 +47,13 @@ export const modeTheme: ThemeBoutique = {
     },
   },
   typographie: {
-    fontFamily: "'El Messiri', var(--font-cairo), 'Cairo', system-ui, sans-serif",
+    fontFamily: "var(--font-el-messiri), var(--font-cairo), 'Cairo', system-ui, sans-serif",
     googleFont: { nom: "El Messiri", poids: [600], sousEnsembles: ["latin", "arabic"] },
     poidsTitre: 600,
     espacementLettres: "-0.01em",
   },
   formes: { rayon: "28px", rayonInterieur: "22px", badge: "pilule", ombre: "0 2px 10px rgba(0,0,0,0.06)" },
+  accentSurClair: "#161616",
   couverture: {
     voile: {
       clair: "linear-gradient(180deg, rgba(20,20,20,0) 45%, rgba(20,20,20,0.32) 100%)",

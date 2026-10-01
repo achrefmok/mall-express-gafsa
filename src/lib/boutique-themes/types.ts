@@ -128,6 +128,15 @@ export interface ThemeBoutique {
   palettes: { clair: PaletteMode; sombre: PaletteMode };
   typographie: TypographieTheme;
   formes: { rayon: string; rayonInterieur: string; badge: FormeBadge; ombre: string };
+  /**
+   * Une teinte du thème, assez sombre pour rester lisible sur le cercle
+   * blanc translucide de la flèche de retour — quel que soit le mode. Pour
+   * un thème clair, c'est presque toujours `palettes.clair.accentFort` ;
+   * pour un thème sombre par nature (Électronique, Voitures), c'est une
+   * couleur à part : leur accent réel (cyan, rouge clair) ne tient pas 4.5:1
+   * sur blanc, et `accentFort` de leur unique palette est déjà celui-là.
+   */
+  accentSurClair: string;
   couverture: StyleCouverture;
   productLayout: ProductLayout;
   promoStyle: StylePromo;

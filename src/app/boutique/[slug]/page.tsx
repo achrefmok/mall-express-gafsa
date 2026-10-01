@@ -10,6 +10,7 @@ import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
+import { POLICES_THEMES } from "@/lib/boutique-themes/fonts";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
@@ -266,7 +267,7 @@ export default async function ShopPage({
       niveau intérieur garde exactement la mise en page d'avant.
     */
     <div
-      className="min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
+      className={`min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))] ${POLICES_THEMES}`}
       style={variablesTheme(theme)}
       data-theme={theme.id}
     >
@@ -296,10 +297,17 @@ export default async function ShopPage({
           du site ou sur la page de présentation. La flèche flotte au-dessus de la
           photo de couverture, faute de barre supérieure sur cet écran.
         */}
+        {/*
+          Le cercle reste blanc translucide, quel que soit le thème : c'est
+          ce qui le rend lisible sur n'importe quelle photo de couverture,
+          claire ou sombre. Seule la flèche prend la couleur du thème
+          (`--theme-accent-fort`) — assez pour se sentir « à sa place » sans
+          jouer le contraste du bouton contre une photo qu'on ne maîtrise pas.
+        */}
         <div className="absolute z-20 p-3">
           <BackButton
             fallback={estProprietaire ? "/vendeur" : "/marketplace"}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,0.88)] text-[var(--color-ink)] shadow-[0_2px_8px_rgba(30,20,45,0.25)] backdrop-blur-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,0.88)] text-[var(--theme-accent-sur-clair,var(--color-ink))] shadow-[0_2px_8px_rgba(30,20,45,0.25)] backdrop-blur-sm"
           />
         </div>
 
@@ -331,6 +339,7 @@ export default async function ShopPage({
           locale={locale}
           t={t}
           userConnecte={Boolean(user)}
+          theme={theme}
         />
 
         <BoutiquePanierFlottant count={counts.cart} label={t.cart.title} />

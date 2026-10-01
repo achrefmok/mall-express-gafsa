@@ -4,6 +4,10 @@ import { modeTheme } from "./mode";
 import { alimentationTheme } from "./alimentation";
 import { santeTheme } from "./sante";
 import { defaultTheme } from "./default";
+import { beauteTheme } from "./beaute";
+import { electroniqueTheme } from "./electronique";
+import { autoTheme } from "./auto";
+import { feteTheme } from "./fete";
 
 export type { ThemeBoutique, ThemeId, PaletteMode, ProductLayout } from "./types";
 
@@ -24,6 +28,10 @@ export const THEMES: Record<string, ThemeBoutique> = {
   alimentation: alimentationTheme,
   sante: santeTheme,
   default: defaultTheme,
+  beaute: beauteTheme,
+  electronique: electroniqueTheme,
+  auto: autoTheme,
+  fete: feteTheme,
 };
 
 /**
@@ -154,6 +162,7 @@ export function variablesTheme(theme: ThemeBoutique): CSSProperties {
     "--theme-rayon-interieur": theme.formes.rayonInterieur,
     "--theme-police": theme.typographie.fontFamily,
     "--theme-voile": voile,
+    "--theme-accent-sur-clair": theme.accentSurClair,
     "--pc-rayon": theme.formes.rayon,
     "--pc-rayon-interieur": theme.formes.rayonInterieur,
   } as CSSProperties;

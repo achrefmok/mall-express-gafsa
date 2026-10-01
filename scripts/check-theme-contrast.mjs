@@ -101,6 +101,20 @@ for (const theme of Object.values(THEMES)) {
   total += 1;
   echecs.push(...verifierMode(theme.id, "clair", theme.palettes.clair));
   echecs.push(...verifierMode(theme.id, "sombre", theme.palettes.sombre));
+
+  /*
+    `accentSurClair` n'appartient à aucune des deux palettes : c'est la
+    teinte de la flèche de retour, posée sur un cercle blanc translucide
+    (`rgba(255,255,255,0.88)`) au-dessus d'une photo de couverture
+    quelconque — le même dans les deux modes, puisque le cercle, lui, ne
+    bascule jamais.
+  */
+  const ratioRetour = contraste(theme.accentSurClair, "#ffffff");
+  if (ratioRetour < 4.5) {
+    echecs.push(
+      `  ✗ [${theme.id}] accentSurClair sur blanc (flèche de retour) : ${theme.accentSurClair} → ${ratioRetour.toFixed(2)}:1 (minimum 4.5:1)`,
+    );
+  }
 }
 
 console.log(`Thèmes vérifiés : ${total} (clair + sombre = ${total * 2} palettes)`);

@@ -48,11 +48,12 @@ export const alimentationTheme: ThemeBoutique = {
     },
   },
   typographie: {
-    fontFamily: "'Reem Kufi', var(--font-cairo), 'Cairo', system-ui, sans-serif",
+    fontFamily: "var(--font-reem-kufi), var(--font-cairo), 'Cairo', system-ui, sans-serif",
     googleFont: { nom: "Reem Kufi", poids: [500], sousEnsembles: ["latin", "arabic"] },
     poidsTitre: 500,
   },
   formes: { rayon: "24px", rayonInterieur: "18px", badge: "ruban", ombre: "0 8px 20px rgba(178,90,28,0.12)" },
+  accentSurClair: "#8a4515",
   couverture: {
     voile: {
       clair: "linear-gradient(180deg, rgba(40,18,4,0) 40%, rgba(40,18,4,0.4) 100%)",

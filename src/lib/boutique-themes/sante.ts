@@ -53,6 +53,7 @@ export const santeTheme: ThemeBoutique = {
     poidsTitre: 500,
   },
   formes: { rayon: "20px", rayonInterieur: "16px", badge: "pilule", ombre: "0 4px 14px rgba(34,110,106,0.08)" },
+  accentSurClair: "#226e6a",
   couverture: {
     voile: {
       clair: "linear-gradient(180deg, rgba(10,20,20,0) 55%, rgba(10,20,20,0.22) 100%)",

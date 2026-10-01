@@ -56,6 +56,7 @@ export const defaultTheme: ThemeBoutique = {
     poidsTitre: 600,
   },
   formes: { rayon: "24px", rayonInterieur: "19px", badge: "pilule", ombre: "0 10px 24px rgba(60,40,90,0.09)" },
+  accentSurClair: "#6d4b8f",
   couverture: {
     voile: { clair: "none", sombre: "none" },
     secours: "aucun",
