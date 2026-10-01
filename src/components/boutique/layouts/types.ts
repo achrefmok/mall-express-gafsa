@@ -10,4 +10,17 @@ import type { ProductCardData } from "@/components/cards/product-card";
 export interface ProduitBoutique extends ProductCardData {
   sizes?: string[];
   category?: { hue: number; slug?: string; name_fr?: string; name_ar?: string } | null;
+  /** `{ "stockage": "128 Go", "poids_g": "12" }` — voir `product_attributes`. */
+  attributs?: Record<string, string>;
+  /** Les matières déclarées en variante (`product_variants.material`). */
+  materiaux?: string[];
+}
+
+export interface PackBoutique {
+  id: string;
+  name: string;
+  name_ar: string | null;
+  discount_percent: number;
+  cover_image: string | null;
+  items: Array<{ id: string; name: string; price: number; images: string[] }>;
 }

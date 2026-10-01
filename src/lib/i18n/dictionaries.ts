@@ -161,6 +161,10 @@ const fr = {
   product: {
     addToCart: "Ajouter au panier",
     added: "Ajouté au panier",
+    compare: "Comparer",
+    selected: "sélectionné(s)",
+    price: "Prix",
+    wear: "Tenue",
     goToCart: "Voir le panier",
     photoOf: "Photo {i} sur {n}",
     stockLabel: "En rayon",
@@ -1100,6 +1104,10 @@ const ar: Dictionary = {
   product: {
     addToCart: "أضف إلى السلة",
     added: "أُضيف إلى السلة",
+    compare: "مقارنة",
+    selected: "محدد",
+    price: "السعر",
+    wear: "مدة الثبات",
     goToCart: "عرض السلة",
     photoOf: "صورة {i} من {n}",
     stockLabel: "في الرفوف",

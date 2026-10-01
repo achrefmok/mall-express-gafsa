@@ -3,7 +3,12 @@ import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
 import { ModeLayout } from "@/components/boutique/layouts/mode-layout";
-import type { ProduitBoutique } from "@/components/boutique/layouts/types";
+import { ElectroniqueLayout } from "@/components/boutique/layouts/electronique-layout";
+import { BeauteLayout } from "@/components/boutique/layouts/beaute-layout";
+import { MaisonLayout } from "@/components/boutique/layouts/maison-layout";
+import { ParapharmacieLayout } from "@/components/boutique/layouts/parapharmacie-layout";
+import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layout";
+import type { PackBoutique, ProduitBoutique } from "@/components/boutique/layouts/types";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -37,6 +42,7 @@ export function BoutiqueContenu({
   casesRoue,
   lives,
   visible,
+  packs,
   locale,
   t,
   userConnecte,
@@ -56,6 +62,7 @@ export function BoutiqueContenu({
   casesRoue: CaseRoue[];
   lives: Live[];
   visible: ProduitBoutique[];
+  packs: PackBoutique[];
   locale: AppLocale;
   t: Dictionary;
   userConnecte: boolean;
@@ -200,16 +207,23 @@ export function BoutiqueContenu({
         )
       ) : theme.productLayout === "editorial" && theme.id === "mode" ? (
         <ModeLayout visible={visible} locale={locale} theme={theme} />
+      ) : theme.productLayout === "technical" ? (
+        <ElectroniqueLayout visible={visible} locale={locale} theme={theme} />
+      ) : theme.productLayout === "beaute" ? (
+        <BeauteLayout visible={visible} locale={locale} theme={theme} />
+      ) : theme.productLayout === "maison" ? (
+        <MaisonLayout visible={visible} locale={locale} theme={theme} />
+      ) : theme.productLayout === "bijouterie" ? (
+        <BijouterieLayout visible={visible} locale={locale} theme={theme} />
+      ) : theme.productLayout === "catalog" && theme.id === "parapharmacie" ? (
+        // "catalog" est partagée avec Fête — seule Parapharmacie reçoit le
+        // rail de packs, Fête continue sur GrilleParDefaut ci-dessous.
+        <ParapharmacieLayout visible={visible} locale={locale} theme={theme} packs={packs} />
       ) : (
         /*
-          `theme.productLayout` porte la mise en page voulue pour chaque
-          métier (voir `src/lib/boutique-themes/types.ts`) ; `GrilleParDefaut`
-          reste le repli pour toute famille qui n'a pas encore la sienne —
-          les lots suivants ajoutent, un par un, une branche de plus
-          (`"beaute"` → Beauté, `"technical"` → Électronique, `"maison"` →
-          Maison, `"catalog"` → Parapharmacie en vérifiant `theme.id`
-          puisque Fête porte aussi cette valeur, `"bijouterie"` →
-          Bijouterie).
+          `GrilleParDefaut` reste le repli pour toute famille qui n'a pas
+          de mise en page dédiée — Alimentation, Cafés, Santé, Sport, Fête,
+          Immobilier, Enseignement, Auto, Animaux, Services, Défaut.
         */
         <GrilleParDefaut visible={visible} locale={locale} theme={theme} />
       )}

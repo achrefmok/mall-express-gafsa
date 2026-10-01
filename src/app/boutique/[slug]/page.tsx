@@ -11,6 +11,7 @@ import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
 import { POLICES_THEMES } from "@/lib/boutique-themes/fonts";
+import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique } from "@/lib/boutique-themes/attributs-server";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
@@ -278,6 +279,26 @@ export default async function ShopPage({
   */
   const visible = await avecBlackFriday(lus, createStaticClient());
 
+  /*
+    Specs, matière, packs — seulement pour les métiers qui en ont besoin,
+    jamais sur chaque page boutique : Sport ou Fête n'ont rien à demander
+    de plus que `visible` ci-dessus.
+  */
+  const idsProduitsVisibles = visible.map((p) => p.id);
+  const [attributsParProduit, matieresParProduit, packs] = await Promise.all([
+    ["technical", "beaute", "maison", "bijouterie"].includes(theme.productLayout)
+      ? lireAttributsProduits(supabase, idsProduitsVisibles)
+      : Promise.resolve(new Map<string, Record<string, string>>()),
+    theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
+    theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
+  ]);
+
+  const visibleEnrichi = visible.map((p) => ({
+    ...p,
+    attributs: attributsParProduit.get(p.id),
+    materiaux: matieresParProduit.get(p.id),
+  }));
+
   return (
     /*
       Deux niveaux, pas un seul : le fond du thème doit couvrir toute la
@@ -358,7 +379,8 @@ export default async function ShopPage({
           roue={roue.data}
           casesRoue={casesRoue}
           lives={lives.data ?? []}
-          visible={visible}
+          visible={visibleEnrichi}
+          packs={packs}
           locale={locale}
           t={t}
           userConnecte={Boolean(user)}

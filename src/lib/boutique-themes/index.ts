@@ -73,6 +73,9 @@ const THEME_PAR_CATEGORIE: Record<string, ThemeId> = {
   "mode-chaussures": "mode",
   // Beauté
   beaute: "beaute",
+  "beaute-maquillage": "beaute",
+  "beaute-parfums": "beaute",
+  "beaute-soin": "beaute",
   // Électronique
   electronique: "electronique",
   "electronique-telephones": "electronique",
