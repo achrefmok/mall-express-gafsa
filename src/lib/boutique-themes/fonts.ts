@@ -1,4 +1,4 @@
-import { Amiri, Changa, El_Messiri, Lalezar, Reem_Kufi } from "next/font/google";
+import { Amiri, Changa, El_Messiri, Lalezar, Readex_Pro, Reem_Kufi } from "next/font/google";
 
 /**
  * Les polices de titre des thèmes, auto-hébergées comme Cairo
@@ -59,6 +59,14 @@ export const reemKufi = Reem_Kufi({
   preload: false,
 });
 
+export const readexPro = Readex_Pro({
+  subsets: ["latin", "arabic"],
+  weight: ["600", "700"],
+  variable: "--font-readex-pro",
+  display: "swap",
+  preload: false,
+});
+
 /**
  * À poser sur l'élément racine de toute page qui affiche une boutique
  * thématisée (la page boutique elle-même, et le labo de prévisualisation) :
@@ -70,5 +78,6 @@ export const POLICES_THEMES = [
   changa.variable,
   elMessiri.variable,
   lalezar.variable,
+  readexPro.variable,
   reemKufi.variable,
 ].join(" ");

@@ -58,6 +58,7 @@ export async function AnnuaireLieux({ famille }: { famille: FamilleLieux }) {
     .from("categories")
     .select("id, slug, hue")
     .eq("slug", famille)
+    .eq("is_active", true)
     .maybeSingle();
 
   // La migration des catégories n'est pas encore passée : on le dit simplement.
@@ -72,7 +73,8 @@ export async function AnnuaireLieux({ famille }: { famille: FamilleLieux }) {
   const { data: enfants } = await supabase
     .from("categories")
     .select("id, name_fr, name_ar")
-    .eq("parent_id", parent.id);
+    .eq("parent_id", parent.id)
+    .eq("is_active", true);
 
   const idsFamille = [parent.id, ...(enfants ?? []).map((c) => c.id)];
   const nomSousCategorie = new Map(

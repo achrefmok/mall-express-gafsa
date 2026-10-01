@@ -87,7 +87,8 @@ export default async function MarketplacePage({
     const { data: children } = await supabase
       .from("categories")
       .select("id")
-      .eq("parent_id", activeCategory.id);
+      .eq("parent_id", activeCategory.id)
+      .eq("is_active", true);
 
     categoryIds = [activeCategory.id, ...(children ?? []).map((c) => c.id)];
   }

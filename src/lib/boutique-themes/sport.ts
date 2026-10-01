@@ -47,7 +47,10 @@ export const sportTheme: ThemeBoutique = {
   },
   accentSurClair: "#9c3620",
   typographie: {
-    fontFamily: "var(--font-cairo), 'Cairo', system-ui, sans-serif",
+    // Readex Pro, géométrique et dense — l'énergie du titre, pas
+    // seulement le poids de Cairo ; prévu dès l'étape 2 (DA « Performance »).
+    fontFamily: "var(--font-readex-pro), var(--font-cairo), 'Cairo', system-ui, sans-serif",
+    googleFont: { nom: "Readex Pro", poids: [700], sousEnsembles: ["latin", "arabic"] },
     poidsTitre: 700,
     espacementLettres: "-0.01em",
   },
