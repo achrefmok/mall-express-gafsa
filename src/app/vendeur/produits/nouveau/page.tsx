@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getMyShop } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { categoriesProduitPourBoutique } from "@/lib/categories-boutique-server";
+import { resolveTheme } from "@/lib/boutique-themes";
 import { ProductEditor } from "../product-editor";
 
 export const metadata: Metadata = {
@@ -20,7 +21,15 @@ export default async function NewProductPage() {
     getT(),
   ]);
 
+  const familleId = resolveTheme(shop.category?.slug).id;
+
   return (
-    <ProductEditor product={null} categories={categories} categoriesFiltrees={filtre} locale={locale} />
+    <ProductEditor
+      product={null}
+      categories={categories}
+      categoriesFiltrees={filtre}
+      locale={locale}
+      familleId={familleId}
+    />
   );
 }

@@ -10,6 +10,7 @@ import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { formatCount, formatPrice, monogram, timeAgo } from "@/lib/format";
 import { lireEtatBlackFriday } from "@/lib/black-friday-server";
+import { resolveTheme } from "@/lib/boutique-themes";
 import { Card, EmptyState, Placeholder, Tag } from "@/components/ui/primitives";
 import {
   BoxIcon,
@@ -771,6 +772,19 @@ export default async function VendorDashboard() {
               titre={t.vendor.poster}
               detail={t.vendeur.posterHint}
             />
+            {/*
+              Les packs n'ont de sens que pour une boutique Parapharmacie
+              (voir `ParapharmacieLayout`) — ailleurs, ce serait un
+              raccourci vers un écran qui ne sert jamais.
+            */}
+            {resolveTheme(shop.category?.slug).id === "parapharmacie" && (
+              <Raccourci
+                href="/vendeur/packs"
+                icone={<SparkIcon size={19} />}
+                titre={t.vendeur.packsTitle}
+                detail={t.vendeur.packsHint}
+              />
+            )}
           </div>
         </section>
 

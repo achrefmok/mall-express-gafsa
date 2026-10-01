@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
 import type { Database, OrderStatus } from "@/types/database";
 
@@ -77,6 +78,95 @@ export async function upsertProduct(input: {
   revalidatePath("/vendeur/produits");
   revalidatePath("/marketplace");
   return ok({ id: data.id });
+}
+
+/*
+  Attributs et matières par métier (specs Électronique, notes de parfum
+  Beauté, pièce Maison, poids/collection Bijouterie) — `product_attributes`
+  et `product_variants.material`, voir le plan de l'expérience par métier.
+  Les deux tolèrent l'absence de leur migration : le vendeur enregistre son
+  produit normalement même si elles ne sont pas encore collées dans
+  Supabase, seuls ces deux blocs du formulaire échouent silencieusement.
+*/
+const MIGRATION_ABSENTE = ["42P01", "42883", "PGRST202", "PGRST204", "PGRST205"];
+
+/*
+  `product_attributes` et la colonne `material` de `product_variants`
+  n'existent pas encore dans les types générés (migrations collées
+  manuellement, voir le projet) — client non typé pour ces deux tables
+  seulement, même choix que `attributs-server.ts`.
+*/
+export async function upsertProductAttributes(productId: string, entries: Record<string, string>) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("shop_id", shop.id)
+    .maybeSingle();
+  if (!product) return fail("Produit introuvable");
+
+  const lignes = Object.entries(entries)
+    .map(([key, value]) => ({ product_id: productId, key, value: value.trim() }))
+    .filter((l) => l.value);
+
+  // On repart d'une table propre : plus simple et plus sûr qu'un diff
+  // ligne à ligne pour une poignée de champs par produit.
+  const { error: suppressionError } = await client.from("product_attributes").delete().eq("product_id", productId);
+  if (suppressionError && !MIGRATION_ABSENTE.includes(suppressionError.code ?? "")) {
+    return fail(readableError(suppressionError));
+  }
+
+  if (lignes.length > 0) {
+    const { error: ecritureError } = await client.from("product_attributes").insert(lignes);
+    if (ecritureError && !MIGRATION_ABSENTE.includes(ecritureError.code ?? "")) {
+      return fail(readableError(ecritureError));
+    }
+  }
+
+  revalidatePath("/vendeur/produits");
+  return done();
+}
+
+export async function upsertProductMateriaux(productId: string, materiaux: string[]) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("shop_id", shop.id)
+    .maybeSingle();
+  if (!product) return fail("Produit introuvable");
+
+  // Les déclinaisons posées ici n'ont ni couleur ni taille — seule la
+  // matière distingue chacune, sur le même principe que `color`/`size`
+  // ailleurs dans `product_variants`.
+  const { error: suppressionError } = await client
+    .from("product_variants")
+    .delete()
+    .eq("product_id", productId)
+    .is("color", null)
+    .is("size", null);
+  if (suppressionError && !MIGRATION_ABSENTE.includes(suppressionError.code ?? "")) {
+    return fail(readableError(suppressionError));
+  }
+
+  const lignes = materiaux.filter(Boolean).map((material) => ({ product_id: productId, material }));
+  if (lignes.length > 0) {
+    const { error: ecritureError } = await client.from("product_variants").insert(lignes);
+    if (ecritureError && !MIGRATION_ABSENTE.includes(ecritureError.code ?? "")) {
+      return fail(readableError(ecritureError));
+    }
+  }
+
+  revalidatePath("/vendeur/produits");
+  return done();
 }
 
 export async function setProductOnline(productId: string, online: boolean) {
@@ -405,6 +495,82 @@ export async function upsertPromotion(input: {
   if (e) return fail(readableError(e));
 
   revalidatePath("/vendeur");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
+
+/*
+  Packs — Parapharmacie. `product_packs`/`pack_items` n'existent pas encore
+  dans les types générés (même raison que `product_attributes` plus haut) :
+  client non typé pour ces deux tables.
+*/
+export async function upsertPack(input: {
+  id?: string;
+  name: string;
+  nameAr?: string;
+  discountPercent: number;
+  productIds: string[];
+  isOnline?: boolean;
+}) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const name = input.name.trim();
+  if (!name) return fail("Le nom du pack est obligatoire");
+  if (input.discountPercent < 1 || input.discountPercent > 90) {
+    return fail("La remise doit être comprise entre 1 % et 90 %");
+  }
+  if (input.productIds.length < 2) return fail("Un pack regroupe au moins deux produits");
+
+  // Les produits du pack doivent appartenir à cette boutique — jamais ceux
+  // d'une autre, même par un identifiant glissé à la main dans l'appel.
+  const { data: produitsValides } = await supabase
+    .from("products")
+    .select("id")
+    .eq("shop_id", shop.id)
+    .in("id", input.productIds);
+  if ((produitsValides?.length ?? 0) !== input.productIds.length) {
+    return fail("Un des produits sélectionnés n'appartient pas à cette boutique");
+  }
+
+  const payload = {
+    shop_id: shop.id,
+    name,
+    name_ar: input.nameAr?.trim() || null,
+    discount_percent: input.discountPercent,
+    is_online: input.isOnline ?? true,
+  };
+
+  const query = input.id
+    ? client.from("product_packs").update(payload).eq("id", input.id).eq("shop_id", shop.id)
+    : client.from("product_packs").insert(payload);
+
+  const { data: pack, error: ecriturePack } = await query.select("id").single();
+  if (ecriturePack) return fail(readableError(ecriturePack));
+
+  const { error: suppressionItems } = await client.from("pack_items").delete().eq("pack_id", pack.id);
+  if (suppressionItems) return fail(readableError(suppressionItems));
+
+  const { error: ecritureItems } = await client
+    .from("pack_items")
+    .insert(input.productIds.map((product_id, sort_order) => ({ pack_id: pack.id, product_id, sort_order })));
+  if (ecritureItems) return fail(readableError(ecritureItems));
+
+  revalidatePath("/vendeur/packs");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return ok({ id: pack.id });
+}
+
+export async function deletePack(packId: string) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const { error: e } = await client.from("product_packs").delete().eq("id", packId).eq("shop_id", shop.id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/packs");
   revalidatePath(`/boutique/${shop.slug}`);
   return done();
 }

@@ -3,13 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { upsertProduct } from "@/app/actions/vendor";
+import { upsertProduct, upsertProductAttributes, upsertProductMateriaux } from "@/app/actions/vendor";
 import { uploadImage } from "@/lib/upload";
 import { cx } from "@/lib/format";
 import { Button, Card, Chip, Divider, KeyValueRow, Switch, fieldClass } from "@/components/ui/primitives";
 import { CameraIcon, ImageIcon, PlusIcon } from "@/components/ui/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { VariantImageEditor } from "./variant-images";
+import { AttributFields } from "./attribute-fields";
+import type { ThemeId } from "@/lib/boutique-themes";
 import type { AppLocale, Category, Product } from "@/types/database";
 
 const FIELD =
@@ -22,6 +24,9 @@ export function ProductEditor({
   categories,
   categoriesFiltrees = true,
   locale,
+  familleId,
+  attributsInitiaux = {},
+  materiauxInitiaux = [],
 }: {
   product: Product | null;
   categories: Category[];
@@ -31,6 +36,10 @@ export function ProductEditor({
    */
   categoriesFiltrees?: boolean;
   locale: AppLocale;
+  /** Le thème de la boutique — pilote quels champs par métier s'affichent. */
+  familleId: ThemeId;
+  attributsInitiaux?: Record<string, string>;
+  materiauxInitiaux?: string[];
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -53,6 +62,8 @@ export function ProductEditor({
   const [isOnline, setIsOnline] = useState(product?.is_online ?? true);
   const [isDraft, setIsDraft] = useState(product?.is_draft ?? false);
   const [pickup, setPickup] = useState(product?.mall_pickup_available ?? true);
+  const [attributs, setAttributs] = useState<Record<string, string>>(attributsInitiaux);
+  const [materiaux, setMateriaux] = useState<string[]>(materiauxInitiaux);
 
   const [uploading, setUploading] = useState(false);
   const [definitionFaible, setDefinitionFaible] = useState<number | null>(null);
@@ -117,8 +128,19 @@ export function ProductEditor({
         mallPickupAvailable: pickup,
       });
 
-      if (result.ok) router.push("/vendeur/produits");
-      else setError(result.error);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      // Les deux tolèrent l'absence de leur migration (voir vendor.ts) :
+      // un échec ici n'empêche jamais d'enregistrer le produit lui-même.
+      await Promise.all([
+        upsertProductAttributes(result.data.id, attributs),
+        upsertProductMateriaux(result.data.id, materiaux),
+      ]);
+
+      router.push("/vendeur/produits");
     });
   }
 
@@ -396,6 +418,17 @@ export function ProductEditor({
             />
           </div>
         </Card>
+
+        {/* ─── Champs par métier ─────────────────────────────────────── */}
+        <AttributFields
+          familleId={familleId}
+          categoryId={categoryId}
+          categories={categories}
+          value={attributs}
+          onChange={setAttributs}
+          materiaux={materiaux}
+          onChangeMateriaux={setMateriaux}
+        />
 
         {/* ─── Publication ───────────────────────────────────────────── */}
         <Card className="flex flex-col gap-[10px] p-3">

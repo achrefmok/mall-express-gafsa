@@ -118,6 +118,8 @@ export const nouveautesFr = {
     promosNone: "Aucune en cours",
     posterHint: "Une image à publier",
     addProductHint: "Photo, prix, stock",
+    packsTitle: "Packs",
+    packsHint: "Grouper des produits avec une remise",
 
     setup: "Profil de boutique — {pct} %",
     setupBody: "Une boutique complète inspire confiance et se retrouve plus facilement.",
@@ -621,6 +623,8 @@ export const nouveautesAr: Nouveautes = {
     promosNone: "لا شيء حالياً",
     posterHint: "صورة جاهزة للنشر",
     addProductHint: "صورة، سعر، مخزون",
+    packsTitle: "الباقات",
+    packsHint: "تجميع منتجات مع تخفيض",
 
     setup: "ملف المتجر — {pct} %",
     setupBody: "متجر مكتمل يوحي بالثقة ويسهل العثور عليه.",
