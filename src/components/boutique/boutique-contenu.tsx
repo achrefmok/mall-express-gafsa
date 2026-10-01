@@ -1,8 +1,9 @@
 import { AvantDebut } from "@/components/ui/avant-debut";
 import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
-import type { ProductCardData } from "@/components/cards/product-card";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
+import { ModeLayout } from "@/components/boutique/layouts/mode-layout";
+import type { ProduitBoutique } from "@/components/boutique/layouts/types";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -54,7 +55,7 @@ export function BoutiqueContenu({
   roue: { id: string; title: string; title_ar: string | null; is_active: boolean } | null;
   casesRoue: CaseRoue[];
   lives: Live[];
-  visible: ProductCardData[];
+  visible: ProduitBoutique[];
   locale: AppLocale;
   t: Dictionary;
   userConnecte: boolean;
@@ -197,17 +198,18 @@ export function BoutiqueContenu({
             })}
           </div>
         )
+      ) : theme.productLayout === "editorial" && theme.id === "mode" ? (
+        <ModeLayout visible={visible} locale={locale} theme={theme} />
       ) : (
         /*
           `theme.productLayout` porte la mise en page voulue pour chaque
-          métier (voir `src/lib/boutique-themes/types.ts`), mais aucune
-          mise en page dédiée n'est encore construite — seul le thème
-          l'est. `GrilleParDefaut` reste donc le seul rendu pour toutes les
-          familles tant que les lots suivants n'ajoutent pas, un par un,
-          une branche par valeur (`"editorial"` → Mode, `"beaute"` →
-          Beauté, `"technical"` → Électronique, `"maison"` → Maison,
-          `"catalog"` → Parapharmacie en vérifiant `theme.id` puisque Fête
-          porte aussi cette valeur, `"bijouterie"` → Bijouterie).
+          métier (voir `src/lib/boutique-themes/types.ts`) ; `GrilleParDefaut`
+          reste le repli pour toute famille qui n'a pas encore la sienne —
+          les lots suivants ajoutent, un par un, une branche de plus
+          (`"beaute"` → Beauté, `"technical"` → Électronique, `"maison"` →
+          Maison, `"catalog"` → Parapharmacie en vérifiant `theme.id`
+          puisque Fête porte aussi cette valeur, `"bijouterie"` →
+          Bijouterie).
         */
         <GrilleParDefaut visible={visible} locale={locale} theme={theme} />
       )}

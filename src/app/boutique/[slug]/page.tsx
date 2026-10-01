@@ -130,9 +130,18 @@ export default async function ShopPage({
 
   const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue] =
     await Promise.all([
+    /*
+      `sizes` et la catégorie complète (pas seulement `hue`) ne servaient à
+      rien avant la mise en page Mode : elle regroupe les produits par leur
+      propre sous-catégorie réelle (femme/homme/enfant/chaussures/
+      accessoires, toutes sœurs sous « mode ») et filtre par taille — sur
+      des données déjà saisies par le commerçant, jamais inventées.
+    */
     supabase
       .from("products")
-      .select("id, name, price, compare_at_price, images, stock, category:categories(hue)")
+      .select(
+        "id, name, price, compare_at_price, images, stock, sizes, category:categories(hue, slug, name_fr, name_ar)",
+      )
       .eq("shop_id", shop.id)
       .eq("is_online", true)
       .eq("is_draft", false)

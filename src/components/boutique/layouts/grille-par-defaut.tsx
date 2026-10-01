@@ -1,7 +1,8 @@
 import { EmptyState } from "@/components/ui/primitives";
-import { ProductCard, type ProductCardData } from "@/components/cards/product-card";
+import { ProductCard } from "@/components/cards/product-card";
 import type { ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
+import type { ProduitBoutique } from "./types";
 
 /**
  * La grille d'origine, extraite de `BoutiqueContenu` sans aucun changement —
@@ -15,7 +16,7 @@ export function GrilleParDefaut({
   locale,
   theme,
 }: {
-  visible: ProductCardData[];
+  visible: ProduitBoutique[];
   locale: AppLocale;
   theme: ThemeBoutique;
 }) {
