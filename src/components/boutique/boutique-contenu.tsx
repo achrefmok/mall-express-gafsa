@@ -1,7 +1,8 @@
 import { AvantDebut } from "@/components/ui/avant-debut";
 import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
-import { ProductCard, type ProductCardData } from "@/components/cards/product-card";
+import type { ProductCardData } from "@/components/cards/product-card";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
+import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -196,22 +197,19 @@ export function BoutiqueContenu({
             })}
           </div>
         )
-      ) : visible.length === 0 ? (
-        <EmptyState
-          title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr}
-        />
       ) : (
-        <div className="grid grid-cols-2 gap-x-[10px] gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-          {visible.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={{ ...product, shop: null }}
-              locale={locale}
-              showShop={false}
-              imageHeight={118}
-            />
-          ))}
-        </div>
+        /*
+          `theme.productLayout` porte la mise en page voulue pour chaque
+          métier (voir `src/lib/boutique-themes/types.ts`), mais aucune
+          mise en page dédiée n'est encore construite — seul le thème
+          l'est. `GrilleParDefaut` reste donc le seul rendu pour toutes les
+          familles tant que les lots suivants n'ajoutent pas, un par un,
+          une branche par valeur (`"editorial"` → Mode, `"beaute"` →
+          Beauté, `"technical"` → Électronique, `"maison"` → Maison,
+          `"catalog"` → Parapharmacie en vérifiant `theme.id` puisque Fête
+          porte aussi cette valeur, `"bijouterie"` → Bijouterie).
+        */
+        <GrilleParDefaut visible={visible} locale={locale} theme={theme} />
       )}
     </div>
   );
