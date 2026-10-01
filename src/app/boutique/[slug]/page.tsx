@@ -286,7 +286,7 @@ export default async function ShopPage({
   */
   const idsProduitsVisibles = visible.map((p) => p.id);
   const [attributsParProduit, matieresParProduit, packs] = await Promise.all([
-    ["technical", "beaute", "maison", "bijouterie"].includes(theme.productLayout)
+    ["technical", "beaute", "maison", "bijouterie", "catalog"].includes(theme.productLayout)
       ? lireAttributsProduits(supabase, idsProduitsVisibles)
       : Promise.resolve(new Map<string, Record<string, string>>()),
     theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
