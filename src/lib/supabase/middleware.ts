@@ -11,6 +11,15 @@ import type { Database } from "@/types/database";
   qu'un magasin d'applications exige de trouver, et tout `/api/…`, dont
   chaque route porte déjà sa propre garde (jeton de cron, secret de
   webhook) — les doubler ici n'ajouterait rien.
+
+  `/boutique` en fait partie depuis peu : un commerçant en préparation
+  partage déjà le lien de sa vitrine (`BoutonPartage`) pour se faire
+  connaître avant le lancement officiel. Sans cette exemption, quiconque
+  ouvrait ce lien — un client qu'on cherche justement à attirer —
+  retombait sur l'écran « en préparation », avec un bouton de connexion
+  qui ressemblait à une demande d'identifiants : l'exact inverse de ce
+  qu'une carte de partage soignée (nom de la boutique, logo, photo)
+  promet en pastillant le lien.
 */
 const EXEMPTS_ACCES_PUBLIC = [
   "/preparation",
@@ -23,6 +32,7 @@ const EXEMPTS_ACCES_PUBLIC = [
   "/suppression-donnees",
   "/hors-ligne",
   "/api",
+  "/boutique",
 ];
 
 function exemptAccesPublic(pathname: string): boolean {
@@ -128,14 +138,15 @@ export async function updateSession(request: NextRequest) {
     n'est pas un marché à visiter, c'est un chantier. Chacun n'y voit que ce
     qu'il a à y faire :
       · un commerçant reste dans `/vendeur` — gérer sa boutique, pas
-        parcourir celle des autres ;
+        parcourir celle des autres (sa propre vitrine s'ouvre quand même,
+        voir `/boutique` dans `EXEMPTS_ACCES_PUBLIC`) ;
       · un exposant reste dans `/exposant`, et l'administration Dahmani dans
         `/lelma3ardh/gestion`, même raisonnement ;
       · seule l'administration de l'application voit tout, y compris le
         côté client — c'est la prévisualisation avant lancement dont parle
         la spécification, pas un privilège de plus.
-    Un visiteur anonyme ou un compte client, lui, n'a nulle part où aller :
-    direction `/preparation`.
+    Un visiteur anonyme ou un compte client, lui, n'a nulle part où aller
+    hors des pages publiques : direction `/preparation`.
   */
   if (!exemptAccesPublic(pathname)) {
     const { data: reglages } = await supabase
@@ -169,25 +180,7 @@ export async function updateSession(request: NextRequest) {
         // qu'il ait ou non un espace dédié pendant la préparation.
         const pageCommune = pathname === "/profil" || pathname.startsWith("/profil/");
 
-        /*
-          « Voir ma boutique » : un commerçant doit pouvoir constater ce que
-          les clients verront, sans pour autant parcourir le reste. Seule la
-          vitrine dont il est propriétaire s'ouvre — la comparaison se fait ici,
-          sur le jeton validé, et non sur un paramètre que l'appelant choisit.
-        */
-        let saVitrine = false;
-        if (role === "vendor" && user && pathname.startsWith("/boutique/")) {
-          const slug = pathname.split("/")[2];
-          const { data: boutique } = await supabase
-            .from("shops")
-            .select("id")
-            .eq("owner_id", user.id)
-            .eq("slug", slug)
-            .maybeSingle();
-          saVitrine = Boolean(boutique);
-        }
-
-        if (!dansSonEspace && !pageCommune && !saVitrine) {
+        if (!dansSonEspace && !pageCommune) {
           const cible = request.nextUrl.clone();
           cible.pathname = racine ?? "/preparation";
           cible.search = "";
