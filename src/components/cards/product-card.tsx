@@ -53,7 +53,8 @@ export interface ProductCardData {
  * La carte n'est plus un lien unique. Elle en contenait un qui enveloppait
  * tout, ce qui interdisait d'y placer le moindre bouton — un contrôle
  * interactif ne peut pas vivre dans un lien. Les zones sont donc distinctes :
- * la photo s'agrandit, le nom ouvre la fiche, le cœur bascule le favori.
+ * la photo s'agrandit, le nom ouvre la fiche, la pastille boutique ouvre la
+ * boutique, le cœur bascule le favori.
  */
 export function ProductCard({
   product,
@@ -167,9 +168,12 @@ export function ProductCard({
         )}
 
         {showShop && product.shop && !bf && (
-          <span className="absolute start-[14px] top-[14px] max-w-[62%] truncate rounded-[10px] bg-[var(--color-surface-solid)]/96 px-2 py-1 text-[0.5625rem] font-bold text-[var(--color-ink)] shadow-[0_4px_10px_rgba(60,40,90,0.14)]">
+          <Link
+            href={`/boutique/${product.shop.slug}`}
+            className="press absolute start-[14px] top-[14px] max-w-[62%] truncate rounded-[10px] bg-[var(--color-surface-solid)]/96 px-2 py-1 text-[0.5625rem] font-bold text-[var(--color-ink)] shadow-[0_4px_10px_rgba(60,40,90,0.14)]"
+          >
             {product.shop.name}
-          </span>
+          </Link>
         )}
 
         {discount !== null && (
