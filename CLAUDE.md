@@ -2,8 +2,16 @@
 
 ## Thèmes de la page boutique
 
-La page `/boutique/[slug]` change d'apparence selon la famille de catégorie
-de la boutique (Mode, Alimentation, Santé…) — voir `src/lib/boutique-themes/`.
+Toutes les boutiques partagent la même identité visuelle — couleur,
+police, formes, voile, style de promo, roue — celle de l'app (violet
+G-Mall), définie une seule fois dans `src/lib/boutique-themes/identite-app.ts`
+et importée (`PALETTES_APP`, `TYPOGRAPHIE_APP`, `FORMES_APP`,
+`ACCENT_SUR_CLAIR_APP`, `VOILE_APP`, `PROMO_STYLE_APP`, `WHEEL_STYLE_APP`)
+par chaque thème. Seule la **structure** change par famille de catégorie
+(Mode, Électronique, Santé…) — voir la section suivante. Décision
+explicite et confirmée (retour en arrière assumé sur une précédente
+palette par catégorie) : ne pas réintroduire de couleur/police/forme
+spécifique à un métier sans redemander confirmation.
 
 - **Jamais de couleur en dur** dans un composant de la page boutique
   (`src/app/boutique/[slug]/`, `src/components/boutique/`,
@@ -15,15 +23,19 @@ de la boutique (Mode, Alimentation, Santé…) — voir `src/lib/boutique-themes
   page boutique, où `--theme-*` n'existe simplement pas.
 - Exception assumée : le bandeau "retour à mon espace" du propriétaire
   reste en identité G-Mall (violet), pas celle du thème — c'est un outil
-  d'administration, pas la vitrine.
+  d'administration, pas la vitrine (de toute façon identique désormais).
 - **Ajouter un thème pour une nouvelle catégorie** : créer
   `src/lib/boutique-themes/<id>.ts` sur le modèle d'un thème existant,
-  l'enregistrer dans `THEMES` et dans `THEME_PAR_CATEGORIE`
+  en spreadant les constantes de `identite-app.ts` pour
+  `palettes`/`typographie`/`accentSurClair`/`formes`/`couverture.voile`/
+  `promoStyle`/`wheelStyle` (toujours `sombreParNature: false`) — ne
+  personnaliser que `id`, `label`, `ambiance` (texte décrivant la
+  structure, pas la couleur), `couverture.secours`/`motif`,
+  `productLayout`, `emptyState` (FR + AR) et `animations`. L'enregistrer
+  dans `THEMES` et dans `THEME_PAR_CATEGORIE`
   (`src/lib/boutique-themes/index.ts`), puis ajouter l'id à `ThemeId`
-  (`types.ts`). Prévoir une palette claire ET sombre (sauf thème "sombre
-  par nature"), un `emptyState` pour `produits`, `promos` et `posts`
-  (FR + AR), et vérifier le rendu dans `/dev/boutique-themes` (dev only).
-- Après toute palette ajoutée ou modifiée, `npm run check:theme-contrast`
+  (`types.ts`), et vérifier le rendu dans `/dev/boutique-themes` (dev only).
+- Après toute modification de `identite-app.ts`, `npm run check:theme-contrast`
   **doit rester vert** — il vérifie chaque paire texte/fond de chaque
   thème, en clair et en sombre, avec la vraie formule WCAG. Il fait partie
   de `npm run check`.
