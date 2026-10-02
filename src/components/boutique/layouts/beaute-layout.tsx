@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/ui/primitives";
 import { ProductCard } from "@/components/cards/product-card";
 import { useI18n } from "@/lib/i18n/provider";
+import { formatPrice } from "@/lib/format";
+import { addToCart } from "@/app/actions/cart";
 import type { ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { ProduitBoutique } from "./types";
@@ -16,6 +19,14 @@ const ONGLETS = [
 
 /** Six carnations de référence — le choix sert à rapprocher des teintes réelles, pas à les inventer. */
 const CARNATIONS = ["#f6dcc6", "#ecc4a2", "#d9a57c", "#c08a5f", "#9a6640", "#6b4429"];
+
+/**
+ * Ordre d'affichage des gestes d'une routine — vient de l'attribut `etape`
+ * (suggéré au vendeur avec ces trois libellés exacts côté `attribute-fields.tsx`,
+ * mais jamais une liste fermée : un libellé différent n'est simplement pas
+ * ordonné et retombe en fin de routine).
+ */
+const ORDRE_ETAPES = ["Nettoyer", "Traiter", "Hydrater & protéger"];
 
 function hexToRgb(hex: string): [number, number, number] | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -51,7 +62,12 @@ export function BeauteLayout({
   theme: ThemeBoutique;
 }) {
   const { t } = useI18n();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [carnation, setCarnation] = useState<number | null>(null);
+  const [familleActive, setFamilleActive] = useState<string | null>(null);
+  const [peauActive, setPeauActive] = useState<string | null>(null);
 
   const groupes = useMemo(() => {
     const parSlug = new Map<string, ProduitBoutique[]>();
@@ -65,6 +81,93 @@ export function BeauteLayout({
 
   const ongletsUtiles = ONGLETS.filter((o) => (groupes.get(o.slug) ?? []).length > 0);
   const [actif, setActif] = useState<string | null>(null);
+
+  const slugActif = actif ?? ongletsUtiles[0]?.slug ?? "";
+  const produitsOnglet = useMemo(() => groupes.get(slugActif) ?? [], [groupes, slugActif]);
+  const estMaquillage = slugActif === "beaute-maquillage";
+  const estParfums = slugActif === "beaute-parfums";
+  const estSoin = slugActif === "beaute-soin";
+
+  const cible = carnation !== null ? hexToRgb(CARNATIONS[carnation]) : null;
+  const produitsTriesTeinte =
+    estMaquillage && cible
+      ? [...produitsOnglet].sort((a, b) => {
+          const da = Math.min(...(a.colors ?? []).map((c) => hexToRgb(c)).filter(Boolean).map((c) => distance(c!, cible)), Infinity);
+          const db = Math.min(...(b.colors ?? []).map((c) => hexToRgb(c)).filter(Boolean).map((c) => distance(c!, cible)), Infinity);
+          return da - db;
+        })
+      : produitsOnglet;
+  const matchesTeinte = cible
+    ? produitsTriesTeinte.filter((p) => (p.colors ?? []).some((c) => {
+        const rgb = hexToRgb(c);
+        return rgb && distance(rgb, cible) < 60;
+      })).length
+    : 0;
+
+  const familles = useMemo(() => {
+    if (!estParfums) return [];
+    const comptes = new Map<string, number>();
+    for (const p of produitsOnglet) {
+      const f = p.attributs?.famille_olfactive;
+      if (!f) continue;
+      comptes.set(f, (comptes.get(f) ?? 0) + 1);
+    }
+    return [...comptes.entries()];
+  }, [estParfums, produitsOnglet]);
+
+  const peaux = useMemo(() => {
+    if (!estSoin) return [];
+    const comptes = new Map<string, number>();
+    for (const p of produitsOnglet) {
+      const peau = p.attributs?.peau;
+      if (!peau) continue;
+      comptes.set(peau, (comptes.get(peau) ?? 0) + 1);
+    }
+    return [...comptes.entries()];
+  }, [estSoin, produitsOnglet]);
+  const peauEffective = peauActive ?? peaux[0]?.[0] ?? null;
+
+  const routine = useMemo(() => {
+    if (!estSoin) return [];
+    const base = peauEffective ? produitsOnglet.filter((p) => p.attributs?.peau === peauEffective) : produitsOnglet;
+    const parEtape = new Map<string, ProduitBoutique>();
+    for (const p of base) {
+      const etape = p.attributs?.etape;
+      if (!etape || parEtape.has(etape)) continue;
+      parEtape.set(etape, p);
+    }
+    const connues = ORDRE_ETAPES.filter((e) => parEtape.has(e)).map((e) => [e, parEtape.get(e)!] as const);
+    const autres = [...parEtape.entries()].filter(([e]) => !ORDRE_ETAPES.includes(e));
+    return [...connues, ...autres];
+  }, [estSoin, peauEffective, produitsOnglet]);
+
+  const prixRoutine = routine.reduce((a, [, p]) => a + p.price, 0);
+  const remiseRoutine = 0.1;
+
+  function ajouterLaRoutine() {
+    setFeedback(null);
+    startTransition(async () => {
+      for (const [, p] of routine) {
+        const result = await addToCart({ productId: p.id });
+        if (!result.ok) {
+          if (result.error === "Authentification requise") {
+            router.push(`/connexion?suite=/boutique/${window.location.pathname.split("/")[2]}`);
+            return;
+          }
+          setFeedback(result.error);
+          return;
+        }
+      }
+      setFeedback(t.product.added);
+      router.refresh();
+    });
+  }
+
+  const produitsActifs = estParfums && familleActive
+    ? produitsOnglet.filter((p) => p.attributs?.famille_olfactive === familleActive)
+    : estSoin && peauEffective
+      ? produitsOnglet.filter((p) => p.attributs?.peau === peauEffective)
+      : produitsTriesTeinte;
 
   if (visible.length === 0) {
     return <EmptyState title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr} />;
@@ -80,21 +183,6 @@ export function BeauteLayout({
       </div>
     );
   }
-
-  const slugActif = actif ?? ongletsUtiles[0].slug;
-  const produitsOnglet = groupes.get(slugActif) ?? [];
-  const estMaquillage = slugActif === "beaute-maquillage";
-  const estParfums = slugActif === "beaute-parfums";
-
-  const cible = carnation !== null ? hexToRgb(CARNATIONS[carnation]) : null;
-  const produitsActifs =
-    estMaquillage && cible
-      ? [...produitsOnglet].sort((a, b) => {
-          const da = Math.min(...(a.colors ?? []).map((c) => hexToRgb(c)).filter(Boolean).map((c) => distance(c!, cible)), Infinity);
-          const db = Math.min(...(b.colors ?? []).map((c) => hexToRgb(c)).filter(Boolean).map((c) => distance(c!, cible)), Infinity);
-          return da - db;
-        })
-      : produitsOnglet;
 
   return (
     <div className="flex flex-col gap-[14px]">
@@ -141,6 +229,108 @@ export function BeauteLayout({
               />
             ))}
           </div>
+          {cible && (
+            <p className="text-[0.625rem] font-semibold text-[var(--theme-accent-fort)]">
+              {matchesTeinte > 0
+                ? locale === "ar"
+                  ? `${matchesTeinte} منتجات قريبة من هذه البشرة`
+                  : `${matchesTeinte} produit${matchesTeinte > 1 ? "s" : ""} proche${matchesTeinte > 1 ? "s" : ""} de cette carnation`
+                : locale === "ar"
+                  ? "لا منتج مطابق بعد"
+                  : "Aucun produit proche de cette carnation pour l'instant"}
+            </p>
+          )}
+        </div>
+      )}
+
+      {estParfums && familles.length > 1 && (
+        <div className="no-sb flex gap-[8px] overflow-x-auto pb-[2px]">
+          {familles.map(([famille, count]) => {
+            const on = famille === familleActive;
+            return (
+              <button
+                key={famille}
+                type="button"
+                onClick={() => setFamilleActive(on ? null : famille)}
+                className="flex-none rounded-[14px] px-[13px] py-[7px] text-[0.65625rem] font-bold whitespace-nowrap"
+                style={{
+                  background: on ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                  color: on ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                }}
+              >
+                {famille} · {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {estSoin && peaux.length > 0 && (
+        <div className="no-sb flex gap-[8px] overflow-x-auto pb-[2px]">
+          {peaux.map(([peau, count]) => {
+            const on = peau === peauEffective;
+            return (
+              <button
+                key={peau}
+                type="button"
+                onClick={() => setPeauActive(peau)}
+                className="flex-none rounded-[14px] px-[13px] py-[7px] text-[0.65625rem] font-bold whitespace-nowrap"
+                style={{
+                  background: on ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                  color: on ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                }}
+              >
+                {peau} · {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {estSoin && routine.length >= 2 && (
+        <div className="flex flex-col gap-[10px] rounded-[18px] border border-[var(--theme-bordure)] bg-[var(--theme-surface)] p-[13px]">
+          <span className="text-[0.75rem] font-bold">
+            {locale === "ar" ? `روتين من ${routine.length} خطوات` : `Ma routine en ${routine.length} gestes`}
+          </span>
+          <div className="flex flex-col gap-[8px]">
+            {routine.map(([etape, p], i) => (
+              <div key={p.id} className="flex items-center gap-[10px] border-t border-[var(--theme-bordure)] pt-[8px] first:border-t-0 first:pt-0">
+                <span
+                  className="flex h-[20px] w-[20px] flex-none items-center justify-center rounded-full text-[0.625rem] font-bold text-[var(--theme-accent-texte)]"
+                  style={{ background: "var(--theme-accent)" }}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[0.625rem] font-bold text-[var(--theme-accent-fort)]">{etape}</p>
+                  <p className="truncate text-[0.75rem] font-semibold">{p.name}</p>
+                </div>
+                <span className="flex-none text-[0.75rem] font-bold">{formatPrice(p.price, locale)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[0.625rem] text-[var(--theme-muted,var(--color-muted))] line-through">
+              {formatPrice(prixRoutine, locale)}
+            </span>
+            <span className="text-[0.8125rem] font-bold text-[var(--theme-accent-fort)]">
+              {formatPrice(prixRoutine * (1 - remiseRoutine), locale)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={ajouterLaRoutine}
+            disabled={pending}
+            className="rounded-[16px] px-[16px] py-[12px] text-center text-[0.8125rem] font-semibold text-[var(--theme-accent-texte,white)] disabled:opacity-60"
+            style={{ background: "var(--theme-accent,var(--color-brand-fill))" }}
+          >
+            {pending
+              ? t.common.saving
+              : locale === "ar"
+                ? `أضيفوا الروتين − ${remiseRoutine * 100}%`
+                : `Ajouter la routine − ${remiseRoutine * 100} %`}
+          </button>
+          {feedback && <p className="text-center text-[0.6875rem] font-semibold text-[var(--theme-accent-fort)]">{feedback}</p>}
         </div>
       )}
 
@@ -193,6 +383,9 @@ export function BeauteLayout({
                   <p className="px-[4px] text-[0.625rem] font-bold text-[var(--theme-accent-fort)]">
                     {t.product.wear} {p.attributs.tenue_heures}
                   </p>
+                )}
+                {estSoin && p.attributs?.etape && (
+                  <p className="px-[4px] text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">{p.attributs.etape}</p>
                 )}
               </div>
             );

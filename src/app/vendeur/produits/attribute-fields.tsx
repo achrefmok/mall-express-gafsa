@@ -44,6 +44,9 @@ const CHAMPS_BIJOUTERIE: Champ[] = [
 
 const CHAMPS_PARAPHARMACIE: Champ[] = [{ cle: "besoin", label: "Besoin", placeholder: "Bébé, Solaire…" }];
 
+const TYPES_PEAU = ["Peau sèche", "Peau grasse", "Mixte", "Sensible"];
+const ETAPES_SOIN = ["Nettoyer", "Traiter", "Hydrater & protéger"];
+
 /*
   Le genre (Femme/Homme/Enfant) vient déjà de la catégorie du produit —
   rien à ajouter ici. Le type de vêtement (Robes/Pulls/Chaussures…) est en
@@ -150,15 +153,60 @@ export function AttributFields({
 
   if (familleId === "beaute") {
     const slugActuel = categories.find((c) => c.id === categoryId)?.slug;
-    if (slugActuel !== "beaute-parfums") return null;
-    return (
-      <Card className="flex flex-col gap-[10px] p-3">
-        <span className={LABEL}>Pyramide olfactive</span>
-        {CHAMPS_PARFUM.map((c) => (
-          <ChampTexte key={c.cle} champ={c} value={value} onChange={onChange} />
-        ))}
-      </Card>
-    );
+    if (slugActuel === "beaute-parfums") {
+      return (
+        <Card className="flex flex-col gap-[10px] p-3">
+          <span className={LABEL}>Pyramide olfactive</span>
+          {CHAMPS_PARFUM.map((c) => (
+            <ChampTexte key={c.cle} champ={c} value={value} onChange={onChange} />
+          ))}
+        </Card>
+      );
+    }
+    if (slugActuel === "beaute-soin") {
+      return (
+        <Card className="flex flex-col gap-[10px] p-3">
+          <span className={LABEL}>Type de peau</span>
+          <div className="flex flex-wrap gap-[6px]">
+            {TYPES_PEAU.map((peau) => (
+              <button
+                key={peau}
+                type="button"
+                onClick={() => onChange({ ...value, peau: value.peau === peau ? "" : peau })}
+                className="rounded-[12px] px-[11px] py-[5px] text-[0.625rem] font-semibold"
+                style={{
+                  background: value.peau === peau ? "var(--color-brand-fill)" : "var(--color-brand-tint)",
+                  color: value.peau === peau ? "#fff" : "var(--color-brand)",
+                }}
+              >
+                {peau}
+              </button>
+            ))}
+          </div>
+          <span className={LABEL}>Geste de la routine</span>
+          <p className="text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">
+            Pour proposer ce produit dans la routine en plusieurs étapes de votre boutique.
+          </p>
+          <div className="flex flex-wrap gap-[6px]">
+            {ETAPES_SOIN.map((etape) => (
+              <button
+                key={etape}
+                type="button"
+                onClick={() => onChange({ ...value, etape: value.etape === etape ? "" : etape })}
+                className="rounded-[12px] px-[11px] py-[5px] text-[0.625rem] font-semibold"
+                style={{
+                  background: value.etape === etape ? "var(--color-brand-fill)" : "var(--color-brand-tint)",
+                  color: value.etape === etape ? "#fff" : "var(--color-brand)",
+                }}
+              >
+                {etape}
+              </button>
+            ))}
+          </div>
+        </Card>
+      );
+    }
+    return null;
   }
 
   if (familleId === "maison") {
