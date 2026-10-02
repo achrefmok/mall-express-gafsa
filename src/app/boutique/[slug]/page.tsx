@@ -10,7 +10,6 @@ import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
-import { POLICES_THEMES } from "@/lib/boutique-themes/fonts";
 import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique } from "@/lib/boutique-themes/attributs-server";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
@@ -312,7 +311,7 @@ export default async function ShopPage({
       niveau intérieur garde exactement la mise en page d'avant.
     */
     <div
-      className={`min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))] ${POLICES_THEMES}`}
+      className="min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
       style={variablesTheme(theme)}
       data-theme={theme.id}
     >

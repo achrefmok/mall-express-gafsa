@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { THEMES, rayonBadge, variablesTheme, type ThemeBoutique } from "@/lib/boutique-themes";
-import { POLICES_THEMES } from "@/lib/boutique-themes/fonts";
 import { ProductCard } from "@/components/cards/product-card";
 import { Placeholder } from "@/components/ui/primitives";
 
@@ -24,17 +23,18 @@ export default function LaboThemesBoutique() {
   const themes = Object.values(THEMES);
 
   return (
-    <div className={`flex min-h-dvh flex-col gap-10 bg-[#f4f1fa] p-6 ${POLICES_THEMES}`}>
+    <div className="flex min-h-dvh flex-col gap-10 bg-[#f4f1fa] p-6">
       <header>
         <h1 className="text-[1.25rem] font-extrabold text-[#241f2e]">Labo — thèmes de boutique</h1>
         <p className="mt-1 max-w-[640px] text-[0.8125rem] leading-[1.5] text-[#635c74]">
-          {themes.length} thème(s) implémenté(s) sur treize spécifiés — voir{" "}
-          <code>src/lib/boutique-themes/</code>. Chacun en clair et en sombre, avec une
-          boutique fictive, sa couverture, ses produits, un état vide et son nom en arabe.
+          {themes.length} thème(s) implémenté(s) — voir{" "}
+          <code>src/lib/boutique-themes/</code>. Couleur, police et formes identiques à
+          l&apos;app pour tous (voir <code>identite-app.ts</code>) ; seule la structure change
+          par métier.
+          Chacun avec une boutique fictive, sa couverture, ses produits, un état vide et son
+          nom en arabe.
         </p>
       </header>
-
-      <ApercuPolices />
 
       {themes.map((theme) => (
         <section key={theme.id} className="flex flex-col gap-4">
@@ -48,54 +48,6 @@ export default function LaboThemesBoutique() {
         </section>
       ))}
     </div>
-  );
-}
-
-/**
- * Un aperçu des polices de titre, avant qu'elles ne soient posées sur une
- * vraie carte — demandé explicitement pour Amiri (Beauté), dont le rendu
- * calligraphique arabe mérite d'être vu seul, sur plusieurs longueurs de
- * nom, avant de valider le thème entier.
- */
-const NOMS_TEST = [
-  { fr: "Zen", ar: "زين" },
-  { fr: "L. Cosmétiques", ar: "بيوتي لاين" },
-  { fr: "Boutique Belle Étoile du Sud", ar: "متجر النجمة الجميلة للجنوب التونسي" },
-];
-
-function ApercuPolices() {
-  const polices = Object.values(THEMES).filter((t) => t.typographie.googleFont);
-
-  return (
-    <section className="flex flex-col gap-4 rounded-[16px] border border-[#e4dbee] bg-white p-4">
-      <h2 className="text-[1rem] font-bold text-[#241f2e]">
-        Aperçu des polices de titre, avant application aux thèmes
-      </h2>
-      {polices.map((theme) => (
-        <div key={theme.id} className="flex flex-col gap-2 border-t border-[#f0ebf7] pt-3 first:border-0 first:pt-0">
-          <p className="text-[0.6875rem] font-bold tracking-wide text-[#635c74] uppercase">
-            {theme.label} — {theme.typographie.googleFont?.nom} ({theme.typographie.poidsTitre})
-          </p>
-          {NOMS_TEST.map((nom) => (
-            <div key={nom.fr} className="flex flex-wrap items-baseline gap-4">
-              <span
-                className="text-[1.25rem]"
-                style={{ fontFamily: theme.typographie.fontFamily, fontWeight: theme.typographie.poidsTitre }}
-              >
-                {nom.fr}
-              </span>
-              <span
-                dir="rtl"
-                className="text-[1.25rem]"
-                style={{ fontFamily: theme.typographie.fontFamily, fontWeight: theme.typographie.poidsTitre }}
-              >
-                {nom.ar}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
-    </section>
   );
 }
 

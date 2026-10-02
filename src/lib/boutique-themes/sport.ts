@@ -1,15 +1,13 @@
 import type { ThemeBoutique } from "./types";
+import { PALETTES_APP, TYPOGRAPHIE_APP, FORMES_APP, ACCENT_SUR_CLAIR_APP, VOILE_APP, PROMO_STYLE_APP, WHEEL_STYLE_APP } from "./identite-app";
 
 /**
- * SPORT (+ Sport & Loisirs) — « Performance »
+ * SPORT (+ Sport & Loisirs) — « Performance ».
  *
- * Énergie, mouvement, diagonales assumées. Couvre les deux catégories
- * top-level `sport` et `sport-loisirs` (doublon noté dans TODO.md : même
- * thème pour les deux, sans toucher à la base) et toutes leurs
- * sous-catégories de loisirs.
- *
- * `accent` assombri à `#9c3620` : la première valeur (`#b23f22`) ne tenait
- * que 4.45:1 en badge (texte sur `accentDoux`) — sous le seuil AA.
+ * Couvre les deux catégories top-level `sport` et `sport-loisirs`
+ * (doublon noté dans TODO.md : même thème pour les deux) et toutes leurs
+ * sous-catégories de loisirs. Couleur, police et formes identiques à
+ * l'app partout — voir `identite-app.ts`.
  */
 export const sportTheme: ThemeBoutique = {
   id: "sport",
@@ -18,57 +16,20 @@ export const sportTheme: ThemeBoutique = {
     nom: "Performance",
     concept: "Énergie et mouvement, pas un rayon sagement rangé.",
     emotion: "Dynamisme, envie de bouger.",
-    principe: "Diagonales assumées, badges en ruban, peu de rondeur.",
+    principe: "Grande image, badges — voir productLayout « showcase ».",
   },
   sombreParNature: false,
-  palettes: {
-    clair: {
-      background: "#fcf5f1",
-      surface: "#ffffff",
-      accent: "#9c3620",
-      accentTexte: "#ffffff",
-      accentDoux: "rgba(156,54,32,0.13)",
-      accentFort: "#9c3620",
-      text: "#241a15",
-      muted: "#7a5d4e",
-      border: "#f0d9c8",
-    },
-    sombre: {
-      background: "#1f140e",
-      surface: "#2b1d14",
-      accent: "#e8784f",
-      accentTexte: "#1f140e",
-      accentDoux: "rgba(232,120,79,0.16)",
-      accentFort: "#e8784f",
-      text: "#f5e9e2",
-      muted: "#cba593",
-      border: "rgba(232,120,79,0.18)",
-    },
-  },
-  accentSurClair: "#9c3620",
-  typographie: {
-    // Readex Pro, géométrique et dense — l'énergie du titre, pas
-    // seulement le poids de Cairo ; prévu dès l'étape 2 (DA « Performance »).
-    fontFamily: "var(--font-readex-pro), var(--font-cairo), 'Cairo', system-ui, sans-serif",
-    googleFont: { nom: "Readex Pro", poids: [700], sousEnsembles: ["latin", "arabic"] },
-    poidsTitre: 700,
-    espacementLettres: "-0.01em",
-  },
-  formes: { rayon: "12px", rayonInterieur: "8px", badge: "ruban", ombre: "0 8px 22px rgba(156,54,32,0.12)" },
+  palettes: PALETTES_APP,
+  accentSurClair: ACCENT_SUR_CLAIR_APP,
+  typographie: TYPOGRAPHIE_APP,
+  formes: FORMES_APP,
   couverture: {
-    voile: {
-      clair: "linear-gradient(115deg, rgba(156,54,32,0.26) 0%, rgba(10,10,14,0.1) 55%, rgba(10,10,14,0.4) 100%)",
-      sombre: "linear-gradient(115deg, rgba(232,120,79,0.22) 0%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.55) 100%)",
-    },
+    voile: VOILE_APP,
     secours: "lignes-dynamiques",
   },
   productLayout: "showcase",
-  promoStyle: { forme: "ruban", accentPropre: true },
-  wheelStyle: {
-    teintes: ["#9c3620", "#e8784f", "#f0a35c", "#241a15", "#c24d2e", "#f5c49a"],
-    texteSurPartsClaires: "#241a15",
-    texteSurPartsSombres: "#ffffff",
-  },
+  promoStyle: PROMO_STYLE_APP,
+  wheelStyle: WHEEL_STYLE_APP,
   emptyState: {
     produits: { fr: "De nouveaux équipements arrivent bientôt.", ar: "معدات جديدة قريبًا" },
     promos: { fr: "Aucune offre en cours.", ar: "لا عروض حاليًا" },
