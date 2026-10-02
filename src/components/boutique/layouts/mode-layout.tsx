@@ -14,6 +14,18 @@ import type { ProduitBoutique } from "./types";
 
 type Tri = "nouveautes" | "prix" | "promo";
 
+/** Un glyphe simple par sous-catégorie réelle — jamais une icône de métier inventée. */
+const ICONE_TYPE: Record<string, string> = {
+  "mode-femme": "♀",
+  "mode-homme": "♂",
+  "mode-enfant": "◡",
+  "mode-chaussures": "⟡",
+  "mode-accessoires": "✦",
+};
+
+/** Une nouveauté affichée comme telle pendant 14 jours — pas plus, sinon le mot perd son sens. */
+const JOURS_NOUVEAUTE = 14;
+
 /**
  * « Vitrine éditoriale » — Mode.
  *
@@ -22,6 +34,10 @@ type Tri = "nouveautes" | "prix" | "promo";
  * sœurs sous « mode » dans `categories`. Une boutique qui n'a encore rangé
  * aucun produit dans une sous-catégorie précise n'affiche simplement pas
  * de rayon — la recherche et la grille fonctionnent quand même.
+ *
+ * Le filtre de taille vient de l'union réelle de `products.sizes` parmi
+ * les articles visibles — jamais une liste XS-XXL figée qui proposerait
+ * une taille que personne ne vend.
  *
  * Le lookbook reprend la photo de couverture de la boutique et épingle ses
  * 2-3 articles les plus vendus (déjà l'ordre de `visible`, voir la requête
@@ -45,6 +61,7 @@ export function ModeLayout({
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(null);
+  const [taille, setTaille] = useState<string | null>(null);
   const [tri, setTri] = useState<Tri>("nouveautes");
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -61,12 +78,19 @@ export function ModeLayout({
     return [...comptes.entries()].map(([slug, v]) => ({ slug, ...v }));
   }, [visible, locale]);
 
+  const tailles = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of visible) for (const s of p.sizes ?? []) set.add(s);
+    return [...set];
+  }, [visible]);
+
   const normalise = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   const filtres = useMemo(() => {
     const q = normalise(query.trim());
     let liste = visible.filter((p) => {
       if (type && p.category?.slug !== type) return false;
+      if (taille && !(p.sizes ?? []).includes(taille)) return false;
       if (q && !normalise(p.name).includes(q)) return false;
       return true;
     });
@@ -77,10 +101,16 @@ export function ModeLayout({
       liste.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
     }
     return liste;
-  }, [visible, type, query, tri]);
+  }, [visible, type, taille, query, tri]);
 
   const lookbook = visible.slice(0, 3);
   const PINS = ["18%,24%", "58%,42%", "32%,66%"];
+
+  function estNouveau(p: ProduitBoutique) {
+    if (!p.created_at) return false;
+    const jours = (Date.now() - new Date(p.created_at).getTime()) / 86_400_000;
+    return jours <= JOURS_NOUVEAUTE;
+  }
 
   function ajouterLeLook() {
     setFeedback(null);
@@ -120,32 +150,55 @@ export function ModeLayout({
       </div>
 
       {types.length > 1 && (
-        <div className="no-sb flex gap-[8px] overflow-x-auto pb-[2px]">
-          <button
-            type="button"
-            onClick={() => setType(null)}
-            className="flex-none rounded-[14px] px-[13px] py-[7px] text-[0.65625rem] font-bold whitespace-nowrap"
-            style={{
-              background: type === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
-              color: type === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-            }}
-          >
-            {t.common.all} · {visible.length}
-          </button>
-          {types.map((entry) => (
-            <button
-              key={entry.slug}
-              type="button"
-              onClick={() => setType(entry.slug === type ? null : entry.slug)}
-              className="flex-none rounded-[14px] px-[13px] py-[7px] text-[0.65625rem] font-bold whitespace-nowrap"
-              style={{
-                background: entry.slug === type ? "var(--theme-accent)" : "var(--theme-accent-doux)",
-                color: entry.slug === type ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-              }}
-            >
-              {entry.label} · {entry.count}
+        <div className="flex flex-col gap-[8px]">
+          <div className="flex items-baseline justify-between px-[2px]">
+            <span className="text-[0.75rem] font-bold">{locale === "ar" ? "أقسام المتجر" : "Rayons de la boutique"}</span>
+            <span className="text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">
+              {visible.length} {locale === "ar" ? "منتج" : "articles"}
+            </span>
+          </div>
+          <div className="no-sb flex gap-[12px] overflow-x-auto pb-[2px]">
+            <button type="button" onClick={() => setType(null)} className="flex flex-none flex-col items-center gap-[6px]">
+              <span
+                className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
+                style={{
+                  background: type === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                  color: type === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                  boxShadow: type === null ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
+                }}
+              >
+                ✱
+              </span>
+              <span className="text-[0.625rem] font-bold whitespace-nowrap">
+                {t.common.all} · {visible.length}
+              </span>
             </button>
-          ))}
+            {types.map((entry) => {
+              const actif = entry.slug === type;
+              return (
+                <button
+                  key={entry.slug}
+                  type="button"
+                  onClick={() => setType(actif ? null : entry.slug)}
+                  className="flex flex-none flex-col items-center gap-[6px]"
+                >
+                  <span
+                    className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
+                    style={{
+                      background: actif ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                      color: actif ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                      boxShadow: actif ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
+                    }}
+                  >
+                    {ICONE_TYPE[entry.slug] ?? "•"}
+                  </span>
+                  <span className="max-w-[64px] truncate text-[0.625rem] font-bold whitespace-nowrap">
+                    {entry.label} · {entry.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -196,54 +249,109 @@ export function ModeLayout({
 
       {feedback && <p className="text-center text-[0.6875rem] font-semibold text-[var(--theme-accent-fort)]">{feedback}</p>}
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.75rem] font-bold">
-          {query ? `« ${query.trim()} »` : type ? types.find((x) => x.slug === type)?.label : t.common.all}
-        </span>
-        <div className="flex gap-[4px]">
-          {(
-            [
-              ["nouveautes", locale === "ar" ? "الأحدث" : "Nouveautés"],
-              ["prix", locale === "ar" ? "السعر" : "Prix ↑"],
-              ["promo", locale === "ar" ? "تخفيض" : "Promo"],
-            ] as const
-          ).map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setTri(v)}
-              className="flex-none rounded-[12px] px-[9px] py-[5px] text-[0.625rem] font-semibold whitespace-nowrap"
-              style={{
-                background: tri === v ? "var(--theme-accent-doux)" : "transparent",
-                color: tri === v ? "var(--theme-accent-fort)" : "var(--theme-muted)",
-                border: `1px solid ${tri === v ? "var(--theme-accent)" : "var(--theme-bordure)"}`,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-[8px]">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[0.75rem] font-bold">
+            {query
+              ? `« ${query.trim()} »`
+              : type
+                ? types.find((x) => x.slug === type)?.label
+                : locale === "ar"
+                  ? "كل المنتجات"
+                  : "Tous les articles"}
+          </span>
+          <div className="flex gap-[4px]">
+            {(
+              [
+                ["nouveautes", locale === "ar" ? "الأحدث" : "Nouveautés"],
+                ["prix", locale === "ar" ? "السعر" : "Prix ↑"],
+                ["promo", locale === "ar" ? "تخفيض" : "Promo"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setTri(v)}
+                className="flex-none rounded-[12px] px-[9px] py-[5px] text-[0.625rem] font-semibold whitespace-nowrap"
+                style={{
+                  background: tri === v ? "var(--theme-accent-doux)" : "transparent",
+                  color: tri === v ? "var(--theme-accent-fort)" : "var(--theme-muted)",
+                  border: `1px solid ${tri === v ? "var(--theme-accent)" : "var(--theme-bordure)"}`,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {tailles.length > 0 && (
+          <div className="flex gap-[6px]">
+            {tailles.map((s) => {
+              const actif = s === taille;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTaille(actif ? null : s)}
+                  className="flex-1 rounded-[11px] py-[8px] text-center text-[0.6875rem] font-bold"
+                  style={{
+                    background: actif ? "var(--theme-accent)" : "transparent",
+                    color: actif ? "var(--theme-accent-texte)" : "var(--theme-texte)",
+                    border: `1px solid ${actif ? "var(--theme-accent)" : "var(--theme-bordure)"}`,
+                  }}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {filtres.length === 0 ? (
         <EmptyState title={format(t.search.noResults, { q: query.trim() })} />
       ) : (
         <div className="grid grid-cols-2 gap-x-[10px] gap-y-4">
-          {filtres.map((product, i) => (
-            <div key={product.id} className={i === 0 && filtres.length > 2 ? "col-span-2" : undefined}>
-              <ProductCard
-                product={{ ...product, shop: null }}
-                locale={locale}
-                showShop={false}
-                imageHeight={i === 0 && filtres.length > 2 ? 220 : 118}
-              />
-              {product.sizes && product.sizes.length > 0 && (
-                <p className="mt-[2px] px-[4px] text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">
-                  {product.sizes.join(" · ")}
-                </p>
-              )}
-            </div>
-          ))}
+          {filtres.map((product, i) => {
+            const nouveau = estNouveau(product);
+            const promo = Boolean(product.compare_at_price);
+            return (
+              <div key={product.id} className={i === 0 && filtres.length > 2 ? "col-span-2" : undefined}>
+                <div className="relative">
+                  {(nouveau || promo) && (
+                    <span
+                      className="absolute top-[10px] left-[10px] z-[1] rounded-[10px] px-[9px] py-[4px] text-[0.5625rem] font-bold text-white"
+                      style={{ background: promo ? "var(--color-live-fill)" : "var(--theme-accent,var(--color-brand-fill))" }}
+                    >
+                      {promo ? (locale === "ar" ? "تخفيض" : "Promo") : locale === "ar" ? "جديد" : "Nouveau"}
+                    </span>
+                  )}
+                  <ProductCard
+                    product={{ ...product, shop: null }}
+                    locale={locale}
+                    showShop={false}
+                    imageHeight={i === 0 && filtres.length > 2 ? 220 : 118}
+                  />
+                </div>
+                <div className="flex flex-col gap-[1px] px-[4px]">
+                  {product.sizes && product.sizes.length > 0 && (
+                    <span className="text-[0.59375rem] text-[var(--theme-muted,var(--color-muted))]">
+                      {product.sizes.join(" · ")}
+                    </span>
+                  )}
+                  {product.category && (
+                    <span
+                      className="text-[0.5625rem] font-bold tracking-[0.04em] uppercase"
+                      style={{ color: "var(--theme-accent-fort)" }}
+                    >
+                      {locale === "ar" ? product.category.name_ar : product.category.name_fr}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
