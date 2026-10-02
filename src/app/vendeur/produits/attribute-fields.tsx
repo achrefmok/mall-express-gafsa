@@ -42,7 +42,10 @@ const CHAMPS_BIJOUTERIE: Champ[] = [
   { cle: "taux_jour", label: "Cours du jour (facultatif)", placeholder: "300 DT / g" },
 ];
 
-const CHAMPS_PARAPHARMACIE: Champ[] = [{ cle: "besoin", label: "Besoin", placeholder: "Bébé, Solaire…" }];
+const CHAMPS_PARAPHARMACIE: Champ[] = [
+  { cle: "besoin", label: "Besoin", placeholder: "Bébé, Solaire…" },
+  { cle: "marque", label: "Marque", placeholder: "Avène, Uriage…" },
+];
 
 const TYPES_PEAU = ["Peau sèche", "Peau grasse", "Mixte", "Sensible"];
 const ETAPES_SOIN = ["Nettoyer", "Traiter", "Hydrater & protéger"];

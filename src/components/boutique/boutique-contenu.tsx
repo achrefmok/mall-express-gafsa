@@ -235,7 +235,7 @@ export function BoutiqueContenu({
       ) : theme.productLayout === "catalog" && theme.id === "parapharmacie" ? (
         // "catalog" est partagée avec Fête — seule Parapharmacie reçoit le
         // rail de packs, Fête continue sur GrilleParDefaut ci-dessous.
-        <ParapharmacieLayout visible={visible} locale={locale} theme={theme} packs={packs} />
+        <ParapharmacieLayout visible={visible} locale={locale} theme={theme} packs={packs} shopId={shopId} shopSlug={shopSlug} />
       ) : theme.productLayout === "service" && theme.id === "services" ? (
         // "service" est partagée avec Santé — seule Services (livraison)
         // reçoit le formulaire de demande, Santé continue sur
