@@ -72,8 +72,12 @@ export function BoutiqueContenu({
 }) {
   return (
     <div className="no-sb flex flex-1 flex-col gap-[14px] px-4 pt-3 pb-4">
-      {/* Chips de sous-catégories, chacune dans sa nuance */}
-      {subCategories.length > 0 && (
+      {/*
+        Chips de sous-catégories, chacune dans sa nuance — absentes pour
+        Mode, qui a sa propre navigation à deux niveaux (genre puis rayon)
+        dans `ModeLayout` ; ce rail générique y ferait doublon.
+      */}
+      {subCategories.length > 0 && !(theme.productLayout === "editorial" && theme.id === "mode") && (
         <Rail className="flex-none" gap={8}>
           <span className="flex-none whitespace-nowrap rounded-[14px] bg-[var(--color-brand-fill)] px-[13px] py-[6px] text-[0.65625rem] font-semibold text-white">
             {t.common.all}

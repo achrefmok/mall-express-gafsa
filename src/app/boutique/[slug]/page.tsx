@@ -280,15 +280,17 @@ export default async function ShopPage({
   const visible = await avecBlackFriday(lus, createStaticClient());
 
   /*
-    Specs, matière, packs — seulement pour les métiers qui en ont besoin,
-    jamais sur chaque page boutique : Sport ou Fête n'ont rien à demander
-    de plus que `visible` ci-dessus.
+    Les attributs sont lus pour tout le monde — une seule requête indexée
+    sur `product_id`, bon marché même quand la mise en page du thème ne les
+    affiche pas. Un allowlist par `productLayout` a déjà fait oublier deux
+    fois une valeur (Parapharmacie, puis Mode) le jour où une mise en page
+    en a eu besoin après coup ; plus simple et plus sûr de ne plus en tenir.
+    Matières et packs restent ciblés : eux seuls ont un vrai coût (table ou
+    jointure à part) et ne servent qu'à Bijouterie/Parapharmacie.
   */
   const idsProduitsVisibles = visible.map((p) => p.id);
   const [attributsParProduit, matieresParProduit, packs] = await Promise.all([
-    ["technical", "beaute", "maison", "bijouterie", "catalog"].includes(theme.productLayout)
-      ? lireAttributsProduits(supabase, idsProduitsVisibles)
-      : Promise.resolve(new Map<string, Record<string, string>>()),
+    lireAttributsProduits(supabase, idsProduitsVisibles),
     theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
   ]);

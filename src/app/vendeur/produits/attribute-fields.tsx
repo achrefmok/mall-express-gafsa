@@ -44,6 +44,16 @@ const CHAMPS_BIJOUTERIE: Champ[] = [
 
 const CHAMPS_PARAPHARMACIE: Champ[] = [{ cle: "besoin", label: "Besoin", placeholder: "Bébé, Solaire…" }];
 
+/*
+  Le genre (Femme/Homme/Enfant) vient déjà de la catégorie du produit —
+  rien à ajouter ici. Le type de vêtement (Robes/Pulls/Chaussures…) est en
+  revanche un second axe que la catégorie ne porte pas : une robe et un
+  pull peuvent tous deux être « Femme ». Suggestions courantes, mais texte
+  libre — jamais une liste fermée qui empêcherait d'ajouter un type que le
+  commerçant vend vraiment.
+*/
+const TYPES_VETEMENT = ["Robes", "Pulls", "Chaussures", "Pantalons", "Vestes", "Chemises", "Sacs", "T-shirts"];
+
 function ChampTexte({
   champ,
   value,
@@ -93,6 +103,40 @@ export function AttributFields({
   materiaux: string[];
   onChangeMateriaux: (m: string[]) => void;
 }) {
+  if (familleId === "mode") {
+    return (
+      <Card className="flex flex-col gap-2 p-3">
+        <span className={LABEL}>Type de vêtement</span>
+        <p className="text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">
+          Pour affiner le rayon dans l&apos;onglet {value.type ? `« ${value.type} »` : "choisi"} de votre boutique,
+          en plus de Femme/Homme/Enfant.
+        </p>
+        <div className="flex flex-wrap gap-[6px]">
+          {TYPES_VETEMENT.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onChange({ ...value, type: value.type === type ? "" : type })}
+              className="rounded-[12px] px-[11px] py-[5px] text-[0.625rem] font-semibold"
+              style={{
+                background: value.type === type ? "var(--color-brand-fill)" : "var(--color-brand-tint)",
+                color: value.type === type ? "#fff" : "var(--color-brand)",
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+        <input
+          value={value.type ?? ""}
+          onChange={(e) => onChange({ ...value, type: e.target.value })}
+          placeholder="Ou un autre type…"
+          className={FIELD}
+        />
+      </Card>
+    );
+  }
+
   if (familleId === "electronique") {
     return (
       <Card className="flex flex-col gap-[10px] p-3">

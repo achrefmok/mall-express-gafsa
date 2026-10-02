@@ -14,36 +14,47 @@ import type { ProduitBoutique } from "./types";
 
 type Tri = "nouveautes" | "prix" | "promo";
 
-/** Un glyphe simple par sous-catégorie réelle — jamais une icône de métier inventée. */
-const ICONE_TYPE: Record<string, string> = {
-  "mode-femme": "♀",
-  "mode-homme": "♂",
-  "mode-enfant": "◡",
-  "mode-chaussures": "⟡",
-  "mode-accessoires": "✦",
+/** Les trois genres réels — seuls ceux qui ont des articles deviennent un onglet. */
+const GENRES = [
+  { slug: "mode-femme", labelFr: "Femme", labelAr: "نساء" },
+  { slug: "mode-homme", labelFr: "Homme", labelAr: "رجال" },
+  { slug: "mode-enfant", labelFr: "Enfant", labelAr: "أطفال" },
+] as const;
+
+/** Chaussures et accessoires n'ont pas de genre dans ce schéma — visibles sous chaque onglet. */
+const CATEGORIES_TRANSVERSALES = ["mode-chaussures", "mode-accessoires"];
+
+/** Un glyphe par type de vêtement — mêmes intitulés que les suggestions du formulaire vendeur. */
+const ICONE_PAR_TYPE: Record<string, string> = {
+  Robes: "◇",
+  Pulls: "▤",
+  Chaussures: "⟡",
+  Pantalons: "∥",
+  Vestes: "⌂",
+  Chemises: "▽",
+  Sacs: "◒",
+  "T-shirts": "⊤",
+  Accessoires: "✦",
 };
 
 /** Une nouveauté affichée comme telle pendant 14 jours — pas plus, sinon le mot perd son sens. */
 const JOURS_NOUVEAUTE = 14;
 
 /**
- * « Vitrine éditoriale » — Mode.
+ * « Vitrine éditoriale » — Mode, navigation à deux niveaux.
  *
- * Le rayon de types (femme/homme/enfant/chaussures/accessoires) vient de la
- * vraie sous-catégorie de chaque produit — ces cinq familles sont déjà
- * sœurs sous « mode » dans `categories`. Une boutique qui n'a encore rangé
- * aucun produit dans une sous-catégorie précise n'affiche simplement pas
- * de rayon — la recherche et la grille fonctionnent quand même.
+ * Premier niveau : le genre (Femme/Homme/Enfant), un onglet par genre déjà
+ * représenté dans le catalogue — une boutique qui ne vend qu'en Femme
+ * n'affiche jamais d'onglet Homme vide. Chaussures et Accessoires
+ * n'étant pas genrés dans `categories`, leurs articles restent visibles
+ * sous chaque onglet plutôt que d'être arbitrairement rattachés à un
+ * genre qu'ils n'ont pas.
  *
- * Le filtre de taille vient de l'union réelle de `products.sizes` parmi
- * les articles visibles — jamais une liste XS-XXL figée qui proposerait
- * une taille que personne ne vend.
- *
- * Le lookbook reprend la photo de couverture de la boutique et épingle ses
- * 2-3 articles les plus vendus (déjà l'ordre de `visible`, voir la requête
- * de `page.tsx`) — pas de coordonnées saisies par le vendeur, donc des
- * repères à des positions fixes plutôt qu'une donnée inventée par article.
- * Absent sans photo de couverture ou avec un seul article.
+ * Second niveau : le rayon, recalculé à chaque changement de genre, à
+ * partir de l'attribut `type` (`product_attributes`, saisi par le
+ * vendeur — Robes, Pulls…) quand il existe, ou de la catégorie elle-même
+ * pour Chaussures/Accessoires. Un article sans `type` reste compté dans
+ * « Tout » sans rayon dédié — jamais un rayon inventé.
  */
 export function ModeLayout({
   visible,
@@ -60,36 +71,51 @@ export function ModeLayout({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
-  const [type, setType] = useState<string | null>(null);
+  const [rayon, setRayon] = useState<string | null>(null);
   const [taille, setTaille] = useState<string | null>(null);
   const [tri, setTri] = useState<Tri>("nouveautes");
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const types = useMemo(() => {
-    const comptes = new Map<string, { label: string; count: number }>();
-    for (const p of visible) {
-      const slug = p.category?.slug;
-      if (!slug) continue;
-      const label = (locale === "ar" ? p.category?.name_ar : p.category?.name_fr) ?? slug;
-      const entry = comptes.get(slug);
-      if (entry) entry.count += 1;
-      else comptes.set(slug, { label, count: 1 });
+  const genresPresents = useMemo(
+    () => GENRES.filter((g) => visible.some((p) => p.category?.slug === g.slug)),
+    [visible],
+  );
+  const [genreActif, setGenreActif] = useState<string | null>(null);
+  const genre = genreActif ?? genresPresents[0]?.slug ?? null;
+
+  const base = useMemo(() => {
+    if (!genre) return visible;
+    return visible.filter((p) => p.category?.slug === genre || CATEGORIES_TRANSVERSALES.includes(p.category?.slug ?? ""));
+  }, [visible, genre]);
+
+  const rayons = useMemo(() => {
+    const comptes = new Map<string, number>();
+    for (const p of base) {
+      const label =
+        p.attributs?.type ||
+        (p.category?.slug === "mode-chaussures" ? "Chaussures" : p.category?.slug === "mode-accessoires" ? "Accessoires" : null);
+      if (!label) continue;
+      comptes.set(label, (comptes.get(label) ?? 0) + 1);
     }
-    return [...comptes.entries()].map(([slug, v]) => ({ slug, ...v }));
-  }, [visible, locale]);
+    return [...comptes.entries()];
+  }, [base]);
 
   const tailles = useMemo(() => {
     const set = new Set<string>();
-    for (const p of visible) for (const s of p.sizes ?? []) set.add(s);
+    for (const p of base) for (const s of p.sizes ?? []) set.add(s);
     return [...set];
-  }, [visible]);
+  }, [base]);
 
   const normalise = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+  const typeDe = (p: ProduitBoutique) =>
+    p.attributs?.type ||
+    (p.category?.slug === "mode-chaussures" ? "Chaussures" : p.category?.slug === "mode-accessoires" ? "Accessoires" : null);
+
   const filtres = useMemo(() => {
     const q = normalise(query.trim());
-    let liste = visible.filter((p) => {
-      if (type && p.category?.slug !== type) return false;
+    let liste = base.filter((p) => {
+      if (rayon && typeDe(p) !== rayon) return false;
       if (taille && !(p.sizes ?? []).includes(taille)) return false;
       if (q && !normalise(p.name).includes(q)) return false;
       return true;
@@ -101,15 +127,21 @@ export function ModeLayout({
       liste.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
     }
     return liste;
-  }, [visible, type, taille, query, tri]);
+  }, [base, rayon, taille, query, tri]);
 
-  const lookbook = visible.slice(0, 3);
+  const lookbook = base.slice(0, 3);
   const PINS = ["18%,24%", "58%,42%", "32%,66%"];
 
   function estNouveau(p: ProduitBoutique) {
     if (!p.created_at) return false;
     const jours = (Date.now() - new Date(p.created_at).getTime()) / 86_400_000;
     return jours <= JOURS_NOUVEAUTE;
+  }
+
+  function changerGenre(slug: string) {
+    setGenreActif(slug);
+    setRayon(null);
+    setTaille(null);
   }
 
   function ajouterLeLook() {
@@ -137,6 +169,28 @@ export function ModeLayout({
 
   return (
     <div className="flex flex-col gap-[14px]">
+      {genresPresents.length > 1 && (
+        <div className="flex gap-[4px] rounded-[18px] bg-[var(--theme-accent-doux)] p-[4px]">
+          {genresPresents.map((g) => {
+            const actif = g.slug === genre;
+            return (
+              <button
+                key={g.slug}
+                type="button"
+                onClick={() => changerGenre(g.slug)}
+                className="flex-1 rounded-[14px] py-[8px] text-center text-[0.75rem] font-bold whitespace-nowrap"
+                style={{
+                  background: actif ? "var(--theme-surface,#fff)" : "transparent",
+                  color: actif ? "var(--theme-accent-fort)" : "var(--theme-muted)",
+                }}
+              >
+                {locale === "ar" ? g.labelAr : g.labelFr}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex items-center gap-[8px] rounded-[16px] bg-[var(--theme-surface,var(--color-surface-solid))] px-[12px] shadow-[0_4px_14px_rgba(60,40,90,0.07)]">
         <span className="text-[0.875rem] text-[var(--theme-muted,var(--color-faint))]" aria-hidden>
           ⌕
@@ -149,39 +203,34 @@ export function ModeLayout({
         />
       </div>
 
-      {types.length > 1 && (
+      {rayons.length > 1 && (
         <div className="flex flex-col gap-[8px]">
           <div className="flex items-baseline justify-between px-[2px]">
             <span className="text-[0.75rem] font-bold">{locale === "ar" ? "أقسام المتجر" : "Rayons de la boutique"}</span>
             <span className="text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">
-              {visible.length} {locale === "ar" ? "منتج" : "articles"}
+              {base.length} {locale === "ar" ? "منتج" : "articles"}
             </span>
           </div>
           <div className="no-sb flex gap-[12px] overflow-x-auto pb-[2px]">
-            <button type="button" onClick={() => setType(null)} className="flex flex-none flex-col items-center gap-[6px]">
+            <button type="button" onClick={() => setRayon(null)} className="flex flex-none flex-col items-center gap-[6px]">
               <span
                 className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
                 style={{
-                  background: type === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
-                  color: type === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-                  boxShadow: type === null ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
+                  background: rayon === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                  color: rayon === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                  boxShadow: rayon === null ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
                 }}
               >
                 ✱
               </span>
               <span className="text-[0.625rem] font-bold whitespace-nowrap">
-                {t.common.all} · {visible.length}
+                {t.common.all} · {base.length}
               </span>
             </button>
-            {types.map((entry) => {
-              const actif = entry.slug === type;
+            {rayons.map(([label, count]) => {
+              const actif = label === rayon;
               return (
-                <button
-                  key={entry.slug}
-                  type="button"
-                  onClick={() => setType(actif ? null : entry.slug)}
-                  className="flex flex-none flex-col items-center gap-[6px]"
-                >
+                <button key={label} type="button" onClick={() => setRayon(actif ? null : label)} className="flex flex-none flex-col items-center gap-[6px]">
                   <span
                     className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
                     style={{
@@ -190,10 +239,10 @@ export function ModeLayout({
                       boxShadow: actif ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
                     }}
                   >
-                    {ICONE_TYPE[entry.slug] ?? "•"}
+                    {ICONE_PAR_TYPE[label] ?? "•"}
                   </span>
                   <span className="max-w-[64px] truncate text-[0.625rem] font-bold whitespace-nowrap">
-                    {entry.label} · {entry.count}
+                    {label} · {count}
                   </span>
                 </button>
               );
@@ -202,7 +251,7 @@ export function ModeLayout({
         </div>
       )}
 
-      {couverture && lookbook.length > 1 && !query && !type && (
+      {couverture && lookbook.length > 1 && !query && !rayon && (
         <div
           className="relative h-[280px] overflow-hidden rounded-[var(--theme-rayon,28px)] bg-center bg-cover"
           style={{ backgroundImage: `url(${couverture})` }}
@@ -227,7 +276,9 @@ export function ModeLayout({
           })}
           <div className="absolute inset-x-[16px] bottom-[16px] flex items-end justify-between gap-2 text-white">
             <span className="flex flex-col">
-              <span className="text-[0.625rem] font-semibold opacity-85">Lookbook</span>
+              <span className="text-[0.625rem] font-semibold opacity-85">
+                Lookbook{genre ? ` · ${GENRES.find((g) => g.slug === genre)?.labelFr}` : ""}
+              </span>
               <span className="text-[1.375rem] font-bold">{theme.ambiance.nom}</span>
             </span>
             <button
@@ -254,8 +305,8 @@ export function ModeLayout({
           <span className="text-[0.75rem] font-bold">
             {query
               ? `« ${query.trim()} »`
-              : type
-                ? types.find((x) => x.slug === type)?.label
+              : rayon
+                ? rayon
                 : locale === "ar"
                   ? "كل المنتجات"
                   : "Tous les articles"}
@@ -340,12 +391,12 @@ export function ModeLayout({
                       {product.sizes.join(" · ")}
                     </span>
                   )}
-                  {product.category && (
+                  {typeDe(product) && (
                     <span
                       className="text-[0.5625rem] font-bold tracking-[0.04em] uppercase"
                       style={{ color: "var(--theme-accent-fort)" }}
                     >
-                      {locale === "ar" ? product.category.name_ar : product.category.name_fr}
+                      {typeDe(product)}
                     </span>
                   )}
                 </div>
