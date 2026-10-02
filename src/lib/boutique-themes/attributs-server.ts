@@ -68,6 +68,29 @@ export async function lireMatieresProduits(
   return parProduit;
 }
 
+export interface ZoneLivraison {
+  id: string;
+  name: string;
+  name_ar: string | null;
+  price: number;
+  delay_minutes: number;
+}
+
+/** Les zones de livraison d'une boutique Services, triées pour l'affichage. */
+export async function lireZonesLivraison(supabase: SupabaseClient, shopId: string): Promise<ZoneLivraison[]> {
+  const { data, error } = await supabase
+    .from("delivery_zones")
+    .select("id, name, name_ar, price, delay_minutes")
+    .eq("shop_id", shopId)
+    .order("sort_order");
+
+  if (error || !data) {
+    if (error && !MIGRATION_ABSENTE.includes(error.code)) console.error(error);
+    return [];
+  }
+  return data;
+}
+
 export interface PackBoutique {
   id: string;
   name: string;

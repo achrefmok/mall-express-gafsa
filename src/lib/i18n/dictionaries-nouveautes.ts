@@ -120,6 +120,8 @@ export const nouveautesFr = {
     addProductHint: "Photo, prix, stock",
     packsTitle: "Packs",
     packsHint: "Grouper des produits avec une remise",
+    livraisonTitle: "Tarifs de livraison",
+    livraisonHint: "Zones, prix et délais",
 
     setup: "Profil de boutique — {pct} %",
     setupBody: "Une boutique complète inspire confiance et se retrouve plus facilement.",
@@ -625,6 +627,8 @@ export const nouveautesAr: Nouveautes = {
     addProductHint: "صورة، سعر، مخزون",
     packsTitle: "الباقات",
     packsHint: "تجميع منتجات مع تخفيض",
+    livraisonTitle: "أسعار التوصيل",
+    livraisonHint: "المناطق، الأسعار والآجال",
 
     setup: "ملف المتجر — {pct} %",
     setupBody: "متجر مكتمل يوحي بالثقة ويسهل العثور عليه.",

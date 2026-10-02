@@ -785,6 +785,19 @@ export default async function VendorDashboard() {
                 detail={t.vendeur.packsHint}
               />
             )}
+            {/*
+              Les tarifs de livraison n'ont de sens que pour une boutique
+              Services (voir `ServiceLayout`) — ailleurs, ce serait un
+              raccourci vers un écran qui ne sert jamais.
+            */}
+            {resolveTheme(shop.category?.slug).id === "services" && (
+              <Raccourci
+                href="/vendeur/livraison"
+                icone={<PinIcon size={19} />}
+                titre={t.vendeur.livraisonTitle}
+                detail={t.vendeur.livraisonHint}
+              />
+            )}
           </div>
         </section>
 

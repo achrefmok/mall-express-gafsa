@@ -10,7 +10,7 @@ import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
-import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique } from "@/lib/boutique-themes/attributs-server";
+import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique, lireZonesLivraison } from "@/lib/boutique-themes/attributs-server";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
@@ -99,7 +99,7 @@ export default async function ShopPage({
     .from("shops")
     .select(
       `id, name, name_ar, description, description_ar, slug, logo_url, cover_url, banner_url,
-       mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count,
+       mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count, address,
        is_partner, partner_tagline, partner_tagline_ar, accepts_reservations,
        followers_count, posts_count, views_count, status, latitude, longitude,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue, slug)`,
@@ -288,10 +288,11 @@ export default async function ShopPage({
     jointure à part) et ne servent qu'à Bijouterie/Parapharmacie.
   */
   const idsProduitsVisibles = visible.map((p) => p.id);
-  const [attributsParProduit, matieresParProduit, packs] = await Promise.all([
+  const [attributsParProduit, matieresParProduit, packs, zones] = await Promise.all([
     lireAttributsProduits(supabase, idsProduitsVisibles),
     theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
+    theme.id === "services" ? lireZonesLivraison(supabase, shop.id) : Promise.resolve([]),
   ]);
 
   const visibleEnrichi = visible.map((p) => ({
@@ -382,6 +383,10 @@ export default async function ShopPage({
           lives={lives.data ?? []}
           visible={visibleEnrichi}
           packs={packs}
+          zones={zones}
+          shopId={shop.id}
+          shopSlug={shop.slug}
+          shopAddress={shop.address}
           couverture={enTete}
           locale={locale}
           t={t}

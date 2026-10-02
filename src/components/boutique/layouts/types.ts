@@ -27,3 +27,12 @@ export interface PackBoutique {
   cover_image: string | null;
   items: Array<{ id: string; name: string; price: number; images: string[] }>;
 }
+
+/** Un tarif de livraison saisi par le vendeur (`delivery_zones`) — voir `ServiceLayout`. */
+export interface ZoneLivraison {
+  id: string;
+  name: string;
+  name_ar: string | null;
+  price: number;
+  delay_minutes: number;
+}

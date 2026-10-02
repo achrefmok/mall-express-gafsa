@@ -574,3 +574,57 @@ export async function deletePack(packId: string) {
   revalidatePath(`/boutique/${shop.slug}`);
   return done();
 }
+
+/*
+  Zones de livraison — Services. `delivery_zones` n'existe pas encore dans
+  les types générés (même raison que `product_packs` plus haut) : client non
+  typé pour cette table.
+*/
+export async function upsertZoneLivraison(input: {
+  id?: string;
+  name: string;
+  nameAr?: string;
+  price: number;
+  delayMinutes: number;
+}) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const name = input.name.trim();
+  if (!name) return fail("Le nom de la zone est obligatoire");
+  if (!Number.isFinite(input.price) || input.price < 0) return fail("Prix invalide");
+  if (!Number.isInteger(input.delayMinutes) || input.delayMinutes <= 0) return fail("Délai invalide");
+
+  const payload = {
+    shop_id: shop.id,
+    name,
+    name_ar: input.nameAr?.trim() || null,
+    price: input.price,
+    delay_minutes: input.delayMinutes,
+  };
+
+  const query = input.id
+    ? client.from("delivery_zones").update(payload).eq("id", input.id).eq("shop_id", shop.id)
+    : client.from("delivery_zones").insert(payload);
+
+  const { error: e } = await query;
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/livraison");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
+
+export async function deleteZoneLivraison(zoneId: string) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const { error: e } = await client.from("delivery_zones").delete().eq("id", zoneId).eq("shop_id", shop.id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/livraison");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}

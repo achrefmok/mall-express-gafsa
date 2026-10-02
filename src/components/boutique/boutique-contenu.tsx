@@ -8,7 +8,8 @@ import { BeauteLayout } from "@/components/boutique/layouts/beaute-layout";
 import { MaisonLayout } from "@/components/boutique/layouts/maison-layout";
 import { ParapharmacieLayout } from "@/components/boutique/layouts/parapharmacie-layout";
 import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layout";
-import type { PackBoutique, ProduitBoutique } from "@/components/boutique/layouts/types";
+import { ServiceLayout } from "@/components/boutique/layouts/service-layout";
+import type { PackBoutique, ProduitBoutique, ZoneLivraison } from "@/components/boutique/layouts/types";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -43,6 +44,10 @@ export function BoutiqueContenu({
   lives,
   visible,
   packs,
+  zones,
+  shopId,
+  shopSlug,
+  shopAddress,
   couverture,
   locale,
   t,
@@ -64,6 +69,10 @@ export function BoutiqueContenu({
   lives: Live[];
   visible: ProduitBoutique[];
   packs: PackBoutique[];
+  zones: ZoneLivraison[];
+  shopId: string;
+  shopSlug: string;
+  shopAddress: string | null;
   couverture: string | null;
   locale: AppLocale;
   t: Dictionary;
@@ -77,7 +86,9 @@ export function BoutiqueContenu({
         Mode, qui a sa propre navigation à deux niveaux (genre puis rayon)
         dans `ModeLayout` ; ce rail générique y ferait doublon.
       */}
-      {subCategories.length > 0 && !(theme.productLayout === "editorial" && theme.id === "mode") && (
+      {subCategories.length > 0 &&
+        !(theme.productLayout === "editorial" && theme.id === "mode") &&
+        !(theme.productLayout === "service" && theme.id === "services") && (
         <Rail className="flex-none" gap={8}>
           <span className="flex-none whitespace-nowrap rounded-[14px] bg-[var(--color-brand-fill)] px-[13px] py-[6px] text-[0.65625rem] font-semibold text-white">
             {t.common.all}
@@ -225,6 +236,11 @@ export function BoutiqueContenu({
         // "catalog" est partagée avec Fête — seule Parapharmacie reçoit le
         // rail de packs, Fête continue sur GrilleParDefaut ci-dessous.
         <ParapharmacieLayout visible={visible} locale={locale} theme={theme} packs={packs} />
+      ) : theme.productLayout === "service" && theme.id === "services" ? (
+        // "service" est partagée avec Santé — seule Services (livraison)
+        // reçoit le formulaire de demande, Santé continue sur
+        // GrilleParDefaut ci-dessous tant qu'elle n'a pas son propre besoin.
+        <ServiceLayout shopId={shopId} shopSlug={shopSlug} shopAddress={shopAddress} zones={zones} locale={locale} />
       ) : (
         /*
           `GrilleParDefaut` reste le repli pour toute famille qui n'a pas
