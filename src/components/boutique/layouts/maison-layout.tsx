@@ -120,19 +120,52 @@ export function MaisonLayout({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-x-[10px] gap-y-4">
-        {produits.map((p) => {
-          const legende = [p.attributs?.dimensions, p.attributs?.materiau].filter(Boolean).join(" · ");
-          return (
-            <div key={p.id} className="flex flex-col gap-[2px]">
-              <ProductCard product={{ ...p, shop: null }} locale={locale} showShop={false} imageHeight={118} />
-              {legende && (
-                <p className="px-[4px] text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">{legende}</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {pieceActive ? (
+        /*
+          En liste numérotée quand une pièce est active — les numéros
+          correspondent aux repères posés sur la photo d'ambiance
+          ci-dessus, comme dans la maquette.
+        */
+        <div className="flex flex-col gap-[10px]">
+          {produits.map((p, i) => {
+            const legende = [p.attributs?.dimensions, p.attributs?.materiau].filter(Boolean).join(" · ");
+            return (
+              <div
+                key={p.id}
+                className="flex items-center gap-[10px] rounded-[16px] border border-[var(--theme-bordure)] bg-[var(--theme-surface)] p-[11px]"
+              >
+                <span
+                  className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[0.6875rem] font-bold text-[var(--theme-accent-texte)]"
+                  style={{ background: "var(--theme-accent)" }}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.8125rem] font-semibold">{p.name}</p>
+                  {legende && (
+                    <p className="truncate text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">{legende}</p>
+                  )}
+                </div>
+                <span className="flex-none text-[0.8125rem] font-bold">{formatPrice(p.price, locale)}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-[10px] gap-y-4">
+          {produits.map((p) => {
+            const legende = [p.attributs?.dimensions, p.attributs?.materiau].filter(Boolean).join(" · ");
+            return (
+              <div key={p.id} className="flex flex-col gap-[2px]">
+                <ProductCard product={{ ...p, shop: null }} locale={locale} showShop={false} imageHeight={118} />
+                {legende && (
+                  <p className="px-[4px] text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">{legende}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {pieceActive && produits.length > 1 && (
         <button
