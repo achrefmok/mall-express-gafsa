@@ -1,27 +1,36 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EmptyState, Card } from "@/components/ui/primitives";
-import { ProductCard } from "@/components/cards/product-card";
+import Link from "next/link";
+import Image from "next/image";
+import { EmptyState, Card, Placeholder } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { formatPrice } from "@/lib/format";
+import { lienProduit } from "@/lib/product-url";
 import type { ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { ProduitBoutique } from "./types";
 
 /** Les trois clés de specs attendues côté vendeur — voir le formulaire produit. */
-const CLES_SPECS = ["stockage", "ecran", "batterie"] as const;
+const CLES_SPECS = [
+  { cle: "stockage", labelFr: "Stockage", labelAr: "التخزين" },
+  { cle: "ecran", labelFr: "Écran", labelAr: "الشاشة" },
+  { cle: "batterie", labelFr: "mAh", labelAr: "mAh" },
+] as const;
 const VERSEMENTS = [1, 3, 6] as const;
 
 /**
  * « Fiche technique » — Électronique.
  *
- * Les mini-stats et la marque viennent de `product_attributes` : un
- * produit qui n'en a aucune (le cas de toute boutique aujourd'hui, avant
- * que le vendeur les remplisse) reste une carte simple, sans case vide ni
- * tiret, et n'apparaît simplement dans aucun filtre de marque. Le
- * comparateur fonctionne quand même — comparer deux fiches sans specs
- * reste utile pour les photos et les prix.
+ * Une fiche par ligne, pas une grille de photos : ici on compare des
+ * chiffres (stockage, écran, batterie, garantie), pas une allure — la
+ * photo reste une vignette, les specs prennent la place.
+ *
+ * Les mini-stats, la marque et la garantie viennent de `product_attributes` :
+ * un produit qui n'en a aucune (le cas de toute boutique aujourd'hui, avant
+ * que le vendeur les remplisse) reste une fiche simple, sans case vide ni
+ * tiret. Le comparateur fonctionne quand même — comparer deux fiches sans
+ * specs reste utile pour les photos et les prix.
  *
  * Le « payer en X fois » ne divise que l'affichage — aucun versement n'est
  * réellement proposé au paiement, c'est un repère de budget comme dans la
@@ -80,7 +89,7 @@ export function ElectroniqueLayout({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={locale === "ar" ? "الموديل، المرجع…" : "Modèle, référence…"}
+          placeholder={locale === "ar" ? "الموديل، المرجع…" : "Modèle, référence, marque…"}
           className="min-w-0 flex-1 border-0 bg-transparent py-[12px] text-[0.75rem] text-[var(--theme-texte,var(--color-ink))] outline-none"
         />
       </div>
@@ -135,48 +144,67 @@ export function ElectroniqueLayout({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-[10px] gap-y-[18px]">
+      <div className="flex flex-col gap-[10px]">
         {filtres.map((product) => {
-          const specs = CLES_SPECS.map((cle) => product.attributs?.[cle]).filter(Boolean) as string[];
+          const specs = CLES_SPECS.map((c) => ({ ...c, valeur: product.attributs?.[c.cle] })).filter((c) => c.valeur);
           const enComparaison = comparaison.includes(product.id);
+          const garantie = product.attributs?.garantie_mois;
           return (
-            <div key={product.id} className="flex flex-col gap-[6px]">
-              <ProductCard
-                product={{ ...product, shop: null }}
-                locale={locale}
-                showShop={false}
-                imageHeight={118}
-              />
-              {versements > 1 && (
-                <p className="px-[4px] text-[0.8125rem] font-bold" style={{ color: "var(--theme-accent-fort)" }}>
-                  {prixAffiche(product.price)}
-                </p>
-              )}
-              {specs.length > 0 && (
-                <div className="flex gap-[4px] px-[4px]">
-                  {specs.map((v, i) => (
-                    <span
-                      key={i}
-                      className="flex-1 rounded-[10px] bg-[var(--theme-accent-doux)] px-[6px] py-[4px] text-center text-[0.5625rem] font-bold text-[var(--theme-accent-fort)]"
-                    >
-                      {v}
-                    </span>
-                  ))}
+            <div
+              key={product.id}
+              className="flex gap-[12px] rounded-[18px] border border-[var(--theme-bordure)] bg-[var(--theme-surface)] p-[10px] shadow-[var(--shadow-card)]"
+            >
+              <Link href={lienProduit(product)} className="relative h-[88px] w-[72px] flex-none overflow-hidden rounded-[14px]">
+                {product.images[0] ? (
+                  <Image src={product.images[0]} alt="" fill sizes="72px" className="object-cover" />
+                ) : (
+                  <Placeholder label="produit" className="h-full w-full" />
+                )}
+              </Link>
+              <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
+                <Link href={lienProduit(product)} className="truncate text-[0.8125rem] font-bold text-[var(--theme-texte,var(--color-ink))]">
+                  {product.name}
+                </Link>
+                {specs.length > 0 && (
+                  <div className="flex gap-[4px]">
+                    {specs.map((s) => (
+                      <span
+                        key={s.cle}
+                        className="flex flex-1 flex-col rounded-[10px] px-[6px] py-[4px] text-[0.5625rem]"
+                        style={{ background: "var(--theme-accent-doux)", color: "var(--theme-muted)" }}
+                      >
+                        <b className="text-[0.6875rem]" style={{ color: "var(--theme-accent-fort)" }}>
+                          {s.valeur}
+                        </b>
+                        {locale === "ar" ? s.labelAr : s.labelFr}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex flex-col">
+                    <span className="text-[0.875rem] font-bold">{prixAffiche(product.price)}</span>
+                    {garantie && (
+                      <span className="text-[0.59375rem] text-[var(--theme-muted,var(--color-muted))]">
+                        {locale === "ar" ? `ضمان ${garantie} شهر` : `Garantie ${garantie} mois`}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleComparaison(product.id)}
+                    className="flex-none rounded-[12px] px-[10px] py-[6px] text-[0.625rem] font-bold whitespace-nowrap"
+                    style={{
+                      background: enComparaison ? "var(--theme-accent)" : "transparent",
+                      color: enComparaison ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                      border: enComparaison ? "none" : "1px solid var(--theme-accent)",
+                    }}
+                  >
+                    {enComparaison ? "✓ " : "+ "}
+                    {t.product.compare}
+                  </button>
                 </div>
-              )}
-              <button
-                type="button"
-                onClick={() => toggleComparaison(product.id)}
-                className="mx-[4px] rounded-[10px] px-[8px] py-[6px] text-[0.625rem] font-bold"
-                style={{
-                  background: enComparaison ? "var(--theme-accent)" : "transparent",
-                  color: enComparaison ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-                  border: enComparaison ? "none" : "1px solid var(--theme-accent)",
-                }}
-              >
-                {enComparaison ? "✓ " : "+ "}
-                {t.product.compare}
-              </button>
+              </div>
             </div>
           );
         })}
@@ -232,15 +260,15 @@ export function ElectroniqueLayout({
                   </span>
                 ))}
               </div>
-              {CLES_SPECS.map((cle) => (
+              {CLES_SPECS.map((c) => (
                 <div
-                  key={cle}
+                  key={c.cle}
                   className="grid gap-[4px] border-t border-[var(--color-hairline)] p-[10px] text-[0.6875rem]"
                   style={{ gridTemplateColumns: `1.4fr repeat(${produitsComparés.length}, 1fr)` }}
                 >
-                  <span className="text-[var(--color-muted)]">{cle}</span>
+                  <span className="text-[var(--color-muted)]">{locale === "ar" ? c.labelAr : c.labelFr}</span>
                   {produitsComparés.map((p) => (
-                    <span key={p.id}>{p.attributs?.[cle] ?? "—"}</span>
+                    <span key={p.id}>{p.attributs?.[c.cle] ?? "—"}</span>
                   ))}
                 </div>
               ))}
