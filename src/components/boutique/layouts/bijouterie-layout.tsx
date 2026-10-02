@@ -48,6 +48,13 @@ export function BijouterieLayout({
   const diametreMm = (taille / Math.PI).toFixed(1);
   const diametrePx = Math.round(taille / Math.PI) * 3.2;
 
+  // Le cours du jour est optionnel, saisi par le vendeur sur n'importe quel
+  // produit de la matière active — on prend le premier trouvé plutôt que
+  // d'inventer un taux par défaut.
+  const tauxJour = matiereActive
+    ? produits.map((p) => p.attributs?.taux_jour).find(Boolean)
+    : undefined;
+
   return (
     <div className="flex flex-col gap-[14px]">
       {matieres.length > 0 && (
@@ -69,6 +76,17 @@ export function BijouterieLayout({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {tauxJour && (
+        <div className="flex items-center justify-between rounded-[16px] bg-[var(--theme-surface)] px-[13px] py-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.12)]">
+          <span className="text-[0.6875rem] text-[var(--theme-muted,var(--color-muted))]">
+            {locale === "ar" ? "سعر اليوم" : "Cours du jour"}
+          </span>
+          <span className="text-[0.875rem] font-bold" style={{ color: "var(--theme-accent-fort)" }}>
+            {tauxJour}
+          </span>
         </div>
       )}
 

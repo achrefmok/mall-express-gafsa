@@ -141,7 +141,7 @@ export default async function ShopPage({
     supabase
       .from("products")
       .select(
-        "id, name, price, compare_at_price, images, stock, sizes, category:categories(hue, slug, name_fr, name_ar)",
+        "id, name, price, compare_at_price, images, stock, sizes, colors, created_at, category:categories(hue, slug, name_fr, name_ar)",
       )
       .eq("shop_id", shop.id)
       .eq("is_online", true)
@@ -381,6 +381,7 @@ export default async function ShopPage({
           lives={lives.data ?? []}
           visible={visibleEnrichi}
           packs={packs}
+          couverture={enTete}
           locale={locale}
           t={t}
           userConnecte={Boolean(user)}

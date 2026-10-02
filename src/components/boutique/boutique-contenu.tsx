@@ -43,6 +43,7 @@ export function BoutiqueContenu({
   lives,
   visible,
   packs,
+  couverture,
   locale,
   t,
   userConnecte,
@@ -63,6 +64,7 @@ export function BoutiqueContenu({
   lives: Live[];
   visible: ProduitBoutique[];
   packs: PackBoutique[];
+  couverture: string | null;
   locale: AppLocale;
   t: Dictionary;
   userConnecte: boolean;
@@ -206,13 +208,13 @@ export function BoutiqueContenu({
           </div>
         )
       ) : theme.productLayout === "editorial" && theme.id === "mode" ? (
-        <ModeLayout visible={visible} locale={locale} theme={theme} />
+        <ModeLayout visible={visible} locale={locale} theme={theme} couverture={couverture} />
       ) : theme.productLayout === "technical" ? (
         <ElectroniqueLayout visible={visible} locale={locale} theme={theme} />
       ) : theme.productLayout === "beaute" ? (
         <BeauteLayout visible={visible} locale={locale} theme={theme} />
       ) : theme.productLayout === "maison" ? (
-        <MaisonLayout visible={visible} locale={locale} theme={theme} />
+        <MaisonLayout visible={visible} locale={locale} theme={theme} couverture={couverture} />
       ) : theme.productLayout === "bijouterie" ? (
         <BijouterieLayout visible={visible} locale={locale} theme={theme} />
       ) : theme.productLayout === "catalog" && theme.id === "parapharmacie" ? (

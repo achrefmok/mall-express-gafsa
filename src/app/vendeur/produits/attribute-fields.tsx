@@ -15,6 +15,7 @@ interface Champ {
 }
 
 const CHAMPS_ELECTRONIQUE: Champ[] = [
+  { cle: "marque", label: "Marque", placeholder: "Samsung, Apple…" },
   { cle: "stockage", label: "Stockage", placeholder: "128 Go" },
   { cle: "ecran", label: "Écran", placeholder: "6,1″" },
   { cle: "batterie", label: "Batterie (mAh)", placeholder: "5000" },
@@ -38,6 +39,7 @@ const PIECES = ["Salon", "Chambre", "Cuisine", "Bain", "Extérieur"];
 const CHAMPS_BIJOUTERIE: Champ[] = [
   { cle: "poids_g", label: "Poids (g)", placeholder: "4,2" },
   { cle: "collection", label: "Collection", placeholder: "Mariage, quotidien…" },
+  { cle: "taux_jour", label: "Cours du jour (facultatif)", placeholder: "300 DT / g" },
 ];
 
 const CHAMPS_PARAPHARMACIE: Champ[] = [{ cle: "besoin", label: "Besoin", placeholder: "Bébé, Solaire…" }];

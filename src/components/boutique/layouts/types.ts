@@ -9,6 +9,9 @@ import type { ProductCardData } from "@/components/cards/product-card";
  */
 export interface ProduitBoutique extends ProductCardData {
   sizes?: string[];
+  /** Couleurs hex du produit (`products.colors`) — réutilisées par Beauté comme teintes. */
+  colors?: string[];
+  created_at?: string;
   category?: { hue: number; slug?: string; name_fr?: string; name_ar?: string } | null;
   /** `{ "stockage": "128 Go", "poids_g": "12" }` — voir `product_attributes`. */
   attributs?: Record<string, string>;
