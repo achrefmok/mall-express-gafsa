@@ -40,8 +40,8 @@ export async function GET() {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f4f1fa",
-    theme_color: "#f4f1fa",
+    background_color: "#17131f",
+    theme_color: "#17131f",
     lang: "fr",
     dir: "auto", // bascule automatiquement en RTL quand l'interface passe en arabe
     categories: ["shopping", "lifestyle", "business"],

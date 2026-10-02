@@ -9,7 +9,7 @@ import { avecBlackFriday } from "@/lib/black-friday-server";
 import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
-import { reglesModeSombreTheme, resolveTheme, variablesTheme } from "@/lib/boutique-themes";
+import { resolveTheme, variablesTheme } from "@/lib/boutique-themes";
 import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique, lireZonesLivraison } from "@/lib/boutique-themes/attributs-server";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
@@ -242,7 +242,6 @@ export default async function ShopPage({
     origine — aucune catégorie n'y est inventée.
   */
   const theme = resolveTheme(shop.category?.slug);
-  const reglesSombre = reglesModeSombreTheme(theme);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -305,18 +304,16 @@ export default async function ShopPage({
     /*
       Deux niveaux, pas un seul : le fond du thème doit couvrir toute la
       largeur de l'écran, marges latérales comprises — sur un moniteur large,
-      le contenu reste borné à 1120px, mais le lavande générique de
-      `<body>` ne doit plus se voir de part et d'autre d'une boutique
-      « Alimentation ». Le niveau extérieur porte donc le fond et
-      `data-theme` (pour le mode sombre, voir `reglesModeSombreTheme`), le
-      niveau intérieur garde exactement la mise en page d'avant.
+      le contenu reste borné à 1120px, mais le fond générique de `<body>`
+      ne doit plus se voir de part et d'autre d'une boutique « Alimentation ».
+      Le niveau extérieur porte donc le fond et `data-theme`, le niveau
+      intérieur garde exactement la mise en page d'avant.
     */
     <div
       className="min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
       style={variablesTheme(theme)}
       data-theme={theme.id}
     >
-      {reglesSombre && <style dangerouslySetInnerHTML={{ __html: reglesSombre }} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}

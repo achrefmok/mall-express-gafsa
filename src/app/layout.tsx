@@ -72,10 +72,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5, // jamais 1 : bloquer le zoom casse l'accessibilité
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f1fa" },
-    { media: "(prefers-color-scheme: dark)", color: "#241f2e" },
-  ],
+  themeColor: "#17131f", // --color-app, seule palette de l'app (sombre, permanente)
   viewportFit: "cover", // permet l'usage de env(safe-area-inset-*)
 };
 

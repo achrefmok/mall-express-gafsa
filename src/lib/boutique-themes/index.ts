@@ -172,40 +172,18 @@ function versVariablesCss(palette: PaletteMode, prefixe: string): Record<string,
 
 /**
  * Les variables CSS à poser sur le conteneur de la page boutique, en style
- * inline — c'est la palette **claire** (ou sombre, si le thème l'est par
- * nature) qui sert de valeur par défaut. Le basculement automatique vers le
- * mode sombre du système se fait par `<StyleSombreTheme>`, ci-dessous : un
- * style inline ne peut pas exprimer une media query.
+ * inline — toujours la palette **sombre** : l'app n'a plus de mode clair
+ * (voir `globals.css`), la page boutique suit la même identité partout.
  */
 export function variablesTheme(theme: ThemeBoutique): CSSProperties {
-  const base = theme.sombreParNature ? theme.palettes.sombre : theme.palettes.clair;
-  const voile = theme.sombreParNature ? theme.couverture.voile.sombre : theme.couverture.voile.clair;
   return {
-    ...versVariablesCss(base, "theme"),
+    ...versVariablesCss(theme.palettes.sombre, "theme"),
     "--theme-rayon": theme.formes.rayon,
     "--theme-rayon-interieur": theme.formes.rayonInterieur,
     "--theme-police": theme.typographie.fontFamily,
-    "--theme-voile": voile,
+    "--theme-voile": theme.couverture.voile.sombre,
     "--theme-accent-sur-clair": theme.accentSurClair,
     "--pc-rayon": theme.formes.rayon,
     "--pc-rayon-interieur": theme.formes.rayonInterieur,
   } as CSSProperties;
-}
-
-/**
- * La feuille de style qui bascule un thème clair vers sa variante sombre
- * quand le système le demande — absente pour un thème "sombre par nature"
- * (Électronique, Voitures à venir), qui n'a rien à basculer : il affiche
- * déjà sa palette sombre en toute circonstance.
- */
-export function reglesModeSombreTheme(theme: ThemeBoutique): string | null {
-  if (theme.sombreParNature) return null;
-
-  const vars = versVariablesCss(theme.palettes.sombre, "theme");
-  vars["--theme-voile"] = theme.couverture.voile.sombre;
-  const declarations = Object.entries(vars)
-    .map(([nom, valeur]) => `${nom}: ${valeur};`)
-    .join(" ");
-
-  return `@media (prefers-color-scheme: dark) { [data-theme="${theme.id}"] { ${declarations} } }`;
 }

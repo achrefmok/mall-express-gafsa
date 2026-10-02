@@ -88,10 +88,8 @@ export function BoutiqueEnTete({
             que le dégradé.
           */}
           {/*
-            `--theme-voile` porte déjà la bonne valeur pour le mode courant
-            (clair ou sombre) — posée par `variablesTheme()` et basculée par
-            `reglesModeSombreTheme()`, jamais choisie ici en JS : le serveur
-            ne sait pas dans quel mode le navigateur va afficher la page.
+            `--theme-voile` porte déjà la bonne valeur (palette sombre,
+            toujours) — posée par `variablesTheme()`, jamais choisie ici.
           */}
           <span
             aria-hidden

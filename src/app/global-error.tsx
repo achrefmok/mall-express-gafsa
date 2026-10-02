@@ -53,8 +53,8 @@ export default function GlobalError({
           gap: 12,
           padding: "0 32px",
           textAlign: "center",
-          background: "#f4f1fa",
-          color: "#241f2e",
+          background: "#17131f",
+          color: "#ece8f2",
           fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
         }}
       >
@@ -77,13 +77,13 @@ export default function GlobalError({
 
         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>G-Mall est momentanément indisponible</h1>
 
-        <p style={{ margin: 0, maxWidth: "34ch", fontSize: 13, lineHeight: 1.6, color: "#6f6880" }}>
+        <p style={{ margin: 0, maxWidth: "34ch", fontSize: 13, lineHeight: 1.6, color: "#b3abc0" }}>
           Rechargez la page. Si cela persiste, réessayez dans quelques minutes —
           vos commandes et votre panier sont conservés.
         </p>
 
         {error.digest && (
-          <p style={{ margin: 0, fontFamily: "monospace", fontSize: 10, color: "#a79fb5" }}>
+          <p style={{ margin: 0, fontFamily: "monospace", fontSize: 10, color: "#9c94a9" }}>
             {error.digest}
           </p>
         )}
@@ -100,7 +100,7 @@ export default function GlobalError({
               fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
-              background: "#6d4b8f",
+              background: "#7a54a0",
               color: "#fff",
             }}
           >
@@ -115,7 +115,7 @@ export default function GlobalError({
               padding: "12px 18px",
               fontSize: 13,
               fontWeight: 600,
-              color: "#6d4b8f",
+              color: "#bd9ade",
               textDecoration: "none",
             }}
           >

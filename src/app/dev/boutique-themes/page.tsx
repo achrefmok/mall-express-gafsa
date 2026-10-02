@@ -11,11 +11,8 @@ import { Placeholder } from "@/components/ui/primitives";
  * n'a rien à faire dans un index de moteur de recherche ni devant un
  * visiteur réel.
  *
- * Chaque thème est montré deux fois — palette claire, palette sombre — en
- * forçant directement les jetons du mode voulu plutôt qu'en dépendant du
- * réglage du système : c'est un outil de revue, pas une démonstration du
- * vrai basculement `prefers-color-scheme` (que la page boutique, elle,
- * applique réellement — voir `reglesModeSombreTheme`).
+ * L'app n'a plus qu'une seule palette (sombre, permanente — voir
+ * `globals.css`) : chaque thème n'est donc montré qu'une fois ici.
  */
 export default function LaboThemesBoutique() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -23,10 +20,10 @@ export default function LaboThemesBoutique() {
   const themes = Object.values(THEMES);
 
   return (
-    <div className="flex min-h-dvh flex-col gap-10 bg-[#f4f1fa] p-6">
+    <div className="flex min-h-dvh flex-col gap-10 bg-[#17131f] p-6">
       <header>
-        <h1 className="text-[1.25rem] font-extrabold text-[#241f2e]">Labo — thèmes de boutique</h1>
-        <p className="mt-1 max-w-[640px] text-[0.8125rem] leading-[1.5] text-[#635c74]">
+        <h1 className="text-[1.25rem] font-extrabold text-[#ece8f2]">Labo — thèmes de boutique</h1>
+        <p className="mt-1 max-w-[640px] text-[0.8125rem] leading-[1.5] text-[#b3abc0]">
           {themes.length} thème(s) implémenté(s) — voir{" "}
           <code>src/lib/boutique-themes/</code>. Couleur, police et formes identiques à
           l&apos;app pour tous (voir <code>identite-app.ts</code>) ; seule la structure change
@@ -38,12 +35,11 @@ export default function LaboThemesBoutique() {
 
       {themes.map((theme) => (
         <section key={theme.id} className="flex flex-col gap-4">
-          <h2 className="text-[1rem] font-bold text-[#241f2e]">
+          <h2 className="text-[1rem] font-bold text-[#ece8f2]">
             {theme.label} — <span className="font-normal italic">{theme.ambiance.nom}</span>
           </h2>
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <VitrineFictive theme={theme} mode="clair" avecCouverture />
-            <VitrineFictive theme={theme} mode="sombre" avecCouverture={false} />
+            <VitrineFictive theme={theme} avecCouverture />
           </div>
         </section>
       ))}
@@ -65,43 +61,18 @@ const PRODUITS_FICTIFS = [
  */
 function VitrineFictive({
   theme,
-  mode,
   avecCouverture,
 }: {
   theme: ThemeBoutique;
-  mode: "clair" | "sombre";
   avecCouverture: boolean;
 }) {
-  const palette = theme.palettes[mode];
-  const voile = theme.couverture.voile[mode];
-
-  const style = {
-    ...variablesTheme(theme),
-    // On écrase la sélection automatique de `variablesTheme` (qui choisit
-    // clair sauf thème sombre par nature) pour montrer explicitement le mode
-    // demandé, quel que soit `sombreParNature`.
-    "--theme-fond": palette.background,
-    "--theme-surface": palette.surface,
-    "--theme-accent": palette.accent,
-    "--theme-accent-texte": palette.accentTexte,
-    "--theme-accent-doux": palette.accentDoux,
-    "--theme-accent-fort": palette.accentFort,
-    "--theme-texte": palette.text,
-    "--theme-muted": palette.muted,
-    "--theme-bordure": palette.border,
-    "--theme-voile": voile,
-  } as React.CSSProperties;
+  const style = variablesTheme(theme) as React.CSSProperties;
 
   return (
     <div
       className="overflow-hidden rounded-[20px] border"
       style={{ ...style, background: "var(--theme-fond)", borderColor: "var(--theme-bordure)" }}
     >
-      <div className="flex items-center justify-between px-4 py-2 text-[0.625rem] font-bold uppercase" style={{ color: "var(--theme-muted)" }}>
-        <span>{mode === "clair" ? "Palette claire" : "Palette sombre"}</span>
-        {theme.sombreParNature && <span>Sombre par nature</span>}
-      </div>
-
       {/* Couverture, avec ou sans photo — le fallback thématisé n'est pas encore implémenté (voir TODO.md). */}
       {avecCouverture ? (
         <div className="relative h-[100px] w-full" style={{ background: "var(--theme-accent-doux)" }}>

@@ -45,17 +45,20 @@ export const NOM_APPLICATION = "G-Mall";
 export const NOM_COURT = "G-Mall";
 
 /**
- * Les teintes de la marque, recopiées des jetons de `globals.css`.
+ * Les teintes de la marque, pour l'icône générée et l'image de partage, qui
+ * tournent hors de toute feuille de style — d'où des valeurs en dur plutôt
+ * que lues.
  *
- * Recopiées et non lues, parce que ceux qui les utilisent — l'icône
- * générée, l'image de partage — tournent hors de toute feuille de style.
- * Si `--color-brand` change, ces valeurs doivent suivre.
+ * Volontairement indépendantes des jetons de `globals.css` (devenu
+ * permanemment sombre) : ces visuels composent une carte claire sur la
+ * photo partagée, pas l'interface de l'app — voir `og.tsx`, qui bascule
+ * lui-même vers du blanc sur fond sombre quand la photo l'exige.
  */
 export const COULEURS_MARQUE = {
-  violet: "#6d4b8f", // --color-brand
-  violetFonce: "#5a3a78", // --color-brand-strong
-  fond: "#f4f1fa", // --color-app
-  encre: "#241f2e", // --color-ink
+  violet: "#6d4b8f",
+  violetFonce: "#5a3a78",
+  fond: "#f4f1fa",
+  encre: "#241f2e",
 } as const;
 
 /** Le logo, avec l'empreinte de sa version. */
