@@ -52,7 +52,7 @@ export function ShopSettingsForm({
   facebookConfigured: boolean;
   facebookWebhookEnabled: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, locale: localeActif, setLocale } = useI18n();
 
   const [name, setName] = useState(shop.name);
   const [phone, setPhone] = useState(shop.phone ?? "");
@@ -558,6 +558,23 @@ export function ShopSettingsForm({
                 />
               </KeyValueRow>
             </div>
+          </Card>
+        </section>
+
+        {/* ─── Affichage ──────────────────────────────────────────────── */}
+        <section className="flex flex-none flex-col gap-2">
+          <SectionTitle>Affichage</SectionTitle>
+
+          <Card className="flex flex-col gap-[10px] p-3">
+            <KeyValueRow label="Langue">
+              <button
+                type="button"
+                onClick={() => setLocale(localeActif === "ar" ? "fr" : "ar")}
+                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.6875rem] font-bold text-[var(--color-brand)]"
+              >
+                {localeActif === "ar" ? "العربية" : "Français"}
+              </button>
+            </KeyValueRow>
           </Card>
         </section>
 
