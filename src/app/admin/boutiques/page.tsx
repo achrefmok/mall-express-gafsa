@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
 import { formatCount, formatRating, monogram, timeAgo } from "@/lib/format";
@@ -35,6 +36,13 @@ export default async function AdminShopsPage() {
       <TopBar title={t.nav.shops} back="/admin" />
 
       <div className="no-sb flex flex-1 flex-col gap-[10px] overflow-y-auto lg:grid lg:grid-cols-2 lg:content-start px-4 pt-2 pb-4">
+        <Link
+          href="/admin/activation"
+          className="press flex flex-none items-center justify-center gap-2 rounded-[14px] border border-dashed border-[var(--color-brand)] py-3 text-[0.75rem] font-bold text-[var(--color-brand)] lg:col-span-full"
+        >
+          + Créer une boutique
+        </Link>
+
         {(shops ?? []).length === 0 ? (
           <EmptyState title={t.common.empty} />
         ) : (
@@ -55,20 +63,22 @@ export default async function AdminShopsPage() {
               />
             ) : (
               <Card key={shop.id} className="flex flex-none items-center gap-[10px] p-[11px]">
-                <span
-                  className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[0.6875rem] font-bold"
-                  style={{ "--hue": shop.category?.hue ?? 300 } as React.CSSProperties}
-                >
-                  {monogram(shop.name)}
-                </span>
+                <Link href={`/admin/boutiques/${shop.id}`} className="flex min-w-0 flex-1 items-center gap-[10px]">
+                  <span
+                    className="cat-surface cat-ink flex h-8 w-8 flex-none items-center justify-center rounded-full text-[0.6875rem] font-bold"
+                    style={{ "--hue": shop.category?.hue ?? 300 } as React.CSSProperties}
+                  >
+                    {monogram(shop.name)}
+                  </span>
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">{shop.name}</p>
-                  <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
-                    {shop.category?.name_fr} · {formatCount(shop.followers_count)} {t.shop.followers} ·{" "}
-                    {formatRating(shop.rating_sum, shop.rating_count)} ★
-                  </p>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">{shop.name}</p>
+                    <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
+                      {shop.category?.name_fr} · {formatCount(shop.followers_count)} {t.shop.followers} ·{" "}
+                      {formatRating(shop.rating_sum, shop.rating_count)} ★
+                    </p>
+                  </div>
+                </Link>
 
                 <div className="flex flex-none items-center gap-2">
                   {shop.status === "rejected" && <Tag tone="live">{statusLabel(shop.status)}</Tag>}

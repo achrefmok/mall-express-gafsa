@@ -216,6 +216,13 @@ export const FlagIcon = (p: IconProps) => (
   </Svg>
 );
 
+export const ShieldIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M10 2.5l6 2.2v4.8c0 4-2.5 6.8-6 8-3.5-1.2-6-4-6-8V4.7z" />
+    <path d="M7.3 9.7l1.9 1.9 3.5-3.9" />
+  </Svg>
+);
+
 /** Point plein « en direct », animé. */
 export const LiveDot = ({ size = 10 }: { size?: number }) => (
   <span

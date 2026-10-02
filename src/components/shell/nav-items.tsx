@@ -4,12 +4,13 @@ import { useI18n } from "@/lib/i18n/provider";
 import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import {
   BoxIcon,
-  FlagIcon,
+  DotsIcon,
   GearIcon,
   GridIcon,
   HeartIcon,
   HomeIcon,
   LiveDot,
+  ShieldIcon,
   SparkIcon,
   StoreIcon,
   UserIcon,
@@ -53,16 +54,20 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/vendeur/roue", label: "Roue", icon: <SparkIcon size={17} /> },
       { href: "/vendeur/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
     ],
+    /*
+      Neuf écrans vivent sous /admin, mais une barre d'onglets n'en tient
+      lisiblement que cinq. Les cinq les plus consultés (modération et
+      gestion courantes) restent ici ; les autres (Signalements, Pharmacies,
+      Partenaires, G-Shop, Black Friday, Catégories, Réglages) se retrouvent
+      groupés par thème sur /admin/plus, un onglet de plus plutôt qu'une
+      barre qui déborde.
+    */
     admin: [
       { href: "/admin", label: t.nav.dashboard, icon: <HomeIcon size={17} />, exact: true },
       { href: "/admin/boutiques", label: t.nav.shops, icon: <StoreIcon size={17} /> },
       { href: "/admin/membres", label: t.nav.members, icon: <UserIcon size={17} /> },
-      { href: "/admin/signalements", label: t.nav.reports, icon: <FlagIcon size={17} /> },
-      { href: "/admin/pharmacies", label: t.admin.pharmacies, icon: <SparkIcon size={17} /> },
-      { href: "/admin/partenaires", label: "Partenaires", icon: <StoreIcon size={17} /> },
-      { href: "/admin/free-shop", label: "G-Shop", icon: <HeartIcon size={17} /> },
-      { href: "/admin/black-friday", label: "Black Friday", icon: <SparkIcon size={17} /> },
-      { href: "/admin/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
+      { href: "/admin/securite", label: "Sécurité", icon: <ShieldIcon size={17} /> },
+      { href: "/admin/plus", label: "Plus", icon: <DotsIcon size={17} /> },
     ],
   };
 

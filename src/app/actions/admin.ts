@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { done, fail, ok, readableError, requireAdmin } from "./_helpers";
 import type { UserRole } from "@/types/database";
 import { createAdminClient } from "@/lib/supabase/server";
+import { signaler } from "@/lib/signal";
 
 /* ─── Validation des boutiques (écran 14) ──────────────────────────────── */
 
@@ -36,6 +38,61 @@ export async function rejectShop(shopId: string, reason: string, missingDocument
   if (rpcError) return fail(readableError(rpcError));
 
   revalidatePath("/admin");
+  return done();
+}
+
+/**
+ * Corrige la fiche d'une boutique depuis l'administration.
+ *
+ * Pour une faute de frappe, une adresse à jour ou une catégorie mal choisie
+ * à l'inscription — sans repasser par le compte du commerçant, qui n'a pas
+ * toujours la main (boutique créée par code d'activation, compte perdu…).
+ */
+export async function updateShopAdmin(
+  shopId: string,
+  input: {
+    name: string;
+    nameAr?: string;
+    categoryId?: string | null;
+    address?: string;
+    phone?: string;
+    whatsapp?: string;
+    instagram?: string;
+    facebookUrl?: string;
+    mallLevel?: number | null;
+    mallUnit?: string;
+  },
+) {
+  const { supabase, profile, error } = await requireAdmin();
+  if (!profile) return fail(error);
+
+  const name = input.name.trim();
+  if (name.length < 2) return fail("Le nom de la boutique est obligatoire");
+
+  const { error: e } = await supabase
+    .from("shops")
+    .update({
+      name,
+      name_ar: input.nameAr?.trim() || null,
+      category_id: input.categoryId || null,
+      address: input.address?.trim() || null,
+      phone: input.phone?.trim() || null,
+      whatsapp: input.whatsapp?.trim() || null,
+      instagram: input.instagram?.trim() || null,
+      facebook_url: input.facebookUrl?.trim() || null,
+      mall_level: input.mallLevel ?? null,
+      mall_unit: input.mallUnit?.trim() || null,
+    })
+    .eq("id", shopId);
+
+  if (e) return fail(readableError(e));
+
+  const { data: boutique } = await supabase.from("shops").select("slug").eq("id", shopId).maybeSingle();
+
+  revalidatePath(`/admin/boutiques/${shopId}`);
+  revalidatePath("/admin/boutiques");
+  revalidatePath("/marketplace");
+  if (boutique?.slug) revalidatePath(`/boutique/${boutique.slug}`);
   return done();
 }
 
@@ -104,6 +161,8 @@ export async function setMemberRole(userId: string, role: UserRole) {
   const { supabase, profile, error } = await requireAdmin();
   if (!profile) return fail(error);
 
+  const { data: avant } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+
   // La règle « il reste toujours un administrateur » est appliquée en SQL :
   // elle doit tenir même si deux consoles retirent un rôle en même temps.
   const { error: e } = await supabase.rpc("set_member_role", {
@@ -113,8 +172,26 @@ export async function setMemberRole(userId: string, role: UserRole) {
 
   if (e) return fail(readableError(e));
 
+  // Journal pour /admin/securite — voir `role_changes`. Best-effort : un échec
+  // ici ne doit jamais faire paraître le changement de rôle lui-même en échec.
+  // Table absente des types générés tant que la migration n'est pas collée
+  // (même raison que `product_packs` dans `vendor.ts`) : client non typé.
+  if (avant && avant.role !== role) {
+    const client = supabase as unknown as SupabaseClient;
+    const { error: logError } = await client.from("role_changes").insert({
+      target_id: userId,
+      previous_role: avant.role,
+      new_role: role,
+      changed_by: profile.id,
+    });
+    if (logError && !["42P01", "PGRST205"].includes(logError.code)) {
+      signaler(logError, { ou: "journal des changements de rôle", quoi: { userId } });
+    }
+  }
+
   revalidatePath("/admin/membres");
   revalidatePath("/admin");
+  revalidatePath("/admin/securite");
   return done();
 }
 
