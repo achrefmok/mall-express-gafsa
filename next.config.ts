@@ -224,6 +224,14 @@ const nextConfig: NextConfig = {
       */
       { source: "/bons-plans", destination: "/free-shop", permanent: true },
       { source: "/bons-plans/:chemin*", destination: "/free-shop/:chemin*", permanent: true },
+      /*
+        CAPSA PHONE s'était inscrite avec son adresse e-mail en guise de nom
+        de boutique — slugifiée telle quelle, elle fuitait dans chaque lien
+        partagé (voir `ressembleAUneAdresseEmail`, qui bloque désormais la
+        récidive). Le nom a été corrigé et le slug régénéré ; ce 308 évite
+        qu'un lien déjà partagé ne tombe en 404.
+      */
+      { source: "/boutique/touta-imed1-gmail-com", destination: "/boutique/capsa-phone", permanent: true },
     ];
   },
 

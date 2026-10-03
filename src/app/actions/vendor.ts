@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
+import { ressembleAUneAdresseEmail } from "@/lib/format";
 import type { Database, OrderStatus } from "@/types/database";
 
 /* ─── Catalogue ────────────────────────────────────────────────────────── */
@@ -283,6 +284,11 @@ export async function createMyShop(input: {
 
   const name = input.name.trim();
   if (name.length < 2) return fail("Le nom de la boutique est obligatoire");
+  // Le nom devient le slug, l'adresse publique de la boutique — voir
+  // `ressembleAUneAdresseEmail`.
+  if (ressembleAUneAdresseEmail(name)) {
+    return fail("Le nom de la boutique ne doit pas être une adresse e-mail");
+  }
 
   const { data: existing } = await supabase
     .from("shops")

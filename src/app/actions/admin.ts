@@ -6,6 +6,7 @@ import { done, fail, ok, readableError, requireAdmin } from "./_helpers";
 import type { UserRole } from "@/types/database";
 import { createAdminClient } from "@/lib/supabase/server";
 import { signaler } from "@/lib/signal";
+import { ressembleAUneAdresseEmail } from "@/lib/format";
 
 /* ─── Validation des boutiques (écran 14) ──────────────────────────────── */
 
@@ -68,6 +69,9 @@ export async function updateShopAdmin(
 
   const name = input.name.trim();
   if (name.length < 2) return fail("Le nom de la boutique est obligatoire");
+  if (ressembleAUneAdresseEmail(name)) {
+    return fail("Le nom de la boutique ne doit pas être une adresse e-mail");
+  }
 
   const { error: e } = await supabase
     .from("shops")

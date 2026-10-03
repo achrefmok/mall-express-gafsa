@@ -134,6 +134,22 @@ export function shortName(
   return initial ? `${first} ${initial}.` : first;
 }
 
+/**
+ * Un nom de boutique qui ressemble à une adresse e-mail.
+ *
+ * Le nom sert de base au slug (`slugify`), qui devient l'adresse publique de
+ * la boutique — `/boutique/<slug>`. Une adresse e-mail saisie là (par erreur,
+ * ou faute de mieux au moment de l'inscription) finit donc translittérée dans
+ * une URL que l'app partage activement (BoutonPartage, images Open Graph) :
+ * l'adresse du commerçant fuite dans chaque lien partagé, même après qu'il
+ * ait renommé sa boutique — le slug, lui, ne change pas rétroactivement.
+ * Un seul « @ » suffit à la repérer, sans faux positif sur un nom de
+ * boutique ordinaire.
+ */
+export function ressembleAUneAdresseEmail(nom: string): boolean {
+  return nom.includes("@");
+}
+
 /** Discount percentage from a compare-at price. */
 export function percentOff(price: number, compareAt: number | null | undefined): number | null {
   if (!compareAt || compareAt <= price) return null;

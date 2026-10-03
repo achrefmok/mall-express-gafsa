@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { ressembleAUneAdresseEmail } from "@/lib/format";
 import { done, fail, ok } from "./_helpers";
 
 /**
@@ -66,6 +67,12 @@ export async function signUp(input: {
   if (input.role === "vendor") {
     if (!input.shopName?.trim()) return fail("Le nom de la boutique est obligatoire");
     if (!input.shopLocation?.trim()) return fail("Le local au mall ou l'adresse est obligatoire");
+    // Le nom devient l'adresse publique de la boutique (slug) : une adresse
+    // e-mail saisie là fuiterait dans chaque lien partagé — voir
+    // `ressembleAUneAdresseEmail`.
+    if (ressembleAUneAdresseEmail(input.shopName.trim())) {
+      return fail("Le nom de la boutique ne doit pas être une adresse e-mail");
+    }
   }
 
   const supabase = await createClient();

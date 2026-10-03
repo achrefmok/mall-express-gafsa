@@ -5,6 +5,7 @@ import {
   fullName,
   monogram,
   percentOff,
+  ressembleAUneAdresseEmail,
   shortName,
 } from "./format";
 
@@ -101,6 +102,20 @@ describe("fullName et shortName", () => {
   it("rendent une chaîne vide sans profil, jamais « null »", () => {
     expect(fullName(null)).toBe("");
     expect(shortName(undefined)).toBe("");
+  });
+});
+
+describe("ressembleAUneAdresseEmail", () => {
+  it("repère une adresse e-mail saisie comme nom de boutique", () => {
+    // Le cas réel qui a motivé la fonction : CAPSA PHONE s'était inscrite
+    // avec son adresse en guise de nom, slugifiée telle quelle dans chaque
+    // lien partagé (/boutique/touta-imed1-gmail-com).
+    expect(ressembleAUneAdresseEmail("touta.imed1@gmail.com")).toBe(true);
+  });
+
+  it("laisse passer un nom de boutique ordinaire", () => {
+    expect(ressembleAUneAdresseEmail("CAPSA PHONE")).toBe(false);
+    expect(ressembleAUneAdresseEmail("Zara Mall Gafsa")).toBe(false);
   });
 });
 

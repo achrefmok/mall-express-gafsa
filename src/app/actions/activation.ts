@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireAdmin } from "./_helpers";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { signaler } from "@/lib/signal";
+import { ressembleAUneAdresseEmail } from "@/lib/format";
 
 /**
  * Activation d'une boutique par code.
@@ -68,6 +69,11 @@ export async function creerBoutiqueAvecCode(input: {
 
   const name = input.name.trim();
   if (name.length < 2) return fail("Le nom de la boutique est obligatoire");
+  // Le nom devient le slug, l'adresse publique de la boutique — voir
+  // `ressembleAUneAdresseEmail`.
+  if (ressembleAUneAdresseEmail(name)) {
+    return fail("Le nom de la boutique ne doit pas être une adresse e-mail");
+  }
 
   const jours = Math.round(input.validityDays);
   if (!Number.isFinite(jours) || jours < 1 || jours > 90) {
