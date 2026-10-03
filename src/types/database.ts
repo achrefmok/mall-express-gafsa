@@ -1892,6 +1892,8 @@ export interface Database {
       };
       owns_shop: { Args: { target_shop_id: string }; Returns: boolean };
       owns_exhibitor: { Args: { target_exhibitor_id: string }; Returns: boolean };
+      is_courier: { Args: Record<PropertyKey, never>; Returns: boolean };
+      notify_courier_ready: { Args: { p_order_id: string }; Returns: undefined };
       slugify: { Args: { input: string }; Returns: string };
       search_catalog: {
         Args: { q: string; limit_count?: number };

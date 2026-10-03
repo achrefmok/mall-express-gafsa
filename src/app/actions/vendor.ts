@@ -251,15 +251,9 @@ export async function advanceOrder(orderId: string, status: OrderStatus) {
   // ignore les commandes en retrait (delivery_method ≠ 'delivery') ; on
   // avale son erreur pour ne jamais faire échouer le changement de statut
   // à cause d'un souci de notification (même choix que le patron taxi).
-  //
-  // `notify_courier_ready` n'existe pas encore dans les types générés
-  // (migration collée manuellement, voir le projet) — client non typé pour
-  // cet appel seulement, même choix que `product_attributes` plus haut.
   if (status === "ready") {
     try {
-      await (supabase as unknown as SupabaseClient).rpc("notify_courier_ready", {
-        p_order_id: orderId,
-      });
+      await supabase.rpc("notify_courier_ready", { p_order_id: orderId });
     } catch {
       // tant pis, le statut est déjà enregistré
     }
