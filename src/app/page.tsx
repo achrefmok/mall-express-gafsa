@@ -5,6 +5,10 @@ import { createStaticClient } from "@/lib/supabase/server";
 import { Reveal } from "@/components/marketing/reveal";
 import { LaunchButtons } from "@/components/marketing/launch-buttons";
 import { Hero3D } from "@/components/marketing/hero-3d";
+import { HeroMockup } from "@/components/marketing/hero-mockup";
+import { Marquee } from "@/components/marketing/marquee";
+import { StatsCounter } from "@/components/marketing/stats-counter";
+import { FonctionnementTabs } from "@/components/marketing/fonctionnement-tabs";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Coordonnées
@@ -261,68 +265,17 @@ export default async function PresentationPage() {
               </div>
 
               <Reveal delay={200} className="relative">
-                <div className="relative w-[280px] rounded-[34px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] p-3 shadow-[0_30px_70px_rgba(60,40,90,0.20)] sm:w-[320px]">
-                <div className="flex flex-col gap-3 rounded-[26px] bg-[var(--color-field)] p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
-                      G-<span className="text-[var(--color-brand)]">Mall</span>
-                    </p>
-                    <span className="flex h-2 w-2 rounded-full bg-[var(--color-live-fill)]" />
-                  </div>
-
-                  <div className="rounded-[18px] bg-[image:var(--gradient-brand)] p-4 text-white">
-                    <p className="text-[0.65625rem] opacity-80">En direct maintenant</p>
-                    <p className="mt-1 text-[0.875rem] font-bold">Collection automne</p>
-                    <p className="mt-2 text-[0.625rem] opacity-80">128 spectateurs · 3 produits épinglés</p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {[300, 25, 165].map((hue, index) => (
-                      <div
-                        key={hue}
-                        className="cat-surface cat-ring flex h-[58px] flex-col items-center justify-center gap-1 rounded-[16px]"
-                        style={{ "--hue": hue } as React.CSSProperties}
-                      >
-                        <span className="cat-ink text-[0.8125rem] font-bold">
-                          {["MD", "AL", "SA"][index]}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-[14px] border border-[var(--color-outline)] bg-[var(--color-veil)] p-2">
-                    <span className="ph-stripe h-9 w-9 flex-none rounded-[12px]" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
-                        Retrait au mall en 30 min
-                      </p>
-                      <p className="text-[0.59375rem] text-[var(--color-muted)]">
-                        Niveau 1 — Local B12
-                      </p>
-                    </div>
-                    <span className="flex-none rounded-[10px] bg-[var(--color-brand-fill)] px-2 py-1 text-[0.59375rem] font-bold text-white">
-                      Voir
-                    </span>
-                  </div>
-                </div>
-              </div>
+                <HeroMockup />
               </Reveal>
             </div>
           </div>
         </section>
 
+        <Marquee />
+
         {/* ═══ Chiffres ════════════════════════════════════════════════ */}
-        <section className="border-y border-[var(--color-hairline)] bg-white/45">
-          <div className="mx-auto grid max-w-[1140px] grid-cols-2 gap-6 px-5 py-10 md:grid-cols-4 lg:px-8">
-            {figures.map((figure, index) => (
-              <Reveal key={figure.label} delay={index * 70} className="text-center">
-                <p className="text-[1.875rem] leading-none font-bold text-[var(--color-brand)] lg:text-[2.375rem]">
-                  {figure.value}
-                </p>
-                <p className="mt-2 text-[0.75rem] text-[var(--color-muted)]">{figure.label}</p>
-              </Reveal>
-            ))}
-          </div>
+        <section className="border-b border-[var(--color-hairline)] bg-white/45">
+          <StatsCounter figures={figures} />
         </section>
 
         {/* ═══ Le projet ═══════════════════════════════════════════════ */}
@@ -382,44 +335,18 @@ export default async function PresentationPage() {
               </h2>
             </Reveal>
 
-            <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:gap-14">
-              {(
-                [
+            <Reveal delay={80} className="mt-12">
+              <FonctionnementTabs
+                columns={[
                   { title: "Vous achetez", steps: STEPS_CLIENT, cta: null },
                   {
                     title: "Vous tenez une boutique",
                     steps: STEPS_VENDOR,
                     cta: { href: "/inscription?role=vendeur", label: "Ouvrir ma boutique" },
                   },
-                ] as const
-              ).map((column, columnIndex) => (
-                <Reveal key={column.title} delay={columnIndex * 120}>
-                  <h3 className="text-[1.125rem] font-bold text-[var(--color-ink)]">{column.title}</h3>
-
-                  <ol className="mt-5 flex flex-col gap-5">
-                    {column.steps.map((step, index) => (
-                      <li key={step} className="flex gap-4">
-                        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--color-brand-tint)] text-[0.8125rem] font-bold text-[var(--color-brand)]">
-                          {index + 1}
-                        </span>
-                        <p className="pt-[6px] text-[0.84375rem] leading-[1.6] text-[var(--color-muted)]">
-                          {step}
-                        </p>
-                      </li>
-                    ))}
-                  </ol>
-
-                  {column.cta && (
-                    <Link
-                      href={column.cta.href}
-                      className="mt-6 inline-flex min-h-[46px] items-center rounded-[16px] bg-[var(--color-ink)] px-6 text-[0.84375rem] font-bold text-[var(--color-app)] transition-transform hover:-translate-y-0.5"
-                    >
-                      {column.cta.label}
-                    </Link>
-                  )}
-                </Reveal>
-              ))}
-            </div>
+                ]}
+              />
+            </Reveal>
           </div>
         </section>
 
