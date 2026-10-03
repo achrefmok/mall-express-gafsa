@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { createStaticClient } from "@/lib/supabase/server";
 import { Reveal } from "@/components/marketing/reveal";
 import { LaunchButtons } from "@/components/marketing/launch-buttons";
+import { Hero3D } from "@/components/marketing/hero-3d";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Coordonnées
@@ -163,7 +164,7 @@ export default async function PresentationPage() {
   ];
 
   return (
-    <div className="min-h-dvh bg-[var(--color-workshop)]">
+    <div className="clair-marketing min-h-dvh bg-[var(--color-workshop)]">
       {/* ═══ En-tête ═══════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-40 border-b border-[var(--color-hairline)] bg-[var(--color-workshop)]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
@@ -245,8 +246,22 @@ export default async function PresentationPage() {
             </div>
 
             {/* Aperçu : la vraie coque de l'application, à sa largeur réelle. */}
-            <Reveal delay={200} className="justify-self-center lg:justify-self-end">
-              <div className="relative w-[280px] rounded-[34px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] p-3 shadow-[0_30px_70px_rgba(60,40,90,0.20)] sm:w-[320px]">
+            <div className="relative justify-self-center lg:justify-self-end">
+              {/*
+                La scène 3D flotte derrière la maquette, pas devant : elle ne
+                doit jamais gêner la lecture de l'aperçu, seulement lui
+                donner de la place autour. Masquée sous `sm` — le canevas
+                WebGL coûte une initialisation GPU que les halos flous (eux,
+                CSS pur) n'imposent pas, et un téléphone d'entrée de gamme
+                garde le repli calme plutôt que de payer ce coût pour un
+                agrément qui, à cette taille d'écran, se voit à peine.
+              */}
+              <div className="absolute inset-[-70px] hidden sm:block">
+                <Hero3D />
+              </div>
+
+              <Reveal delay={200} className="relative">
+                <div className="relative w-[280px] rounded-[34px] border border-[var(--color-surface-edge)] bg-[var(--color-app)] p-3 shadow-[0_30px_70px_rgba(60,40,90,0.20)] sm:w-[320px]">
                 <div className="flex flex-col gap-3 rounded-[26px] bg-[var(--color-field)] p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
@@ -291,7 +306,8 @@ export default async function PresentationPage() {
                   </div>
                 </div>
               </div>
-            </Reveal>
+              </Reveal>
+            </div>
           </div>
         </section>
 

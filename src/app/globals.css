@@ -159,6 +159,72 @@ img {
   filter: brightness(0.94);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Page « projet » (/) — seule exception au sombre permanent
+   ═══════════════════════════════════════════════════════════════════════
+   Décision explicite et confirmée : la vitrine publique du projet reste
+   claire, par contraste avec l'application (en sombre permanent depuis la
+   décision précédente). Les valeurs ci-dessous sont celles qui vivaient en
+   clair avant cette décision — reprises ici plutôt que redevinées, pour
+   rester au pixel près de l'identité d'origine.
+
+   Posé sur le conteneur racine de `src/app/page.tsx` (`.clair-marketing`) :
+   la cascade des jetons `--color-*` couvre tout le sous-arbre sans toucher
+   au reste de l'app, qui ne lit jamais cette classe. */
+.clair-marketing {
+  --color-app: #f4f1fa;
+  --color-workshop: #eae5f2;
+  --color-brand: #6d4b8f;
+  --color-brand-fill: #6d4b8f;
+  --color-brand-tint: rgba(109, 75, 143, 0.1);
+  --color-brand-strong: #5a3a78;
+  --color-ink: #241f2e;
+  --color-muted: #635c74;
+  --color-faint: #767085;
+  --color-live: oklch(0.52 0.17 10);
+  --color-live-fill: oklch(0.52 0.17 10);
+  --color-live-tint: oklch(0.52 0.17 10 / 0.12);
+  --color-success: #2e8b57;
+  --color-hairline: rgba(60, 40, 90, 0.09);
+  --color-outline: rgba(60, 40, 90, 0.14);
+  --color-surface: rgba(255, 255, 255, 0.85);
+  --color-surface-edge: rgba(255, 255, 255, 0.9);
+  --color-track: rgba(60, 40, 90, 0.16);
+  --color-surface-solid: #ffffff;
+  --color-field: rgba(255, 255, 255, 0.6);
+  --color-veil: rgba(255, 255, 255, 0.72);
+  --shadow-card: 0 6px 18px rgba(60, 40, 90, 0.07);
+  --shadow-search: 0 4px 14px rgba(60, 40, 90, 0.07);
+  --shadow-fab: 0 6px 18px rgba(60, 40, 90, 0.3);
+  --gradient-brand: linear-gradient(135deg, #6d4b8f, #241f2e);
+  color-scheme: light;
+}
+
+/* Les pastilles de catégorie sont un mélange avec `--color-app` : en clair,
+   elles doivent redevenir la formule d'origine (plus sombre que le fond),
+   sinon elles gardent la formule éclaircie pensée pour un fond sombre. */
+.clair-marketing .cat-ink {
+  color: oklch(0.47 0.12 var(--hue, 300));
+}
+
+.clair-marketing .cat-surface {
+  background: color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 14%, var(--color-app));
+}
+
+.clair-marketing .cat-rule {
+  background: oklch(0.47 0.12 var(--hue, 300));
+}
+
+.clair-marketing .cat-ring {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 30%, transparent);
+}
+
+/* L'assombrissement global des photos est une correction pour fond sombre :
+   sans objet ici. */
+.clair-marketing img {
+  filter: none;
+}
+
 html {
   /* 16px × échelle : toutes les tailles en rem suivent. */
   font-size: calc(100% * var(--text-scale));
