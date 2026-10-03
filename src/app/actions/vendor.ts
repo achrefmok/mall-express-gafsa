@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
 import { ressembleAUneAdresseEmail } from "@/lib/format";
-import type { Database, OrderStatus } from "@/types/database";
+import { traduireTexte } from "@/lib/translate";
+import type { AppLocale, Database, OrderStatus } from "@/types/database";
 
 /* ─── Catalogue ────────────────────────────────────────────────────────── */
 
@@ -347,9 +348,15 @@ export async function createMyShop(input: {
 
 export async function updateShopSettings(input: {
   name?: string;
-  nameAr?: string;
+  /**
+   * Description écrite dans un seul champ : plus de paire FR/AR à saisir
+   * deux fois. `contentLocale` dit dans quelle langue `name`/`description`
+   * viennent d'être écrits — c'est l'interface du commerçant au moment où
+   * il tape, pas un choix séparé — et sert de source à la traduction
+   * automatique vers l'autre langue (voir `traduireTexte`).
+   */
   description?: string;
-  descriptionAr?: string;
+  contentLocale?: AppLocale;
   logoUrl?: string | null;
   coverUrl?: string | null;
   bannerUrl?: string | null;
@@ -375,10 +382,37 @@ export async function updateShopSettings(input: {
   // guard_shop_privileges : inutile de les filtrer ici, mais on ne les
   // transmet pas non plus.
   const patch: Database["public"]["Tables"]["shops"]["Update"] = {};
-  if (input.name !== undefined) patch.name = input.name.trim();
-  if (input.nameAr !== undefined) patch.name_ar = input.nameAr.trim() || null;
-  if (input.description !== undefined) patch.description = input.description.trim() || null;
-  if (input.descriptionAr !== undefined) patch.description_ar = input.descriptionAr.trim() || null;
+  const depuis = input.contentLocale ?? "fr";
+  const vers = depuis === "ar" ? "fr" : "ar";
+
+  if (input.name !== undefined) {
+    const propre = input.name.trim();
+    if (depuis === "ar") {
+      patch.name_ar = propre || null;
+      // `name` est NOT NULL : jamais vidé si la traduction échoue, la
+      // colonne garde alors sa dernière valeur plutôt que de bloquer
+      // l'enregistrement.
+      const traduit = propre ? await traduireTexte(propre, depuis, vers) : null;
+      if (traduit) patch.name = traduit;
+    } else {
+      patch.name = propre;
+      const traduit = propre ? await traduireTexte(propre, depuis, vers) : null;
+      if (traduit) patch.name_ar = traduit;
+    }
+  }
+
+  if (input.description !== undefined) {
+    const propre = input.description.trim();
+    const traduit = propre ? await traduireTexte(propre, depuis, vers) : null;
+    if (depuis === "ar") {
+      patch.description_ar = propre || null;
+      if (traduit) patch.description = traduit;
+    } else {
+      patch.description = propre || null;
+      if (traduit) patch.description_ar = traduit;
+    }
+  }
+
   if (input.logoUrl !== undefined) patch.logo_url = input.logoUrl;
   if (input.coverUrl !== undefined) patch.cover_url = input.coverUrl;
   if (input.bannerUrl !== undefined) patch.banner_url = input.bannerUrl;
@@ -393,15 +427,35 @@ export async function updateShopSettings(input: {
   if (input.acceptsReservations !== undefined) patch.accepts_reservations = input.acceptsReservations;
   if (input.isOpenNow !== undefined) patch.is_open_now = input.isOpenNow;
 
-  if (Object.keys(patch).length === 0) return done();
+  if (Object.keys(patch).length === 0) {
+    return ok({
+      name: shop.name,
+      nameAr: shop.name_ar,
+      description: shop.description,
+      descriptionAr: shop.description_ar,
+    });
+  }
 
-  const { error: e } = await supabase.from("shops").update(patch).eq("id", shop.id);
+  const { data: ecrit, error: e } = await supabase
+    .from("shops")
+    .update(patch)
+    .eq("id", shop.id)
+    .select("name, name_ar, description, description_ar")
+    .single();
   if (e) return fail(readableError(e));
 
   revalidatePath("/vendeur/reglages");
   revalidatePath("/vendeur");
   revalidatePath(`/boutique/${shop.slug}`);
-  return done();
+  // Le nom/la description écrits ici incluent la traduction automatique :
+  // le formulaire resynchronise son état local sur ce retour plutôt que
+  // d'attendre un rechargement de page pour voir l'autre langue à jour.
+  return ok({
+    name: ecrit.name,
+    nameAr: ecrit.name_ar,
+    description: ecrit.description,
+    descriptionAr: ecrit.description_ar,
+  });
 }
 
 export async function updateShopHours(

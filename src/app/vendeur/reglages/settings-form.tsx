@@ -54,16 +54,21 @@ export function ShopSettingsForm({
 }) {
   const { t, locale: localeActif, setLocale } = useI18n();
 
-  const [name, setName] = useState(shop.name);
-  const [phone, setPhone] = useState(shop.phone ?? "");
   /*
-    La présentation de la boutique.
+    Le nom et la présentation de la boutique — un seul champ visible à la
+    fois pour chacun, plutôt qu'une paire FR/AR affichée ensemble.
 
-    L'action serveur savait déjà l'enregistrer, mais aucun champ ne la
-    proposait : le commerçant ne pouvait pas l'écrire, et sa page publique
-    restait muette sous son nom. Deux champs, une langue chacun — l'arabe n'est
-    pas une traduction automatique du français, il s'écrit.
+    Décision explicite et confirmée, en sens inverse d'une précédente :
+    le champ affiché bascule avec `localeActif` (voir le bouton de langue
+    en haut de l'écran), et ce qui vient d'être tapé est traduit
+    automatiquement vers l'autre langue à l'enregistrement (voir
+    `traduireTexte`, appelée depuis `updateShopSettings`) — les deux
+    valeurs restent donc en mémoire ici, même si une seule s'édite à la
+    fois, pour ne jamais perdre l'autre langue en basculant.
   */
+  const [name, setName] = useState(shop.name);
+  const [nameAr, setNameAr] = useState(shop.name_ar ?? "");
+  const [phone, setPhone] = useState(shop.phone ?? "");
   const [description, setDescription] = useState(shop.description ?? "");
   const [descriptionAr, setDescriptionAr] = useState(shop.description_ar ?? "");
   const [mallLevel, setMallLevel] = useState(shop.mall_level?.toString() ?? "");
@@ -119,12 +124,12 @@ export function ShopSettingsForm({
     setFeedback(null);
 
     startTransition(async () => {
-      const results = await Promise.all([
+      const [shopResult, ...autresResultats] = await Promise.all([
         updateShopSettings({
-          name,
+          name: localeActif === "ar" ? nameAr : name,
           phone,
-          description,
-          descriptionAr,
+          description: localeActif === "ar" ? descriptionAr : description,
+          contentLocale: localeActif,
           logoUrl,
           bannerUrl,
           mallLevel: mallLevel === "" ? null : Number.parseInt(mallLevel, 10),
@@ -141,6 +146,14 @@ export function ShopSettingsForm({
         updateShopCategories(selected),
       ]);
 
+      if (shopResult.ok) {
+        setName(shopResult.data.name);
+        setNameAr(shopResult.data.nameAr ?? "");
+        setDescription(shopResult.data.description ?? "");
+        setDescriptionAr(shopResult.data.descriptionAr ?? "");
+      }
+
+      const results = [shopResult, ...autresResultats];
       const failed = results.find((result) => !result.ok);
       setFeedback(
         failed && !failed.ok
@@ -162,13 +175,18 @@ export function ShopSettingsForm({
         title={t.vendor.shopSettings}
         back="/vendeur"
         action={
+          /*
+            La langue d'édition, en haut et toujours visible — pas enfouie
+            dans une section « Affichage » en bas de l'écran. C'est elle qui
+            décide quel champ (nom, description) s'affiche plus bas : un
+            bouton simple, pas un réglage parmi d'autres.
+          */
           <button
             type="button"
-            onClick={onSave}
-            disabled={pending}
-            className="text-[0.71875rem] font-semibold text-[var(--color-brand)] disabled:opacity-40"
+            onClick={() => setLocale(localeActif === "ar" ? "fr" : "ar")}
+            className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.6875rem] font-bold text-[var(--color-brand)]"
           >
-            {pending ? t.common.saving : t.common.save}
+            {localeActif === "ar" ? "العربية" : "Français"}
           </button>
         }
       />
@@ -300,7 +318,13 @@ export function ShopSettingsForm({
           <Card className="flex flex-col gap-2 p-3">
             <label className="flex flex-col gap-1">
               <span className="text-[0.65625rem] text-[var(--color-muted)]">{t.vendor.shopName}</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={FIELD} />
+              <input
+                value={localeActif === "ar" ? nameAr : name}
+                onChange={(e) => (localeActif === "ar" ? setNameAr(e.target.value) : setName(e.target.value))}
+                dir={localeActif === "ar" ? "rtl" : "ltr"}
+                lang={localeActif}
+                className={FIELD}
+              />
             </label>
 
             <label className="flex flex-col gap-1">
@@ -327,38 +351,30 @@ export function ShopSettingsForm({
 
             <label className="flex flex-col gap-1">
               <span className="flex items-center justify-between text-[0.65625rem] text-[var(--color-muted)]">
-                <span>{t.vendeur.descriptionFr}</span>
+                <span>{t.vendeur.description}</span>
                 <span dir="ltr" className="tabular-nums">
-                  {format(t.vendeur.charCount, { n: description.length, max: MAX_DESCRIPTION })}
+                  {format(t.vendeur.charCount, {
+                    n: (localeActif === "ar" ? descriptionAr : description).length,
+                    max: MAX_DESCRIPTION,
+                  })}
                 </span>
               </span>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
+                value={localeActif === "ar" ? descriptionAr : description}
+                onChange={(e) => {
+                  const valeur = e.target.value.slice(0, MAX_DESCRIPTION);
+                  if (localeActif === "ar") setDescriptionAr(valeur);
+                  else setDescription(valeur);
+                }}
                 rows={3}
-                lang="fr"
-                dir="ltr"
-                placeholder={t.vendeur.descriptionPlaceholderFr}
+                lang={localeActif}
+                dir={localeActif === "ar" ? "rtl" : "ltr"}
+                placeholder={t.vendeur.descriptionPlaceholder}
                 className={cx(FIELD, "min-h-[84px] resize-y py-2 leading-[1.5]")}
               />
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="flex items-center justify-between text-[0.65625rem] text-[var(--color-muted)]">
-                <span>{t.vendeur.descriptionAr}</span>
-                <span dir="ltr" className="tabular-nums">
-                  {format(t.vendeur.charCount, { n: descriptionAr.length, max: MAX_DESCRIPTION })}
-                </span>
-              </span>
-              <textarea
-                value={descriptionAr}
-                onChange={(e) => setDescriptionAr(e.target.value.slice(0, MAX_DESCRIPTION))}
-                rows={3}
-                lang="ar"
-                dir="rtl"
-                placeholder={t.vendeur.descriptionPlaceholderAr}
-                className={cx(FIELD, "min-h-[84px] resize-y py-2 leading-[1.5]")}
-              />
+              <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-faint)]">
+                {t.vendeur.descriptionAutoTranslateHint}
+              </p>
             </label>
 
             <Divider />
@@ -561,23 +577,6 @@ export function ShopSettingsForm({
           </Card>
         </section>
 
-        {/* ─── Affichage ──────────────────────────────────────────────── */}
-        <section className="flex flex-none flex-col gap-2">
-          <SectionTitle>Affichage</SectionTitle>
-
-          <Card className="flex flex-col gap-[10px] p-3">
-            <KeyValueRow label="Langue">
-              <button
-                type="button"
-                onClick={() => setLocale(localeActif === "ar" ? "fr" : "ar")}
-                className="rounded-[10px] bg-[var(--color-brand-tint)] px-3 py-1 text-[0.6875rem] font-bold text-[var(--color-brand)]"
-              >
-                {localeActif === "ar" ? "العربية" : "Français"}
-              </button>
-            </KeyValueRow>
-          </Card>
-        </section>
-
         {/* Même service pour le vendeur : cinq écrans à retenir, dont la
             diffusion en direct qu'il n'utilisera pas toutes les semaines. */}
         <ReplayVendorTour />
@@ -595,6 +594,15 @@ export function ShopSettingsForm({
             {feedback.message}
           </p>
         )}
+
+        {/*
+          Enregistrer en bas, pas dans la barre du haut : c'est le dernier
+          geste d'un écran qu'on fait défiler, pas un raccourci à chercher
+          au-dessus de tout le reste.
+        */}
+        <Button type="button" onClick={onSave} disabled={pending} block>
+          {pending ? t.common.saving : t.common.save}
+        </Button>
       </div>
     </>
   );
