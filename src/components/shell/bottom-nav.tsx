@@ -13,10 +13,10 @@ import { isActive, useNavItems, type NavVariant } from "./nav-items";
  * Masquée à partir de `lg` : la navigation passe alors dans la colonne
  * latérale (`SideNav`), qui a la place d'afficher de vrais libellés.
  */
-export function BottomNav({ variant }: { variant: NavVariant }) {
+export function BottomNav({ variant, isCourier = false }: { variant: NavVariant; isCourier?: boolean }) {
   const { t } = useI18n();
   const pathname = usePathname();
-  const items = useNavItems(variant);
+  const items = useNavItems(variant, { isCourier });
 
   /*
     Une pilule flottante plutôt qu'un bandeau collé au bord.

@@ -36,6 +36,7 @@ const fr = {
     dashboard: "Tableau",
     products: "Produits",
     orders: "Commandes",
+    deliveries: "Livraisons",
     settings: "Réglages",
     // admin
     shops: "Boutiques",
@@ -787,6 +788,21 @@ const fr = {
       delivered: "Livrée",
       cancelled: "Annulée",
     },
+    // Libellé du bouton vendeur à l'étape « à préparer → prête », uniquement
+    // en livraison : plus parlant que le générique « Prête » du statut, vu
+    // que cliquer dessus prévient immédiatement le livreur.
+    readyToDeliver: "Commande prête à livrer",
+  },
+
+  /** Écran /vendeur/livraisons, réservé au compte désigné comme livreur. */
+  delivery: {
+    title: "Livraisons",
+    toTake: "À prendre en charge",
+    inTransit: "En livraison",
+    takeAction: "C'est bon, je prends la livraison",
+    completeAction: "Livraison effectuée",
+    empty: "Aucune livraison en attente",
+    fromShop: "Boutique",
   },
 
   auth: {
@@ -980,6 +996,7 @@ const ar: Dictionary = {
     dashboard: "لوحة التحكم",
     products: "المنتجات",
     orders: "الطلبات",
+    deliveries: "التوصيل",
     settings: "الإعدادات",
     shops: "المتاجر",
     members: "الأعضاء",
@@ -1715,6 +1732,17 @@ const ar: Dictionary = {
       delivered: "تم التسليم",
       cancelled: "ملغاة",
     },
+    readyToDeliver: "الطلب جاهز للتوصيل",
+  },
+
+  delivery: {
+    title: "التوصيل",
+    toTake: "بانتظار التكفّل",
+    inTransit: "قيد التوصيل",
+    takeAction: "تم، أتكفّل بالتوصيل",
+    completeAction: "تم التوصيل",
+    empty: "لا توجد طلبات توصيل حالياً",
+    fromShop: "المتجر",
   },
 
   auth: {

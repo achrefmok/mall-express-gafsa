@@ -21,15 +21,18 @@ export function SideNav({
   variant,
   role,
   hasShop = false,
+  isCourier = false,
 }: {
   variant: NavVariant;
   role?: UserRole;
   /** Sans boutique, l'onglet ne mènerait qu'à un écran vide. */
   hasShop?: boolean;
+  /** Vendeur désigné comme livreur : ajoute l'onglet « Livraisons ». */
+  isCourier?: boolean;
 }) {
   const { t } = useI18n();
   const pathname = usePathname();
-  const items = useNavItems(variant);
+  const items = useNavItems(variant, { isCourier });
 
   // Un vendeur ou un administrateur circule entre plusieurs espaces. Sur
   // téléphone c'est le rôle de `SpaceSwitcher` ; ici, autant les montrer.

@@ -30,18 +30,25 @@ interface OrderData {
 }
 
 /**
- * Progression du statut. Le retrait au mall saute l'étape « en livraison » :
- * le client vient chercher, il n'y a pas d'acheminement.
+ * Progression du statut côté vendeur.
+ *
+ * Pour un retrait au mall, le vendeur reste seul maître de bout en bout :
+ * `ready` → `delivered` directement, il n'y a pas d'acheminement.
+ *
+ * Pour une livraison, le vendeur s'arrête à `ready` (« Commande prête à
+ * livrer » — ça prévient le livreur, voir `advanceOrder`) : la suite
+ * (`ready` → `shipped` → `delivered`) appartient au livreur, sur l'écran
+ * /vendeur/livraisons. Plus de bouton d'action ici une fois `ready` atteint,
+ * seul le badge de statut renseigne encore le vendeur.
  */
 function nextStatus(current: OrderStatus, delivery: "delivery" | "pickup"): OrderStatus | null {
   switch (current) {
     case "pending":
       return "to_prepare";
     case "to_prepare":
-      return delivery === "pickup" ? "ready" : "shipped";
+      return "ready";
     case "ready":
-    case "shipped":
-      return "delivered";
+      return delivery === "pickup" ? "delivered" : null;
     default:
       return null;
   }
@@ -150,7 +157,9 @@ export function VendorOrderCard({ order, locale }: { order: OrderData; locale: A
           )}
           {next && (
             <Button size="sm" onClick={() => advance(next)} disabled={pending}>
-              {t.orders.status[next]}
+              {next === "ready" && order.delivery_method === "delivery"
+                ? t.orders.readyToDeliver
+                : t.orders.status[next]}
             </Button>
           )}
         </div>

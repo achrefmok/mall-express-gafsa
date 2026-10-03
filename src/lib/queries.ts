@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/database";
 
@@ -105,6 +106,21 @@ export const getMyShop = cache(async () => {
   if (error) throw new Error(`Lecture de la boutique impossible : ${error.message}`);
 
   return data;
+});
+
+/**
+ * Ce vendeur est-il le livreur désigné (voir `is_courier()` côté base) ?
+ *
+ * `is_courier` n'existe pas encore dans les types générés (migration collée
+ * manuellement, voir le projet) — client non typé pour cet appel seulement.
+ */
+export const getIsCourier = cache(async (): Promise<boolean> => {
+  const user = await getSessionUser();
+  if (!user) return false;
+
+  const supabase = await createClient();
+  const { data } = await (supabase as unknown as SupabaseClient).rpc("is_courier");
+  return Boolean(data);
 });
 
 export const getCategories = cache(async (topLevelOnly = true) => {

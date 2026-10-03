@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getMyShop, getProfile } from "@/lib/queries";
+import { getIsCourier, getMyShop, getProfile } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { format } from "@/lib/i18n/format";
 import { AppShell } from "@/components/shell/app-shell";
@@ -15,10 +15,11 @@ export default async function VendorLayout({ children }: { children: React.React
   if (profile.role !== "vendor" && profile.role !== "admin") redirect("/accueil");
 
   const shop = await getMyShop();
+  const isCourier = await getIsCourier();
   const { t } = await getT();
 
   return (
-    <AppShell nav="vendor" role={profile.role} hasShop={Boolean(shop)}>
+    <AppShell nav="vendor" role={profile.role} hasShop={Boolean(shop)} isCourier={isCourier}>
       <div className="lg:hidden">
         <SpaceSwitcher role={profile.role} hasShop={Boolean(shop)} />
       </div>
@@ -53,7 +54,7 @@ export default async function VendorLayout({ children }: { children: React.React
         <PageTransition>{children}</PageTransition>
       </main>
 
-      <BottomNav variant="vendor" />
+      <BottomNav variant="vendor" isCourier={isCourier} />
 
       <VendorTour />
       <VendorWelcome />

@@ -29,6 +29,7 @@ export function AppShell({
   nav,
   role,
   hasShop,
+  isCourier,
   contentWidth = "wide",
   className,
 }: {
@@ -38,6 +39,8 @@ export function AppShell({
   role?: UserRole;
   /** Une boutique existe-t-elle ? Décide de l'onglet « Ma boutique ». */
   hasShop?: boolean;
+  /** Vendeur désigné comme livreur : ajoute l'onglet « Livraisons ». */
+  isCourier?: boolean;
   contentWidth?: "wide" | "reading";
   className?: string;
 }) {
@@ -54,7 +57,7 @@ export function AppShell({
         className,
       )}
     >
-      {nav && <SideNav variant={nav} role={role} hasShop={hasShop} />}
+      {nav && <SideNav variant={nav} role={role} hasShop={hasShop} isCourier={isCourier} />}
 
       <div
         className={cx(

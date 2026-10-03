@@ -33,7 +33,7 @@ export type NavItem = {
  * colonne latérale sur ordinateur. Les définir une seule fois évite qu'un
  * onglet ajouté d'un côté manque de l'autre.
  */
-export function useNavItems(variant: NavVariant): NavItem[] {
+export function useNavItems(variant: NavVariant, opts?: { isCourier?: boolean }): NavItem[] {
   const { t } = useI18n();
 
   const sets: Record<NavVariant, NavItem[]> = {
@@ -52,6 +52,11 @@ export function useNavItems(variant: NavVariant): NavItem[] {
       { href: "/vendeur/lives", label: t.nav.lives, icon: <LiveDot size={9} /> },
       { href: "/vendeur/reservations", label: "Réservations", icon: <BoxIcon size={17} /> },
       { href: "/vendeur/roue", label: "Roue", icon: <SparkIcon size={17} /> },
+      // Réservé au compte désigné comme livreur (SADEN DELIVERY) — voir
+      // `is_courier()` côté base. Absent pour tous les autres vendeurs.
+      ...(opts?.isCourier
+        ? [{ href: "/vendeur/livraisons", label: t.nav.deliveries, icon: <BoxIcon size={17} /> }]
+        : []),
       { href: "/vendeur/reglages", label: t.nav.settings, icon: <GearIcon size={17} /> },
     ],
     /*
