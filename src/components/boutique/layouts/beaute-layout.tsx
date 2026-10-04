@@ -15,6 +15,15 @@ const ONGLETS = [
   { slug: "beaute-maquillage", labelFr: "Maquillage", labelAr: "مكياج" },
   { slug: "beaute-parfums", labelFr: "Parfums", labelAr: "عطور" },
   { slug: "beaute-soin", labelFr: "Soin", labelAr: "العناية" },
+  /*
+    Un produit sans sous-catégorie (le cas de la quasi-totalité des
+    boutiques aujourd'hui) n'avait aucun onglet où atterrir dès qu'au moins
+    deux des trois onglets ci-dessus avaient un seul produit chacun — il
+    disparaissait silencieusement de la boutique entière. Cet onglet
+    attrape tout ce qui n'est pas rangé, pour qu'un produit ne soit jamais
+    invisible faute de classement.
+  */
+  { slug: "beaute-autres", labelFr: "Autres", labelAr: "أخرى" },
 ] as const;
 
 /** Six carnations de référence — le choix sert à rapprocher des teintes réelles, pas à les inventer. */
@@ -74,7 +83,11 @@ export function BeauteLayout({
     for (const o of ONGLETS) parSlug.set(o.slug, []);
     for (const p of visible) {
       const slug = p.category?.slug;
-      if (slug && parSlug.has(slug)) parSlug.get(slug)!.push(p);
+      if (slug && parSlug.has(slug) && slug !== "beaute-autres") {
+        parSlug.get(slug)!.push(p);
+      } else {
+        parSlug.get("beaute-autres")!.push(p);
+      }
     }
     return parSlug;
   }, [visible]);
