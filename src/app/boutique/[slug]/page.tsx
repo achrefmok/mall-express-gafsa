@@ -56,12 +56,23 @@ export async function generateMetadata({
 
   const { data } = await supabase
     .from("shops")
-    .select("name, description, cover_url, mall_level, mall_unit")
+    .select("name, description, cover_url, mall_level, mall_unit, status, owner_id")
     .eq("slug", slug)
-    .eq("status", "approved")
     .maybeSingle();
 
   if (!data) return { title: "Boutique introuvable" };
+
+  // Même exception qu'en bas de page : l'admin et le propriétaire doivent
+  // voir un titre d'onglet correct en prévisualisant une boutique pas
+  // encore approuvée, pas « Boutique introuvable ».
+  if (data.status !== "approved") {
+    const user = await getSessionUser();
+    const profile = user ? await getProfile() : null;
+    const estProprietaire = user?.id === data.owner_id;
+    if (!estProprietaire && profile?.role !== "admin") {
+      return { title: "Boutique introuvable" };
+    }
+  }
 
   const place = data.mall_unit ? ` — Niveau ${data.mall_level}, local ${data.mall_unit}` : "";
 
@@ -107,7 +118,7 @@ export default async function ShopPage({
     .eq("slug", slug)
     .maybeSingle();
 
-  if (!shop || shop.status !== "approved") notFound();
+  if (!shop) notFound();
 
   const user = await getSessionUser();
   // Le nom et le numéro déjà connus, pour ne pas les faire ressaisir.
@@ -127,6 +138,19 @@ export default async function ShopPage({
         ).data,
       )
     : false;
+
+  /*
+    Une boutique pas encore approuvée (ou suspendue) reste invisible du
+    public — mais pas de son propriétaire, qui doit pouvoir se relire avant
+    validation, ni de l'administration, qui doit pouvoir l'examiner avant de
+    l'approuver. Sans cette exception, aucun des deux ne pouvait jamais ouvrir
+    cette page tant que le statut n'était pas "approved" : un commerçant qui
+    avait déjà préparé des produits (autorisé jusqu'à 5 avant l'approbation,
+    voir upsertProduct) ne voyait littéralement rien sur sa propre vitrine.
+  */
+  if (shop.status !== "approved" && !estProprietaire && profile?.role !== "admin") {
+    notFound();
+  }
 
   const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue] =
     await Promise.all([
