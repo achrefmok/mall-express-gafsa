@@ -47,7 +47,15 @@ export function MaisonLayout({
     return [...comptes.entries()];
   }, [visible]);
 
-  const [pieceActive, setPieceActive] = useState<string | null>(pieces[0]?.[0] ?? null);
+  /*
+    Jamais la première pièce présélectionnée : ça masquerait par défaut, dès
+    l'arrivée sur la page, tout produit qui n'a pas cette pièce précise —
+    même bug que celui corrigé dans BeauteLayout (voir son commit), juste
+    déclenché par un état initial plutôt que par des onglets. Aucun filtre
+    actif par défaut, tous les produits visibles jusqu'à ce que le visiteur
+    clique lui-même une puce.
+  */
+  const [pieceActive, setPieceActive] = useState<string | null>(null);
 
   if (visible.length === 0) {
     return <EmptyState title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr} />;
