@@ -763,6 +763,9 @@ const fr = {
     clear: "Vider le panier",
     clearConfirm: "Vider tout le panier ?",
     yourDetails: "Vos coordonnées",
+    freeDeliveryReached: "✓ Livraison offerte dans Gafsa",
+    freeDeliveryRemaining: "Encore {amount} pour la livraison offerte",
+    loyaltyPoints: "+{points} pts fidélité",
   },
 
   orders: {
@@ -1712,6 +1715,9 @@ const ar: Dictionary = {
     clear: "تفريغ السلة",
     clearConfirm: "تفريغ السلة بالكامل؟",
     yourDetails: "بياناتك",
+    freeDeliveryReached: "✓ توصيل مجاني داخل قفصة",
+    freeDeliveryRemaining: "بقي {amount} للتوصيل المجاني",
+    loyaltyPoints: "+{points} نقطة ولاء",
   },
 
   orders: {

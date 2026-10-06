@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient, createStaticClient } from "@/lib/supabase/server";
-import { getProfile, getSessionUser, getTopBarCounts } from "@/lib/queries";
+import { getProfile, getSessionUser } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { formatRating } from "@/lib/format";
 import { avecBlackFriday } from "@/lib/black-friday-server";
@@ -119,6 +119,7 @@ export default async function ShopPage({
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count, address,
        is_partner, partner_tagline, partner_tagline_ar, accepts_reservations,
        followers_count, posts_count, views_count, status, latitude, longitude,
+       free_delivery_threshold,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue, slug)`,
     )
     .eq("slug", slug)
@@ -158,7 +159,7 @@ export default async function ShopPage({
     notFound();
   }
 
-  const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue, stories] =
+  const [products, promo, promotions, hoursToday, subCategories, following, lives, roue, stories, cartShop] =
     await Promise.all([
     /*
       `sizes` et la catégorie complète (pas seulement `hue`) ne servaient à
@@ -230,8 +231,6 @@ export default async function ShopPage({
       .order("scheduled_at")
       .limit(5),
 
-    getTopBarCounts(),
-
     /*
       La roue de la boutique, si elle en a une.
 
@@ -246,6 +245,21 @@ export default async function ShopPage({
       .maybeSingle(),
 
     lireStoriesBoutique(supabase, shop.id),
+
+    /*
+      Le panier flottant de cette page annonce un palier de livraison
+      gratuite propre à CETTE boutique : il lui faut donc le compte et le
+      total des lignes de panier de cette boutique précisément, pas le
+      total global (plusieurs boutiques peuvent cohabiter dans le même
+      panier, une commande ne portant jamais que sur une seule à la fois).
+    */
+    user
+      ? supabase
+          .from("cart_items")
+          .select("quantity, product:products!inner(price, shop_id)")
+          .eq("user_id", user.id)
+          .eq("product.shop_id", shop.id)
+      : Promise.resolve({ data: [] as Array<{ quantity: number; product: { price: number } | null }> }),
   ]);
 
   /* Les cases sans leurs poids ni leurs stocks : la fonction les retire. */
@@ -325,6 +339,12 @@ export default async function ShopPage({
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
     theme.id === "services" ? lireZonesLivraison(supabase, shop.id) : Promise.resolve([]),
   ]);
+
+  const lignesPanier = cartShop.data ?? [];
+  const panierBoutique = {
+    count: lignesPanier.reduce((a, l) => a + l.quantity, 0),
+    total: lignesPanier.reduce((a, l) => a + (l.product?.price ?? 0) * l.quantity, 0),
+  };
 
   const visibleEnrichi = visible.map((p) => ({
     ...p,
@@ -424,7 +444,14 @@ export default async function ShopPage({
           theme={theme}
         />
 
-        <BoutiquePanierFlottant count={counts.cart} label={t.cart.title} />
+        <BoutiquePanierFlottant
+          count={panierBoutique.count}
+          total={panierBoutique.total}
+          freeDeliveryThreshold={shop.free_delivery_threshold}
+          label={t.cart.title}
+          locale={locale}
+          t={t}
+        />
       </main>
       </div>
     </div>
