@@ -372,7 +372,7 @@ export default async function ShopPage({
       intérieur garde exactement la mise en page d'avant.
     */
     <div
-      className="min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
+      className="clair-boutique min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))]"
       style={variablesTheme(theme)}
       data-theme={theme.id}
     >

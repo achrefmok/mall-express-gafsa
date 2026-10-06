@@ -172,16 +172,19 @@ function versVariablesCss(palette: PaletteMode, prefixe: string): Record<string,
 
 /**
  * Les variables CSS à poser sur le conteneur de la page boutique, en style
- * inline — toujours la palette **sombre** : l'app n'a plus de mode clair
- * (voir `globals.css`), la page boutique suit la même identité partout.
+ * inline — toujours la palette **claire** : décision explicite et confirmée,
+ * la vitrine d'une boutique reste claire (comme le prototype de référence),
+ * à la différence du reste de l'app, en sombre permanent (voir `globals.css`,
+ * `.clair-boutique`). `theme.palettes.sombre` reste défini pour un futur
+ * bouton clair/sombre côté visiteur, pas utilisé aujourd'hui.
  */
 export function variablesTheme(theme: ThemeBoutique): CSSProperties {
   return {
-    ...versVariablesCss(theme.palettes.sombre, "theme"),
+    ...versVariablesCss(theme.palettes.clair, "theme"),
     "--theme-rayon": theme.formes.rayon,
     "--theme-rayon-interieur": theme.formes.rayonInterieur,
     "--theme-police": theme.typographie.fontFamily,
-    "--theme-voile": theme.couverture.voile.sombre,
+    "--theme-voile": theme.couverture.voile.clair,
     "--theme-accent-sur-clair": theme.accentSurClair,
     "--pc-rayon": theme.formes.rayon,
     "--pc-rayon-interieur": theme.formes.rayonInterieur,

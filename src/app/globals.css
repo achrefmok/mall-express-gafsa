@@ -225,6 +225,68 @@ img {
   filter: none;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Pages boutique (/boutique/[slug]) — deuxième exception au sombre permanent
+   ═══════════════════════════════════════════════════════════════════════
+   Décision explicite et confirmée : la vitrine d'une boutique reste claire,
+   comme dans le handoff de design (prototype « Boutiques par catégorie
+   v4 ») — les captures de référence sont toutes en clair, jamais en sombre.
+   Mêmes valeurs que `.clair-marketing`, pour la même raison : rester au
+   pixel près de l'identité déjà validée plutôt que d'en redeviner une.
+
+   Posée sur le conteneur racine de `src/app/boutique/[slug]/page.tsx`
+   (`.clair-boutique`) et sur le cadre d'aperçu de `/vendeur/vitrine`, qui
+   doit refléter la vraie page — tout `--theme-*` (couleur par catégorie)
+   continue de s'appliquer par-dessus, inchangé. */
+.clair-boutique {
+  --color-app: #f4f1fa;
+  --color-workshop: #eae5f2;
+  --color-brand: #6d4b8f;
+  --color-brand-fill: #6d4b8f;
+  --color-brand-tint: rgba(109, 75, 143, 0.1);
+  --color-brand-strong: #5a3a78;
+  --color-ink: #241f2e;
+  --color-muted: #635c74;
+  --color-faint: #767085;
+  --color-live: oklch(0.52 0.17 10);
+  --color-live-fill: oklch(0.52 0.17 10);
+  --color-live-tint: oklch(0.52 0.17 10 / 0.12);
+  --color-success: #2e8b57;
+  --color-hairline: rgba(60, 40, 90, 0.09);
+  --color-outline: rgba(60, 40, 90, 0.14);
+  --color-surface: rgba(255, 255, 255, 0.85);
+  --color-surface-edge: rgba(255, 255, 255, 0.9);
+  --color-track: rgba(60, 40, 90, 0.16);
+  --color-surface-solid: #ffffff;
+  --color-field: rgba(255, 255, 255, 0.6);
+  --color-veil: rgba(255, 255, 255, 0.72);
+  --shadow-card: 0 6px 18px rgba(60, 40, 90, 0.07);
+  --shadow-search: 0 4px 14px rgba(60, 40, 90, 0.07);
+  --shadow-fab: 0 6px 18px rgba(60, 40, 90, 0.3);
+  --gradient-brand: linear-gradient(135deg, #6d4b8f, #241f2e);
+  color-scheme: light;
+}
+
+.clair-boutique .cat-ink {
+  color: oklch(0.47 0.12 var(--hue, 300));
+}
+
+.clair-boutique .cat-surface {
+  background: color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 14%, var(--color-app));
+}
+
+.clair-boutique .cat-rule {
+  background: oklch(0.47 0.12 var(--hue, 300));
+}
+
+.clair-boutique .cat-ring {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, oklch(0.47 0.12 var(--hue, 300)) 30%, transparent);
+}
+
+.clair-boutique img {
+  filter: none;
+}
+
 html {
   /* 16px × échelle : toutes les tailles en rem suivent. */
   font-size: calc(100% * var(--text-scale));
