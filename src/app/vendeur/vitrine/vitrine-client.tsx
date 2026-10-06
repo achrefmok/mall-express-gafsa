@@ -243,7 +243,7 @@ export function VitrineClient({
           </span>
           <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-[32px] border-[6px] border-[#1b1724] bg-[var(--color-app)]">
             <div
-              className="clair-boutique max-h-[520px] overflow-y-auto"
+              className="clair-boutique max-h-[520px] overflow-y-auto text-ink"
               style={{ ...styleTheme, background: "var(--theme-fond,var(--color-app))" }}
               data-theme={theme.id}
             >
