@@ -701,3 +701,122 @@ export async function deleteZoneLivraison(zoneId: string) {
   revalidatePath(`/boutique/${shop.slug}`);
   return done();
 }
+
+/*
+  Stories — `shop_stories` n'existe pas encore dans les types générés (même
+  raison que `product_packs`/`delivery_zones` plus haut) : client non typé.
+*/
+export async function upsertStory(input: {
+  id?: string;
+  kind: "nouveautes" | "promo" | "tuto" | "avis" | "evenement" | "libre";
+  label: string;
+  title: string;
+  subtitle?: string;
+  imageUrl?: string | null;
+  ctaLabel?: string;
+  ctaTarget?: string;
+  /** `null` = permanente (ex. un modèle "Avis" qui ne périme jamais). */
+  expiresAt?: string | null;
+}) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const label = input.label.trim();
+  const title = input.title.trim();
+  if (!label || !title) return fail("Le modèle et le titre sont obligatoires");
+
+  const payload = {
+    shop_id: shop.id,
+    kind: input.kind,
+    label,
+    title,
+    subtitle: input.subtitle?.trim() || null,
+    image_url: input.imageUrl ?? null,
+    cta_label: input.ctaLabel?.trim() || null,
+    cta_target: input.ctaTarget?.trim() || null,
+    expires_at: input.expiresAt ?? null,
+  };
+
+  const query = input.id
+    ? client.from("shop_stories").update(payload).eq("id", input.id).eq("shop_id", shop.id)
+    : client.from("shop_stories").insert(payload);
+
+  const { data, error: e } = await query.select("id").single();
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/vitrine");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return ok({ id: data.id });
+}
+
+export async function deleteStory(storyId: string) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  const { error: e } = await client.from("shop_stories").delete().eq("id", storyId).eq("shop_id", shop.id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/vitrine");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
+
+/**
+ * Réordonne les stories selon l'ordre de `storyIds` — pas de glisser-déposer
+ * réel (voir le plan) : appelée après chaque clic "monter"/"descendre" avec
+ * la liste complète déjà réordonnée côté client.
+ */
+export async function reorderStories(storyIds: string[]) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  for (let i = 0; i < storyIds.length; i += 1) {
+    const { error: e } = await client
+      .from("shop_stories")
+      .update({ sort_order: i })
+      .eq("id", storyIds[i])
+      .eq("shop_id", shop.id);
+    if (e) return fail(readableError(e));
+  }
+
+  revalidatePath("/vendeur/vitrine");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
+
+/* ─── Réglages « Ma vitrine » ───────────────────────────────────────────── */
+
+export async function updateShopVitrineSettings(input: {
+  freeDeliveryThreshold?: number | null;
+  installments?: number[];
+  routineDiscount?: number;
+  packTiers?: Array<{ min: number; pct: number }>;
+}) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+
+  if (input.freeDeliveryThreshold != null && input.freeDeliveryThreshold < 0) {
+    return fail("Le palier de livraison gratuite doit être positif");
+  }
+  if (input.routineDiscount != null && (input.routineDiscount < 0 || input.routineDiscount > 90)) {
+    return fail("La remise doit être comprise entre 0 et 90 %");
+  }
+
+  const patch: Database["public"]["Tables"]["shops"]["Update"] = {};
+  if (input.freeDeliveryThreshold !== undefined) patch.free_delivery_threshold = input.freeDeliveryThreshold;
+  if (input.installments !== undefined) patch.installments = input.installments;
+  if (input.routineDiscount !== undefined) patch.routine_discount = input.routineDiscount;
+  if (input.packTiers !== undefined) patch.pack_tiers = input.packTiers;
+
+  if (Object.keys(patch).length === 0) return done();
+
+  const { error: e } = await supabase.from("shops").update(patch).eq("id", shop.id);
+  if (e) return fail(readableError(e));
+
+  revalidatePath("/vendeur/vitrine");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
