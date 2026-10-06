@@ -237,6 +237,9 @@ export interface Database {
           accepts_reservations: boolean;
           list_in_marketplace: boolean;
           free_delivery_threshold: number | null;
+          installments: number[];
+          routine_discount: number;
+          pack_tiers: Array<{ min: number; pct: number }>;
           rating_sum: number;
           rating_count: number;
           followers_count: number;

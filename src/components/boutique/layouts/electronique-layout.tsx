@@ -17,7 +17,7 @@ const CLES_SPECS = [
   { cle: "ecran", labelFr: "Écran", labelAr: "الشاشة" },
   { cle: "batterie", labelFr: "mAh", labelAr: "mAh" },
 ] as const;
-const VERSEMENTS = [1, 3, 6] as const;
+const VERSEMENTS_PROPOSABLES = [3, 6] as const;
 
 /**
  * « Fiche technique » — Électronique.
@@ -34,21 +34,27 @@ const VERSEMENTS = [1, 3, 6] as const;
  *
  * Le « payer en X fois » ne divise que l'affichage — aucun versement n'est
  * réellement proposé au paiement, c'est un repère de budget comme dans la
- * maquette, pas une fonctionnalité de paiement fractionné.
+ * maquette, pas une fonctionnalité de paiement fractionné. Le sélecteur
+ * reste entièrement masqué si la boutique n'a déclaré aucune option
+ * (`shops.installments`, vide par défaut) : pas de 3×/6× inventés pour un
+ * commerçant qui ne les propose pas vraiment.
  */
 export function ElectroniqueLayout({
   visible,
   locale,
   theme,
+  installments,
 }: {
   visible: ProduitBoutique[];
   locale: AppLocale;
   theme: ThemeBoutique;
+  installments: number[];
 }) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [marque, setMarque] = useState<string | null>(null);
-  const [versements, setVersements] = useState<(typeof VERSEMENTS)[number]>(1);
+  const optionsVersement = [1, ...VERSEMENTS_PROPOSABLES.filter((v) => installments.includes(v))];
+  const [versements, setVersements] = useState<number>(1);
   const [comparaison, setComparaison] = useState<string[]>([]);
   const [ouvert, setOuvert] = useState(false);
 
@@ -124,25 +130,27 @@ export function ElectroniqueLayout({
         </div>
       )}
 
-      <div className="flex items-center gap-[8px]">
-        <span className="text-[0.6875rem] font-bold whitespace-nowrap">{locale === "ar" ? "ادفع على" : "Payer en"}</span>
-        <div className="flex flex-1 gap-[4px] rounded-[16px] bg-[var(--theme-accent-doux)] p-[4px]">
-          {VERSEMENTS.map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setVersements(v)}
-              className="flex-1 rounded-[12px] py-[6px] text-center text-[0.6875rem] font-bold"
-              style={{
-                background: versements === v ? "var(--theme-surface,#fff)" : "transparent",
-                color: versements === v ? "var(--theme-accent-fort)" : "var(--theme-muted)",
-              }}
-            >
-              {v}×
-            </button>
-          ))}
+      {optionsVersement.length > 1 && (
+        <div className="flex items-center gap-[8px]">
+          <span className="text-[0.6875rem] font-bold whitespace-nowrap">{locale === "ar" ? "ادفع على" : "Payer en"}</span>
+          <div className="flex flex-1 gap-[4px] rounded-[16px] bg-[var(--theme-accent-doux)] p-[4px]">
+            {optionsVersement.map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVersements(v)}
+                className="flex-1 rounded-[12px] py-[6px] text-center text-[0.6875rem] font-bold"
+                style={{
+                  background: versements === v ? "var(--theme-surface,#fff)" : "transparent",
+                  color: versements === v ? "var(--theme-accent-fort)" : "var(--theme-muted)",
+                }}
+              >
+                {v}×
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col gap-[10px]">
         {filtres.map((product) => {

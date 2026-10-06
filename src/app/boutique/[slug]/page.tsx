@@ -119,7 +119,7 @@ export default async function ShopPage({
        mall_level, mall_unit, phone, is_open_now, rating_sum, rating_count, address,
        is_partner, partner_tagline, partner_tagline_ar, accepts_reservations,
        followers_count, posts_count, views_count, status, latitude, longitude,
-       free_delivery_threshold,
+       free_delivery_threshold, installments, routine_discount, pack_tiers,
        category:categories!shops_category_id_fkey(name_fr, name_ar, hue, slug)`,
     )
     .eq("slug", slug)
@@ -333,12 +333,19 @@ export default async function ShopPage({
     jointure à part) et ne servent qu'à Bijouterie/Parapharmacie.
   */
   const idsProduitsVisibles = visible.map((p) => p.id);
-  const [attributsParProduit, matieresParProduit, packs, zones] = await Promise.all([
+  const [attributsParProduit, matieresParProduit, packs, zones, favoris] = await Promise.all([
     lireAttributsProduits(supabase, idsProduitsVisibles),
     theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
     theme.id === "services" ? lireZonesLivraison(supabase, shop.id) : Promise.resolve([]),
+    // Le cœur favori n'a de sens que connecté — `ProductCard` le masque
+    // entièrement si `isFavorite` reste `undefined`.
+    user && idsProduitsVisibles.length > 0
+      ? supabase.from("favorites").select("product_id").eq("user_id", user.id).in("product_id", idsProduitsVisibles)
+      : Promise.resolve({ data: null }),
   ]);
+
+  const idsFavoris = new Set((favoris.data ?? []).map((f) => f.product_id));
 
   const lignesPanier = cartShop.data ?? [];
   const panierBoutique = {
@@ -350,6 +357,7 @@ export default async function ShopPage({
     ...p,
     attributs: attributsParProduit.get(p.id),
     materiaux: matieresParProduit.get(p.id),
+    isFavorite: user ? idsFavoris.has(p.id) : undefined,
   }));
 
   return (
@@ -438,6 +446,9 @@ export default async function ShopPage({
           shopSlug={shop.slug}
           shopAddress={shop.address}
           couverture={enTete}
+          installments={shop.installments}
+          routineDiscount={shop.routine_discount}
+          packTiers={shop.pack_tiers}
           locale={locale}
           t={t}
           userConnecte={Boolean(user)}

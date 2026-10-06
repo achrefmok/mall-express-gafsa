@@ -17,6 +17,8 @@ export interface ProduitBoutique extends ProductCardData {
   attributs?: Record<string, string>;
   /** Les matières déclarées en variante (`product_variants.material`). */
   materiaux?: string[];
+  /** `undefined` si personne n'est connecté — `ProductCard` masque alors le cœur. */
+  isFavorite?: boolean;
 }
 
 export interface PackBoutique {

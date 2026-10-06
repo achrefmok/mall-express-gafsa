@@ -20,11 +20,12 @@ import type { PackBoutique, ProduitBoutique } from "./types";
  * a créé tant qu'elle ne passe pas par l'écran vendeur dédié : le rail
  * reste alors simplement absent, pas un rail vide.
  *
- * Le pourcentage affiché sur un pack est indicatif ; le prix réellement
- * facturé est recalculé côté serveur au moment de l'ajout au panier (voir
- * le plan — jamais confiance à un montant composé côté client). Cette
- * mise en page ne fait qu'afficher `discount_percent`, elle ne calcule ni
- * ne facture rien.
+ * Le pourcentage affiché, qu'il vienne d'un pack prêt ou de « Composez
+ * votre pack », est toujours indicatif — `ajouterLePack`/`ajouterPackPret`
+ * ajoutent les produits à leur prix plein, jamais un montant composé
+ * calculé ici : la remise promise est honorée par la boutique au moment de
+ * traiter la commande (voir le message affiché après l'ajout), jamais
+ * appliquée automatiquement par du code qui tournerait côté client.
  */
 export function ParapharmacieLayout({
   visible,
@@ -33,6 +34,7 @@ export function ParapharmacieLayout({
   packs,
   shopId,
   shopSlug,
+  packTiers,
 }: {
   visible: ProduitBoutique[];
   locale: AppLocale;
@@ -40,6 +42,8 @@ export function ParapharmacieLayout({
   packs: PackBoutique[];
   shopId: string;
   shopSlug: string;
+  /** `shops.pack_tiers` — paliers triés du plus petit au plus grand. */
+  packTiers: Array<{ min: number; pct: number }>;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -83,7 +87,11 @@ export function ParapharmacieLayout({
 
   const choisis = produits.filter((p) => selection.includes(p.id));
   const sousTotal = choisis.reduce((a, p) => a + p.price, 0);
-  const remise = choisis.length >= 3 ? 0.15 : choisis.length === 2 ? 0.1 : 0;
+
+  const paliers = [...packTiers].sort((a, b) => a.min - b.min);
+  const palierAtteint = [...paliers].reverse().find((p) => choisis.length >= p.min) ?? null;
+  const remise = (palierAtteint?.pct ?? 0) / 100;
+  const prochainPalier = paliers.find((p) => p.min > choisis.length) ?? null;
 
   function toggleChoix(id: string) {
     setSelection((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -214,7 +222,7 @@ export function ParapharmacieLayout({
         </div>
       )}
 
-      {produits.length >= 2 && (
+      {paliers.length > 0 && produits.length >= paliers[0].min && (
         <div className="flex flex-col gap-[10px] rounded-[18px] border border-[var(--theme-bordure)] bg-[var(--theme-surface)] p-[13px]">
           <div className="flex flex-col gap-[2px]">
             <span className="text-[0.8125rem] font-bold">{locale === "ar" ? "كوّنوا باقتكم" : "Composez votre pack"}</span>
@@ -223,18 +231,22 @@ export function ParapharmacieLayout({
               style={{ color: remise > 0 ? "var(--theme-accent-fort)" : "var(--theme-muted,var(--color-muted))" }}
             >
               {remise > 0
-                ? locale === "ar"
-                  ? `−${remise * 100}% مطبّق${remise < 0.15 ? " · أضيفوا منتجًا آخر لـ −15%" : ""}`
-                  : `−${remise * 100} % appliqué${remise < 0.15 ? " · encore 1 produit pour −15 %" : ""}`
-                : locale === "ar"
-                  ? "منتجان −10% · ثلاثة فأكثر −15%"
-                  : "2 produits −10 % · 3 produits et plus −15 %"}
+                ? `−${palierAtteint!.pct} % ${locale === "ar" ? "مطبّق" : "appliqué"}${
+                    prochainPalier
+                      ? locale === "ar"
+                        ? ` · أضيفوا ${prochainPalier.min - choisis.length} منتجًا آخر لـ −${prochainPalier.pct}%`
+                        : ` · encore ${prochainPalier.min - choisis.length} produit${prochainPalier.min - choisis.length > 1 ? "s" : ""} pour −${prochainPalier.pct} %`
+                      : ""
+                  }`
+                : paliers.map((p) => `${p.min}+ −${p.pct}%`).join(" · ")}
             </span>
           </div>
           <div className="h-[6px] overflow-hidden rounded-[3px] bg-[var(--theme-accent-doux)]">
             <div
               className="h-full rounded-[3px] bg-[var(--theme-accent,var(--color-brand-fill))]"
-              style={{ width: `${Math.min(100, (choisis.length / 3) * 100)}%` }}
+              style={{
+                width: `${Math.min(100, (choisis.length / (paliers.at(-1)?.min ?? 3)) * 100)}%`,
+              }}
             />
           </div>
           <div className="flex flex-col gap-[6px]">
@@ -272,13 +284,13 @@ export function ParapharmacieLayout({
           <button
             type="button"
             onClick={ajouterLePack}
-            disabled={pending || choisis.length < 2}
+            disabled={pending || choisis.length < (paliers[0]?.min ?? 2)}
             className="rounded-[16px] px-[16px] py-[12px] text-center text-[0.8125rem] font-semibold text-[var(--theme-accent-texte,white)] disabled:opacity-50"
             style={{ background: "var(--theme-accent,var(--color-brand-fill))" }}
           >
             {pending
               ? t.common.saving
-              : choisis.length >= 2
+              : choisis.length >= (paliers[0]?.min ?? 2)
                 ? `${locale === "ar" ? "أضف الباقة" : "Ajouter mon pack"} · ${formatPrice(sousTotal * (1 - remise), locale)}${
                     remise > 0
                       ? locale === "ar"
@@ -287,8 +299,8 @@ export function ParapharmacieLayout({
                       : ""
                   }`
                 : locale === "ar"
-                  ? "اختاروا منتجَين على الأقل"
-                  : "Cochez au moins 2 produits"}
+                  ? `اختاروا ${paliers[0]?.min ?? 2} منتجات على الأقل`
+                  : `Cochez au moins ${paliers[0]?.min ?? 2} produits`}
           </button>
           {feedback && <p className="text-center text-[0.6875rem] font-semibold text-[var(--theme-accent-fort)]">{feedback}</p>}
         </div>

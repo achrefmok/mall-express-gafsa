@@ -65,10 +65,13 @@ export function BeauteLayout({
   visible,
   locale,
   theme,
+  routineDiscount,
 }: {
   visible: ProduitBoutique[];
   locale: AppLocale;
   theme: ThemeBoutique;
+  /** `shops.routine_discount`, en pourcentage entier (ex. 10 → −10 %). */
+  routineDiscount: number;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -155,7 +158,7 @@ export function BeauteLayout({
   }, [estSoin, peauEffective, produitsOnglet]);
 
   const prixRoutine = routine.reduce((a, [, p]) => a + p.price, 0);
-  const remiseRoutine = 0.1;
+  const remiseRoutine = routineDiscount / 100;
 
   function ajouterLaRoutine() {
     setFeedback(null);

@@ -382,6 +382,7 @@ export function ModeLayout({
                     product={{ ...product, shop: null }}
                     locale={locale}
                     showShop={false}
+                    isFavorite={product.isFavorite}
                     imageHeight={i === 0 && filtres.length > 2 ? 220 : 118}
                   />
                 </div>
