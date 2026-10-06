@@ -37,6 +37,7 @@ const fr = {
     products: "Produits",
     orders: "Commandes",
     deliveries: "Livraisons",
+    vitrine: "Ma vitrine",
     settings: "Réglages",
     // admin
     shops: "Boutiques",
@@ -1002,6 +1003,7 @@ const ar: Dictionary = {
     products: "المنتجات",
     orders: "الطلبات",
     deliveries: "التوصيل",
+    vitrine: "واجهتي",
     settings: "الإعدادات",
     shops: "المتاجر",
     members: "الأعضاء",

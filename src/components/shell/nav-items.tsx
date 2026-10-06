@@ -52,6 +52,7 @@ export function useNavItems(variant: NavVariant, opts?: { isCourier?: boolean })
       { href: "/vendeur/lives", label: t.nav.lives, icon: <LiveDot size={9} /> },
       { href: "/vendeur/reservations", label: "Réservations", icon: <BoxIcon size={17} /> },
       { href: "/vendeur/roue", label: "Roue", icon: <SparkIcon size={17} /> },
+      { href: "/vendeur/vitrine", label: t.nav.vitrine, icon: <StoreIcon size={17} /> },
       // Réservé au compte désigné comme livreur (SADEN DELIVERY) — voir
       // `is_courier()` côté base. Absent pour tous les autres vendeurs.
       ...(opts?.isCourier
