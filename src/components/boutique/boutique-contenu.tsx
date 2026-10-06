@@ -53,6 +53,7 @@ export function BoutiqueContenu({
   installments,
   routineDiscount,
   packTiers,
+  lookbook,
   locale,
   t,
   userConnecte,
@@ -81,6 +82,7 @@ export function BoutiqueContenu({
   installments: number[];
   routineDiscount: number;
   packTiers: Array<{ min: number; pct: number }>;
+  lookbook: { imageUrl: string; reperes: Array<{ id: string; productId: string | null; x: number; y: number }> } | null;
   locale: AppLocale;
   t: Dictionary;
   userConnecte: boolean;
@@ -231,7 +233,7 @@ export function BoutiqueContenu({
           </div>
         )
       ) : theme.productLayout === "editorial" && theme.id === "mode" ? (
-        <ModeLayout visible={visible} locale={locale} theme={theme} couverture={couverture} />
+        <ModeLayout visible={visible} locale={locale} theme={theme} couverture={couverture} lookbook={lookbook} />
       ) : theme.productLayout === "technical" ? (
         <ElectroniqueLayout visible={visible} locale={locale} theme={theme} installments={installments} />
       ) : theme.productLayout === "beaute" ? (

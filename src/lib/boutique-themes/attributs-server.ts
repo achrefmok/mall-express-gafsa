@@ -94,6 +94,42 @@ export async function lireStoriesBoutique(supabase: SupabaseClient, shopId: stri
   return data;
 }
 
+export interface RepereLookbook {
+  id: string;
+  productId: string | null;
+  x: number;
+  y: number;
+}
+
+/**
+ * Les repères d'un scope donné (`'lookbook'`, `'piece:Salon'`…), avec la
+ * photo qui les porte — `null` si la boutique n'en a posé aucun pour ce
+ * scope, auquel cas l'appelant garde son repli actuel (auto-épinglage des
+ * N premiers produits sur la couverture).
+ */
+export async function lireRepereLookbook(
+  supabase: SupabaseClient,
+  shopId: string,
+  scope: string,
+): Promise<{ imageUrl: string; reperes: RepereLookbook[] } | null> {
+  const { data, error } = await supabase
+    .from("shop_lookbook_pins")
+    .select("id, image_url, product_id, x, y")
+    .eq("shop_id", shopId)
+    .eq("scope", scope)
+    .order("sort_order");
+
+  if (error || !data || data.length === 0) {
+    if (error && !MIGRATION_ABSENTE.includes(error.code)) console.error(error);
+    return null;
+  }
+
+  return {
+    imageUrl: data[0].image_url,
+    reperes: data.map((r) => ({ id: r.id, productId: r.product_id, x: r.x, y: r.y })),
+  };
+}
+
 export interface ZoneLivraison {
   id: string;
   name: string;

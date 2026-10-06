@@ -1,7 +1,8 @@
 "use client";
 
+import { Reorder } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   upsertStory,
   deleteStory,
@@ -9,10 +10,15 @@ import {
   updateShopVitrineSettings,
 } from "@/app/actions/vendor";
 import { uploadImage } from "@/lib/upload";
-import { Button, Card, EmptyState } from "@/components/ui/primitives";
+import { useI18n } from "@/lib/i18n/provider";
+import { Button, Card } from "@/components/ui/primitives";
 import { TopBar } from "@/components/shell/top-bar";
 import { StoriesRail } from "@/components/boutique/stories-rail";
+import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
+import { HotspotEditor } from "@/components/vendor/hotspot-editor";
+import { variablesTheme, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { StoryBoutique } from "@/lib/boutique-themes/attributs-server";
+import type { PackBoutique, ProduitBoutique, ZoneLivraison } from "@/components/boutique/layouts/types";
 import type { Completude } from "@/lib/vitrine-completude";
 import type { ThemeId } from "@/lib/boutique-themes";
 
@@ -52,28 +58,38 @@ function formStoryVide() {
   };
 }
 
-/**
- * Pas d'aperçu en direct de la grille de produits (voir `page.tsx`) : la
- * section "Aperçu" montre le rail de stories tel qu'il apparaîtra
- * réellement — c'est la seule partie de cet écran qui change la vitrine
- * de façon visuellement immédiate.
- */
 export function VitrineClient({
   shop,
   themeId,
+  theme,
   stories,
   completude,
+  produitsApercu,
+  enTeteApercu,
+  packs,
+  zones,
+  lookbook,
+  produitsPourRepere,
 }: {
   shop: ShopVitrine;
   themeId: ThemeId;
+  theme: ThemeBoutique;
   stories: StoryBoutique[];
   completude: Completude;
+  produitsApercu: ProduitBoutique[];
+  enTeteApercu: string | null;
+  packs: PackBoutique[];
+  zones: ZoneLivraison[];
+  lookbook: { imageUrl: string; reperes: Array<{ id: string; productId: string | null; x: number; y: number }> } | null;
+  produitsPourRepere: Array<{ id: string; name: string }>;
 }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [pending, startTransition] = useTransition();
   const [erreurStory, setErreurStory] = useState<string | null>(null);
   const [formStory, setFormStory] = useState(formStoryVide());
   const [envoiImage, setEnvoiImage] = useState(false);
+  const [ordreStories, setOrdreStories] = useState(stories);
 
   const [seuil, setSeuil] = useState(shop.freeDeliveryThreshold?.toString() ?? "");
   const [installments, setInstallments] = useState<number[]>(shop.installments);
@@ -135,13 +151,9 @@ export function VitrineClient({
     });
   }
 
-  function onDeplacer(index: number, direction: -1 | 1) {
-    const cible = index + direction;
-    if (cible < 0 || cible >= stories.length) return;
-    const reordonnees = [...stories];
-    [reordonnees[index], reordonnees[cible]] = [reordonnees[cible], reordonnees[index]];
+  function onFinDeplacement() {
     startTransition(async () => {
-      await reorderStories(reordonnees.map((s) => s.id));
+      await reorderStories(ordreStories.map((s) => s.id));
       router.refresh();
     });
   }
@@ -178,6 +190,12 @@ export function VitrineClient({
       router.refresh();
     });
   }
+
+  // L'aperçu reflète l'état du formulaire en cours de saisie, pas encore
+  // enregistré — c'est tout l'intérêt par rapport à recharger la page.
+  const remiseApercu = Number.parseInt(remiseRoutine, 10) || 0;
+
+  const styleTheme = useMemo(() => variablesTheme(theme), [theme]);
 
   return (
     <>
@@ -218,45 +236,63 @@ export function VitrineClient({
           </div>
         </Card>
 
-        {/* ─── Aperçu ──────────────────────────────────────────────────── */}
+        {/* ─── Aperçu en direct ───────────────────────────────────────── */}
         <Card className="flex flex-col gap-2 p-3">
-          <span className={LABEL}>Aperçu — rail de stories tel que vu sur la vitrine</span>
-          {stories.length === 0 ? (
-            <EmptyState title="Aucune story : le rail reste masqué" />
-          ) : (
-            <StoriesRail stories={stories} shopSlug={shop.slug} shopName={shop.name} />
-          )}
+          <span className={LABEL}>
+            Aperçu — reflète vos réglages en cours de saisie ci-dessous, avant même d&apos;enregistrer
+          </span>
+          <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-[32px] border-[6px] border-[#1b1724] bg-[var(--color-app)]">
+            <div
+              className="max-h-[520px] overflow-y-auto"
+              style={{ ...styleTheme, background: "var(--theme-fond,var(--color-app))" }}
+              data-theme={theme.id}
+            >
+              {stories.length > 0 && <StoriesRail stories={ordreStories} shopSlug={shop.slug} shopName={shop.name} />}
+              <BoutiqueContenu
+                onglet="products"
+                subCategories={[]}
+                promo={null}
+                promotions={[]}
+                roue={null}
+                casesRoue={[]}
+                lives={[]}
+                visible={produitsApercu}
+                packs={packs}
+                zones={zones}
+                shopId={shop.id}
+                shopSlug={shop.slug}
+                shopAddress={null}
+                couverture={enTeteApercu}
+                installments={installments}
+                routineDiscount={remiseApercu}
+                packTiers={themeId === "parapharmacie" ? paliers : shop.packTiers}
+                lookbook={lookbook}
+                locale={locale}
+                t={t}
+                userConnecte={false}
+                theme={theme}
+              />
+            </div>
+          </div>
         </Card>
 
         {/* ─── Stories ─────────────────────────────────────────────────── */}
         <Card id="stories" className="flex flex-col gap-[10px] p-3">
-          <span className={LABEL}>Stories ({stories.length})</span>
+          <span className={LABEL}>Stories ({ordreStories.length}) — glissez pour réordonner</span>
 
-          {stories.length > 0 && (
-            <div className="flex flex-col gap-1">
-              {stories.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2 rounded-[12px] border border-[var(--color-outline)] p-[8px]">
+          {ordreStories.length > 0 && (
+            <Reorder.Group axis="y" values={ordreStories} onReorder={setOrdreStories} className="flex flex-col gap-1">
+              {ordreStories.map((s) => (
+                <Reorder.Item
+                  key={s.id}
+                  value={s}
+                  onDragEnd={onFinDeplacement}
+                  className="flex cursor-grab items-center gap-2 rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-app)] p-[8px] active:cursor-grabbing"
+                >
+                  <span className="flex-none text-[0.75rem] opacity-50">⠿</span>
                   <span className="min-w-0 flex-1 truncate text-[0.75rem] font-semibold">
                     {s.label} — {s.title}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onDeplacer(i, -1)}
-                    disabled={pending || i === 0}
-                    className="flex-none text-[0.75rem] disabled:opacity-30"
-                    aria-label="Monter"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeplacer(i, 1)}
-                    disabled={pending || i === stories.length - 1}
-                    className="flex-none text-[0.75rem] disabled:opacity-30"
-                    aria-label="Descendre"
-                  >
-                    ↓
-                  </button>
                   <button
                     type="button"
                     onClick={() => onSupprimerStory(s.id)}
@@ -265,9 +301,9 @@ export function VitrineClient({
                   >
                     Supprimer
                   </button>
-                </div>
+                </Reorder.Item>
               ))}
-            </div>
+            </Reorder.Group>
           )}
 
           <span className={LABEL}>Nouvelle story</span>
@@ -355,6 +391,19 @@ export function VitrineClient({
             {pending ? "Enregistrement…" : "Ajouter la story"}
           </Button>
         </Card>
+
+        {/* ─── Lookbook (Mode) ────────────────────────────────────────── */}
+        {themeId === "mode" && (
+          <Card className="p-3">
+            <HotspotEditor
+              scope="lookbook"
+              titre="Lookbook — repères sur la photo"
+              imageUrlInitiale={lookbook?.imageUrl ?? null}
+              pinsInitiaux={lookbook?.reperes.map((r) => ({ productId: r.productId, x: r.x, y: r.y })) ?? []}
+              produits={produitsPourRepere}
+            />
+          </Card>
+        )}
 
         {/* ─── Réglages ────────────────────────────────────────────────── */}
         <Card className="flex flex-col gap-[10px] p-3">

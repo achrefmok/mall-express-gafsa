@@ -787,6 +787,45 @@ export async function reorderStories(storyIds: string[]) {
   return done();
 }
 
+/*
+  Repères de lookbook/ambiance — `shop_lookbook_pins` n'existe pas encore
+  dans les types générés (même raison que `shop_stories` plus haut) :
+  client non typé.
+*/
+export async function upsertLookbookPins(
+  scope: string,
+  imageUrl: string,
+  pins: Array<{ productId: string | null; x: number; y: number }>,
+) {
+  const { supabase, shop, error } = await requireShopOwner();
+  if (!shop) return fail(error);
+  const client = supabase as unknown as SupabaseClient;
+
+  // On repart d'un scope propre à chaque enregistrement — même raisonnement
+  // que `upsertProductAttributes` : plus simple et plus sûr qu'un diff
+  // repère à repère pour une poignée de points par photo.
+  const { error: suppressionError } = await client.from("shop_lookbook_pins").delete().eq("shop_id", shop.id).eq("scope", scope);
+  if (suppressionError) return fail(readableError(suppressionError));
+
+  if (pins.length > 0) {
+    const lignes = pins.map((p, sort_order) => ({
+      shop_id: shop.id,
+      scope,
+      image_url: imageUrl,
+      product_id: p.productId,
+      x: p.x,
+      y: p.y,
+      sort_order,
+    }));
+    const { error: ecritureError } = await client.from("shop_lookbook_pins").insert(lignes);
+    if (ecritureError) return fail(readableError(ecritureError));
+  }
+
+  revalidatePath("/vendeur/vitrine");
+  revalidatePath(`/boutique/${shop.slug}`);
+  return done();
+}
+
 /* ─── Réglages « Ma vitrine » ───────────────────────────────────────────── */
 
 export async function updateShopVitrineSettings(input: {

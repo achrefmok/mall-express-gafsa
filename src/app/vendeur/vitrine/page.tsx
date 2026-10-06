@@ -4,7 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getMyShop } from "@/lib/queries";
 import { resolveTheme } from "@/lib/boutique-themes";
-import { lireStoriesBoutique, lirePacksBoutique, lireZonesLivraison } from "@/lib/boutique-themes/attributs-server";
+import {
+  lireAttributsProduits,
+  lireMatieresProduits,
+  lirePacksBoutique,
+  lireRepereLookbook,
+  lireStoriesBoutique,
+  lireZonesLivraison,
+} from "@/lib/boutique-themes/attributs-server";
 import { calculerCompletude, type DonneesCompletude } from "@/lib/vitrine-completude";
 import { VitrineClient } from "./vitrine-client";
 
@@ -47,9 +54,10 @@ export default async function VendorVitrinePage() {
     { count: nbHoraires },
     { data: promoActive },
     { count: produitsTotal },
-    { data: produits },
+    { data: produitsComplets },
     packs,
     zones,
+    lookbookExistant,
   ] = await Promise.all([
     lireStoriesBoutique(supabase, shop.id),
     supabase.from("shop_hours").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).eq("is_closed", false),
@@ -62,10 +70,24 @@ export default async function VendorVitrinePage() {
       .limit(1)
       .maybeSingle(),
     supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shop.id),
-    supabase.from("products").select("id").eq("shop_id", shop.id),
+    // Jeu complet pour l'aperçu en direct — mêmes colonnes que la page
+    // boutique publique (src/app/boutique/[slug]/page.tsx).
+    supabase
+      .from("products")
+      .select(
+        "id, name, price, compare_at_price, images, stock, sizes, colors, created_at, category:categories(hue, slug, name_fr, name_ar)",
+      )
+      .eq("shop_id", shop.id)
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .order("sold_count", { ascending: false })
+      .limit(24),
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
     theme.id === "services" ? lireZonesLivraison(supabase, shop.id) : Promise.resolve([]),
+    theme.id === "mode" ? lireRepereLookbook(supabase, shop.id, "lookbook") : Promise.resolve(null),
   ]);
+
+  const produits = (produitsComplets ?? []).map((p) => ({ id: p.id }));
 
   const clesMetier = CLES_PAR_METIER[theme.id] ?? [];
   let produitsAvecAttributCle = 0;
@@ -111,6 +133,21 @@ export default async function VendorVitrinePage() {
 
   const completude = calculerCompletude(theme.id, donnees);
 
+  // Enrichissement pour l'aperçu en direct — mêmes deux lectures que la
+  // page boutique publique, jamais inventées pour l'occasion.
+  const idsPourApercu = (produitsComplets ?? []).map((p) => p.id);
+  const [attributsApercu, materiauxApercu] = await Promise.all([
+    lireAttributsProduits(supabase, idsPourApercu),
+    theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsPourApercu) : Promise.resolve(new Map<string, string[]>()),
+  ]);
+  const produitsApercu = (produitsComplets ?? []).map((p) => ({
+    ...p,
+    attributs: attributsApercu.get(p.id),
+    materiaux: materiauxApercu.get(p.id),
+  }));
+
+  const enTeteApercu = shop.banner_url ?? shop.cover_url;
+
   return (
     <VitrineClient
       shop={{
@@ -123,8 +160,15 @@ export default async function VendorVitrinePage() {
         packTiers: shop.pack_tiers,
       }}
       themeId={theme.id}
+      theme={theme}
       stories={stories}
       completude={completude}
+      produitsApercu={produitsApercu}
+      enTeteApercu={enTeteApercu}
+      packs={packs}
+      zones={zones}
+      lookbook={lookbookExistant}
+      produitsPourRepere={(produitsComplets ?? []).map((p) => ({ id: p.id, name: p.name }))}
     />
   );
 }

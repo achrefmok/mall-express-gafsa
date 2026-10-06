@@ -61,11 +61,14 @@ export function ModeLayout({
   locale,
   theme,
   couverture,
+  lookbook: lookbookPose,
 }: {
   visible: ProduitBoutique[];
   locale: AppLocale;
   theme: ThemeBoutique;
   couverture: string | null;
+  /** Repères posés par le vendeur (`/vendeur/vitrine`) — `null` = pas encore posés. */
+  lookbook: { imageUrl: string; reperes: Array<{ id: string; productId: string | null; x: number; y: number }> } | null;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -129,8 +132,21 @@ export function ModeLayout({
     return liste;
   }, [base, rayon, taille, query, tri]);
 
-  const lookbook = base.slice(0, 3);
-  const PINS = ["18%,24%", "58%,42%", "32%,66%"];
+  /*
+    Repères réels posés par le vendeur (/vendeur/vitrine) s'il y en a — sinon
+    repli sur les 3 premiers articles du genre actif, épinglés à des
+    positions fixes : jamais de section vide, même sans réglage.
+  */
+  const reperesReels =
+    lookbookPose && lookbookPose.reperes.length > 0
+      ? lookbookPose.reperes
+          .map((r) => ({ repere: r, produit: visible.find((p) => p.id === r.productId) }))
+          .filter((x): x is { repere: (typeof lookbookPose.reperes)[number]; produit: ProduitBoutique } => Boolean(x.produit))
+      : null;
+
+  const imageLookbook = lookbookPose?.imageUrl ?? couverture;
+  const lookbook = reperesReels ? reperesReels.map((x) => x.produit) : base.slice(0, 3);
+  const PINS_AUTO = ["18%,24%", "58%,42%", "32%,66%"];
 
   function estNouveau(p: ProduitBoutique) {
     if (!p.created_at) return false;
@@ -251,14 +267,16 @@ export function ModeLayout({
         </div>
       )}
 
-      {couverture && lookbook.length > 1 && !query && !rayon && (
+      {imageLookbook && lookbook.length > 1 && !query && !rayon && (
         <div
           className="relative h-[280px] overflow-hidden rounded-[var(--theme-rayon,28px)] bg-center bg-cover"
-          style={{ backgroundImage: `url(${couverture})` }}
+          style={{ backgroundImage: `url(${imageLookbook})` }}
         >
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,20,20,0)_45%,rgba(20,20,20,0.55)_100%)]" />
           {lookbook.map((p, i) => {
-            const [x, y] = PINS[i].split(",");
+            const [x, y] = reperesReels
+              ? [`${reperesReels[i].repere.x}%`, `${reperesReels[i].repere.y}%`]
+              : PINS_AUTO[i].split(",");
             return (
               <span
                 key={p.id}

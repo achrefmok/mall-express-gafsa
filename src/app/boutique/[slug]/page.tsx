@@ -14,6 +14,7 @@ import {
   lireAttributsProduits,
   lireMatieresProduits,
   lirePacksBoutique,
+  lireRepereLookbook,
   lireStoriesBoutique,
   lireZonesLivraison,
 } from "@/lib/boutique-themes/attributs-server";
@@ -333,11 +334,12 @@ export default async function ShopPage({
     jointure à part) et ne servent qu'à Bijouterie/Parapharmacie.
   */
   const idsProduitsVisibles = visible.map((p) => p.id);
-  const [attributsParProduit, matieresParProduit, packs, zones, favoris] = await Promise.all([
+  const [attributsParProduit, matieresParProduit, packs, zones, lookbook, favoris] = await Promise.all([
     lireAttributsProduits(supabase, idsProduitsVisibles),
     theme.id === "bijouterie" ? lireMatieresProduits(supabase, idsProduitsVisibles) : Promise.resolve(new Map<string, string[]>()),
     theme.id === "parapharmacie" ? lirePacksBoutique(supabase, shop.id) : Promise.resolve([]),
     theme.id === "services" ? lireZonesLivraison(supabase, shop.id) : Promise.resolve([]),
+    theme.id === "mode" ? lireRepereLookbook(supabase, shop.id, "lookbook") : Promise.resolve(null),
     // Le cœur favori n'a de sens que connecté — `ProductCard` le masque
     // entièrement si `isFavorite` reste `undefined`.
     user && idsProduitsVisibles.length > 0
@@ -449,6 +451,7 @@ export default async function ShopPage({
           installments={shop.installments}
           routineDiscount={shop.routine_discount}
           packTiers={shop.pack_tiers}
+          lookbook={lookbook}
           locale={locale}
           t={t}
           userConnecte={Boolean(user)}
