@@ -68,6 +68,32 @@ export async function lireMatieresProduits(
   return parProduit;
 }
 
+export interface StoryBoutique {
+  id: string;
+  kind: string;
+  label: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+  cta_label: string | null;
+  cta_target: string | null;
+}
+
+/** Les stories actives d'une boutique, triées pour l'affichage du rail. */
+export async function lireStoriesBoutique(supabase: SupabaseClient, shopId: string): Promise<StoryBoutique[]> {
+  const { data, error } = await supabase
+    .from("shop_stories")
+    .select("id, kind, label, title, subtitle, image_url, cta_label, cta_target")
+    .eq("shop_id", shopId)
+    .order("sort_order");
+
+  if (error || !data) {
+    if (error && !MIGRATION_ABSENTE.includes(error.code)) console.error(error);
+    return [];
+  }
+  return data;
+}
+
 export interface ZoneLivraison {
   id: string;
   name: string;

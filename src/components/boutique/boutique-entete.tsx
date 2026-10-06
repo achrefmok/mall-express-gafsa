@@ -6,7 +6,9 @@ import { Card, Placeholder } from "@/components/ui/primitives";
 import { PinIcon } from "@/components/ui/icons";
 import { FollowButton, ShopContact, CountShopView } from "@/app/boutique/[slug]/shop-client";
 import { ReservationSheet } from "@/components/partners/reservation-sheet";
+import { StoriesRail } from "@/components/boutique/stories-rail";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
+import type { StoryBoutique } from "@/lib/boutique-themes/attributs-server";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -27,6 +29,7 @@ export function BoutiqueEnTete({
   locale,
   t,
   following,
+  stories,
   reservationDefaults,
 }: {
   shop: {
@@ -56,6 +59,7 @@ export function BoutiqueEnTete({
   locale: AppLocale;
   t: Dictionary;
   following: boolean;
+  stories: StoryBoutique[];
   reservationDefaults: { fullName: string; phone: string };
 }) {
   return (
@@ -232,7 +236,11 @@ export function BoutiqueEnTete({
             </div>
           )}
         </div>
+      </div>
 
+      <StoriesRail stories={stories} shopSlug={shop.slug} shopName={shop.name} />
+
+      <div className="flex flex-none flex-col gap-2 px-4">
         {/*
           Où se trouve la boutique, et comment y aller.
 

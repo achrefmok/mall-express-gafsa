@@ -1,4 +1,5 @@
 import { AvantDebut } from "@/components/ui/avant-debut";
+import { CompteARebours } from "@/components/ui/compte-a-rebours-boites";
 import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
@@ -112,26 +113,27 @@ export function BoutiqueContenu({
           <span className="flex-none rounded-[14px] bg-[var(--color-live-fill)] px-[9px] py-[6px] text-[0.6875rem] font-bold text-white">
             −{promo.percent_off}%
           </span>
-          <div className="min-w-0">
-            <p className="text-[0.71875rem] font-semibold text-[var(--color-ink)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.59375rem] font-bold text-[var(--color-live)]">⚡ {t.shop.todayOffer}</p>
+            <p className="truncate text-[0.71875rem] font-semibold text-[var(--color-ink)]">
               {locale === "ar" && promo.title_ar ? promo.title_ar : promo.title}
             </p>
             {/*
-              À venir, elle annonce son décompte ; commencée, sa date de
-              fin. Une promotion préparée pour demain n'a aucune raison
-              de rester cachée jusqu'au matin : l'annoncer fait revenir,
-              et c'est le seul intérêt de la programmer.
+              À venir, elle annonce son décompte avant de démarrer ; une fois
+              commencée, son décompte avant la fin — en cases chiffrées, pas
+              une date : une promotion préparée pour demain n'a aucune raison
+              de rester cachée jusqu'au matin, et « ça presse » se lit mieux
+              en secondes qui défilent qu'en date de fin.
             */}
-            <p className="text-[0.65625rem] text-[var(--color-muted)]">
-              {new Date(promo.starts_at).getTime() > Date.now() ? (
+            {new Date(promo.starts_at).getTime() > Date.now() && (
+              <p className="text-[0.65625rem] text-[var(--color-muted)]">
                 <AvantDebut debut={promo.starts_at} />
-              ) : (
-                <>
-                  {t.deals.validUntil} {new Date(promo.ends_at).toLocaleDateString("fr-FR")}
-                </>
-              )}
-            </p>
+              </p>
+            )}
           </div>
+          {new Date(promo.starts_at).getTime() <= Date.now() && (
+            <CompteARebours jusqua={promo.ends_at} className="flex-none" />
+          )}
         </div>
       )}
 

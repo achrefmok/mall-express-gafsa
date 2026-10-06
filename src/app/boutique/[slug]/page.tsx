@@ -10,7 +10,13 @@ import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { resolveTheme, variablesTheme } from "@/lib/boutique-themes";
-import { lireAttributsProduits, lireMatieresProduits, lirePacksBoutique, lireZonesLivraison } from "@/lib/boutique-themes/attributs-server";
+import {
+  lireAttributsProduits,
+  lireMatieresProduits,
+  lirePacksBoutique,
+  lireStoriesBoutique,
+  lireZonesLivraison,
+} from "@/lib/boutique-themes/attributs-server";
 import { BoutiqueEnTete } from "@/components/boutique/boutique-entete";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { BoutiquePanierFlottant } from "@/components/boutique/boutique-panier-flottant";
@@ -152,7 +158,7 @@ export default async function ShopPage({
     notFound();
   }
 
-  const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue] =
+  const [products, promo, promotions, hoursToday, subCategories, following, lives, counts, roue, stories] =
     await Promise.all([
     /*
       `sizes` et la catégorie complète (pas seulement `hue`) ne servaient à
@@ -238,6 +244,8 @@ export default async function ShopPage({
       .select("id, title, title_ar, is_active")
       .eq("shop_id", shop.id)
       .maybeSingle(),
+
+    lireStoriesBoutique(supabase, shop.id),
   ]);
 
   /* Les cases sans leurs poids ni leurs stocks : la fonction les retire. */
@@ -386,6 +394,7 @@ export default async function ShopPage({
           locale={locale}
           t={t}
           following={following}
+          stories={stories}
           reservationDefaults={{
             fullName: [profile?.first_name, profile?.last_name].filter(Boolean).join(" "),
             phone: profile?.phone ?? "",

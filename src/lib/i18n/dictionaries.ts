@@ -665,6 +665,8 @@ const fr = {
     openUntil: "Ouvert · ferme à {time}",
     closed: "Fermé",
     askVendor: "Demander au vendeur",
+    todayOffer: "Offre du jour",
+    stories: "Stories",
     tabs: { products: "Produits", promos: "Promos", posts: "Posts", lives: "Lives" },
   },
 
@@ -1612,6 +1614,8 @@ const ar: Dictionary = {
     openUntil: "مفتوح · يغلق على {time}",
     closed: "مغلق",
     askVendor: "اسأل البائع",
+    todayOffer: "عرض اليوم",
+    stories: "ستوريز",
     tabs: { products: "المنتجات", promos: "العروض", posts: "المنشورات", lives: "البثوث" },
   },
 
