@@ -2,8 +2,8 @@ import Image from "next/image";
 import { format } from "@/lib/i18n/format";
 import { formatCount, formatTime, monogram } from "@/lib/format";
 import { BoutonPartage } from "@/components/black-friday/share-button";
-import { Card, Placeholder } from "@/components/ui/primitives";
-import { PinIcon } from "@/components/ui/icons";
+import { Placeholder } from "@/components/ui/primitives";
+import { ChevronRightIcon, PinIcon } from "@/components/ui/icons";
 import { FollowButton, ShopContact, CountShopView } from "@/app/boutique/[slug]/shop-client";
 import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { StoriesRail } from "@/components/boutique/stories-rail";
@@ -244,47 +244,35 @@ export function BoutiqueEnTete({
         {/*
           Où se trouve la boutique, et comment y aller.
 
-          La page disait « Niveau 1 » dans une ligne de texte gris, sous le
-          nom. Or c'est l'information qui décide du déplacement : quelqu'un
-          qui consulte une vitrine depuis chez lui veut savoir s'il peut y
-          passer. Elle prend donc une carte à elle, avec l'itinéraire au bout.
-
-          L'itinéraire s'ouvre dans l'application de cartographie du
-          téléphone : c'est elle qui connaît le trafic et qui parle pendant le
-          trajet. Sans coordonnées, la carte reste et se contente d'indiquer
-          le local — à l'intérieur d'un mall, « Niveau 1, local B12 » guide
-          mieux qu'un point sur une carte.
+          La catégorie n'est pas répétée ici : elle est déjà sous le nom de
+          la boutique, juste au-dessus. Une seule ligne compacte — pastille,
+          texte, bouton rond — plutôt qu'une carte à deux lignes.
         */}
         {(shop.mall_unit || (shop.latitude !== null && shop.longitude !== null)) && (
-          <Card className="mt-1 flex items-center gap-[10px] p-[12px_13px]">
-            <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[var(--theme-accent-doux,var(--color-brand-tint))] text-[var(--theme-accent-fort,var(--color-brand))]">
-              <PinIcon size={16} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[0.75rem] font-bold text-[var(--color-ink)]">
-                {shop.mall_unit
-                  ? format(t.product.walkTime, {
-                      level: shop.mall_level ?? 0,
-                      unit: shop.mall_unit,
-                      min: 3,
-                    })
-                  : t.shop.findUs}
-              </p>
-              <p className="text-[0.625rem] leading-[1.35] text-[var(--color-muted)]">
-                {locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr}
-              </p>
-            </div>
+          <div className="mt-1 flex items-center gap-[8px] rounded-[14px] bg-[var(--theme-accent-doux,var(--color-brand-tint))] px-[10px] py-[7px]">
+            <PinIcon size={14} className="flex-none text-[var(--theme-accent-fort,var(--color-brand))]" />
+            <p className="min-w-0 flex-1 truncate text-[0.6875rem] font-semibold text-[var(--color-ink)]">
+              {shop.mall_unit
+                ? format(t.product.walkTime, {
+                    level: shop.mall_level ?? 0,
+                    unit: shop.mall_unit,
+                    min: 3,
+                  })
+                : t.shop.findUs}
+            </p>
             {shop.latitude !== null && shop.longitude !== null && (
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-                className="press flex-none rounded-[16px] bg-[var(--theme-accent,var(--color-brand-fill))] px-[13px] py-2 text-[0.65625rem] font-bold whitespace-nowrap text-[var(--theme-accent-texte,white)] shadow-[0_8px_18px_rgba(109,75,143,0.26)]"
+                aria-label={t.shop.guideMe}
+                title={t.shop.guideMe}
+                className="press flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)]"
               >
-                {t.shop.guideMe}
+                <ChevronRightIcon size={13} />
               </a>
             )}
-          </Card>
+          </div>
         )}
       </div>
     </>

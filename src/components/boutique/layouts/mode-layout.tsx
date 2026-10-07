@@ -115,6 +115,21 @@ export function ModeLayout({
     p.attributs?.type ||
     (p.category?.slug === "mode-chaussures" ? "Chaussures" : p.category?.slug === "mode-accessoires" ? "Accessoires" : null);
 
+  /*
+    Une vraie photo plutôt qu'un glyphe quand le rayon en a une — le premier
+    produit du rayon qui a déjà une image, jamais une photo inventée pour
+    un rayon dont aucun produit n'en a encore.
+  */
+  const imageParRayon = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of base) {
+      const label = typeDe(p);
+      if (!label || m.has(label) || !p.images?.[0]) continue;
+      m.set(label, p.images[0]);
+    }
+    return m;
+  }, [base]);
+
   const filtres = useMemo(() => {
     const q = normalise(query.trim());
     let liste = base.filter((p) => {
@@ -245,17 +260,23 @@ export function ModeLayout({
             </button>
             {rayons.map(([label, count]) => {
               const actif = label === rayon;
+              const image = imageParRayon.get(label);
               return (
                 <button key={label} type="button" onClick={() => setRayon(actif ? null : label)} className="flex flex-none flex-col items-center gap-[6px]">
                   <span
-                    className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
+                    className="relative flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-[20px] text-[1.125rem]"
                     style={{
-                      background: actif ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                      background: image ? undefined : actif ? "var(--theme-accent)" : "var(--theme-accent-doux)",
                       color: actif ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
                       boxShadow: actif ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
                     }}
                   >
-                    {ICONE_PAR_TYPE[label] ?? "•"}
+                    {image ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- miniature fixe 60px
+                      <img src={image} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      (ICONE_PAR_TYPE[label] ?? "•")
+                    )}
                   </span>
                   <span className="max-w-[64px] truncate text-[0.625rem] font-bold whitespace-nowrap">
                     {label} · {count}

@@ -8,6 +8,7 @@ import { toggleFollowShop } from "@/app/actions/cart";
 import { countShopView, openConversation } from "@/app/actions/account";
 import { telHref, whatsAppHref } from "@/lib/contact";
 import { cx } from "@/lib/format";
+import { GridIcon, LiveDot, SparkIcon } from "@/components/ui/icons";
 
 export function FollowButton({
   shopId,
@@ -72,13 +73,19 @@ export function ShopTabs({
     qu'absent : il promettrait un contenu qui n'existe pas.
   */
   const tabs = [
-    { key: "products", label: t.shop.tabs.products },
-    { key: "promos", label: t.shop.tabs.promos },
-    { key: "lives", label: `${t.shop.tabs.lives}${liveCount > 0 ? ` (${liveCount})` : ""}` },
+    { key: "products", label: t.shop.tabs.products, icon: <GridIcon size={16} /> },
+    { key: "promos", label: t.shop.tabs.promos, icon: <SparkIcon size={16} /> },
+    { key: "lives", label: t.shop.tabs.lives, icon: <LiveDot size={9} />, badge: liveCount },
   ];
 
+  /*
+    Trois petites pastilles plutôt qu'une bande pleine largeur avec un mot
+    par onglet : l'intitulé reste accessible (aria-label, titre), juste
+    plus discret visuellement — l'essentiel de l'écran revient aux rayons
+    et aux produits qui suivent.
+  */
   return (
-    <div className="mt-3 flex flex-none border-y border-[var(--color-hairline)]">
+    <div className="mt-2 flex flex-none items-center gap-2">
       {tabs.map((tab) => {
         const current = active === tab.key;
         return (
@@ -87,14 +94,21 @@ export function ShopTabs({
             href={`/boutique/${slug}?onglet=${tab.key}`}
             scroll={false}
             aria-current={current ? "page" : undefined}
+            aria-label={tab.label}
+            title={tab.label}
             className={cx(
-              "flex-1 py-[10px] text-center text-[0.71875rem]",
+              "relative flex h-9 w-9 flex-none items-center justify-center rounded-full transition-colors",
               current
-                ? "border-b-2 border-[var(--theme-accent-fort,var(--color-brand))] font-semibold text-[var(--theme-accent-fort,var(--color-brand))]"
-                : "text-[var(--color-muted)]",
+                ? "bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)]"
+                : "bg-[var(--color-surface-solid)] text-[var(--color-muted)]",
             )}
           >
-            {tab.label}
+            {tab.icon}
+            {Boolean(tab.badge) && (
+              <span className="absolute -top-[2px] -end-[2px] flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[var(--color-live-fill)] px-[3px] text-[0.5rem] font-bold text-white">
+                {tab.badge}
+              </span>
+            )}
           </Link>
         );
       })}
