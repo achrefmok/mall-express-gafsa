@@ -565,6 +565,9 @@ export function ShopSettingsForm({
                 Coupé, le bouton « Réserver » disparaît de la fiche et la base
                 refuse toute nouvelle demande : un commerçant parti en congé ne
                 doit pas trouver dix demandes en attente au retour.
+                Depuis le 2026-10-12, la page boutique n'affiche plus aucun
+                bouton « Réserver » (demande de l'utilisateur) : ce réglage n'a
+                donc plus d'effet visible côté client.
               */}
               <KeyValueRow label="Accepter les réservations">
                 <Switch

@@ -130,7 +130,7 @@ export default async function ShopPage({
   if (!shop) notFound();
 
   const user = await getSessionUser();
-  // Le nom et le numéro déjà connus, pour ne pas les faire ressaisir.
+  // Le profil sert à reconnaître l’administration (aperçu d’une boutique non approuvée).
   const profile = user ? await getProfile() : null;
 
   // Le propriétaire regarde sa propre vitrine : on lui offre le chemin du
@@ -437,10 +437,6 @@ export default async function ShopPage({
           t={t}
           following={following}
           stories={stories}
-          reservationDefaults={{
-            fullName: [profile?.first_name, profile?.last_name].filter(Boolean).join(" "),
-            phone: profile?.phone ?? "",
-          }}
         />
 
         <ShopTabs active={onglet} slug={shop.slug} liveCount={(lives.data ?? []).length} />

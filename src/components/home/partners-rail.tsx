@@ -45,9 +45,6 @@ export function cartePourBoutique(p: PartenaireAccueil, locale: AppLocale): Cart
     liens: [
       { href: `/boutique/${p.slug}?onglet=products`, libelle: "Voir les produits" },
       { href: `/boutique/${p.slug}?onglet=promos`, libelle: "Voir les promotions" },
-      ...(p.accepts_reservations
-        ? [{ href: `/boutique/${p.slug}`, libelle: "Réserver", accent: true }]
-        : []),
     ],
   };
 }

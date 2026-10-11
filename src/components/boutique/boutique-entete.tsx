@@ -2,7 +2,6 @@ import Image from "next/image";
 import { formatCount, monogram } from "@/lib/format";
 import { BoutonPartage } from "@/components/black-friday/share-button";
 import { FollowButton, ShopContact, CountShopView } from "@/app/boutique/[slug]/shop-client";
-import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { StoriesRail } from "@/components/boutique/stories-rail";
 import { BlocInfos, CouvertureRelief, type HoraireJour } from "@/components/boutique/entete-client";
 import type { ConfigVitrine } from "@/lib/boutique-vitrines";
@@ -33,7 +32,6 @@ export function BoutiqueEnTete({
   t,
   following,
   stories,
-  reservationDefaults,
 }: {
   shop: {
     id: string;
@@ -47,7 +45,6 @@ export function BoutiqueEnTete({
     mall_unit: string | null;
     phone: string | null;
     is_open_now: boolean;
-    accepts_reservations: boolean;
     latitude: number | null;
     longitude: number | null;
     followers_count: number;
@@ -67,7 +64,6 @@ export function BoutiqueEnTete({
   t: Dictionary;
   following: boolean;
   stories: StoryBoutique[];
-  reservationDefaults: { fullName: string; phone: string };
 }) {
   const ar = locale === "ar";
   const nom = ar && shop.name_ar ? shop.name_ar : shop.name;
@@ -192,11 +188,6 @@ export function BoutiqueEnTete({
             whatsApp: t.common.whatsApp,
           }}
         />
-
-        {/* Réserver engage une date : sa propre ligne, sous les contacts. */}
-        {shop.accepts_reservations && (
-          <ReservationSheet shopId={shop.id} shopName={shop.name} defaults={reservationDefaults} label="Réserver" />
-        )}
 
         <BlocInfos
           ouvert={shop.is_open_now}
