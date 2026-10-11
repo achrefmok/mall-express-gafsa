@@ -13,9 +13,12 @@ import { GridIcon, LiveDot, SparkIcon } from "@/components/ui/icons";
 export function FollowButton({
   shopId,
   initiallyFollowing,
+  variante = "bouton",
 }: {
   shopId: string;
   initiallyFollowing: boolean;
+  /** `logo` : la pastille « + متابعة » posée sur le bas du logo (handoff). */
+  variante?: "bouton" | "logo";
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -35,6 +38,24 @@ export function FollowButton({
         router.refresh();
       }
     });
+  }
+
+  if (variante === "logo") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={pending}
+        aria-pressed={following}
+        className="absolute -bottom-[10px] left-1/2 z-[2] h-6 -translate-x-1/2 rounded-[12px] border-2 border-white px-[10px] text-[0.6875rem] font-extrabold whitespace-nowrap shadow-[0_4px_10px_rgba(60,40,90,.25)]"
+        style={{
+          background: following ? "var(--theme-accent-doux)" : "var(--theme-accent)",
+          color: following ? "var(--theme-accent-fort)" : "var(--theme-accent-texte)",
+        }}
+      >
+        {following ? `✓ ${t.shop.following}` : `+ ${t.shop.follow}`}
+      </button>
+    );
   }
 
   return (
@@ -85,7 +106,7 @@ export function ShopTabs({
     et aux produits qui suivent.
   */
   return (
-    <div className="mt-2 flex flex-none items-center gap-2">
+    <div className="mt-4 flex flex-none items-center gap-2 px-4">
       {tabs.map((tab) => {
         const current = active === tab.key;
         return (
@@ -136,11 +157,13 @@ export function ShopContact({
   shopName,
   phone,
   labels,
+  variante = "pilules",
 }: {
   shopId: string;
   shopName: string;
   phone: string | null;
   labels: { message: string; call: string; whatsApp: string };
+  variante?: "pilules" | "handoff";
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -164,6 +187,52 @@ export function ShopContact({
 
       router.push(`/messages/${result.data.id}`);
     });
+  }
+
+  /*
+    Variante du handoff : un bouton principal plein (libellé du métier —
+    « اسأل البائع », « اطلب عيّنة »…) qui ouvre la messagerie, puis l'appel
+    et WhatsApp en icônes de 46px.
+  */
+  if (variante === "handoff") {
+    return (
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onMessage}
+          disabled={pending}
+          className="press min-h-[46px] min-w-0 flex-1 truncate rounded-[14px] bg-[var(--theme-accent)] px-3 text-[0.875rem] font-extrabold whitespace-nowrap text-[var(--theme-accent-texte)] disabled:opacity-60"
+        >
+          {pending ? "…" : labels.message}
+        </button>
+        {tel && (
+          <a
+            href={tel}
+            aria-label={labels.call}
+            title={labels.call}
+            className="press flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[14px] bg-[var(--theme-accent-doux)] text-[var(--theme-accent-fort)]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
+            </svg>
+          </a>
+        )}
+        {wa && (
+          <a
+            href={wa}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={labels.whatsApp}
+            title={labels.whatsApp}
+            className="press flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[14px] bg-[#e2f5ea] text-[#1d7a46]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z" />
+            </svg>
+          </a>
+        )}
+      </div>
+    );
   }
 
   return (

@@ -161,7 +161,7 @@ export default async function ShopPage({
     notFound();
   }
 
-  const [products, promo, promotions, hoursToday, subCategories, following, lives, roue, stories, cartShop] =
+  const [products, promo, promotions, horaires, subCategories, following, lives, roue, stories, cartShop] =
     await Promise.all([
     /*
       `sizes` et la catégorie complète (pas seulement `hue`) ne servaient à
@@ -204,12 +204,13 @@ export default async function ShopPage({
       .order("percent_off", { ascending: false })
       .limit(20),
 
+    // La semaine entière : le statut du jour, l'heure de réouverture et
+    // « المواعيد » qui déplie les sept jours réels.
     supabase
       .from("shop_hours")
-      .select("*")
+      .select("weekday, opens_at, closes_at, is_closed")
       .eq("shop_id", shop.id)
-      .eq("weekday", (new Date().getDay() + 6) % 7)
-      .maybeSingle(),
+      .order("weekday"),
 
     supabase
       .from("shop_categories")
@@ -428,10 +429,10 @@ export default async function ShopPage({
 
         <BoutiqueEnTete
           shop={shop}
-          theme={theme}
+          vitrine={vitrine}
           enTete={enTete}
           rating={rating}
-          hoursCloseAt={hoursToday.data?.closes_at}
+          horaires={horaires.data ?? []}
           locale={locale}
           t={t}
           following={following}

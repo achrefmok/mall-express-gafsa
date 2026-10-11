@@ -47,7 +47,7 @@ export function StoriesRail({
 
   return (
     <>
-      <div className="no-sb flex flex-none gap-[14px] overflow-x-auto px-4 pt-1 pb-1">
+      <div className="no-sb flex flex-none gap-[14px] overflow-x-auto px-[14px] pt-1 pb-1">
         {stories.map((story, i) => {
           const vue = vues.has(story.id);
           return (
@@ -56,25 +56,22 @@ export function StoriesRail({
               type="button"
               onClick={() => setOuverte(i)}
               className="flex flex-none flex-col items-center gap-[5px]"
-              style={{ width: 60 }}
+              style={{ width: 64 }}
             >
+              {/* Handoff : rond de 60px, anneau 3px — accent tant que non vue, gris ensuite. */}
               <span
-                className="flex h-[57px] w-[57px] items-center justify-center rounded-full p-[2.5px]"
-                style={{
-                  background: vue
-                    ? "var(--color-outline)"
-                    : "linear-gradient(135deg,var(--theme-accent,var(--color-brand)),var(--color-live),#e0a35a)",
-                }}
+                className="flex h-[60px] w-[60px] items-center justify-center rounded-full p-[3px]"
+                style={{ background: vue ? "#d6cfe2" : "var(--theme-accent,var(--color-brand))" }}
               >
                 <span
-                  className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[2.5px] border-[var(--color-app)] bg-[var(--theme-accent-doux,var(--color-brand-tint))] bg-cover bg-center text-[0.875rem] font-bold text-[var(--theme-accent-fort,var(--color-brand))]"
+                  className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--theme-fond,var(--color-app))] bg-[var(--theme-accent-doux,var(--color-brand-tint))] bg-cover bg-center text-[0.875rem] font-bold text-[var(--theme-accent-fort,var(--color-brand))]"
                   style={story.image_url ? { backgroundImage: `url(${story.image_url})` } : undefined}
                 >
                   {!story.image_url && mono}
                 </span>
               </span>
               <span
-                className="truncate text-[0.59375rem] text-[var(--color-ink)]"
+                className="max-w-[64px] truncate text-[0.6875rem] text-[var(--theme-texte,var(--color-ink))]"
                 style={{ fontWeight: vue ? 500 : 700 }}
               >
                 {story.label}

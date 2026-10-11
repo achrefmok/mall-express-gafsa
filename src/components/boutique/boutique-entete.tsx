@@ -1,31 +1,34 @@
 import Image from "next/image";
-import { format } from "@/lib/i18n/format";
-import { formatCount, formatTime, monogram } from "@/lib/format";
+import { formatCount, monogram } from "@/lib/format";
 import { BoutonPartage } from "@/components/black-friday/share-button";
-import { Placeholder } from "@/components/ui/primitives";
-import { ChevronRightIcon, PinIcon } from "@/components/ui/icons";
 import { FollowButton, ShopContact, CountShopView } from "@/app/boutique/[slug]/shop-client";
 import { ReservationSheet } from "@/components/partners/reservation-sheet";
 import { StoriesRail } from "@/components/boutique/stories-rail";
-import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
+import { BlocInfos, CouvertureRelief, type HoraireJour } from "@/components/boutique/entete-client";
+import type { ConfigVitrine } from "@/lib/boutique-vitrines";
 import type { StoryBoutique } from "@/lib/boutique-themes/attributs-server";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
+/** Un nombre isolé en LTR au milieu d'un texte arabe (U+2066 … U+2069). */
+const ltr = (s: string) => `⁦${s}⁩`;
+
 /**
- * L'en-tête de la vitrine — couverture, identité, contact, emplacement.
+ * L'en-tête de la vitrine, commun à toutes les boutiques (handoff,
+ * « Structure commune ») : couverture de 200px en relief, carte blanche
+ * qui la chevauche (logo à anneau tournant et pastille « + متابعة », nom,
+ * description, chiffres, contact), bloc statut / emplacement, stories.
  *
- * Extrait de `page.tsx` tel quel, sans le moindre changement de classe ni de
- * structure : c'est une extraction, pas une refonte. La refonte vient
- * ensuite, une fois que cette page rend exactement comme avant depuis des
- * fichiers plus courts.
+ * Seules des données réelles : les visites sont le total
+ * (`shops.views_count`), pas un « aujourd'hui » qu'aucune table ne compte ;
+ * pas de temps de marche inventé sous l'emplacement.
  */
 export function BoutiqueEnTete({
   shop,
-  theme,
+  vitrine,
   enTete,
   rating,
-  hoursCloseAt,
+  horaires,
   locale,
   t,
   following,
@@ -47,234 +50,174 @@ export function BoutiqueEnTete({
     accepts_reservations: boolean;
     latitude: number | null;
     longitude: number | null;
-    posts_count: number;
     followers_count: number;
     views_count: number;
+    rating_count: number;
+    status: string;
+    is_partner: boolean;
+    partner_tagline: string | null;
+    partner_tagline_ar: string | null;
     category: { name_fr: string; name_ar: string } | null;
   };
-  theme: ThemeBoutique;
+  vitrine: ConfigVitrine | null;
   enTete: string | null;
   rating: string;
-  hoursCloseAt: string | null | undefined;
+  horaires: HoraireJour[];
   locale: AppLocale;
   t: Dictionary;
   following: boolean;
   stories: StoryBoutique[];
   reservationDefaults: { fullName: string; phone: string };
 }) {
+  const ar = locale === "ar";
+  const nom = ar && shop.name_ar ? shop.name_ar : shop.name;
+  const sousTitre =
+    (shop.is_partner && (ar ? shop.partner_tagline_ar ?? shop.partner_tagline : shop.partner_tagline)) ||
+    (ar ? shop.category?.name_ar : shop.category?.name_fr) ||
+    null;
+  const description = ar && shop.description_ar ? shop.description_ar : shop.description;
+
+  const emplacement = shop.mall_unit
+    ? ar
+      ? `الطابق ${shop.mall_level ?? 0} · المحل ${shop.mall_unit}`
+      : `Niveau ${shop.mall_level ?? 0} · Local ${shop.mall_unit}`
+    : shop.latitude !== null
+      ? t.shop.findUs
+      : null;
+  const lienCarte =
+    shop.latitude !== null && shop.longitude !== null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`
+      : null;
+
+  const chiffre = "flex flex-1 flex-col items-center leading-[1.2]";
+  const filet = <span aria-hidden className="h-7 w-px bg-[rgba(60,40,90,.1)]" />;
+
   return (
     <>
-      {enTete ? (
-        /*
-          `fill` dans un cadre de hauteur fixe, et un `sizes` déclaré.
+      <CouvertureRelief src={enTete}>
+        {/* Le bouton retour occupe le coin de départ : le partage prend l'autre. */}
+        <div className="absolute end-[14px] top-3 z-[3]">
+          <BoutonPartage
+            variante="rond"
+            chemin={`/boutique/${shop.slug}`}
+            titre={shop.name}
+            texte={`${shop.name} — ${t.brand.first}${t.brand.second}`}
+            image={`/partage/boutique/${shop.slug}`}
+          />
+        </div>
+      </CouvertureRelief>
 
-          La couverture est recadrée : elle occupe toute la largeur sur une
-          hauteur imposée, quel que soit le format du fichier envoyé par le
-          commerçant. Déclarer 520 × 110 annonçait un rapport que le rendu ne
-          tenait pas, et sans `sizes` le navigateur supposait la pleine largeur
-          de l'écran — il téléchargeait donc une variante trop lourde pour un
-          bandeau de cent-dix pixels.
-        */
-        <span className="relative block h-[110px] w-full flex-none">
-          <Image
-            src={enTete}
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 520px) 100vw, 520px"
-            className="object-cover"
-          />
-          {/*
-            Le voile de l'ambiance : jamais opaque, jamais devant le texte
-            qui suit — juste de quoi teinter la photo du commerçant sans la
-            remplacer. Une boutique « Électronique » y gagne un motif de
-            grille très pâle en plus du dégradé, une boutique « Mode » n'a
-            que le dégradé.
-          */}
-          {/*
-            `--theme-voile` porte déjà la bonne valeur (palette sombre,
-            toujours) — posée par `variablesTheme()`, jamais choisie ici.
-          */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{ backgroundImage: "var(--theme-voile)" }}
-          />
-          {theme.couverture.motif && (
+      <div className="relative z-[2] mx-3 -mt-11 flex flex-none flex-col gap-[14px] rounded-[24px] bg-[var(--theme-surface,#fff)] px-[14px] pb-[14px] shadow-[0_14px_34px_rgba(60,40,90,.12)]">
+        <div className="-mt-[30px] flex items-end gap-3 pb-[6px]">
+          <div className="relative h-[78px] w-[78px] flex-none">
+            <div aria-hidden className="absolute -inset-[3px] overflow-hidden rounded-[25px]">
+              <div
+                className="animate-anneau-logo absolute -inset-[40%]"
+                style={{
+                  background:
+                    "conic-gradient(var(--theme-accent),color-mix(in srgb,var(--theme-accent) 35%,white),var(--theme-accent))",
+                }}
+              />
+            </div>
             <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{ backgroundImage: theme.couverture.motif, backgroundSize: theme.couverture.motifTaille }}
-            />
-          )}
-        </span>
-      ) : (
-        <Placeholder label="photo de couverture" className="h-[110px] w-full flex-none" />
-      )}
+              className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-[22px] border-[3px] border-white text-[1.4375rem] font-black tracking-[-0.5px] text-white"
+              style={{ background: "color-mix(in srgb,var(--theme-accent) 70%,#120d17)" }}
+            >
+              {shop.logo_url ? (
+                <Image src={shop.logo_url} alt="" width={78} height={78} className="h-full w-full object-cover" />
+              ) : (
+                monogram(shop.name)
+              )}
+            </span>
+            <FollowButton shopId={shop.id} initiallyFollowing={following} variante="logo" />
+          </div>
 
-      <div className="-mt-6 flex flex-none flex-col gap-2 px-4">
-        <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[var(--color-app)] bg-[var(--theme-accent,var(--color-brand-fill))] text-[1.125rem] font-bold text-[var(--theme-accent-texte,white)]">
-          {shop.logo_url ? (
-            <Image src={shop.logo_url} alt="" width={64} height={64} className="h-full w-full object-cover" />
-          ) : (
-            monogram(shop.name)
-          )}
-        </span>
-
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col pb-[2px]">
             <h1
-              className="text-[1.1875rem] font-semibold text-[var(--color-ink)]"
+              className="flex items-center gap-[6px] text-[1.125rem] leading-[1.2] font-extrabold"
               style={{ fontFamily: "var(--theme-police)" }}
             >
-              {locale === "ar" && shop.name_ar ? shop.name_ar : shop.name}
+              <span className="min-w-0 truncate">{nom}</span>
+              {/* Une boutique visible du public a été validée par l'administration du mall. */}
+              {shop.status === "approved" && (
+                <span
+                  title={ar ? "متجر موثّق من G-Mall" : "Boutique validée par G-Mall"}
+                  className="flex h-4 w-4 flex-none items-center justify-center rounded-full bg-[var(--theme-accent)] text-[0.5625rem] font-black text-[var(--theme-accent-texte)]"
+                >
+                  ✓
+                </span>
+              )}
             </h1>
-            <p className="text-[0.6875rem] text-[var(--color-muted)]">
-              {locale === "ar" ? shop.category?.name_ar : shop.category?.name_fr}
-              {shop.mall_level !== null && ` · Niveau ${shop.mall_level}`}
-            </p>
-            <div className="mt-2">
-              <BoutonPartage
-                chemin={`/boutique/${shop.slug}`}
-                titre={shop.name}
-                texte={`${shop.name} — ${t.brand.first}${t.brand.second}`}
-                image={`/partage/boutique/${shop.slug}`}
-              />
-            </div>
+            {sousTitre && <span className="truncate text-[0.75rem] text-[var(--theme-muted)]">{sousTitre}</span>}
           </div>
-          <FollowButton shopId={shop.id} initiallyFollowing={following} />
-          {/*
-            La visite est comptée depuis le navigateur, et non pendant le rendu :
-            cette page est servie en cache cinq minutes (`revalidate = 300`), si
-            bien qu'un incrément côté serveur n'aurait compté qu'une visite par
-            intervalle, quel que soit le nombre de visiteurs réels.
-          */}
-          <CountShopView shopId={shop.id} />
+        </div>
+
+        {description && <p className="text-[0.875rem] leading-[1.5] text-[var(--theme-texte)]">{description}</p>}
+
+        <div className="flex items-center justify-between border-y border-[rgba(60,40,90,.08)] px-1 py-[10px]">
+          <div className={chiffre}>
+            <b className="text-[1.0625rem]">{ltr(formatCount(shop.followers_count))}</b>
+            <span className="text-[0.6875rem] text-[var(--theme-muted)]">{t.shop.followers}</span>
+          </div>
+          {filet}
+          <div className={chiffre}>
+            <b className="flex items-center gap-[3px] text-[1.0625rem] whitespace-nowrap">
+              {ltr(rating)}
+              <span className="text-[0.875rem] text-[oklch(.72_.15_75)]">★</span>
+            </b>
+            <span className="text-[0.6875rem] text-[var(--theme-muted)]">
+              {ltr(formatCount(shop.rating_count))} {ar ? "تقييم" : "avis"}
+            </span>
+          </div>
+          {filet}
+          <div className={chiffre}>
+            <b className="text-[1.0625rem]">{ltr(formatCount(shop.views_count))}</b>
+            <span className="text-[0.6875rem] text-[var(--theme-muted)]">{t.common.views}</span>
+          </div>
         </div>
 
         {/*
-          Plus de statistique "posts" : aucune table ne porte cette donnée,
-          et `shops.posts_count` n'est incrémenté nulle part — c'est un
-          compteur mort, toujours à 0. Voir TODO.md.
+          Le bouton principal ouvre la messagerie — le seul canal qui laisse
+          une trace des deux côtés —, avec le libellé du métier ; l'appel et
+          WhatsApp suivent en icônes.
         */}
-        <div className="mt-[2px] flex justify-between gap-3 text-[0.6875rem] text-[var(--color-muted)]">
-          <span className="whitespace-nowrap">
-            <b className="text-[var(--color-ink)]">{formatCount(shop.followers_count)}</b>{" "}
-            {t.shop.followers}
-          </span>
-          <span className="whitespace-nowrap">
-            <b className="text-[var(--color-ink)]">{formatCount(shop.views_count)}</b>{" "}
-            {t.common.views}
-          </span>
-          <span className="whitespace-nowrap">
-            <b className="text-[var(--color-ink)]">{rating}</b> ★ {t.shop.reviews}
-          </span>
-        </div>
+        <ShopContact
+          variante="handoff"
+          shopId={shop.id}
+          shopName={shop.name}
+          phone={shop.phone}
+          labels={{
+            message: vitrine ? (ar ? vitrine.libelleAction.ar : vitrine.libelleAction.fr) : t.shop.askVendor,
+            call: t.taxi.call,
+            whatsApp: t.common.whatsApp,
+          }}
+        />
 
-        {(shop.description || shop.description_ar) && (
-          <p className="text-[0.75rem] leading-[1.5] text-[var(--color-ink)]">
-            {locale === "ar" && shop.description_ar ? shop.description_ar : shop.description}
-          </p>
+        {/* Réserver engage une date : sa propre ligne, sous les contacts. */}
+        {shop.accepts_reservations && (
+          <ReservationSheet shopId={shop.id} shopName={shop.name} defaults={reservationDefaults} label="Réserver" />
         )}
 
-        <div className="mt-[2px] flex flex-none flex-wrap items-center gap-2">
-          <span
-            className="flex items-center gap-[6px] bg-[var(--theme-accent-doux)] px-[10px] py-[5px] text-[0.625rem] font-bold text-[var(--theme-accent-fort)]"
-            style={{ borderRadius: rayonBadge(theme) }}
-          >
-            <span
-              className={`inline-block h-[6px] w-[6px] rounded-full ${
-                shop.is_open_now ? "bg-[var(--color-success)]" : "bg-[var(--color-faint)]"
-              }`}
-            />
-            {shop.is_open_now && hoursCloseAt
-              ? format(t.shop.openUntil, { time: formatTime(hoursCloseAt) })
-              : t.shop.closed}
-          </span>
-
-          {/*
-            Trois portes vers le vendeur, et non plus une seule.
-
-            Le lien précédent choisissait à la place du visiteur : un numéro
-            renseigné menait à l'appel, et la messagerie du site devenait
-            alors inaccessible depuis la boutique — alors qu'elle est le seul
-            canal qui laisse une trace consultable des deux côtés. Un client
-            qui veut écrire à 23 h n'appelle pas ; un client pressé n'écrit pas.
-          */}
-          <ShopContact
-            shopId={shop.id}
-            shopName={shop.name}
-            phone={shop.phone}
-            labels={{
-              message: t.shop.askVendor,
-              call: t.taxi.call,
-              whatsApp: t.common.whatsApp,
-            }}
-          />
-
-          {/*
-            Réserver, quand la boutique le propose.
-
-            Sous la barre de contact et non dedans : appeler, écrire et
-            réserver ne sont pas trois gestes du même poids. Les deux
-            premiers ouvrent une conversation, le troisième engage une
-            date et un nombre de personnes — il mérite sa propre ligne.
-
-            Un visiteur non connecté le voit aussi : lui cacher le bouton
-            jusqu'à la connexion, c'est lui cacher la raison de se
-            connecter. L'action l'enverra s'identifier, et la policy
-            d'insertion refuse de toute façon sans session.
-          */}
-          {shop.accepts_reservations && (
-            <div className="w-full">
-              <ReservationSheet
-                shopId={shop.id}
-                shopName={shop.name}
-                defaults={reservationDefaults}
-                label="Réserver"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <StoriesRail stories={stories} shopSlug={shop.slug} shopName={shop.name} />
-
-      <div className="flex flex-none flex-col gap-2 px-4">
+        <BlocInfos
+          ouvert={shop.is_open_now}
+          horaires={horaires}
+          emplacement={emplacement}
+          sousEmplacement={shop.mall_unit ? "Mall Express Gafsa" : null}
+          lienCarte={lienCarte}
+          locale={locale}
+        />
         {/*
-          Où se trouve la boutique, et comment y aller.
-
-          La catégorie n'est pas répétée ici : elle est déjà sous le nom de
-          la boutique, juste au-dessus. Une seule ligne compacte — pastille,
-          texte, bouton rond — plutôt qu'une carte à deux lignes.
+          La visite est comptée depuis le navigateur : la page est servie en
+          cache cinq minutes, un incrément serveur n'en compterait qu'une.
         */}
-        {(shop.mall_unit || (shop.latitude !== null && shop.longitude !== null)) && (
-          <div className="mt-1 flex items-center gap-[8px] rounded-[14px] bg-[var(--theme-accent-doux,var(--color-brand-tint))] px-[10px] py-[7px]">
-            <PinIcon size={14} className="flex-none text-[var(--theme-accent-fort,var(--color-brand))]" />
-            <p className="min-w-0 flex-1 truncate text-[0.6875rem] font-semibold text-[var(--color-ink)]">
-              {shop.mall_unit
-                ? format(t.product.walkTime, {
-                    level: shop.mall_level ?? 0,
-                    unit: shop.mall_unit,
-                    min: 3,
-                  })
-                : t.shop.findUs}
-            </p>
-            {shop.latitude !== null && shop.longitude !== null && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={t.shop.guideMe}
-                title={t.shop.guideMe}
-                className="press flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)]"
-              >
-                <ChevronRightIcon size={13} />
-              </a>
-            )}
-          </div>
-        )}
+        <CountShopView shopId={shop.id} />
       </div>
+
+      {stories.length > 0 && (
+        <div className="pt-4">
+          <StoriesRail stories={stories} shopSlug={shop.slug} shopName={shop.name} />
+        </div>
+      )}
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { compterPartage } from "@/app/actions/black-friday";
 import { useI18n } from "@/lib/i18n/provider";
+import { ShareIcon } from "@/components/ui/icons";
 
 type Retour = "copie" | "preparation" | "enregistree" | "echec" | null;
 
@@ -40,7 +41,10 @@ export function BoutonPartage({
   offreId,
   clair = false,
   image,
+  variante = "boutons",
 }: {
+  /** `rond` : bouton unique de 40px sur une couverture (en-tête boutique). */
+  variante?: "boutons" | "rond";
   /** Chemin relatif de la page à partager. */
   chemin: string;
   titre: string;
@@ -53,6 +57,7 @@ export function BoutonPartage({
 }) {
   const { t } = useI18n();
   const [retour, setRetour] = useState<Retour>(null);
+  const [menu, setMenu] = useState(false);
 
   function signaler(r: Exclude<Retour, null>) {
     setRetour(r);
@@ -119,6 +124,61 @@ export function BoutonPartage({
     } catch {
       signaler("echec");
     }
+  }
+
+  /*
+    Variante ronde (en-tête boutique du handoff) : un seul bouton de 40px
+    posé sur la couverture. Avec des images de partage, il ouvre un petit
+    menu — lien, image, story — plutôt que de perdre ces deux formats.
+  */
+  if (variante === "rond") {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => (image ? setMenu((m) => !m) : partager())}
+          aria-label={t.share.share}
+          aria-expanded={image ? menu : undefined}
+          className="press flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(20,14,26,.45)] text-white backdrop-blur-[10px]"
+        >
+          <ShareIcon size={18} />
+        </button>
+        {menu && image && (
+          <div className="absolute top-12 start-0 z-10 flex min-w-[150px] flex-col overflow-hidden rounded-[14px] bg-white text-[0.8125rem] font-bold text-[#241f2e] shadow-[0_14px_34px_rgba(20,14,26,.25)]">
+            {(
+              [
+                [t.share.share, () => partager()],
+                [`📸 ${t.share.image}`, () => partagerImage("post")],
+                [`▯ ${t.share.story}`, () => partagerImage("story")],
+              ] as const
+            ).map(([libelle, action]) => (
+              <button
+                key={libelle}
+                type="button"
+                onClick={() => {
+                  setMenu(false);
+                  action();
+                }}
+                className="min-h-11 px-4 text-start hover:bg-black/5"
+              >
+                {libelle}
+              </button>
+            ))}
+          </div>
+        )}
+        {retour && (
+          <span
+            aria-live="polite"
+            className="absolute top-12 start-0 rounded-full bg-[rgba(20,14,26,.7)] px-3 py-1 text-[0.6875rem] font-semibold whitespace-nowrap text-white"
+          >
+            {retour === "copie" && t.share.copied}
+            {retour === "preparation" && t.share.preparing}
+            {retour === "enregistree" && t.share.saved}
+            {retour === "echec" && t.share.imageFailed}
+          </span>
+        )}
+      </div>
+    );
   }
 
   const secondaire = clair

@@ -400,6 +400,24 @@ html[data-simplified="true"] body {
   animation: pulse-live 1.6s ease-in-out infinite;
 }
 
+/* En-tête boutique (handoff) : anneau conique du logo, point de statut pulsé. */
+@keyframes anneau-tourne {
+  to { transform: rotate(360deg); }
+}
+
+@utility animate-anneau-logo {
+  animation: anneau-tourne 6s linear infinite;
+}
+
+@keyframes point-pulse {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70%, 100% { box-shadow: 0 0 0 7px transparent; }
+}
+
+@utility animate-point-statut {
+  animation: point-pulse 1.8s ease-out infinite;
+}
+
 @keyframes slide-up {
   from { transform: translateY(12px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
