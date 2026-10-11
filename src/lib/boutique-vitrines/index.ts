@@ -1,7 +1,7 @@
 import { VITRINES } from "./configs";
 import type { ConfigVitrine, FiltreMetier, OptionFiltre, VitrineId } from "./types";
 
-export { VITRINES } from "./configs";
+export { VITRINES, reglagesScene } from "./configs";
 export type { ConfigVitrine, FiltreMetier, OptionFiltre, SceneVitrine, VitrineId } from "./types";
 
 /**

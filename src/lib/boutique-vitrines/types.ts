@@ -51,6 +51,36 @@ export interface SceneVitrine {
   marque: string;
   pastille: string;
   encrePastille: string;
+
+  /*
+    Réglages facultatifs — absents, le rendu est celui du handoff (scène
+    sombre, bouton Pause, voile noir de profondeur). Mode s'en sert pour son
+    showroom blanc ; aucune valeur visuelle n'est écrite dans le composant.
+  */
+  /** `false` : aucun bouton (ni Pause) — on tourne au doigt ou à la souris, c'est tout. */
+  controles?: boolean;
+  /** Rotation automatique au repos, en °/s (défaut −14). */
+  vitesse?: number;
+  /** Couleur vers laquelle s'estompent les pièces du fond (défaut noir) et son intensité max. */
+  brume?: { couleur: string; max: number };
+  /** Lueur ou ombre au sol sous le présentoir. */
+  sol?: string;
+  /** Le petit luminaire au plafond ; `null` : pas de luminaire. */
+  luminaire?: string | null;
+  /** Fond d'une carte avec photo, pendant le chargement. */
+  fondCarte?: string;
+  /** Bandeau nom + prix sur la carte : sombre (défaut) ou clair. */
+  etiquette?: { fond: string; texte: string };
+  /** Métal du portant suspendu (mât, boule, anneau, socle, fil, cintre). */
+  metal?: {
+    boule: string;
+    mat: string;
+    anneau: string;
+    socleCentre: string;
+    fil: string;
+    cintre: string;
+    attache: string;
+  };
 }
 
 export interface OptionFiltre {

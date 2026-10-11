@@ -8,18 +8,48 @@ import type { ConfigVitrine, SceneVitrine, VitrineId } from "./types";
   gardent leur oklch, que le navigateur lit directement.
 */
 
+/** L'or du portant — le même métal que le handoff, réutilisé par la scène claire. */
+const OR = {
+  boule: "radial-gradient(circle at 35% 30%,#fff8e4,#c9a14f 55%,#6b4f1d)",
+  mat: "linear-gradient(90deg,#7a5a22,#fff3d0 40%,#b08a3e 65%,#5e441a)",
+  anneau: "conic-gradient(from 20deg,#fff3d0,#b08a3e,#f6e3b4,#7a5a22,#fbe9be,#a07c34,#fff3d0)",
+  fil: "linear-gradient(180deg,#f6e3b4,#b08a3e)",
+  cintre: "linear-gradient(90deg,#8a6a2a,#fff3d0 50%,#8a6a2a)",
+  attache: "#e8cd96",
+};
+
+/*
+  Mode — showroom blanc (demande de l'utilisateur, 2026-10-12) : un mur
+  blanc cassé, un sol clair, un portant doré, des ombres douces ; aucun
+  bouton, rotation très lente au repos. Les pièces du fond s'estompent dans
+  le blanc au lieu de s'assombrir.
+*/
 const SCENE_PORTANT: SceneVitrine = {
   titre: { fr: "Portant 360°", ar: "الرّف الدوّار 360°" },
   suspendu: true,
-  fond: "radial-gradient(80% 60% at 50% 30%,#3a2a44,transparent 70%),linear-gradient(180deg,#1a1320 0%,#251b2d 78%,#0e0a12 78.3%,#18111d 100%)",
-  mur: "rgba(232,205,150,.45)",
-  lampe: "rgba(255,236,200,.7)",
-  cone: "linear-gradient(180deg,rgba(255,230,180,.22),transparent 85%)",
-  carte: { largeur: 86, hauteur: 124, rayon: "12px", liseré: "0 0 0 1px rgba(232,205,150,.35),0 18px 30px rgba(0,0,0,.55)" },
-  dos: "linear-gradient(160deg,#2a1f33,#120d17)",
+  fond:
+    "radial-gradient(70% 55% at 50% 38%,#ffffff,transparent 72%),linear-gradient(180deg,#fbfaf8 0%,#f4f1ec 76%,#e9e3da 76.3%,#f3efe9 84%,#faf8f5 100%)",
+  mur: "rgba(150,120,70,.4)",
+  lampe: "rgba(255,236,200,.75)",
+  cone: "linear-gradient(180deg,rgba(255,232,190,.3),transparent 80%)",
+  carte: {
+    largeur: 86,
+    hauteur: 124,
+    rayon: "12px",
+    liseré: "0 0 0 1px rgba(201,161,79,.22),0 12px 18px -6px rgba(70,50,25,.28),0 22px 30px -18px rgba(70,50,25,.25)",
+  },
+  dos: "linear-gradient(160deg,#f7f3ec,#e6ddd0)",
   marque: "#c9a14f",
   pastille: "linear-gradient(90deg,#e8cd96,#c9a14f)",
   encrePastille: "#1a1320",
+  controles: false,
+  vitesse: -7,
+  brume: { couleur: "#ffffff", max: 0.55 },
+  sol: "radial-gradient(closest-side,rgba(70,50,25,.22),rgba(70,50,25,.08) 55%,transparent)",
+  luminaire: "#e7e1d7",
+  fondCarte: "#efe9e1",
+  etiquette: { fond: "linear-gradient(180deg,transparent,rgba(255,255,255,.94) 45%)", texte: "#241f2e" },
+  metal: { ...OR, socleCentre: "#f4f0ea" },
 };
 
 export const VITRINES: Record<VitrineId, ConfigVitrine> = {
@@ -352,3 +382,26 @@ export const VITRINES: Record<VitrineId, ConfigVitrine> = {
     },
   },
 };
+
+/**
+ * Les réglages facultatifs d'une scène, complétés par les valeurs du
+ * handoff (scène sombre, Pause visible, voile noir de profondeur) : ce que
+ * toutes les vitrines sauf Mode utilisent sans rien déclarer.
+ */
+export function reglagesScene(scene: SceneVitrine) {
+  return {
+    controles: scene.controles ?? true,
+    vitesse: scene.vitesse ?? -14,
+    brume: scene.brume ?? { couleur: "#000000", max: 0.55 },
+    sol:
+      scene.sol ??
+      (scene.suspendu
+        ? "radial-gradient(closest-side,rgba(255,230,190,.25),transparent)"
+        : "radial-gradient(closest-side,rgba(255,255,255,.18),transparent)"),
+    luminaire: scene.luminaire === undefined ? "#0f0c13" : scene.luminaire,
+    fondCarte: scene.fondCarte ?? "#2c2736",
+    fondSansPhoto: "linear-gradient(160deg,#4a4458,#2c2736)",
+    etiquette: scene.etiquette ?? { fond: "linear-gradient(180deg,transparent,rgba(12,8,16,.86))", texte: "#ffffff" },
+    metal: scene.metal ?? { ...OR, socleCentre: "#2a2431" },
+  };
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { SceneVitrine } from "@/lib/boutique-vitrines";
+import { reglagesScene, type SceneVitrine } from "@/lib/boutique-vitrines";
 import type { AppLocale } from "@/types/database";
 
 export interface PieceDuPresentoir {
@@ -17,14 +17,12 @@ export interface PieceDuPresentoir {
   correspond: boolean;
 }
 
-const VITESSE = -14; // °/s, rotation automatique
-
-/** Fond d'une pièce sans photo : ses propres couleurs, sinon un gris neutre. */
-function fondPiece(p: PieceDuPresentoir): string {
+/** Fond d'une pièce sans photo : ses propres couleurs, sinon le neutre de la scène. */
+function fondPiece(p: PieceDuPresentoir, neutre: string): string {
   const [a, b] = p.couleurs;
   if (a && b) return `linear-gradient(160deg,${a},${b})`;
   if (a) return `linear-gradient(160deg,${a},color-mix(in srgb,${a} 70%,#000))`;
-  return "linear-gradient(160deg,#4a4458,#2c2736)";
+  return neutre;
 }
 
 /**
@@ -65,7 +63,12 @@ export function Presentoir360({
   const cartes = useRef<Array<HTMLDivElement | null>>([]);
   const voiles = useRef<Array<HTMLDivElement | null>>([]);
   const dernierStyle = useRef<Array<{ t: string; v: string; d: string }>>([]);
-  const etat = useRef({ a: 0, v: VITESSE, glisse: false, x0: 0, t0: 0, deplace: 0, face: -1 });
+  const r = reglagesScene(scene);
+  const vitesse = r.vitesse;
+  const etat = useRef({ a: 0, v: vitesse, glisse: false, x0: 0, t0: 0, deplace: 0, face: -1, repos: 0 });
+  const vitesseRef = useRef(vitesse);
+  vitesseRef.current = vitesse;
+  const brumeMax = r.brume.max;
   const pauseRef = useRef(false);
   const piecesRef = useRef(pieces);
   const ouvrirRef = useRef(onOuvrir);
@@ -97,7 +100,8 @@ export function Presentoir360({
 
       if (rotor.current && total > 0) {
         if (!s.glisse) {
-          const cible = pauseRef.current || reduit ? 0 : VITESSE;
+          // Après un geste, l'élan s'éteint puis la rotation lente reprend.
+          const cible = pauseRef.current || reduit || t < s.repos ? 0 : vitesseRef.current;
           s.v += (cible - s.v) * Math.min(1, dt * 1.6);
           s.a += s.v * dt;
         }
@@ -123,8 +127,9 @@ export function Presentoir360({
           const transform = suspendu
             ? `rotateZ(${(balancement * (1 + 0.3 * Math.sin(i))).toFixed(1)}deg) scale(${(0.92 + 0.1 * k * k).toFixed(3)})`
             : `scale(${(0.92 + 0.1 * k * k).toFixed(3)})`;
-          // Luminosité .45 + .55k du prototype : un voile noir d'opacité .55(1−k).
-          const assombri = (0.55 * (1 - k)).toFixed(2);
+          // Luminosité .45 + .55k du prototype : un voile (noir, ou blanc pour
+          // le showroom Mode) d'opacité max·(1−k).
+          const assombri = (brumeMax * (1 - k)).toFixed(2);
           // Le dos de la carte quand elle tourne le dos : jamais de texte en miroir.
           const dos = z < -0.05 ? "1" : "0";
 
@@ -169,7 +174,7 @@ export function Presentoir360({
       observateur.disconnect();
       document.removeEventListener("visibilitychange", relancer);
     };
-  }, [suspendu]);
+  }, [suspendu, brumeMax]);
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
     const s = etat.current;
@@ -207,7 +212,18 @@ export function Presentoir360({
     if (!s.glisse) return;
     s.glisse = false;
     s.v = Math.max(-720, Math.min(720, s.v));
-    if (s.deplace < 6) ouvrirFace();
+    s.repos = performance.now() + 1800;
+  }
+
+  /*
+    La pièce s'ouvre au « click », pas au lever du doigt : sur écran
+    tactile (Android), le navigateur envoie un click juste après
+    pointerup, au même endroit. Ouvrir la fiche dès pointerup la faisait
+    apparaître sous ce click, qui tombait sur son voile et la refermait
+    aussitôt. Un glissement (6 px et plus) n'ouvre jamais rien.
+  */
+  function onClick() {
+    if (etat.current.deplace < 6) ouvrirFace();
   }
 
   function ouvrirFace() {
@@ -222,7 +238,7 @@ export function Presentoir360({
       e.preventDefault();
       s.a += (e.key === "ArrowLeft" ? -1 : 1) * pas;
       s.v = 0;
-      setEnPause(true);
+      s.repos = performance.now() + 4000;
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       ouvrirFace();
@@ -238,6 +254,7 @@ export function Presentoir360({
             {locale === "ar" ? "اسحب للتدوير · المس القطعة الأمامية" : "Glissez pour tourner · touchez la pièce de face"}
           </span>
         </div>
+        {r.controles && (
         <button
           type="button"
           onClick={() => setEnPause((p) => !p)}
@@ -245,6 +262,7 @@ export function Presentoir360({
         >
           {enPause ? (locale === "ar" ? "▶ تدوير" : "▶ Tourner") : locale === "ar" ? "Ⅱ إيقاف" : "Ⅱ Pause"}
         </button>
+        )}
       </div>
 
       <div
@@ -259,7 +277,10 @@ export function Presentoir360({
         onPointerUp={onUp}
         onPointerCancel={() => {
           etat.current.glisse = false;
+          // Geste repris par le défilement de la page : pas un tap.
+          etat.current.deplace = 99;
         }}
+        onClick={onClick}
         onKeyDown={onKey}
         className="relative mt-2 cursor-grab touch-pan-y overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent)] active:cursor-grabbing"
         style={{
@@ -277,10 +298,12 @@ export function Presentoir360({
         >
           {texteMur}
         </span>
-        <span
-          className="absolute top-0 left-1/2 -ml-[23px] h-2 w-[46px] rounded-b-[8px] bg-[#0f0c13]"
-          style={{ boxShadow: `0 4px 18px ${scene.lampe}` }}
-        />
+        {r.luminaire && (
+          <span
+            className="absolute top-0 left-1/2 -ml-[23px] h-2 w-[46px] rounded-b-[8px]"
+            style={{ background: r.luminaire, boxShadow: `0 4px 18px ${scene.lampe}` }}
+          />
+        )}
         <div
           className="absolute top-[6px] left-1/2 -ml-[165px] w-[330px]"
           style={{ height: suspendu ? 340 : 300, background: scene.cone, clipPath: "polygon(43% 0,57% 0,100% 100%,0 100%)" }}
@@ -289,9 +312,7 @@ export function Presentoir360({
           className="absolute left-1/2 -ml-[165px] h-20 w-[330px] rounded-[50%]"
           style={{
             top: suspendu ? 292 : 248,
-            background: suspendu
-              ? "radial-gradient(closest-side,rgba(255,230,190,.25),transparent)"
-              : "radial-gradient(closest-side,rgba(255,255,255,.18),transparent)",
+            background: r.sol,
           }}
         />
 
@@ -304,11 +325,11 @@ export function Presentoir360({
               {/* Boule et mât du portant */}
               <span
                 className="absolute top-[22px] left-1/2 -ml-2 h-4 w-4 rounded-full"
-                style={{ background: "radial-gradient(circle at 35% 30%,#fff8e4,#c9a14f 55%,#6b4f1d)" }}
+                style={{ background: r.metal.boule }}
               />
               <div
                 className="absolute top-[34px] left-1/2 -ml-1 w-2 rounded-[4px]"
-                style={{ height: 290, background: "linear-gradient(90deg,#7a5a22,#fff3d0 40%,#b08a3e 65%,#5e441a)" }}
+                style={{ height: 290, background: r.metal.mat }}
               />
             </>
           )}
@@ -325,7 +346,7 @@ export function Presentoir360({
                     height: 2 * rayon,
                     marginLeft: -rayon,
                     marginTop: -rayon,
-                    background: "conic-gradient(from 20deg,#fff3d0,#b08a3e,#f6e3b4,#7a5a22,#fbe9be,#a07c34,#fff3d0)",
+                    background: r.metal.anneau,
                     WebkitMaskImage: "radial-gradient(closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px))",
                     maskImage: "radial-gradient(closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px))",
                     transform: "rotateX(90deg)",
@@ -335,8 +356,7 @@ export function Presentoir360({
                   className="absolute left-1/2 -mt-[75px] -ml-[75px] h-[150px] w-[150px] rounded-full"
                   style={{
                     top: 324,
-                    background:
-                      "radial-gradient(circle,#2a2431 0 22%,transparent 23%),conic-gradient(from 20deg,#fff3d0,#b08a3e,#f6e3b4,#7a5a22,#fbe9be,#a07c34,#fff3d0)",
+                    background: `radial-gradient(circle,${r.metal.socleCentre} 0 22%,transparent 23%),${r.metal.anneau}`,
                     transform: "rotateX(90deg)",
                   }}
                 />
@@ -395,12 +415,15 @@ export function Presentoir360({
                   {suspendu && (
                     <>
                       {/* Fil, cintre, attaches */}
-                      <span className="h-4 w-px" style={{ background: "linear-gradient(180deg,#f6e3b4,#b08a3e)" }} />
+                      <span className="h-4 w-px" style={{ background: r.metal.fil }} />
                       <span
                         className="relative h-[3px] w-[62px] rounded-[2px]"
-                        style={{ background: "linear-gradient(90deg,#8a6a2a,#fff3d0 50%,#8a6a2a)" }}
+                        style={{ background: r.metal.cintre }}
                       >
-                        <i className="absolute -top-[5px] left-1/2 -ml-[3px] h-[6px] w-[6px] rounded-full border-[1.5px] border-[#e8cd96]" />
+                        <i
+                          className="absolute -top-[5px] left-1/2 -ml-[3px] h-[6px] w-[6px] rounded-full border-[1.5px]"
+                          style={{ borderColor: r.metal.attache }}
+                        />
                       </span>
                       <span className="flex h-2 w-[62px] justify-between">
                         <i className="h-2 w-px" style={{ background: scene.marque }} />
@@ -415,7 +438,7 @@ export function Presentoir360({
                       width: L,
                       height: H,
                       borderRadius: scene.carte.rayon,
-                      background: p.image ? "#2c2736" : fondPiece(p),
+                      background: p.image ? r.fondCarte : fondPiece(p, r.fondSansPhoto),
                       boxShadow: scene.carte.liseré,
                       opacity: p.correspond ? 1 : 0.25,
                     }}
@@ -439,7 +462,10 @@ export function Presentoir360({
                       </span>
                     )}
                     <div className="absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,.28)_0%,rgba(255,255,255,.05)_28%,transparent_42%)]" />
-                    <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-[3px] bg-[linear-gradient(180deg,transparent,rgba(12,8,16,.86))] px-2 pt-[22px] pb-2 text-center text-white">
+                    <div
+                      className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-[3px] px-2 pt-[22px] pb-2 text-center"
+                      style={{ background: r.etiquette.fond, color: r.etiquette.texte }}
+                    >
                       <span className="line-clamp-2 text-[0.625rem] leading-[1.2] font-bold">{p.nom}</span>
                       <span
                         className="rounded-full px-[7px] py-px text-[0.625rem] font-black whitespace-nowrap"
@@ -465,8 +491,8 @@ export function Presentoir360({
                       ref={(el) => {
                         voiles.current[i] = el;
                       }}
-                      className="pointer-events-none absolute inset-0 bg-black"
-                      style={{ opacity: 0 }}
+                      className="pointer-events-none absolute inset-0"
+                      style={{ opacity: 0, background: r.brume.couleur }}
                     />
                   </div>
                 </div>
