@@ -11,6 +11,7 @@ import { HautDeVitrine, OPACITE_HORS_FILTRE, useVitrine } from "./vitrine-commun
 import { Comparateur, nombreDe, useComparaison, type LigneComparaison } from "./comparateur";
 import { FeuilleProduit, fondSansPhoto } from "../feuille-produit";
 import { ToastBoutique, useAjoutPanier } from "../use-ajout-panier";
+import { Visionneuse3D } from "../visionneuse-3d";
 
 /** Les quatre cases de la fiche (handoff) — clés `product_attributes`. */
 const SPECS = [
@@ -234,6 +235,8 @@ export function TelephonesLayout({
         pending={panier.pending}
         tailleRequise
         sousTitre={etat.ouvert?.attributs?.marque}
+        // Le produit en grand, en volume, qu'on fait tourner du doigt.
+        visuel={etat.ouvert && <Visionneuse3D produit={etat.ouvert} locale={locale} />}
         onAjouter={(taille) => etat.ouvert && ajouter(etat.ouvert, taille)}
       >
         {etat.ouvert && (

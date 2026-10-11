@@ -36,6 +36,7 @@ export function FeuilleProduit({
   sousTitre,
   children,
   prixAffiche,
+  visuel,
 }: {
   produit: ProduitBoutique | null;
   locale: AppLocale;
@@ -49,6 +50,11 @@ export function FeuilleProduit({
   children?: ReactNode;
   /** Remplace le prix (location : prix × jours). */
   prixAffiche?: string;
+  /**
+   * Grand visuel pleine largeur en tête de feuille (Téléphones : le produit
+   * en 3D qu'on fait tourner) — remplace alors la petite vignette.
+   */
+  visuel?: ReactNode;
 }) {
   /*
     Montée à chaque nouveau produit : le composant interne est remonté par
@@ -66,6 +72,7 @@ export function FeuilleProduit({
       tailleRequise={tailleRequise}
       sousTitre={sousTitre}
       prixAffiche={prixAffiche}
+      visuel={visuel}
     >
       {children}
     </Feuille>
@@ -82,6 +89,7 @@ function Feuille({
   sousTitre,
   children,
   prixAffiche,
+  visuel,
 }: {
   produit: ProduitBoutique;
   locale: AppLocale;
@@ -92,6 +100,7 @@ function Feuille({
   sousTitre?: ReactNode;
   children?: ReactNode;
   prixAffiche?: string;
+  visuel?: ReactNode;
 }) {
   const [monte, setMonte] = useState(false);
   const [taille, setTaille] = useState<string | null>(null);
@@ -138,7 +147,9 @@ function Feuille({
         }}
       >
         <span className="mx-auto mt-[10px] h-[5px] w-[42px] flex-none rounded-full bg-[var(--theme-bordure,rgba(60,40,90,.16))]" />
+        {visuel && <div className="px-4 pt-3">{visuel}</div>}
         <div className="flex items-start gap-3 px-4 pt-3">
+          {!visuel && (
           <div
             className="relative h-[112px] w-[112px] flex-none overflow-hidden rounded-[18px] bg-[var(--theme-accent-doux)]"
           >
@@ -154,6 +165,7 @@ function Feuille({
               </span>
             )}
           </div>
+          )}
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[1.0625rem] leading-[1.3] font-extrabold">{produit.name}</span>
             {sousTitre && <span className="text-[0.75rem] text-[var(--theme-muted)]">{sousTitre}</span>}
