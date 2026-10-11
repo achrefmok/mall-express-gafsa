@@ -4,10 +4,8 @@ import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
 import { ModeLayout } from "@/components/boutique/layouts/mode-layout";
-import { ElectroniqueLayout } from "@/components/boutique/layouts/electronique-layout";
 import { BeauteLayout } from "@/components/boutique/layouts/beaute-layout";
 import { MaisonLayout } from "@/components/boutique/layouts/maison-layout";
-import { ParapharmacieLayout } from "@/components/boutique/layouts/parapharmacie-layout";
 import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layout";
 import { ServiceLayout } from "@/components/boutique/layouts/service-layout";
 import { TelephonesLayout } from "@/components/boutique/layouts/telephones-layout";
@@ -299,26 +297,12 @@ export function BoutiqueContenu({
           nomBoutique={nomBoutique}
           shopId={shopId}
         />
-      ) : theme.productLayout === "technical" ? (
-        <ElectroniqueLayout visible={visible} locale={locale} theme={theme} installments={installments} />
       ) : theme.productLayout === "beaute" ? (
         <BeauteLayout visible={visible} locale={locale} theme={theme} routineDiscount={routineDiscount} />
       ) : theme.productLayout === "maison" ? (
         <MaisonLayout visible={visible} locale={locale} theme={theme} couverture={couverture} />
       ) : theme.productLayout === "bijouterie" ? (
         <BijouterieLayout visible={visible} locale={locale} theme={theme} />
-      ) : theme.productLayout === "catalog" && theme.id === "parapharmacie" ? (
-        // "catalog" est partagée avec Fête — seule Parapharmacie reçoit le
-        // rail de packs, Fête continue sur GrilleParDefaut ci-dessous.
-        <ParapharmacieLayout
-          visible={visible}
-          locale={locale}
-          theme={theme}
-          packs={packs}
-          shopId={shopId}
-          shopSlug={shopSlug}
-          packTiers={packTiers}
-        />
       ) : theme.productLayout === "service" && theme.id === "services" ? (
         // "service" est partagée avec Santé — seule Services (livraison)
         // reçoit le formulaire de demande, Santé continue sur

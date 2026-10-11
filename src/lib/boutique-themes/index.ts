@@ -143,6 +143,12 @@ const THEME_PAR_CATEGORIE: Record<string, ThemeId> = {
   "animaux-veterinaire": "animaux",
   // Services, et tout ce qui ne rentre dans aucune famille ci-dessus
   services: "services",
+  // Location de matériel (migration 20261011001000) — vitrine « location »
+  location: "services",
+  "location-voitures": "services",
+  "location-fetes": "services",
+  "location-sonorisation": "services",
+  "location-camping": "services",
   // Bijouterie et Parapharmacie — créées sans boutique encore inscrite
   bijouterie: "bijouterie",
   parapharmacie: "parapharmacie",

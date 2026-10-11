@@ -846,7 +846,8 @@ export async function updateShopVitrineSettings(input: {
 
   const patch: Database["public"]["Tables"]["shops"]["Update"] = {};
   if (input.freeDeliveryThreshold !== undefined) patch.free_delivery_threshold = input.freeDeliveryThreshold;
-  if (input.installments !== undefined) patch.installments = input.installments;
+  // Seuls les versements que la vitrine sait afficher (3, 6, 12 mois).
+  if (input.installments !== undefined) patch.installments = [...new Set(input.installments)].filter((n) => [3, 6, 12].includes(n));
   if (input.routineDiscount !== undefined) patch.routine_discount = input.routineDiscount;
   if (input.packTiers !== undefined) patch.pack_tiers = input.packTiers;
 

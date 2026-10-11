@@ -7,7 +7,7 @@ import { PALETTES_APP, TYPOGRAPHIE_APP, FORMES_APP, ACCENT_SUR_CLAIR_APP, VOILE_
  * Couleur, police et formes identiques à l'app partout — voir
  * `identite-app.ts`. Seule la structure change : recherche par modèle,
  * filtre marque, mini-stats, comparateur (`productLayout: "technical"`,
- * voir `ElectroniqueLayout`).
+ * voir les vitrines `telephones` / `electromenager`).
  */
 export const electroniqueTheme: ThemeBoutique = {
   id: "electronique",

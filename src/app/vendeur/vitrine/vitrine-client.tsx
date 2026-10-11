@@ -423,7 +423,7 @@ export function VitrineClient({
             <div className="flex flex-col gap-1">
               <span className={LABEL}>Paiement en plusieurs fois proposé</span>
               <div className="flex gap-2">
-                {[3, 6].map((v) => (
+                {[3, 6, 12].map((v) => (
                   <button
                     key={v}
                     type="button"
