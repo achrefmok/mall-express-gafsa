@@ -58,7 +58,7 @@ export function SideNav({
     fait une barre à une seule entrée.
   */
   if (role === "dahmani_admin" || role === "admin") {
-    spaces.push({ href: spaceHref("/lelma3ardh/gestion"), label: "Lelma3ardh", variant: "client" });
+    spaces.push({ href: spaceHref("/lelma3ardh/gestion"), label: t.dahmani.brand, variant: "client" });
   }
 
   return (

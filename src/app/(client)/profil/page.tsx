@@ -184,7 +184,7 @@ export default async function ProfilePage() {
             href="/lelma3ardh/gestion"
             className="flex items-center gap-[10px] rounded-[18px] bg-[linear-gradient(135deg,#8a5a1f,#3d2608)] p-3 text-white"
           >
-            <span className="flex-1 text-[0.78125rem] font-bold">Gestion Lelma3ardh</span>
+            <span className="flex-1 text-[0.78125rem] font-bold">{t.dahmani.brandManagement}</span>
             <ChevronRightIcon size={14} />
           </Link>
         )}

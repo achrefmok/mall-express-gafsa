@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
+import { getT } from "@/lib/i18n/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { GestionLelma3ardh, type ExpoGeree, type ExposantGere, type ProduitGere } from "./gestion-client";
 
-export const metadata: Metadata = {
-  title: "Gestion Lelma3ardh",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return { title: t.dahmani.brandManagement, robots: { index: false, follow: false } };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export const dynamic = "force-dynamic";
  * seul fait une sécurité.
  */
 export default async function GestionLelma3ardhPage() {
+  const { t } = await getT();
   const profile = await getProfile();
   if (!profile) redirect("/connexion?suite=/lelma3ardh/gestion");
   if (profile.role !== "dahmani_admin" && profile.role !== "admin") {
@@ -61,7 +63,7 @@ export default async function GestionLelma3ardhPage() {
 
   return (
     <>
-      <TopBar title="Lelma3ardh — gestion" back="/lelma3ardh" />
+      <TopBar title={t.dahmani.brandManagement} back="/lelma3ardh" />
       <GestionLelma3ardh
         expos={(expos.data ?? []) as unknown as ExpoGeree[]}
         exposants={(exposants.data ?? []) as unknown as ExposantGere[]}

@@ -31,13 +31,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const { data } = await lireExposant(slug);
+  const { t } = await getT();
 
   if (!data) return { title: "Exposant introuvable", robots: { index: false, follow: false } };
 
   return {
-    title: `${data.name} — Lelma3ardh`,
+    title: `${data.name} — ${t.dahmani.brand}`,
     description:
-      data.description ?? `Le stand de ${data.name} à Lelma3ardh, Société Dahmani, Gafsa.`,
+      data.description ?? `Le stand de ${data.name} à ${t.dahmani.brand}, Société Dahmani, Gafsa.`,
   };
 }
 

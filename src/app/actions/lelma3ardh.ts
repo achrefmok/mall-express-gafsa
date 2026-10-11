@@ -30,7 +30,7 @@ async function exigerDahmani() {
   if (!profile) return { supabase: null, profile: null, error };
 
   if (profile.role !== "dahmani_admin" && profile.role !== "admin") {
-    return { supabase: null, profile: null, error: "Réservé à l'administration Lelma3ardh" };
+    return { supabase: null, profile: null, error: "Réservé à l'administration Expos" };
   }
 
   return { supabase, profile, error: null };

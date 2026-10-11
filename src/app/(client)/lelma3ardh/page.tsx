@@ -12,11 +12,14 @@ import {
   type ProduitAffiche,
 } from "./exposition-client";
 
-export const metadata: Metadata = {
-  title: "Société Dahmani — Lelma3ardh",
-  description:
-    "Les exposants de Société Dahmani à Gafsa : leurs stands, leurs produits et leurs prix, consultables même après la fin de l'exposition.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: `Société Dahmani — ${t.dahmani.brand}`,
+    description:
+      "Les exposants de Société Dahmani à Gafsa : leurs stands, leurs produits et leurs prix, consultables même après la fin de l'exposition.",
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +56,7 @@ export default async function Lelma3ardhPage({
   searchParams: Promise<{ vue?: string }>;
 }) {
   const { vue } = await searchParams;
-  const { locale } = await getT();
+  const { t, locale } = await getT();
   const supabase = await createClient();
 
   const [expos, exposants, produits, profile] = await Promise.all([
@@ -84,7 +87,7 @@ export default async function Lelma3ardhPage({
 
   return (
     <>
-      <TopBar title="Lelma3ardh" back="/accueil" />
+      <TopBar title={t.dahmani.brand} back="/accueil" />
 
       {(expos.data ?? []).length === 0 ? (
         <div className="col-reading flex flex-1 flex-col gap-3 px-4 pt-4">
