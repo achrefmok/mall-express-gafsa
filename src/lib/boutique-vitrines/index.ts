@@ -26,6 +26,8 @@ const VITRINE_PAR_CATEGORIE: Record<string, VitrineId> = {
   informatique: "telephones",
   "electronique-electromenager": "electromenager",
   "beaute-parfums": "parfumerie",
+  "beaute-maquillage": "cosmetiques",
+  "beaute-soin": "cosmetiques",
   parapharmacie: "parapharmacie",
   "voitures-motos": "moto",
   alimentation: "patisserie",
@@ -66,7 +68,7 @@ export function resolveVitrine(
   }
   if (slugCategorie === "beaute") {
     const parfums = slugsProduits.filter((s) => s === "beaute-parfums").length;
-    return parfums > 0 && parfums * 2 > slugsProduits.filter(Boolean).length ? VITRINES.parfumerie : null;
+    return parfums > 0 && parfums * 2 > slugsProduits.filter(Boolean).length ? VITRINES.parfumerie : VITRINES.cosmetiques;
   }
 
   const id = VITRINE_PAR_CATEGORIE[slugCategorie];

@@ -11,10 +11,12 @@ une seule fois dans `src/lib/boutique-themes/identite-app.ts` et importés
 les dix métiers du handoff de design « Boutiques G-Mall par catégorie »
 — les **vitrines** de `src/lib/boutique-vitrines/` (Mode, Téléphones,
 Parfumerie, Parapharmacie, Électroménager, Moto, Pâtisserie, Animalerie,
-Sport, Location) — prennent l'accent de leur métier, superposé par
+Sport, Location) — plus **Cosmétiques** (ajoutée le 2026-10-12 à la
+demande de l'utilisateur, sans maquette : coiffeuse lumineuse, rose
+poudré) prennent l'accent de leur métier, superposé par
 `variablesTheme(theme, vitrine)`. Toute boutique sans vitrine (bijouterie,
-maison, santé, cafés, fête, immobilier, enseignement, services, beauté
-hors parfums) reste en violet app : ne pas lui donner de couleur propre
+maison, santé, cafés, fête, immobilier, enseignement, services) reste en
+violet app : ne pas lui donner de couleur propre
 sans redemander. Le panier flottant reste G-Mall partout.
 
 - **Vitrine ≠ thème** : le `ThemeId` regroupe une famille de catégories,

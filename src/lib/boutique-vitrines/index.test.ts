@@ -27,10 +27,21 @@ describe("resolveVitrine", () => {
     expect(resolveVitrine("electronique", ["electronique-electromenager", "electronique-telephones"])?.id).toBe("telephones");
   });
 
-  it("beauté parente : parfumerie seulement si les parfums dominent", () => {
+  it("beauté parente : parfumerie si les parfums dominent, cosmétiques sinon", () => {
     expect(resolveVitrine("beaute", ["beaute-parfums", "beaute-parfums", "beaute-soin"])?.id).toBe("parfumerie");
-    expect(resolveVitrine("beaute", ["beaute-soin", "beaute-maquillage"])).toBeNull();
-    expect(resolveVitrine("beaute", [])).toBeNull();
+    expect(resolveVitrine("beaute", ["beaute-soin", "beaute-maquillage"])?.id).toBe("cosmetiques");
+    expect(resolveVitrine("beaute", [])?.id).toBe("cosmetiques");
+    expect(resolveVitrine("beaute-maquillage")?.id).toBe("cosmetiques");
+  });
+
+  it("cosmétiques : le besoin se lit aussi dans la sous-catégorie et le nom", () => {
+    const filtre = VITRINES.cosmetiques.filtre;
+    const produits = [
+      { name: "Palette fards", category: { slug: "beaute-maquillage" } },
+      { name: "Brosse soufflante Keratin 3D" },
+      { name: "Epilateur Electrique Femme" },
+    ];
+    expect(optionsPresentes(produits, filtre).map((o) => o.cle)).toEqual(["maquillage", "cheveux", "corps"]);
   });
 });
 

@@ -457,7 +457,6 @@ export default async function ShopPage({
           shopAddress={shop.address}
           couverture={enTete}
           installments={shop.installments}
-          routineDiscount={shop.routine_discount}
           packTiers={shop.pack_tiers}
           lookbook={lookbook}
           locale={locale}

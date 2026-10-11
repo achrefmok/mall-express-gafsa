@@ -19,6 +19,7 @@ const THEME_DE: Record<VitrineId, string> = {
   mode: "mode",
   telephones: "electronique",
   parfumerie: "beaute",
+  cosmetiques: "beaute",
   parapharmacie: "parapharmacie",
   electromenager: "electronique",
   moto: "auto",
@@ -53,6 +54,13 @@ const DONNEES: Record<VitrineId, Fictif[]> = {
     ["Oud Royal", 260, null, { famille_olfactive: "Oriental", note_tete: "Safran", note_coeur: "Rose", note_fond: "Oud, ambre", sillage: "5", tenue_heures: "12 h" }, { colors: ["#5a2a1c", "#1c0f0a"] }],
     ["Cèdre bleu", 180, null, { famille_olfactive: "Boisé", note_fond: "Cèdre, vétiver", tenue_heures: "6 h" }, { colors: ["#3b4a5a", "#141c24"] }],
     ["Agrumes d'été", 95, null, { famille_olfactive: "Frais", note_tete: "Citron, néroli", sillage: "2" }, { colors: ["#f2c14e", "#e08a1e"] }],
+  ],
+  cosmetiques: [
+    ["Rouge à lèvres mat", 39, I + "cat-beaute.webp", { besoin: "Maquillage", marque: "Velours" }, { colors: ["#a8323e", "#c45a62", "#7a2433", "#d98a8a"], category: { hue: 340, slug: "beaute-maquillage" } }],
+    ["Palette fards à paupières 12 teintes", 59, null, { besoin: "Maquillage" }, { colors: ["#c9a27e", "#8a5a44", "#e6c9b0", "#5a3a2e", "#b98a8a"], category: { hue: 340, slug: "beaute-maquillage" } }],
+    ["Sérum vitamine C", 72, null, { besoin: "Soin visage", peau: "Peau terne", ingredients: "Vitamine C, acide hyaluronique", marque: "Éclat" }, { sizes: ["15 ml", "30 ml"], category: { hue: 340, slug: "beaute-soin" } }],
+    ["Brosse soufflante kératine", 129, null, { besoin: "Cheveux" }, { category: { hue: 340, slug: "beaute" } }],
+    ["Épilateur électrique 5 en 1", 99, null, { besoin: "Corps" }, { category: { hue: 340, slug: "beaute-soin" } }],
   ],
   parapharmacie: [
     ["Crème hydratante intense", 49, I + "svc-pharmacie.webp", { marque: "Avène", peau: "Peau sèche", moment: "matin et soir", ingredients: "Eau thermale, glycérine, karité" }],
@@ -165,7 +173,6 @@ export default async function LaboVitrines({
           shopAddress={null}
           couverture={null}
           installments={[3, 6, 12]}
-          routineDiscount={10}
           packTiers={[]}
           lookbook={null}
           locale={locale}

@@ -136,6 +136,58 @@ export const VITRINES: Record<VitrineId, ConfigVitrine> = {
     },
   },
 
+  /*
+    Cosmétiques — sans maquette dans le handoff : vitrine ajoutée le
+    2026-10-12 à la demande de l'utilisateur (« coiffeuse lumineuse, rose
+    poudré »). Même moteur, même structure que les autres métiers.
+  */
+  cosmetiques: {
+    id: "cosmetiques",
+    label: { fr: "Cosmétiques", ar: "تجميل" },
+    accent: "#994b6c", // oklch(.52 .11 355)
+    accentDoux: "#f2e8ec",
+    fondPage: "#f0eaf1",
+    libelleAction: { fr: "Demander conseil", ar: "اطلب نصيحة" },
+    filtre: {
+      titre: { fr: "Mon besoin", ar: "احتياجي" },
+      source: { attributs: ["besoin"] },
+      options: [
+        { cle: "maquillage", fr: "Maquillage", ar: "مكياج", motsCles: ["maquillage", "beaute-maquillage", "fard", "palette", "rouge a levres", "mascara", "fond de teint", "gloss", "eyeliner", "مكياج"] },
+        { cle: "soin", fr: "Soin visage", ar: "عناية بالوجه", motsCles: ["soin", "beaute-soin", "serum", "creme", "visage", "nettoyant", "masque", "booster", "عناية", "بشرة"] },
+        { cle: "cheveux", fr: "Cheveux", ar: "شعر", motsCles: ["cheveu", "brosse", "shampo", "lisseur", "keratin", "seche-cheveux", "شعر"] },
+        { cle: "corps", fr: "Corps", ar: "جسم", motsCles: ["corps", "epilat", "lait corporel", "gommage", "جسم"] },
+      ],
+    },
+    scene: {
+      titre: { fr: "Coiffeuse 360°", ar: "طاولة التجميل 360°" },
+      suspendu: false,
+      // Un miroir ovale entouré d'ampoules, sur un mur rose poudré.
+      fond: [
+        ...[8, 22, 36, 50, 64, 78, 92].map(
+          (x, i) =>
+            `radial-gradient(circle at ${x}% ${i === 0 || i === 6 ? 30 : i === 1 || i === 5 ? 15 : 9}%,#fffaf0 0 4px,rgba(255,228,190,.55) 5px,transparent 13px)`,
+        ),
+        "radial-gradient(40% 34% at 50% 30%,rgba(255,255,255,.95),rgba(255,255,255,.65) 82%,#e9c6cf 83%,#e9c6cf 85%,transparent 86%)",
+        "linear-gradient(180deg,#fbf0f2 0%,#f5e2e7 74%,#ecd2d9 74.3%,#f6e8ec 100%)",
+      ].join(","),
+      mur: "rgba(153,75,108,.42)",
+      lampe: "rgba(255,236,215,.9)",
+      cone: "linear-gradient(180deg,rgba(255,240,225,.55),transparent 85%)",
+      disque: "radial-gradient(circle,#ffffff 0 58%,#f7e3e8 59% 72%,#ffffff 73%)",
+      bord: "#e8c3cd",
+      ombreDisque: "0 0 0 3px #e9b9c6,0 16px 30px rgba(140,60,80,.22)",
+      carte: { largeur: 80, hauteur: 116, rayon: "20px", liseré: "0 0 0 3px #fff,0 0 0 4px #efc6d1,0 14px 24px rgba(140,60,80,.25)" },
+      dos: "linear-gradient(160deg,#ffffff,#f6e1e7)",
+      marque: "#c97a92",
+      pastille: "linear-gradient(90deg,#f6d3dc,#e7a9ba)",
+      encrePastille: "#4a1f2c",
+      brume: { couleur: "#ffffff", max: 0.5 },
+      luminaire: "#efd9de",
+      fondCarte: "#f6e6ea",
+      etiquette: { fond: "linear-gradient(180deg,transparent,rgba(255,255,255,.94) 45%)", texte: "#3a1f28" },
+    },
+  },
+
   parapharmacie: {
     id: "parapharmacie",
     label: { fr: "Parapharmacie", ar: "شبه صيدلية" },

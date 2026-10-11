@@ -96,7 +96,6 @@ export function VitrineClient({
 
   const [seuil, setSeuil] = useState(shop.freeDeliveryThreshold?.toString() ?? "");
   const [installments, setInstallments] = useState<number[]>(shop.installments);
-  const [remiseRoutine, setRemiseRoutine] = useState(String(shop.routineDiscount));
   const [paliers, setPaliers] = useState(shop.packTiers);
   const [erreurReglages, setErreurReglages] = useState<string | null>(null);
   const [reglagesEnregistres, setReglagesEnregistres] = useState(false);
@@ -177,12 +176,10 @@ export function VitrineClient({
       setErreurReglages("Le palier de livraison doit être un nombre positif");
       return;
     }
-    const remiseNombre = Number.parseInt(remiseRoutine, 10);
     startTransition(async () => {
       const result = await updateShopVitrineSettings({
         freeDeliveryThreshold: seuilNombre,
         installments,
-        routineDiscount: themeId === "beaute" ? remiseNombre : undefined,
         packTiers: themeId === "parapharmacie" ? paliers : undefined,
       });
       if (!result.ok) {
@@ -194,9 +191,6 @@ export function VitrineClient({
     });
   }
 
-  // L'aperçu reflète l'état du formulaire en cours de saisie, pas encore
-  // enregistré — c'est tout l'intérêt par rapport à recharger la page.
-  const remiseApercu = Number.parseInt(remiseRoutine, 10) || 0;
 
   const styleTheme = useMemo(() => variablesTheme(theme, vitrine), [theme, vitrine]);
 
@@ -267,7 +261,6 @@ export function VitrineClient({
                 shopAddress={null}
                 couverture={enTeteApercu}
                 installments={installments}
-                routineDiscount={remiseApercu}
                 packTiers={themeId === "parapharmacie" ? paliers : shop.packTiers}
                 lookbook={lookbook}
                 locale={locale}
@@ -440,18 +433,6 @@ export function VitrineClient({
                 ))}
               </div>
             </div>
-          )}
-
-          {themeId === "beaute" && (
-            <label className="flex flex-col gap-1">
-              <span className={LABEL}>Remise sur la routine (%)</span>
-              <input
-                value={remiseRoutine}
-                onChange={(e) => setRemiseRoutine(e.target.value)}
-                inputMode="numeric"
-                className={FIELD}
-              />
-            </label>
           )}
 
           {themeId === "parapharmacie" && (

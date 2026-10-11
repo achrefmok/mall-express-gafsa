@@ -15,6 +15,7 @@ export type VitrineId =
   | "mode"
   | "telephones"
   | "parfumerie"
+  | "cosmetiques"
   | "parapharmacie"
   | "electromenager"
   | "moto"

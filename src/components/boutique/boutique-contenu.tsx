@@ -4,7 +4,7 @@ import { EmptyState, Rail, Tag } from "@/components/ui/primitives";
 import { RoueDeLaChance, type CaseRoue } from "@/components/roue/roue-de-la-chance";
 import { GrilleParDefaut } from "@/components/boutique/layouts/grille-par-defaut";
 import { ModeLayout } from "@/components/boutique/layouts/mode-layout";
-import { BeauteLayout } from "@/components/boutique/layouts/beaute-layout";
+import { CosmetiquesLayout } from "@/components/boutique/layouts/cosmetiques-layout";
 import { MaisonLayout } from "@/components/boutique/layouts/maison-layout";
 import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layout";
 import { ServiceLayout } from "@/components/boutique/layouts/service-layout";
@@ -59,7 +59,6 @@ export function BoutiqueContenu({
   shopAddress,
   couverture,
   installments,
-  routineDiscount,
   packTiers,
   lookbook,
   locale,
@@ -90,7 +89,6 @@ export function BoutiqueContenu({
   shopAddress: string | null;
   couverture: string | null;
   installments: number[];
-  routineDiscount: number;
   packTiers: Array<{ min: number; pct: number }>;
   lookbook: { imageUrl: string; reperes: Array<{ id: string; productId: string | null; x: number; y: number }> } | null;
   locale: AppLocale;
@@ -259,6 +257,8 @@ export function BoutiqueContenu({
         <TelephonesLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
       ) : vitrine?.id === "parfumerie" ? (
         <ParfumerieLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "cosmetiques" ? (
+        <CosmetiquesLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
       ) : vitrine?.id === "parapharmacie" ? (
         <ParapharmacieVitrineLayout
           visible={visible}
@@ -297,8 +297,6 @@ export function BoutiqueContenu({
           nomBoutique={nomBoutique}
           shopId={shopId}
         />
-      ) : theme.productLayout === "beaute" ? (
-        <BeauteLayout visible={visible} locale={locale} theme={theme} routineDiscount={routineDiscount} />
       ) : theme.productLayout === "maison" ? (
         <MaisonLayout visible={visible} locale={locale} theme={theme} couverture={couverture} />
       ) : theme.productLayout === "bijouterie" ? (

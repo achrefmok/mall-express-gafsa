@@ -48,8 +48,6 @@ const CHAMPS_PARAPHARMACIE: Champ[] = [
   { cle: "marque", label: "Marque", placeholder: "Avène, Uriage…" },
 ];
 
-const TYPES_PEAU = ["Peau sèche", "Peau grasse", "Mixte", "Sensible"];
-const ETAPES_SOIN = ["Nettoyer", "Traiter", "Hydrater & protéger"];
 
 /*
   Le genre (Femme/Homme/Enfant) vient déjà de la catégorie du produit —
@@ -182,6 +180,16 @@ const CHAMPS_VITRINE: Partial<Record<VitrineId, { titre: string; aide: string; c
       { cle: "famille_olfactive", label: "Famille olfactive", options: ["Floral", "Boisé", "Oriental", "Frais"], libre: true, placeholder: "Ou une autre famille…" },
       ...CHAMPS_PARFUM.filter((c) => c.cle !== "famille_olfactive"),
       { cle: "sillage", label: "Sillage (1 léger → 5 intense)", options: ["1", "2", "3", "4", "5"] },
+    ],
+  },
+  cosmetiques: {
+    titre: "Fiche beauté",
+    aide: "Le besoin alimente le filtre « احتياجي » ; les teintes s'affichent depuis les couleurs du produit, le type de peau et les ingrédients sur la fiche. "+AIDE_DECLINAISONS,
+    champs: [
+      { cle: "besoin", label: "Besoin", options: ["Maquillage", "Soin visage", "Cheveux", "Corps"] },
+      { cle: "peau", label: "Type de peau", options: ["Peau sèche", "Peau grasse", "Peau mixte", "Peau sensible"], multiple: true, libre: true, placeholder: "Ou une autre précision…" },
+      { cle: "marque", label: "Marque", placeholder: "L'Oréal, Flormar…" },
+      { cle: "ingredients", label: "Ingrédients clés", placeholder: "Vitamine C, acide hyaluronique…" },
     ],
   },
   parapharmacie: {
@@ -332,54 +340,6 @@ export function AttributFields({
         )}
       </Card>
     );
-  }
-
-  if (familleId === "beaute") {
-    const slugActuel = slugProduit;
-    if (slugActuel === "beaute-soin") {
-      return (
-        <Card className="flex flex-col gap-[10px] p-3">
-          <span className={LABEL}>Type de peau</span>
-          <div className="flex flex-wrap gap-[6px]">
-            {TYPES_PEAU.map((peau) => (
-              <button
-                key={peau}
-                type="button"
-                onClick={() => onChange({ ...value, peau: value.peau === peau ? "" : peau })}
-                className="rounded-[12px] px-[11px] py-[5px] text-[0.625rem] font-semibold"
-                style={{
-                  background: value.peau === peau ? "var(--color-brand-fill)" : "var(--color-brand-tint)",
-                  color: value.peau === peau ? "#fff" : "var(--color-brand)",
-                }}
-              >
-                {peau}
-              </button>
-            ))}
-          </div>
-          <span className={LABEL}>Geste de la routine</span>
-          <p className="text-[0.625rem] leading-[1.45] text-[var(--color-muted)]">
-            Pour proposer ce produit dans la routine en plusieurs étapes de votre boutique.
-          </p>
-          <div className="flex flex-wrap gap-[6px]">
-            {ETAPES_SOIN.map((etape) => (
-              <button
-                key={etape}
-                type="button"
-                onClick={() => onChange({ ...value, etape: value.etape === etape ? "" : etape })}
-                className="rounded-[12px] px-[11px] py-[5px] text-[0.625rem] font-semibold"
-                style={{
-                  background: value.etape === etape ? "var(--color-brand-fill)" : "var(--color-brand-tint)",
-                  color: value.etape === etape ? "#fff" : "var(--color-brand)",
-                }}
-              >
-                {etape}
-              </button>
-            ))}
-          </div>
-        </Card>
-      );
-    }
-    return null;
   }
 
   if (familleId === "maison") {
