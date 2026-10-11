@@ -735,21 +735,31 @@ export default async function HomePage() {
                   <span className="absolute start-[14px] end-[14px] top-[7px] h-[2px] bg-[repeating-linear-gradient(90deg,var(--color-outline)_0_5px,transparent_5px_10px)]" />
                 </div>
 
-                <Link href={lienProduit(promo.data)} className="block px-4 pt-[2px] pb-4">
-                  <p className="text-[0.875rem] leading-[1.3] font-bold tracking-[-0.01em] text-[var(--color-ink)]">
-                    {locale === "ar" && promo.data.name_ar ? promo.data.name_ar : promo.data.name}
-                  </p>
-                  {promo.data.description_ar && (
-                    <p
-                      lang="ar"
-                      dir="rtl"
-                      className="mt-[3px] line-clamp-2 text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]"
-                    >
-                      {promo.data.description_ar}
+                {/*
+                  Deux destinations, deux liens frères — jamais imbriqués : le
+                  nom, la description et le prix mènent à la fiche produit,
+                  « زيارة المتجر » à la boutique du produit, par le `slug` réel
+                  de sa ligne `shops` (jointure sur `products.shop_id`). Le
+                  bouton était un simple <span> dans le lien produit : il
+                  ouvrait la fiche, pas la boutique.
+                */}
+                <div className="block px-4 pt-[2px] pb-4">
+                  <Link href={lienProduit(promo.data)} className="block">
+                    <p className="text-[0.875rem] leading-[1.3] font-bold tracking-[-0.01em] text-[var(--color-ink)]">
+                      {locale === "ar" && promo.data.name_ar ? promo.data.name_ar : promo.data.name}
                     </p>
-                  )}
+                    {promo.data.description_ar && (
+                      <p
+                        lang="ar"
+                        dir="rtl"
+                        className="mt-[3px] line-clamp-2 text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]"
+                      >
+                        {promo.data.description_ar}
+                      </p>
+                    )}
+                  </Link>
                   <div className="mt-[9px] flex items-end gap-[9px]">
-                    <div className="min-w-0 flex-1">
+                    <Link href={lienProduit(promo.data)} className="block min-w-0 flex-1">
                       <p className="text-[1.125rem] leading-none font-extrabold tracking-[-0.02em] text-[var(--color-brand)]">
                         {formatPrice(promo.data.price, locale)}
                       </p>
@@ -758,12 +768,17 @@ export default async function HomePage() {
                           {formatPrice(promo.data.compare_at_price, locale)}
                         </p>
                       )}
-                    </div>
-                    <span className="flex-none rounded-full bg-[var(--color-brand-fill)] px-[14px] py-[10px] text-[0.6875rem] font-bold whitespace-nowrap text-white shadow-[0_6px_16px_rgba(109,75,143,0.36)]">
-                      {t.product.seeShop}
-                    </span>
+                    </Link>
+                    {promo.data.shop?.slug && (
+                      <Link
+                        href={`/boutique/${promo.data.shop.slug}`}
+                        className="press flex-none rounded-full bg-[var(--color-brand-fill)] px-[14px] py-[10px] text-[0.6875rem] font-bold whitespace-nowrap text-white shadow-[0_6px_16px_rgba(109,75,143,0.36)]"
+                      >
+                        {t.product.seeShop}
+                      </Link>
+                    )}
                   </div>
-                </Link>
+                </div>
               </div>
             )}
           </section>
