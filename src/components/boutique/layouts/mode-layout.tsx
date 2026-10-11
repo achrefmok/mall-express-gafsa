@@ -8,9 +8,11 @@ import { useI18n } from "@/lib/i18n/provider";
 import { format } from "@/lib/i18n/format";
 import { formatPrice } from "@/lib/format";
 import { addToCart } from "@/app/actions/cart";
+import { lienProduit } from "@/lib/product-url";
 import type { ThemeBoutique } from "@/lib/boutique-themes";
 import type { AppLocale } from "@/types/database";
 import type { ProduitBoutique } from "./types";
+import { Presentoir360, type PieceDuPortant } from "./presentoir-360";
 
 type Tri = "nouveautes" | "prix" | "promo";
 
@@ -198,6 +200,80 @@ export function ModeLayout({
     return <EmptyState title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr} />;
   }
 
+  /* Le portant éteint ce que les filtres actifs écartent — « يضيء الرّف ما يناسبك ». */
+  const qPortant = normalise(query.trim());
+  const piecesPortant: PieceDuPortant[] = base.slice(0, 10).map((p) => ({
+    id: p.id,
+    nom: p.name,
+    motCourt: p.name.split(/[\s—–-]+/)[0] || p.name,
+    prix: formatPrice(p.price, locale),
+    image: p.images[0] ?? null,
+    couleurs: p.colors ?? [],
+    correspond:
+      (!rayon || typeDe(p) === rayon) &&
+      (!taille || (p.sizes ?? []).includes(taille)) &&
+      (!qPortant || normalise(p.name).includes(qPortant)),
+  }));
+
+  function ouvrirPiece(id: string) {
+    const produit = base.find((p) => p.id === id);
+    if (produit) router.push(lienProduit(produit));
+  }
+
+  const rayonsUI = (
+    <div className="flex flex-col gap-[8px]">
+      <div className="flex items-baseline justify-between px-[2px]">
+        <span className="text-[0.75rem] font-bold">{locale === "ar" ? "أقسام المتجر" : "Rayons de la boutique"}</span>
+        <span className="text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">
+          {base.length} {locale === "ar" ? "منتج" : "articles"}
+        </span>
+      </div>
+      <div className="no-sb flex gap-[12px] overflow-x-auto pb-[2px]">
+        <button type="button" onClick={() => setRayon(null)} className="flex flex-none flex-col items-center gap-[6px]">
+          <span
+            className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
+            style={{
+              background: rayon === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+              color: rayon === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+              boxShadow: rayon === null ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
+            }}
+          >
+            ✱
+          </span>
+          <span className="text-[0.625rem] font-bold whitespace-nowrap">
+            {t.common.all} · {base.length}
+          </span>
+        </button>
+        {rayons.map(([label, count]) => {
+          const actif = label === rayon;
+          const image = imageParRayon.get(label);
+          return (
+            <button key={label} type="button" onClick={() => setRayon(actif ? null : label)} className="flex flex-none flex-col items-center gap-[6px]">
+              <span
+                className="relative flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-[20px] text-[1.125rem]"
+                style={{
+                  background: image ? undefined : actif ? "var(--theme-accent)" : "var(--theme-accent-doux)",
+                  color: actif ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
+                  boxShadow: actif ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
+                }}
+              >
+                {image ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- miniature fixe 60px
+                  <img src={image} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  (ICONE_PAR_TYPE[label] ?? "•")
+                )}
+              </span>
+              <span className="max-w-[64px] truncate text-[0.625rem] font-bold whitespace-nowrap">
+                {label} · {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-[14px]">
       {genresPresents.length > 1 && (
@@ -234,58 +310,27 @@ export function ModeLayout({
         />
       </div>
 
-      {rayons.length > 1 && (
-        <div className="flex flex-col gap-[8px]">
-          <div className="flex items-baseline justify-between px-[2px]">
-            <span className="text-[0.75rem] font-bold">{locale === "ar" ? "أقسام المتجر" : "Rayons de la boutique"}</span>
-            <span className="text-[0.625rem] text-[var(--theme-muted,var(--color-muted))]">
-              {base.length} {locale === "ar" ? "منتج" : "articles"}
-            </span>
-          </div>
-          <div className="no-sb flex gap-[12px] overflow-x-auto pb-[2px]">
-            <button type="button" onClick={() => setRayon(null)} className="flex flex-none flex-col items-center gap-[6px]">
-              <span
-                className="flex h-[60px] w-[60px] items-center justify-center rounded-[20px] text-[1.125rem]"
-                style={{
-                  background: rayon === null ? "var(--theme-accent)" : "var(--theme-accent-doux)",
-                  color: rayon === null ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-                  boxShadow: rayon === null ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
-                }}
-              >
-                ✱
-              </span>
-              <span className="text-[0.625rem] font-bold whitespace-nowrap">
-                {t.common.all} · {base.length}
-              </span>
-            </button>
-            {rayons.map(([label, count]) => {
-              const actif = label === rayon;
-              const image = imageParRayon.get(label);
-              return (
-                <button key={label} type="button" onClick={() => setRayon(actif ? null : label)} className="flex flex-none flex-col items-center gap-[6px]">
-                  <span
-                    className="relative flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-[20px] text-[1.125rem]"
-                    style={{
-                      background: image ? undefined : actif ? "var(--theme-accent)" : "var(--theme-accent-doux)",
-                      color: actif ? "var(--theme-accent-texte)" : "var(--theme-accent-fort)",
-                      boxShadow: actif ? "0 0 0 2px var(--theme-surface,#fff), 0 0 0 4px var(--theme-accent)" : "none",
-                    }}
-                  >
-                    {image ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- miniature fixe 60px
-                      <img src={image} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      (ICONE_PAR_TYPE[label] ?? "•")
-                    )}
-                  </span>
-                  <span className="max-w-[64px] truncate text-[0.625rem] font-bold whitespace-nowrap">
-                    {label} · {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      {/*
+        Le portant 360° du handoff Mode, et juste dessous — à la place de
+        la plaque « في الواجهة الآن » du prototype — la carte des rayons.
+        Moins de 3 pièces : pas de portant (un cercle de 2 cintres n'a rien
+        d'un présentoir), les rayons restent seuls dans leur carte.
+      */}
+      {piecesPortant.length >= 3 ? (
+        <div className="-mx-4 flex flex-col">
+          <Presentoir360 pieces={piecesPortant} locale={locale} onOuvrir={ouvrirPiece} />
+          {rayons.length > 1 && (
+            <div className="relative z-[2] mx-[14px] -mt-[6px] rounded-[16px] bg-[var(--theme-surface,var(--color-surface-solid))] px-3 py-[10px] shadow-[0_8px_20px_rgba(60,40,90,0.08)]">
+              {rayonsUI}
+            </div>
+          )}
         </div>
+      ) : (
+        rayons.length > 1 && (
+          <div className="rounded-[16px] bg-[var(--theme-surface,var(--color-surface-solid))] px-3 py-[10px] shadow-[0_8px_20px_rgba(60,40,90,0.08)]">
+            {rayonsUI}
+          </div>
+        )
       )}
 
       {imageLookbook && lookbook.length > 1 && !query && !rayon && (
