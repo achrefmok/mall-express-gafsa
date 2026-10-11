@@ -10,6 +10,15 @@ import { MaisonLayout } from "@/components/boutique/layouts/maison-layout";
 import { ParapharmacieLayout } from "@/components/boutique/layouts/parapharmacie-layout";
 import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layout";
 import { ServiceLayout } from "@/components/boutique/layouts/service-layout";
+import { TelephonesLayout } from "@/components/boutique/layouts/telephones-layout";
+import { ParfumerieLayout } from "@/components/boutique/layouts/parfumerie-layout";
+import { ParapharmacieVitrineLayout } from "@/components/boutique/layouts/parapharmacie-vitrine-layout";
+import { ElectromenagerLayout } from "@/components/boutique/layouts/electromenager-layout";
+import { MotoLayout } from "@/components/boutique/layouts/moto-layout";
+import { PatisserieLayout } from "@/components/boutique/layouts/patisserie-layout";
+import { AnimalerieLayout } from "@/components/boutique/layouts/animalerie-layout";
+import { SportLayout } from "@/components/boutique/layouts/sport-layout";
+import { LocationLayout } from "@/components/boutique/layouts/location-layout";
 import type { PackBoutique, ProduitBoutique, ZoneLivraison } from "@/components/boutique/layouts/types";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
 import type { ConfigVitrine } from "@/lib/boutique-vitrines";
@@ -247,6 +256,48 @@ export function BoutiqueContenu({
           nomBoutique={nomBoutique}
           couverture={couverture}
           lookbook={lookbook}
+        />
+      ) : vitrine?.id === "telephones" ? (
+        <TelephonesLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "parfumerie" ? (
+        <ParfumerieLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "parapharmacie" ? (
+        <ParapharmacieVitrineLayout
+          visible={visible}
+          locale={locale}
+          theme={theme}
+          vitrine={vitrine}
+          nomBoutique={nomBoutique}
+          packs={packs}
+          shopId={shopId}
+          shopSlug={shopSlug}
+          packTiers={packTiers}
+        />
+      ) : vitrine?.id === "electromenager" ? (
+        <ElectromenagerLayout
+          visible={visible}
+          locale={locale}
+          theme={theme}
+          vitrine={vitrine}
+          nomBoutique={nomBoutique}
+          installments={installments}
+        />
+      ) : vitrine?.id === "moto" ? (
+        <MotoLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "patisserie" ? (
+        <PatisserieLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "animalerie" ? (
+        <AnimalerieLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "sport" ? (
+        <SportLayout visible={visible} locale={locale} theme={theme} vitrine={vitrine} nomBoutique={nomBoutique} />
+      ) : vitrine?.id === "location" ? (
+        <LocationLayout
+          visible={visible}
+          locale={locale}
+          theme={theme}
+          vitrine={vitrine}
+          nomBoutique={nomBoutique}
+          shopId={shopId}
         />
       ) : theme.productLayout === "technical" ? (
         <ElectroniqueLayout visible={visible} locale={locale} theme={theme} installments={installments} />

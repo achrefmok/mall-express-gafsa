@@ -33,6 +33,9 @@ const EXEMPTS_ACCES_PUBLIC = [
   "/hors-ligne",
   "/api",
   "/boutique",
+  // Les labos `/dev/…` (données fictives) : en développement seulement —
+  // ils répondent 404 en production quoi qu'il arrive.
+  ...(process.env.NODE_ENV === "production" ? [] : ["/dev"]),
 ];
 
 function exemptAccesPublic(pathname: string): boolean {

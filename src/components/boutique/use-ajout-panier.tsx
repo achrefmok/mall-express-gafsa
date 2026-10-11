@@ -72,7 +72,7 @@ export function ToastBoutique({ message }: { message: string | null }) {
   return (
     <div
       role="status"
-      className="pointer-events-none fixed inset-x-0 bottom-[84px] z-50 flex justify-center px-4"
+      className="pointer-events-none fixed inset-x-0 bottom-[140px] z-50 flex justify-center px-4"
     >
       <span className="rounded-[14px] bg-[#241f2e] px-4 py-[10px] text-center text-[0.875rem] font-bold text-white shadow-[0_10px_30px_rgba(20,14,26,.3)]">
         {message}

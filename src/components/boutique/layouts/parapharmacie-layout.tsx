@@ -35,6 +35,7 @@ export function ParapharmacieLayout({
   shopId,
   shopSlug,
   packTiers,
+  packsSeulement = false,
 }: {
   visible: ProduitBoutique[];
   locale: AppLocale;
@@ -44,6 +45,11 @@ export function ParapharmacieLayout({
   shopSlug: string;
   /** `shops.pack_tiers` — paliers triés du plus petit au plus grand. */
   packTiers: Array<{ min: number; pct: number }>;
+  /**
+   * Vitrine Parapharmacie (handoff) : elle a son propre filtre et son
+   * catalogue — seuls les packs prêts et « Composez votre pack » viennent d'ici.
+   */
+  packsSeulement?: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -77,6 +83,7 @@ export function ParapharmacieLayout({
   const [besoinActif, setBesoinActif] = useState<string | null>(null);
 
   if (visible.length === 0) {
+    if (packsSeulement) return null;
     return <EmptyState title={locale === "ar" ? theme.emptyState.produits.ar : theme.emptyState.produits.fr} />;
   }
 
@@ -142,7 +149,7 @@ export function ParapharmacieLayout({
 
   return (
     <div className="flex flex-col gap-[14px]">
-      {besoins.length > 0 && (
+      {!packsSeulement && besoins.length > 0 && (
         <div className="no-sb flex gap-[8px] overflow-x-auto pb-[2px]">
           {besoins.map(([besoin, count]) => {
             const on = besoin === besoinActif;
@@ -306,13 +313,15 @@ export function ParapharmacieLayout({
         </div>
       )}
 
+      {!packsSeulement && (
       <div className="grid grid-cols-2 gap-x-[10px] gap-y-4">
         {produits.map((p) => (
           <ProductCard key={p.id} product={{ ...p, shop: null }} locale={locale} showShop={false} imageHeight={118} />
         ))}
       </div>
+      )}
 
-      {marques.length > 0 && (
+      {!packsSeulement && marques.length > 0 && (
         <div className="flex flex-col gap-[8px]">
           <span className="px-[2px] text-[0.75rem] font-bold">
             {locale === "ar" ? "علامات المتجر" : "Marques de la boutique"}
@@ -330,6 +339,7 @@ export function ParapharmacieLayout({
         </div>
       )}
 
+      {!packsSeulement && (
       <div className="flex items-center gap-[10px] rounded-[16px] border border-[var(--theme-bordure)] bg-[var(--theme-surface)] p-[12px]">
         <span
           className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[0.8125rem] font-bold text-[var(--theme-accent-texte)]"
@@ -350,6 +360,7 @@ export function ParapharmacieLayout({
           {locale === "ar" ? "اكتبوا" : "Écrire"}
         </button>
       </div>
+      )}
     </div>
   );
 }

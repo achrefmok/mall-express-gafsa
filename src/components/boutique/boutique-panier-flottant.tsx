@@ -84,9 +84,10 @@ export function BoutiquePanierFlottant({
       >
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-[10px]">
-            <span className="relative flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--theme-accent,var(--color-brand-fill))] text-[var(--theme-accent-texte,white)]">
+            {/* Le panier reste aux couleurs G-Mall dans toutes les boutiques (handoff). */}
+            <span className="relative flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--color-brand-fill)] text-white">
               <CartIcon size={17} />
-              <span className="absolute -top-[4px] -end-[4px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--color-ink)] bg-white px-1 text-[0.5625rem] font-extrabold text-[var(--color-ink)]">
+              <span className="absolute -top-[4px] -end-[4px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--color-ink)] bg-[#bd9ade] px-1 text-[0.5625rem] font-extrabold text-[var(--color-ink)]">
                 {count > 99 ? "99+" : count}
               </span>
             </span>
