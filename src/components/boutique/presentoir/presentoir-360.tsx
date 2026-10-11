@@ -250,9 +250,12 @@ export function Presentoir360({
       <div className="flex items-center justify-between gap-2 px-[14px]">
         <div className="flex min-w-0 flex-col leading-[1.25]">
           <span className="text-[1rem] font-extrabold">{locale === "ar" ? scene.titre.ar : scene.titre.fr}</span>
-          <span className="text-[0.75rem] text-[var(--theme-muted,var(--color-muted))]">
-            {locale === "ar" ? "اسحب للتدوير · المس القطعة الأمامية" : "Glissez pour tourner · touchez la pièce de face"}
-          </span>
+          {/* Showroom épuré (Mode) : pas de consigne affichée, le geste suffit. */}
+          {r.controles && (
+            <span className="text-[0.75rem] text-[var(--theme-muted,var(--color-muted))]">
+              {locale === "ar" ? "اسحب للتدوير · المس القطعة الأمامية" : "Glissez pour tourner · touchez la pièce de face"}
+            </span>
+          )}
         </div>
         {r.controles && (
         <button

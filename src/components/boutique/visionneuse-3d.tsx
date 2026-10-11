@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { AppLocale } from "@/types/database";
 import type { ProduitBoutique } from "./layouts/types";
 import { fondSansPhoto } from "./feuille-produit";
@@ -23,13 +22,12 @@ function estUnTelephone(p: ProduitBoutique): boolean {
  * choisissent en vignettes et passent à l'avant.
  *
  * Glisser fait tourner (0,6° par pixel) avec de l'élan ; au repos, l'objet
- * tourne lentement (rien sous `prefers-reduced-motion`). « ⤢ » l'ouvre en
- * plein écran. Le défilement vertical de la feuille reste possible : seul
+ * tourne lentement (rien sous `prefers-reduced-motion`). Aucun bouton : le
+ * geste suffit. Le défilement vertical de la feuille reste possible : seul
  * un geste horizontal est capturé.
  */
 export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; locale: AppLocale }) {
   const ar = locale === "ar";
-  const [plein, setPlein] = useState(false);
   const [indexAvant, setIndexAvant] = useState(0);
   const corps = useRef<HTMLDivElement>(null);
   const ombre = useRef<HTMLDivElement>(null);
@@ -41,16 +39,13 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
   const avant = images[indexAvant] ?? null;
   const arriere = images.find((_, i) => i !== indexAvant) ?? null;
 
-  // Dimensions de l'objet, agrandies en plein écran.
-  const echelle = plein ? 1.45 : 1;
-  const L = Math.round((telephone ? 150 : 200) * echelle);
-  const H = Math.round((telephone ? 304 : 200) * echelle);
-  const P = Math.round((telephone ? 14 : 16) * echelle);
-  const rayon = Math.round((telephone ? 30 : 26) * echelle);
-  /** Bande du bas réservée aux boutons, sous l'objet. */
-  const BANDE = 52;
-  const hauteurScene = plein ? Math.max(H + 140, 520) : H + 40 + BANDE;
-  const centre = (hauteurScene - BANDE) / 2;
+  // Dimensions de l'objet : largeur, hauteur, épaisseur, rayon des coins.
+  const L = telephone ? 150 : 200;
+  const H = telephone ? 304 : 200;
+  const P = telephone ? 14 : 16;
+  const rayon = telephone ? 30 : 26;
+  const hauteurScene = H + 56;
+  const centre = hauteurScene / 2;
 
   useEffect(() => {
     const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -76,18 +71,6 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  useEffect(() => {
-    if (!plein) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        // La feuille écoute aussi Échap : ne fermer que le plein écran.
-        e.stopImmediatePropagation();
-        setPlein(false);
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [plein]);
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
     const s = etat.current;
@@ -155,7 +138,7 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
         perspective: "1000px",
         background:
           "radial-gradient(60% 50% at 50% 45%,rgba(90,140,255,.28),transparent 70%),linear-gradient(180deg,#05070d,#0b1224)",
-        borderRadius: plein ? 0 : 22,
+        borderRadius: 22,
       }}
     >
       {/* Ombre au sol, plus étroite quand l'objet est de profil */}
@@ -164,7 +147,7 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
         className="pointer-events-none absolute left-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(0,0,0,.55),transparent)]"
         style={{ width: L * 1.3, height: 26, marginLeft: (-L * 1.3) / 2, top: centre + H / 2 + 4 }}
       />
-      <div className="absolute inset-x-0 top-0" style={{ bottom: BANDE, transformStyle: "preserve-3d" }}>
+      <div className="absolute inset-x-0 top-0" style={{ bottom: 0, transformStyle: "preserve-3d" }}>
       <div ref={corps} className="absolute inset-0" style={{ transformStyle: "preserve-3d", willChange: "transform" }}>
         {/* Avant : l'écran (ou la face du produit) */}
         <div
@@ -177,7 +160,7 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
             borderRadius: rayon,
             transform: `translateZ(${P / 2}px)`,
             background: telephone ? "#07080c" : "#fff",
-            padding: telephone ? Math.round(5 * echelle) : 0,
+            padding: telephone ? 5 : 0,
             boxShadow: "0 0 0 1px rgba(150,190,255,.35)",
           }}
         >
@@ -259,24 +242,6 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
       </div>
       </div>
 
-      <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => tourner(180)}
-          className="min-h-[36px] rounded-full bg-[rgba(255,255,255,.14)] px-3 text-[0.75rem] font-bold text-white backdrop-blur-sm"
-        >
-          ↻ {ar ? "اقلب" : "Retourner"}
-        </button>
-        <span className="text-[0.6875rem] font-semibold text-white/70">{ar ? "اسحب لتدوير المنتج" : "Glissez pour tourner"}</span>
-        <button
-          type="button"
-          onClick={() => setPlein((p) => !p)}
-          aria-label={plein ? (ar ? "تصغير" : "Réduire") : ar ? "ملء الشاشة" : "Plein écran"}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(255,255,255,.14)] text-[1rem] font-bold text-white backdrop-blur-sm"
-        >
-          {plein ? "✕" : "⤢"}
-        </button>
-      </div>
     </div>
   );
 
@@ -299,20 +264,6 @@ export function Visionneuse3D({ produit, locale }: { produit: ProduitBoutique; l
         ))}
       </div>
     ) : null;
-
-  if (plein) {
-    /*
-      Rendu dans <body> : la feuille est transformée (translateY), ce qui
-      piégerait un `position: fixed` dans ses propres limites.
-    */
-    return createPortal(
-      <div role="dialog" aria-modal="true" aria-label={produit.name} className="fixed inset-0 z-[60] flex flex-col justify-center bg-[#05070d]">
-        {scene}
-        {vignettes && <div className="px-4 pb-6">{vignettes}</div>}
-      </div>,
-      document.body,
-    );
-  }
 
   return (
     <div className="flex flex-col">
