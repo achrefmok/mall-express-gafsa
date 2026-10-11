@@ -17,6 +17,7 @@ import { StoriesRail } from "@/components/boutique/stories-rail";
 import { BoutiqueContenu } from "@/components/boutique/boutique-contenu";
 import { HotspotEditor } from "@/components/vendor/hotspot-editor";
 import { variablesTheme, type ThemeBoutique } from "@/lib/boutique-themes";
+import type { ConfigVitrine } from "@/lib/boutique-vitrines";
 import type { StoryBoutique } from "@/lib/boutique-themes/attributs-server";
 import type { PackBoutique, ProduitBoutique, ZoneLivraison } from "@/components/boutique/layouts/types";
 import type { Completude } from "@/lib/vitrine-completude";
@@ -62,6 +63,7 @@ export function VitrineClient({
   shop,
   themeId,
   theme,
+  vitrine,
   stories,
   completude,
   produitsApercu,
@@ -74,6 +76,7 @@ export function VitrineClient({
   shop: ShopVitrine;
   themeId: ThemeId;
   theme: ThemeBoutique;
+  vitrine: ConfigVitrine | null;
   stories: StoryBoutique[];
   completude: Completude;
   produitsApercu: ProduitBoutique[];
@@ -195,7 +198,7 @@ export function VitrineClient({
   // enregistré — c'est tout l'intérêt par rapport à recharger la page.
   const remiseApercu = Number.parseInt(remiseRoutine, 10) || 0;
 
-  const styleTheme = useMemo(() => variablesTheme(theme), [theme]);
+  const styleTheme = useMemo(() => variablesTheme(theme, vitrine), [theme, vitrine]);
 
   return (
     <>
@@ -271,6 +274,8 @@ export function VitrineClient({
                 t={t}
                 userConnecte={false}
                 theme={theme}
+                vitrine={vitrine}
+                nomBoutique={shop.name}
               />
             </div>
           </div>

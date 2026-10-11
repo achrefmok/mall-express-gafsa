@@ -11,6 +11,7 @@
  */
 
 import { THEMES } from "../src/lib/boutique-themes/index.js";
+import { VITRINES } from "../src/lib/boutique-vitrines/configs.js";
 
 /*
   Une couleur peut être un hex (#rrggbb) ou une rgba() translucide — les
@@ -118,7 +119,32 @@ for (const theme of Object.values(THEMES)) {
   }
 }
 
-console.log(`Thèmes vérifiés : ${total} (clair + sombre = ${total * 2} palettes)`);
+/*
+  Les vitrines par métier (handoff « Boutiques G-Mall par catégorie ») :
+  leur accent remplace celui de la palette claire app, sur leur propre fond
+  de page — mêmes paires que ci-dessus, recomposées comme le fait
+  `variablesTheme(theme, vitrine)`.
+*/
+const paletteApp = THEMES.default.palettes.clair;
+for (const vitrine of Object.values(VITRINES)) {
+  total += 1;
+  echecs.push(
+    ...verifierMode(`vitrine ${vitrine.id}`, "clair", {
+      ...paletteApp,
+      accent: vitrine.accent,
+      accentTexte: "#ffffff",
+      accentDoux: vitrine.accentDoux,
+      accentFort: vitrine.accent,
+      background: vitrine.fondPage,
+    }),
+  );
+  const ratioRetour = contraste(vitrine.accent, "#ffffff");
+  if (ratioRetour < 4.5) {
+    echecs.push(`  ✗ [vitrine ${vitrine.id}] accent sur blanc (flèche de retour) : ${ratioRetour.toFixed(2)}:1`);
+  }
+}
+
+console.log(`Thèmes et vitrines vérifiés : ${total}`);
 
 if (echecs.length > 0) {
   console.log(`\n${echecs.length} paire(s) sous le seuil AA :\n`);

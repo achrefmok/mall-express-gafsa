@@ -10,6 +10,7 @@ import { BackButton } from "@/components/shell/back";
 import { ShopTabs } from "./shop-client";
 import { jsonLd as jsonLdHtml } from "@/lib/json-ld";
 import { resolveTheme, variablesTheme } from "@/lib/boutique-themes";
+import { resolveVitrine } from "@/lib/boutique-vitrines";
 import {
   lireAttributsProduits,
   lireMatieresProduits,
@@ -289,6 +290,16 @@ export default async function ShopPage({
     origine — aucune catégorie n'y est inventée.
   */
   const theme = resolveTheme(shop.category?.slug);
+  /*
+    Le métier du handoff (Téléphones, Parfumerie…) : sa couleur, son
+    présentoir 360°, son filtre et son catalogue. Résolu ici, côté serveur,
+    sur la catégorie de la boutique et — pour une catégorie parente — sur
+    celles de ses produits réels. `null` : mise en page du thème, violet app.
+  */
+  const vitrine = resolveVitrine(
+    shop.category?.slug,
+    (products.data ?? []).map((p) => p.category?.slug),
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -373,7 +384,7 @@ export default async function ShopPage({
     */
     <div
       className="clair-boutique min-h-dvh w-full bg-[var(--theme-fond,var(--color-app))] text-ink"
-      style={variablesTheme(theme)}
+      style={variablesTheme(theme, vitrine)}
       data-theme={theme.id}
     >
       <script
@@ -456,6 +467,8 @@ export default async function ShopPage({
           t={t}
           userConnecte={Boolean(user)}
           theme={theme}
+          vitrine={vitrine}
+          nomBoutique={shop.name}
         />
 
         <BoutiquePanierFlottant

@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getMyShop } from "@/lib/queries";
 import { resolveTheme } from "@/lib/boutique-themes";
+import { resolveVitrine } from "@/lib/boutique-vitrines";
 import {
   lireAttributsProduits,
   lireMatieresProduits,
@@ -147,6 +148,11 @@ export default async function VendorVitrinePage() {
   }));
 
   const enTeteApercu = shop.banner_url ?? shop.cover_url;
+  // Même résolution que la page publique, pour un aperçu fidèle.
+  const vitrine = resolveVitrine(
+    shop.category?.slug,
+    (produitsComplets ?? []).map((p) => p.category?.slug),
+  );
 
   return (
     <VitrineClient
@@ -161,6 +167,7 @@ export default async function VendorVitrinePage() {
       }}
       themeId={theme.id}
       theme={theme}
+      vitrine={vitrine}
       stories={stories}
       completude={completude}
       produitsApercu={produitsApercu}

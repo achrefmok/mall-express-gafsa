@@ -2,16 +2,30 @@
 
 ## Thèmes de la page boutique
 
-Toutes les boutiques partagent la même identité visuelle — couleur,
-police, formes, voile, style de promo, roue — celle de l'app (violet
-G-Mall), définie une seule fois dans `src/lib/boutique-themes/identite-app.ts`
-et importée (`PALETTES_APP`, `TYPOGRAPHIE_APP`, `FORMES_APP`,
-`ACCENT_SUR_CLAIR_APP`, `VOILE_APP`, `PROMO_STYLE_APP`, `WHEEL_STYLE_APP`)
-par chaque thème. Seule la **structure** change par famille de catégorie
-(Mode, Électronique, Santé…) — voir la section suivante. Décision
-explicite et confirmée (retour en arrière assumé sur une précédente
-palette par catégorie) : ne pas réintroduire de couleur/police/forme
-spécifique à un métier sans redemander confirmation.
+Police, formes, voile, style de promo et roue sont ceux de l'app, définis
+une seule fois dans `src/lib/boutique-themes/identite-app.ts` et importés
+(`PALETTES_APP`, `TYPOGRAPHIE_APP`, `FORMES_APP`, `ACCENT_SUR_CLAIR_APP`,
+`VOILE_APP`, `PROMO_STYLE_APP`, `WHEEL_STYLE_APP`) par chaque thème.
+
+**Couleur** (décision du 2026-10-11, qui remplace « violet partout ») :
+les dix métiers du handoff de design « Boutiques G-Mall par catégorie »
+— les **vitrines** de `src/lib/boutique-vitrines/` (Mode, Téléphones,
+Parfumerie, Parapharmacie, Électroménager, Moto, Pâtisserie, Animalerie,
+Sport, Location) — prennent l'accent de leur métier, superposé par
+`variablesTheme(theme, vitrine)`. Toute boutique sans vitrine (bijouterie,
+maison, santé, cafés, fête, immobilier, enseignement, services, beauté
+hors parfums) reste en violet app : ne pas lui donner de couleur propre
+sans redemander. Le panier flottant reste G-Mall partout.
+
+- **Vitrine ≠ thème** : le `ThemeId` regroupe une famille de catégories,
+  la vitrine décrit un commerce (Électronique → téléphones *ou*
+  électroménager). `resolveVitrine(slugCategorie, slugsProduits)` est
+  appelé côté serveur ; une catégorie parente (`electronique`, `beaute`)
+  est tranchée par la majorité des produits réels. Chaque vitrine a son
+  présentoir 360° (`src/components/boutique/presentoir/`, un seul moteur,
+  une scène par métier — valeurs `DISP` du prototype), son filtre
+  (`optionsPresentes` : seulement les options portées par un produit) et
+  son catalogue. Pas de présentoir pour un métier sans maquette.
 
 - **Jamais de couleur en dur** dans un composant de la page boutique
   (`src/app/boutique/[slug]/`, `src/components/boutique/`,

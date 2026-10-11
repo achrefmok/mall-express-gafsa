@@ -12,6 +12,7 @@ import { BijouterieLayout } from "@/components/boutique/layouts/bijouterie-layou
 import { ServiceLayout } from "@/components/boutique/layouts/service-layout";
 import type { PackBoutique, ProduitBoutique, ZoneLivraison } from "@/components/boutique/layouts/types";
 import { rayonBadge, type ThemeBoutique } from "@/lib/boutique-themes";
+import type { ConfigVitrine } from "@/lib/boutique-vitrines";
 import type { AppLocale } from "@/types/database";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -58,6 +59,8 @@ export function BoutiqueContenu({
   t,
   userConnecte,
   theme,
+  vitrine,
+  nomBoutique,
 }: {
   onglet: string;
   subCategories: Array<{ category: { id: string; name_fr: string; name_ar: string; hue: number } | null }>;
@@ -87,6 +90,9 @@ export function BoutiqueContenu({
   t: Dictionary;
   userConnecte: boolean;
   theme: ThemeBoutique;
+  /** Le métier du handoff, s'il y en a un — voir `resolveVitrine`. */
+  vitrine: ConfigVitrine | null;
+  nomBoutique: string;
 }) {
   return (
     <div className="no-sb flex flex-1 flex-col gap-[14px] px-4 pt-3 pb-4">
@@ -96,7 +102,7 @@ export function BoutiqueContenu({
         dans `ModeLayout` ; ce rail générique y ferait doublon.
       */}
       {subCategories.length > 0 &&
-        !(theme.productLayout === "editorial" && theme.id === "mode") &&
+        !vitrine &&
         !(theme.productLayout === "service" && theme.id === "services") && (
         <Rail className="flex-none" gap={8}>
           <span className="flex-none whitespace-nowrap rounded-[14px] bg-[var(--color-brand-fill)] px-[13px] py-[6px] text-[0.65625rem] font-semibold text-white">
@@ -232,8 +238,16 @@ export function BoutiqueContenu({
             })}
           </div>
         )
-      ) : theme.productLayout === "editorial" && theme.id === "mode" ? (
-        <ModeLayout visible={visible} locale={locale} theme={theme} couverture={couverture} lookbook={lookbook} />
+      ) : vitrine?.id === "mode" ? (
+        <ModeLayout
+          visible={visible}
+          locale={locale}
+          theme={theme}
+          vitrine={vitrine}
+          nomBoutique={nomBoutique}
+          couverture={couverture}
+          lookbook={lookbook}
+        />
       ) : theme.productLayout === "technical" ? (
         <ElectroniqueLayout visible={visible} locale={locale} theme={theme} installments={installments} />
       ) : theme.productLayout === "beaute" ? (

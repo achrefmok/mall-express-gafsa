@@ -178,14 +178,32 @@ function versVariablesCss(palette: PaletteMode, prefixe: string): Record<string,
  * `.clair-boutique`). `theme.palettes.sombre` reste défini pour un futur
  * bouton clair/sombre côté visiteur, pas utilisé aujourd'hui.
  */
-export function variablesTheme(theme: ThemeBoutique): CSSProperties {
+export function variablesTheme(
+  theme: ThemeBoutique,
+  vitrine?: { accent: string; accentDoux: string; fondPage: string } | null,
+): CSSProperties {
+  /*
+    Une boutique d'un métier du handoff (Téléphones, Parfumerie…) prend
+    l'accent de son métier — décision du 2026-10-11, qui remplace « violet
+    partout » pour ces métiers seulement. Les autres gardent la palette app.
+  */
+  const palette: PaletteMode = vitrine
+    ? {
+        ...theme.palettes.clair,
+        accent: vitrine.accent,
+        accentTexte: "#ffffff",
+        accentDoux: vitrine.accentDoux,
+        accentFort: vitrine.accent,
+        background: vitrine.fondPage,
+      }
+    : theme.palettes.clair;
   return {
-    ...versVariablesCss(theme.palettes.clair, "theme"),
+    ...versVariablesCss(palette, "theme"),
     "--theme-rayon": theme.formes.rayon,
     "--theme-rayon-interieur": theme.formes.rayonInterieur,
     "--theme-police": theme.typographie.fontFamily,
     "--theme-voile": theme.couverture.voile.clair,
-    "--theme-accent-sur-clair": theme.accentSurClair,
+    "--theme-accent-sur-clair": vitrine?.accent ?? theme.accentSurClair,
     "--pc-rayon": theme.formes.rayon,
     "--pc-rayon-interieur": theme.formes.rayonInterieur,
   } as CSSProperties;
