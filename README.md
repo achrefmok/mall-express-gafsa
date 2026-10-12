@@ -149,6 +149,16 @@ Comptes de démonstration — mot de passe `demo1234` :
 | `zara@demo.gafsa` | Vendeuse (boutique approuvée) |
 | `maisongafsa@demo.gafsa` | Vendeur (dossier en attente) |
 | `admin@demo.gafsa` | Administration |
+| `yasmine@demo.gafsa` | Vendeuse — Pâtisserie Yasmine (vitrine Pâtisserie) |
+| `petshop@demo.gafsa` | Vendeur — Pet Shop Ennakhil (vitrine Animalerie) |
+| `motoksar@demo.gafsa` | Vendeur — Moto Pièces Ksar (vitrine Moto & pièces) |
+| `location@demo.gafsa` | Vendeur — Location Express Gafsa (vitrine Location) |
+
+Les quatre derniers ont été créés le 2026-10-12 directement dans la base de
+production (boutiques approuvées, six produits chacun avec leurs attributs,
+d'après le handoff de design) — pas par `seed.sql`. Pour les retirer :
+`node scripts/clean-test-accounts.mjs @demo.gafsa --dry`, puis sans `--dry`
+(attention : ce domaine vise aussi les autres comptes de démonstration).
 
 ### Diagnostic
 
