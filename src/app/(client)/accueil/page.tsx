@@ -9,24 +9,19 @@ import { format } from "@/lib/i18n/format";
 import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import { cx, formatPrice, monogram, percentOff } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
-import { ProductCard } from "@/components/cards/product-card";
 import { ImageZoom } from "@/components/ui/image-zoom";
-import { SponsoredCarousel, type SponsoredSlot } from "@/components/home/sponsored-carousel";
-import {
-  PARTENAIRES_ACCUEIL,
-  PartnersRail,
-  cartePourBoutique,
-  type CartePartenaire,
-  type PartenaireAccueil,
-} from "@/components/home/partners-rail";
-import { Avatar, Placeholder, Rail } from "@/components/ui/primitives";
-import { PawIcon, ToolIcon, categoryIcon, serviceIcon } from "@/components/ui/category-icons";
+import { Avatar, Placeholder } from "@/components/ui/primitives";
+import { PawIcon, ToolIcon, serviceIcon } from "@/components/ui/category-icons";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PracticalService } from "@/types/database";
 import { lienProduit } from "@/lib/product-url";
-import { avecBlackFriday, lireEtatBlackFriday, lireOffresActives } from "@/lib/black-friday-server";
-import { SectionBlackFriday } from "@/components/black-friday/home-section";
+import { DefilementAccueil } from "@/components/home/accueil/defilement";
+import { ALAffiche, type Affiche } from "@/components/home/accueil/a-l-affiche";
+import { CategoriesRail } from "@/components/home/accueil/categories-rail";
+import { CoupDeCoeur, type CarteCoeur } from "@/components/home/accueil/coup-de-coeur";
+import { CadeauGratter } from "@/components/home/accueil/cadeau-gratter";
+import { Etages3D, type Etage } from "@/components/home/accueil/etages-3d";
 
 export const metadata: Metadata = {
   title: "G-Mall — boutiques, marketplace et services",
@@ -34,37 +29,29 @@ export const metadata: Metadata = {
 };
 
 /*
-  Rendu à la demande, et il faut le dire ainsi.
-
-  Cette page déclarait `revalidate = 60` avec le commentaire « mis en cache une
-  minute pour absorber les pics ». Ce cache n'a jamais existé : la page lit des
-  cookies — la session pour les compteurs de la barre, la langue pour les
-  textes —, ce qui force le rendu dynamique. La construction le confirmait déjà,
-  en la marquant `ƒ` et non `○`.
-
-  Une directive qui ment coûte plus qu'elle ne rapporte : on croit la page
-  protégée d'un pic de trafic alors qu'elle interroge Supabase à chaque visite.
-
-  La rendre réellement statique demanderait de sortir la langue du cookie — elle
-  passerait par le chemin d'URL — et d'isoler les compteurs derrière leur propre
-  frontière. C'est un chantier d'architecture, pas un réglage ; il n'est pas
-  entrepris ici. Les neuf requêtes de la page partent au moins en parallèle.
+  Rendu à la demande : la page lit des cookies (session pour les compteurs,
+  langue pour les textes), ce qui force le rendu dynamique — le dire
+  explicitement plutôt que d'annoncer un cache qui n'existe pas.
 */
 export const dynamic = "force-dynamic";
 
 /*
-  Un clic, et l'on est dans le service.
+  Accueil — handoff « design_handoff_accueil » (2026-10-14).
 
-  Chaque pastille menait à `/services#<genre>` — une page de services, puis
-  il fallait y chercher le bon bloc. Pour le taxi, c'était une page de trop :
-  la page des services renvoie elle-même vers `/taxi`. Pour le louage,
-  c'était pire : `/services` n'affiche pas les louages, l'ancre ne menait
-  nulle part.
+  Ordre du fichier : en-tête violet (salutation, état du mall) et recherche à
+  cheval au texte d'aide animé ; « Tout Gafsa, en un seul endroit » (4 tuiles
+  à compteurs) ; « À l'affiche » ; boutiques en direct ; catégories ;
+  promotions ; « Coup de cœur du jour » ; « Cadeau du jour » ; « Les
+  étages » (plan 3D du mall) ; services pratiques — puis G-Shop, seule section
+  de l'ancien accueil gardée (choix de l'utilisateur, qui a retiré Black
+  Friday, partenaires, sélection et invitation commerçants).
 
-  Chaque genre a désormais son adresse directe. Les pharmacies et la prière
-  vivent sur `/services`, et l'ancre y fait défiler jusqu'au bon bloc : c'est
-  bien l'expérience visée, sans étape intermédiaire.
+  Accueil clair (choix de l'utilisateur, même exception que les pages
+  boutique) : `.clair-boutique` y pose les jetons clairs, le reste de l'app
+  reste sombre. Tous les chiffres et toutes les boutiques sont réels.
 */
+
+/** Un clic, et l'on est dans le service — chaque genre a son adresse directe. */
 const LIEN_SERVICE: Record<string, string> = {
   taxi: "/taxi",
   louage: "/louage",
@@ -74,1006 +61,11 @@ const LIEN_SERVICE: Record<string, string> = {
 
 /** Les raccourcis qui ne sont pas des services pratiques en base. */
 const RACCOURCIS = [
-  { cle: "animaux", nom: "Animaux", hue: 190, href: "/marketplace?categorie=animaux" },
-  { cle: "sos", nom: "SOS", hue: 20, href: "/sos" },
+  { cle: "animaux", hue: 190, href: "/marketplace?categorie=animaux" },
+  { cle: "sos", hue: 20, href: "/sos" },
 ] as const;
 
-export default async function HomePage() {
-  const { t, locale } = await getT();
-  const supabase = await createClient();
-
-  const [
-    status,
-    categories,
-    counts,
-    profile,
-    sponsored,
-    promo,
-    shopPromos,
-    catalogue,
-    services,
-    shopsByCategory,
-    etatBf,
-    offresBf,
-    partenaires,
-    freeShop,
-    exposants,
-    expoAccueil,
-    livesRail,
-  ] = await Promise.all([
-    getMallStatus(),
-    getCategories(),
-    getTopBarCounts(),
-    getProfile(),
-
-    /*
-      La boutique est jointe pour son `slug`, pas pour son nom.
-
-      Le lien se construisait sur `shop_id`, alors que `/boutique/[slug]` attend
-      un slug : une publicité rattachée à une boutique menait donc à une page
-      introuvable. Le défaut ne se voyait pas, faute d'emplacement actif.
-    */
-    supabase
-      .from("sponsored_slots")
-      .select("*, shop:shops(slug, status)")
-      .eq("is_active", true)
-      .lte("starts_at", new Date().toISOString())
-      .gte("ends_at", new Date().toISOString())
-      .order("position")
-      .limit(6),
-
-
-    supabase
-      .from("products")
-      .select("id, name, name_ar, price, compare_at_price, images, description_ar, shop:shops!inner(name, slug, logo_url, status)")
-      .eq("is_online", true)
-      .eq("is_draft", false)
-      .eq("shops.status", "approved")
-      .eq("shops.list_in_marketplace", true)
-      .not("compare_at_price", "is", null)
-      .order("sold_count", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-
-    /*
-      Les promotions de boutique, absentes de cet écran jusqu'ici.
-
-      La requête voisine ne cherche qu'un produit à prix barré : deux mécanismes
-      distincts, et un commerçant qui créait « −10% sur toute la boutique » ne
-      voyait rien apparaître ici. C'était le défaut le plus visible pour un
-      vendeur, puisqu'il croyait sa promotion perdue.
-
-      Les trois bornes comptent autant l'une que l'autre : active, commencée, non
-      expirée. Sans la borne de début, une promotion programmée pour la semaine
-      prochaine s'afficherait aujourd'hui ; sans celle de fin, elle resterait
-      après son terme — le pire des deux, puisqu'un client s'y déplacerait.
-
-      `shops!inner` avec le filtre de statut : une boutique suspendue ne doit pas
-      continuer d'annoncer ses remises depuis la page d'accueil.
-    */
-    supabase
-      .from("promotions")
-      .select("id, title, title_ar, percent_off, ends_at, shop:shops!inner(name, slug, logo_url, status)")
-      .eq("is_active", true)
-      .eq("shops.status", "approved")
-      .lte("starts_at", new Date().toISOString())
-      .gte("ends_at", new Date().toISOString())
-      .order("percent_off", { ascending: false })
-      .limit(6),
-
-    /*
-      De quoi remplir l'écran quand aucun direct n'est en cours.
-
-      Le rail des directs est vide la plupart du temps — un commerçant diffuse
-      une heure par semaine, pas en continu — et l'accueil s'ouvrait alors sur
-      une bande de pastilles grises qui ne menaient nulle part. Autant montrer
-      ce que les boutiques mises en avant ont à vendre.
-
-      Une seule requête, large, plutôt que deux : on demande douze articles des
-      boutiques approuvées et l'on choisit ensuite ceux des boutiques à la une.
-      Interroger d'abord les boutiques mises en avant aurait ajouté un
-      aller-retour, et rendu la section vide le jour où plus aucune ne l'est.
-    */
-    supabase
-      .from("products")
-      .select(
-        "id, name, price, compare_at_price, images, stock, category:categories(hue), shop:shops!inner(name, slug, status, is_featured)",
-      )
-      .eq("is_online", true)
-      .eq("is_draft", false)
-      .eq("shops.status", "approved")
-      .eq("shops.list_in_marketplace", true)
-      .gt("stock", 0)
-      .order("sold_count", { ascending: false })
-      .limit(12),
-
-    supabase
-      .from("practical_services")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order")
-      .limit(8),
-
-    /*
-      Combien de boutiques par catégorie.
-
-      La tuile annonçait une catégorie sans dire ce qu'il y avait derrière : on
-      la touchait pour découvrir une grille vide. Le compte se lit avant de
-      cliquer, et il vient d'une seule requête — la colonne `category_id` des
-      boutiques approuvées, comptée ici plutôt que par douze agrégats.
-    */
-    supabase.from("shops").select("category_id").eq("status", "approved"),
-    /*
-      Le Black Friday : l'état de la campagne et, pendant, dix offres.
-
-      Dans le même Promise.all que le reste — deux requêtes de plus en
-      parallèle, pas deux allers-retours de plus. Hors campagne, la seconde
-      rend une liste vide en quelques millisecondes.
-    */
-    lireEtatBlackFriday(),
-    lireOffresActives(10),
-    /*
-      Les partenaires mis en avant.
-
-      Le drapeau est posé par l'administration seule — un déclencheur
-      empêche un commerçant de se l'attribuer —, et le rang décide de
-      l'ordre. Sans rang, le plus récemment approuvé vient d'abord.
-    */
-    supabase
-      .from("shops")
-      .select(
-        `id, slug, name, name_ar, logo_url, banner_url, cover_url,
-         partner_tagline, partner_tagline_ar, accepts_reservations,
-         category:categories!shops_category_id_fkey(hue)`,
-      )
-      .eq("status", "approved")
-      .eq("is_partner", true)
-      .order("partner_rank", { ascending: true, nullsFirst: false })
-      .order("approved_at", { ascending: false })
-      .limit(8),
-    /*
-      G-Shop : les dernières annonces validées. La policy écarte déjà
-      celles qui attendent ou ont été refusées ; le filtre ci-dessous ne
-      sert qu'à ne pas rapporter les expirées.
-    */
-    supabase
-      .from("deals")
-      .select("id, title, images, price")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    /* Les stands publiés, toutes éditions confondues. */
-    supabase
-      .from("expo_exhibitors")
-      .select("id, slug, name, name_ar, cover_url")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .limit(10),
-    /* L'édition la plus récente, pour la carte de la rangée. */
-    supabase
-      .from("expos")
-      .select("id, name, place, cover_url, starts_on, ends_on")
-      .eq("is_published", true)
-      .order("starts_on", { ascending: false })
-      .limit(1),
-
-    /*
-      Les boutiques en direct ou sur le point de l'être, à la place de la
-      barre d'accessibilité — déjà doublée par la bascule de langue de
-      l'en-tête et par /profil/reglages.
-
-      `status` avant `scheduled_at` : un direct en cours passe toujours
-      devant un direct programmé, quelle que soit l'heure de l'un ou l'autre.
-    */
-    supabase
-      .from("lives")
-      .select("id, status, scheduled_at, shop:shops!inner(name, slug, logo_url, status)")
-      .in("status", ["live", "scheduled"])
-      .eq("shops.status", "approved")
-      .order("status")
-      .order("scheduled_at", { ascending: true })
-      .limit(12),
-  ]);
-
-  /*
-    La rangée des partenaires : les boutiques, puis l'exposition.
-
-    Lelma3ardh n'est pas une boutique et n'a pas de ligne dans `shops` — sa
-    carte est donc composée ici, à partir de l'édition en cours. Elle vient
-    en dernier : un commerce qu'on peut visiter aujourd'hui passe avant un
-    marché qui a ses dates.
-  */
-  const cartesPartenaires: CartePartenaire[] = [
-    ...((partenaires.data ?? []) as unknown as PartenaireAccueil[]).map((p) =>
-      cartePourBoutique(p, locale),
-    ),
-  ];
-
-  const editionEnCours = expoAccueil.data?.[0];
-  if (editionEnCours && (exposants.data ?? []).length > 0) {
-    cartesPartenaires.push({
-      cle: editionEnCours.id,
-      href: "/lelma3ardh",
-      nom: "شركة الدهماني — للمعارض",
-      accroche: `${(exposants.data ?? []).length} عارض · ${editionEnCours.place ?? "قفصة"}`,
-      image: editionEnCours.cover_url,
-      logo: null,
-      monogramme: "SD",
-      teinte: "expo",
-      liens: [
-        { href: "/lelma3ardh", libelle: "مشاهدة الأجنحة" },
-        { href: "/lelma3ardh?vue=produits", libelle: "مشاهدة المنتجات", accent: true },
-      ],
-    });
-  }
-
-  /* Combien de boutiques approuvées derrière chaque catégorie. */
-  const shopCount = (shopsByCategory.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    if (row.category_id) acc[row.category_id] = (acc[row.category_id] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  // Une tuile par type de service pratique (Taxi, Louage, Prière, Pharmacie)
-  const serviceTiles = Object.values(
-    (services.data ?? []).reduce<Record<string, PracticalService>>((acc, service) => {
-      acc[service.kind] ??= service;
-      return acc;
-    }, {}),
-  );
-
-  /*
-    Une pastille par boutique, pas par direct.
-
-    Une boutique peut avoir un direct en cours et un autre programmé ; la
-    requête est triée `status` avant `scheduled_at`, donc le premier direct
-    rencontré pour une boutique est toujours le plus pertinent — en direct
-    s'il y en a un, sinon le plus proche à venir.
-  */
-  const boutiquesEnDirect = Object.values(
-    (livesRail.data ?? []).reduce<
-      Record<
-        string,
-        {
-          id: string;
-          status: string;
-          scheduledAt: string | null;
-          shop: { name: string; slug: string; logo_url: string | null };
-        }
-      >
-    >((acc, live) => {
-      acc[live.shop.slug] ??= {
-        id: live.id,
-        status: live.status,
-        scheduledAt: live.scheduled_at,
-        shop: live.shop,
-      };
-      return acc;
-    }, {}),
-  );
-
-  /** « 35 min », « 2 h », « 3 j » — le délai avant un direct programmé. */
-  function delaiAvantDirect(scheduledAt: string): string {
-    const minutes = Math.max(1, Math.round((new Date(scheduledAt).getTime() - Date.now()) / 60_000));
-    if (minutes < 60) return format(t.live.startsInMin, { n: minutes });
-    const heures = Math.round(minutes / 60);
-    if (heures < 24) return format(t.live.startsInHour, { n: heures });
-    return format(t.live.startsInDay, { n: Math.round(heures / 24) });
-  }
-
-
-  /*
-    Trois articles pour prendre la place, en préférant les boutiques à la une.
-
-    La préférence se fait ici plutôt que dans la requête : PostgREST ne trie pas
-    sur une colonne de table jointe, et un second appel n'aurait servi qu'à
-    obtenir un ordre. Si aucune boutique n'est mise en avant, on garde les plus
-    vendus — la section reste pleine, ce qui est tout son intérêt.
-  */
-  const allProducts = catalogue.data ?? [];
-  const featured = allProducts.filter((p) => p.shop?.is_featured);
-  // Le prix Black Friday sur ces trois cartes : une requête, rien hors campagne.
-  const highlights = await avecBlackFriday((featured.length > 0 ? featured : allProducts).slice(0, 3));
-
-  const discount = promo.data ? percentOff(promo.data.price, promo.data.compare_at_price) : null;
-
-  return (
-    <>
-      {/*
-        ═══ Le panneau d'en-tête ═══════════════════════════════════════
-
-        Quatre choses tenaient chacune sa bande : le surtitre, la salutation,
-        l'état du mall, puis la recherche. Réunies sur une même surface
-        violette arrondie, elles deviennent un seul bloc — celui qui dit à
-        qui l'on parle et ce qui se passe maintenant —, et la barre de
-        recherche vient à cheval sur son bord inférieur plutôt que de
-        commencer une cinquième bande.
-
-        L'en-tête et la recherche restent hors de la zone qui défile : la
-        recherche est la porte de sortie de toutes les autres sections, elle
-        ne doit jamais demander de remonter.
-      */}
-      <header className="relative flex-none overflow-hidden rounded-b-[30px] bg-[image:var(--gradient-brand)] px-[18px] pt-[16px] pb-[40px] text-white">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-[70px] -end-[60px] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.16),transparent_65%)]"
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -bottom-[90px] -start-[70px] h-[210px] w-[210px] rounded-full bg-[radial-gradient(circle,var(--color-live-tint),transparent_68%)]"
-        />
-
-        <div className="relative flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.59375rem] font-bold tracking-[0.22em] text-white/70 uppercase">
-              {t.marketplace.eyebrow}
-            </p>
-            <h1 className="mt-[7px] truncate text-[1.6875rem] leading-[1.05] font-extrabold tracking-[-0.02em]">
-              {profile?.first_name
-                ? format(t.home.greeting, { name: profile.first_name })
-                : t.home.greetingAnon}
-            </h1>
-            {/* Aucune boutique ouverte ne veut pas dire qu'il n'y a rien à voir :
-                on annonce alors le catalogue plutôt qu'un zéro. */}
-            <div className="mt-[7px] flex items-center gap-[7px]">
-              <span
-                aria-hidden
-                className="animate-live-dot h-2 w-2 flex-none rounded-full"
-                style={{ background: status.anyOpen ? "#7ee2a8" : "rgba(255,255,255,0.45)" }}
-              />
-              <p className="truncate text-[0.71875rem] font-medium text-white/85">
-                {status.anyOpen
-                  ? format(t.home.activeShops, { n: status.openCount })
-                  : format(t.marketplace.allShops, { n: status.totalCount })}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-none gap-[7px]">
-            <LanguageToggle sombre />
-
-            <Link
-              href="/notifications"
-              aria-label={t.nav.notifications}
-              className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-white/25 bg-white/15 text-white"
-            >
-              <BellIcon size={17} />
-              {counts.notifications > 0 && (
-                <span className="absolute -top-[1px] -end-[1px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--color-live-fill)] px-1 text-[0.53125rem] font-bold text-white">
-                  {counts.notifications > 99 ? "99+" : counts.notifications}
-                </span>
-              )}
-            </Link>
-
-            <Link
-              href="/panier"
-              aria-label={t.cart.title}
-              className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-white text-[var(--color-brand)]"
-            >
-              <CartIcon size={17} />
-              {counts.cart > 0 && (
-                <span className="absolute -top-[2px] -end-[2px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--color-ink)] px-1 text-[0.53125rem] font-extrabold text-white">
-                  {counts.cart > 99 ? "99+" : counts.cart}
-                </span>
-              )}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* La pilule de recherche, posée sur le bord du panneau. */}
-      <div className="relative z-10 -mt-[26px] flex-none">
-        <SearchBar flottante />
-      </div>
-
-      <div className="no-sb flex flex-1 flex-col gap-7 overflow-y-auto pt-4 pb-5">
-        {/*
-          ─── Boutiques en direct ────────────────────────────────────────
-
-          À la place de la barre d'accessibilité : le réglage du texte et du
-          mode simplifié vit déjà dans /profil/reglages, et la bascule de
-          langue reste dans l'en-tête. Ici, ce que l'accueil peut montrer et
-          que rien d'autre ne montre en un coup d'œil — qui diffuse maintenant,
-          qui s'apprête à le faire.
-        */}
-        {LIVES_DANS_LES_MENUS && boutiquesEnDirect.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue="var(--color-live-fill)" titre={t.live.railTitle} />
-
-            <div className="no-sb flex flex-none gap-4 overflow-x-auto px-4">
-              {boutiquesEnDirect.map((live) => (
-                <Link
-                  key={live.shop.slug}
-                  href={`/lives/${live.id}`}
-                  aria-label={`${live.shop.name} — ${live.status === "live" ? t.live.onAir : t.live.scheduled}`}
-                  className="press flex flex-none flex-col items-center gap-2"
-                >
-                  {/*
-                    L'anneau à la manière d'une story : dégradé tournant pour
-                    « programmé », plein et pulsé pour « en direct » — le
-                    même repère que sur Instagram ou Facebook, déjà connu
-                    sans explication.
-                  */}
-                  <span
-                    className={cx(
-                      "relative flex h-[62px] w-[62px] flex-none items-center justify-center rounded-full p-[3px]",
-                      live.status === "live" && "animate-live-dot",
-                    )}
-                    style={{
-                      background:
-                        live.status === "live"
-                          ? "var(--color-live-fill)"
-                          : "conic-gradient(from 180deg, var(--color-brand), var(--color-live-fill), var(--color-brand-strong), var(--color-brand))",
-                    }}
-                  >
-                    <Avatar
-                      src={live.shop.logo_url}
-                      initials={monogram(live.shop.name)}
-                      size={56}
-                      className="ring-[3px] ring-[var(--color-app)]"
-                    />
-
-                    {/* Le badge chevauche le bas de l'anneau, comme la mention « LIVE ». */}
-                    <span
-                      className={cx(
-                        "absolute -bottom-[7px] flex h-[17px] items-center justify-center rounded-full px-[7px] text-[0.5rem] font-extrabold whitespace-nowrap text-white ring-2 ring-[var(--color-app)]",
-                        live.status === "live" ? "bg-[var(--color-live-fill)]" : "bg-[var(--color-brand)]",
-                      )}
-                    >
-                      {live.status === "live" ? t.live.onAir : delaiAvantDirect(live.scheduledAt!)}
-                    </span>
-                  </span>
-
-                  <span className="max-w-[64px] truncate text-[0.625rem] font-semibold text-[var(--color-muted)]">
-                    {live.shop.name}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/*
-          ─── 1 · Affiches sponsorisées ───────────────────────────────
-
-          En ouverture, avec un titre de section : une affiche sans titre
-          au-dessus se confondait avec une bannière du site lui-même. La
-          mention « sponsorisé » reste posée sur l'image, comme il se doit.
-        */}
-        {(sponsored.data ?? []).length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={40} titre={t.accueil.sponsoredTitle}>
-              <span className="rounded-full border border-[var(--color-outline)] px-[9px] py-1 text-[0.53125rem] font-bold tracking-[0.14em] text-[var(--color-faint)]">
-                {t.home.sponsoredBadge}
-              </span>
-            </EnteteSection>
-            <SponsoredCarousel slots={(sponsored.data ?? []) as SponsoredSlot[]} />
-          </section>
-        )}
-
-        {/*
-          ─── 2 · Black Friday ────────────────────────────────────────
-
-          Haut de page pendant vingt-quatre heures : c'est alors la chose la
-          plus importante de l'application, et une section qu'il faut
-          chercher en faisant défiler est une section qu'on rate.
-        */}
-        <SectionBlackFriday etat={etatBf} offres={offresBf} locale={locale} />
-
-        {/*
-          ─── 4 · Nos partenaires ─────────────────────────────────────────
-
-          Les commerces qui soutiennent l'application. La section disparaît
-          quand il n'y en a aucun : un titre suivi du vide fait croire à une
-          panne, et cette place vaut mieux que ça.
-        */}
-        {cartesPartenaires.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={280} titre={t.home.partners}>
-              {/*
-                Quatre au plus ici, la page des partenaires pour le reste.
-
-                Une rangée qu'on fait glisser six fois n'est pas parcourue :
-                on s'arrête à la troisième carte. Quatre tiennent dans deux
-                gestes, et le lien dit qu'il y en a d'autres — ce qu'une
-                rangée sans fin ne dit jamais.
-              */}
-              <Link href="/partenaires" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
-                {t.common.seeAll} →
-              </Link>
-            </EnteteSection>
-            <PartnersRail cartes={cartesPartenaires.slice(0, PARTENAIRES_ACCUEIL)} taille="moyenne" />
-          </section>
-        )}
-
-        {/*
-          ─── 5 · Catégories ──────────────────────────────────────────
-
-          La photo occupe toute la carte, le nom se lit sur un voile en bas :
-          une catégorie se reconnaît à son image avant de se lire, et une part
-          des clients visés lit peu le français.
-
-          Deux rangées qui glissent sur téléphone : onze catégories en deux
-          colonnes feraient six écrans de haut, et l'accueil ne montrerait plus
-          rien d'autre. Sur grand écran, une grille de quatre, sans défilement.
-
-          Fête & Événements et Sport & Loisirs mènent à leur annuaire : ce sont
-          des lieux, pas des produits.
-        */}
-        <section className="flex flex-col gap-3">
-          <EnteteSection hue={300} titre={t.home.categories} />
-          <div className="no-sb grid auto-cols-[45%] grid-flow-col grid-rows-2 gap-[10px] overflow-x-auto px-4 pb-1 sm:auto-cols-[31%] lg:grid-flow-row lg:grid-cols-4 lg:grid-rows-none lg:overflow-visible">
-            {categories.map((category) => (
-              <CarteCategorie
-                key={category.id}
-                category={category}
-                nom={locale === "ar" ? category.name_ar : category.name_fr}
-                compte={
-                  shopCount[category.id]
-                    ? format(t.home.shopCount, { n: shopCount[category.id] })
-                    : null
-                }
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* ─── 6 · Promotions du moment ───────────────────────────────── */}
-        {(promo.data || (shopPromos.data ?? []).length > 0) && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={25} titre={t.home.promos}>
-              <Link href="/free-shop" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
-                {t.common.seeAll} →
-              </Link>
-            </EnteteSection>
-
-            {/*
-              Les remises de boutique, en tête et sur un rail.
-
-              Elles portent sur un commerce entier, là où la carte qui suit
-              porte sur un seul article : les présenter dans le même format
-              laisserait croire à un produit en promotion, et le client
-              chercherait un prix qui n'existe pas.
-            */}
-            {(shopPromos.data ?? []).length > 0 && (
-              <Rail gap={10} className="px-4">
-                {(shopPromos.data ?? []).map((offer) => (
-                  <Link
-                    key={offer.id}
-                    href={`/boutique/${offer.shop?.slug}`}
-                    className="press flex w-[196px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-[10px] shadow-[var(--shadow-card)]"
-                  >
-                    <Avatar
-                      src={offer.shop?.logo_url}
-                      initials={monogram(offer.shop?.name)}
-                      size={34}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[0.71875rem] font-bold text-[var(--color-ink)]">
-                        {offer.shop?.name}
-                      </p>
-                      <p className="truncate text-[0.625rem] text-[var(--color-muted)]">
-                        {locale === "ar" && offer.title_ar ? offer.title_ar : offer.title}
-                      </p>
-                    </div>
-                    {/* Le signe reste devant le nombre, même en arabe. */}
-                    <span
-                      dir="ltr"
-                      className="flex-none rounded-[10px] bg-[var(--color-live-fill)] px-2 py-[3px] text-[0.59375rem] font-bold text-white"
-                    >
-                      −{offer.percent_off}%
-                    </span>
-                  </Link>
-                ))}
-              </Rail>
-            )}
-
-            {/*
-              L'article en promotion prend la forme d'un coupon.
-
-              Encoches sur les côtés, ligne perforée, remise posée sur la
-              photo : la carte dit « bon à découper » avant même d'être lue,
-              là où une vignette de plus se serait fondue dans la page. La
-              photo garde ses cent-soixante-huit pixels et porte ce qui la
-              qualifie — qui vend, et de combien on économise.
-
-              L'ensemble reste un lien vers la fiche ; seule la photo dérive
-              vers l'agrandissement, comme partout ailleurs.
-            */}
-            {promo.data && (
-              <div className="mx-4 rounded-[20px] bg-[var(--color-surface-solid)] shadow-[0_8px_22px_rgba(60,40,90,0.1)]">
-                <div className="relative overflow-hidden rounded-t-[20px] bg-[var(--color-track)]">
-                  {promo.data.images?.[0] ? (
-                    <ImageZoom
-                      images={promo.data.images}
-                      alt={promo.data.name}
-                      className="block w-full cursor-zoom-in"
-                    >
-                      <span className="relative block h-[168px] w-full">
-                        <Image
-                          src={promo.data.images[0]}
-                          alt={promo.data.name}
-                          fill
-                          sizes="(max-width: 520px) 100vw, 520px"
-                          priority
-                          className="fade-in-img object-cover"
-                        />
-                      </span>
-                    </ImageZoom>
-                  ) : (
-                    <Placeholder label="photo boutique — vitrine" className="h-[168px] w-full" />
-                  )}
-
-                  <Link
-                    href={`/boutique/${promo.data.shop?.slug}`}
-                    className="press absolute start-3 top-3 flex max-w-[70%] items-center gap-[6px] rounded-full bg-[var(--color-surface-solid)]/96 py-1 pe-[10px] ps-1 shadow-[0_3px_10px_rgba(36,31,46,0.16)]"
-                  >
-                    <Avatar
-                      src={promo.data.shop?.logo_url}
-                      initials={monogram(promo.data.shop?.name)}
-                      size={20}
-                    />
-                    <span className="truncate text-[0.625rem] font-bold text-[var(--color-ink)]">
-                      {promo.data.shop?.name}
-                    </span>
-                  </Link>
-
-                  {discount !== null && (
-                    <span
-                      dir="ltr"
-                      className="absolute start-3 bottom-3 rounded-full bg-[var(--color-live-fill)] px-[11px] py-[6px] text-[0.75rem] font-extrabold text-white shadow-[0_4px_12px_rgba(60,40,90,0.34)]"
-                    >
-                      −{discount}%
-                    </span>
-                  )}
-                </div>
-
-                {/* La perforation : deux encoches du fond de l'application, et
-                    des pointillés entre les deux. */}
-                <div className="relative h-4" aria-hidden>
-                  <span className="absolute -top-2 -start-2 h-4 w-4 rounded-full bg-[var(--color-app)]" />
-                  <span className="absolute -top-2 -end-2 h-4 w-4 rounded-full bg-[var(--color-app)]" />
-                  <span className="absolute start-[14px] end-[14px] top-[7px] h-[2px] bg-[repeating-linear-gradient(90deg,var(--color-outline)_0_5px,transparent_5px_10px)]" />
-                </div>
-
-                {/*
-                  Deux destinations, deux liens frères — jamais imbriqués : le
-                  nom, la description et le prix mènent à la fiche produit,
-                  « زيارة المتجر » à la boutique du produit, par le `slug` réel
-                  de sa ligne `shops` (jointure sur `products.shop_id`). Le
-                  bouton était un simple <span> dans le lien produit : il
-                  ouvrait la fiche, pas la boutique.
-                */}
-                <div className="block px-4 pt-[2px] pb-4">
-                  <Link href={lienProduit(promo.data)} className="block">
-                    <p className="text-[0.875rem] leading-[1.3] font-bold tracking-[-0.01em] text-[var(--color-ink)]">
-                      {locale === "ar" && promo.data.name_ar ? promo.data.name_ar : promo.data.name}
-                    </p>
-                    {promo.data.description_ar && (
-                      <p
-                        lang="ar"
-                        dir="rtl"
-                        className="mt-[3px] line-clamp-2 text-[0.71875rem] leading-[1.55] text-[var(--color-muted)]"
-                      >
-                        {promo.data.description_ar}
-                      </p>
-                    )}
-                  </Link>
-                  <div className="mt-[9px] flex items-end gap-[9px]">
-                    <Link href={lienProduit(promo.data)} className="block min-w-0 flex-1">
-                      <p className="text-[1.125rem] leading-none font-extrabold tracking-[-0.02em] text-[var(--color-brand)]">
-                        {formatPrice(promo.data.price, locale)}
-                      </p>
-                      {promo.data.compare_at_price && (
-                        <p className="mt-1 text-[0.6875rem] text-[var(--color-faint)] line-through">
-                          {formatPrice(promo.data.compare_at_price, locale)}
-                        </p>
-                      )}
-                    </Link>
-                    {promo.data.shop?.slug && (
-                      <Link
-                        href={`/boutique/${promo.data.shop.slug}`}
-                        className="press flex-none rounded-full bg-[var(--color-brand-fill)] px-[14px] py-[10px] text-[0.6875rem] font-bold whitespace-nowrap text-white shadow-[0_6px_16px_rgba(109,75,143,0.36)]"
-                      >
-                        {t.product.seeShop}
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/*
-          ─── 7 · G-Shop ───────────────────────────────────────────────
-
-          Les annonces des membres, approuvées. Trois seulement : c'est un
-          aperçu qui donne envie d'ouvrir la section, pas la section. La
-          policy de lecture écarte déjà tout ce qui n'est pas validé — il
-          n'y a donc rien à filtrer ici, et rien à oublier de filtrer.
-        */}
-        {(freeShop.data ?? []).length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={0} titre={t.deals.title}>
-              <Link href="/free-shop" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
-                {t.common.seeAll} →
-              </Link>
-            </EnteteSection>
-
-            <Rail gap={10} className="px-4">
-              {(freeShop.data ?? []).map((annonce) => (
-                <Link
-                  key={annonce.id}
-                  href={`/free-shop/${annonce.id}`}
-                  className="w-[168px] flex-none overflow-hidden rounded-[18px] bg-[var(--color-surface-solid)]"
-                >
-                  <span className="relative block aspect-[4/3] bg-[var(--color-app)]">
-                    {annonce.images[0] ? (
-                      <Image src={annonce.images[0]} alt="" fill sizes="168px" className="object-cover" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-[0.625rem] text-[var(--color-faint)]">
-                        {t.deals.title}
-                      </span>
-                    )}
-                  </span>
-                  <span className="flex flex-col gap-[2px] px-[10px] py-[9px]">
-                    <span className="truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
-                      {annonce.title}
-                    </span>
-                    <span dir="ltr" className="text-[0.65625rem] font-bold text-[var(--color-brand)]">
-                      {annonce.price != null ? formatPrice(annonce.price, locale) : t.deals.free}
-                    </span>
-                  </span>
-                </Link>
-              ))}
-            </Rail>
-          </section>
-        )}
-
-        {/*
-          ─── 9 · La sélection ────────────────────────────────────────
-
-          Ce que les boutiques mises en avant ont à vendre.
-
-          Elle s'effaçait autrefois devant un direct à l'antenne, parce que
-          la rangée des boutiques annonçait ce direct juste au-dessus. Cette
-          rangée n'est plus là : se taire pour un rendez-vous que l'accueil
-          n'annonce plus n'aurait laissé qu'un trou. Les directs gardent leur
-          onglet, qui les montre tous.
-        */}
-        {highlights.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={300} titre={t.home.featured} />
-            <Rail gap={10} className="px-4">
-              {highlights.map((product, i) => (
-                /*
-                  Arrivée décalée de soixante millisecondes par carte. Assez
-                  pour que l'œil suive la rangée, trop peu pour qu'on attende
-                  la dernière.
-                */
-                <div
-                  key={product.id}
-                  className="enter-item w-[150px] flex-none"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <ProductCard product={product} locale={locale} imageHeight={112} />
-                </div>
-              ))}
-            </Rail>
-          </section>
-        )}
-
-        {/*
-          ─── 10 · Services pratiques ──────────────────────────────────
-
-          Des chips de deux lignes sur deux rangées, plutôt que des pastilles
-          rondes : le nom seul ne disait pas l'essentiel — une pharmacie de
-          garde, c'est son horaire ; un taxi, c'est le nombre de chauffeurs
-          en ligne. La seconde ligne porte ce que l'administration a
-          renseigné.
-        */}
-        {serviceTiles.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <EnteteSection hue={165} titre={t.home.practicalServices}>
-              <Link href="/services" className="text-[0.6875rem] font-bold text-[var(--color-brand)]">
-                {t.common.seeAll} →
-              </Link>
-            </EnteteSection>
-
-            <div className="no-sb grid grid-flow-col grid-rows-2 gap-[10px] overflow-x-auto px-4 pb-[6px]">
-              {etatBf.campagne && etatBf.campagne.phase !== "termine" && (
-                <ChipService
-                  href="/black-friday"
-                  nom={t.bf.title}
-                  detail={etatBf.campagne.phase === "actif" ? t.bf.now : t.bf.soon}
-                  emoji="🔥"
-                  sombre
-                />
-              )}
-
-              {serviceTiles.map((service) => (
-                <ChipService
-                  key={service.id}
-                  href={LIEN_SERVICE[service.kind] ?? `/services#${service.kind}`}
-                  nom={locale === "ar" && service.name_ar ? service.name_ar : service.name}
-                  detail={service.info}
-                  imageUrl={service.image_url}
-                  monogramme={service.monogram}
-                  Dessin={serviceIcon(service.kind) ?? undefined}
-                  hue={service.hue}
-                />
-              ))}
-
-              {RACCOURCIS.map((r) => (
-                <ChipService
-                  key={r.cle}
-                  href={r.href}
-                  nom={r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
-                  Dessin={r.cle === "animaux" ? PawIcon : ToolIcon}
-                  hue={r.hue}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ─── 11 · Invitation commerçants ─────────────────────────────── */}
-        <div className="relative mx-4 overflow-hidden rounded-[24px] bg-[image:var(--gradient-brand)] p-[18px] text-white shadow-[0_12px_30px_rgba(109,75,143,0.26)]">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -top-[70px] -end-[56px] h-[190px] w-[190px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.18),transparent_66%)]"
-          />
-          {/* Le reflet qui traverse : une seule couche animée en `transform`,
-              rien à repeindre. Il s'arrête si le système demande moins de
-              mouvement. */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 -start-[70px] w-[70px] -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent)] motion-safe:animate-[shimmer_5s_ease-in-out_infinite]"
-          />
-
-          <div className="relative">
-            <p className="text-[0.875rem] leading-[1.25] font-extrabold tracking-[-0.01em]">
-              {t.home.merchantTitle}
-            </p>
-            <p className="mt-[6px] text-[0.6875rem] leading-[1.5] text-white/80">
-              {t.home.merchantBody}
-            </p>
-          </div>
-
-          <Link
-            href="/inscription?role=vendeur"
-            className="press relative mt-[14px] flex min-h-11 items-center justify-center rounded-full bg-white px-4 text-[0.71875rem] font-bold text-[var(--color-on-light)]"
-          >
-            {t.home.merchantCta}
-          </Link>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/**
- * Le titre d'une section, avec sa pastille de couleur.
- *
- * La pastille reprend la règle de teinte des catégories — `oklch(0.47 0.12
- * <teinte>)` — ou une couleur du thème quand la section n'en a pas. C'est
- * assez pour distinguer sept sections empilées sans dessiner sept cadres, et
- * le titre reprend la taille qu'il mérite : quinze pixels, là où onze le
- * faisaient passer pour une légende.
- */
-function EnteteSection({
-  hue,
-  titre,
-  children,
-}: {
-  hue: number | string;
-  titre: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-2 px-[18px]">
-      <span
-        aria-hidden
-        className="h-[9px] w-[9px] flex-none rounded-full"
-        style={{ background: typeof hue === "number" ? `oklch(0.47 0.12 ${hue})` : hue }}
-      />
-      <h2 className="text-[0.9375rem] leading-none font-extrabold tracking-[-0.01em] text-[var(--color-ink)]">
-        {titre}
-      </h2>
-      {children && <div className="ms-auto flex items-center">{children}</div>}
-    </div>
-  );
-}
-
-/**
- * Un service, en chip de deux lignes.
- *
- * Le rond garde la photo quand l'administration en a téléversé une, le
- * monogramme ou l'emoji sinon : un service ajouté ce matin s'affiche
- * correctement avant qu'on lui ait choisi une image.
- */
-function ChipService({
-  href,
-  nom,
-  detail,
-  imageUrl,
-  monogramme,
-  emoji,
-  Dessin,
-  hue = 300,
-  sombre = false,
-}: {
-  href: string;
-  nom: string;
-  detail?: string | null;
-  imageUrl?: string | null;
-  monogramme?: string;
-  emoji?: string;
-  /*
-    Le dessin passe avant le monogramme.
-
-    Une pharmacie de garde se cherche à minuit, un louage se rattrape à la
-    minute : ce sont des pastilles qu'on balaie du regard, pas qu'on lit. Une
-    croix et un minibus se trouvent plus vite qu'un « PH » et un « LO ».
-  */
-  Dessin?: ComponentType<{ size?: number; className?: string }>;
-  hue?: number;
-  /** Le Black Friday, qui n'emprunte à aucune teinte de catégorie. */
-  sombre?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className="press flex w-[170px] flex-none items-center gap-[10px] rounded-[16px] border border-[var(--color-surface-edge)] bg-[var(--color-surface)] p-2 pe-[11px] shadow-[0_4px_14px_rgba(60,40,90,0.06)]"
-    >
-      <span
-        aria-hidden
-        className={cx(
-          "flex h-[42px] w-[42px] flex-none items-center justify-center overflow-hidden rounded-full text-[1.0625rem]",
-          sombre
-            ? "bg-[linear-gradient(135deg,#0d0b10,#5a3a78)]"
-            : imageUrl
-              ? "bg-[var(--color-track)]"
-              : "cat-surface cat-ink",
-        )}
-        style={sombre ? undefined : ({ "--hue": hue } as React.CSSProperties)}
-      >
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt=""
-            width={42}
-            height={42}
-            className="fade-in-img h-full w-full object-cover"
-          />
-        ) : Dessin ? (
-          <Dessin size={21} />
-        ) : (
-          (emoji ?? <span className="text-[0.8125rem] font-bold">{monogramme}</span>)
-        )}
-      </span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.6875rem] font-bold text-[var(--color-ink)]">
-          {nom}
-        </span>
-        {detail && (
-          <span className="mt-[3px] block truncate text-[0.59375rem] font-semibold text-[var(--color-muted)]">
-            {detail}
-          </span>
-        )}
-      </span>
-    </Link>
-  );
-}
-
-/* ─── Les catégories de l'accueil ─────────────────────────────────────── */
-
-/**
- * Les photos livrées avec l'application, quand l'administration n'en a pas
- * encore téléversé. Une catégorie sans photo garde son dessin sur fond teinté :
- * elle reste reconnaissable, et rien ne manque à l'écran.
- */
+/** Photos livrées avec l'app, quand l'administration n'en a pas téléversé. */
 const PHOTOS_CATEGORIES: Record<string, string> = {
   mode: "/images/cat-mode.webp",
   beaute: "/images/cat-beaute.webp",
@@ -1090,49 +82,629 @@ const ANNUAIRES: Record<string, string> = {
   "sport-loisirs": "/sport-loisirs",
 };
 
-function CarteCategorie({
-  category,
-  nom,
-  compte,
-}: {
-  category: Awaited<ReturnType<typeof getCategories>>[number];
-  nom: string;
-  compte: string | null;
-}) {
-  const photo = category.image_url ?? PHOTOS_CATEGORIES[category.slug] ?? null;
-  const Dessin = categoryIcon(category.slug);
+/** Le plan 3D montre cinq niveaux : RDC à N4. */
+const NIVEAUX = [0, 1, 2, 3, 4];
+
+export default async function HomePage() {
+  const { t, locale } = await getT();
+  const ar = locale === "ar";
+  const supabase = await createClient();
+  const maintenant = new Date().toISOString();
+
+  const [
+    status,
+    categories,
+    counts,
+    profile,
+    sponsored,
+    promo,
+    shopPromos,
+    catalogue,
+    services,
+    freeShop,
+    livesRail,
+    nbProduits,
+    nbPromotions,
+    boutiquesEtages,
+    logos,
+  ] = await Promise.all([
+    getMallStatus(),
+    getCategories(),
+    getTopBarCounts(),
+    getProfile(),
+
+    // La boutique est jointe pour son `slug` : `/boutique/[slug]` n'accepte pas un identifiant.
+    supabase
+      .from("sponsored_slots")
+      .select("*, shop:shops(slug, status)")
+      .eq("is_active", true)
+      .lte("starts_at", maintenant)
+      .gte("ends_at", maintenant)
+      .order("position")
+      .limit(6),
+
+    supabase
+      .from("products")
+      .select("id, name, name_ar, price, compare_at_price, images, description_ar, shop:shops!inner(name, slug, logo_url, status)")
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
+      .not("compare_at_price", "is", null)
+      .order("sold_count", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    // Promotions de boutique : actives, commencées, non expirées, boutique approuvée.
+    supabase
+      .from("promotions")
+      .select("id, title, title_ar, percent_off, ends_at, shop:shops!inner(name, slug, logo_url, status)")
+      .eq("is_active", true)
+      .eq("shops.status", "approved")
+      .lte("starts_at", maintenant)
+      .gte("ends_at", maintenant)
+      .order("percent_off", { ascending: false })
+      .limit(8),
+
+    // De quoi composer « Coup de cœur du jour » et la tuile Produits.
+    supabase
+      .from("products")
+      .select("id, name, name_ar, price, images, shop:shops!inner(name, slug, status)")
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .eq("shops.status", "approved")
+      .eq("shops.list_in_marketplace", true)
+      .gt("stock", 0)
+      .order("sold_count", { ascending: false })
+      .limit(24),
+
+    supabase.from("practical_services").select("*").eq("is_active", true).order("sort_order").limit(8),
+
+    // G-Shop : les dernières annonces validées.
+    supabase.from("deals").select("id, title, images, price").eq("status", "active").order("created_at", { ascending: false }).limit(8),
+
+    // Les boutiques en direct ou sur le point de l'être ; `status` avant `scheduled_at`.
+    supabase
+      .from("lives")
+      .select("id, status, scheduled_at, shop:shops!inner(name, slug, logo_url, status)")
+      .in("status", ["live", "scheduled"])
+      .eq("shops.status", "approved")
+      .order("status")
+      .order("scheduled_at", { ascending: true })
+      .limit(12),
+
+    supabase
+      .from("products")
+      .select("id, shop:shops!inner(status)", { count: "exact", head: true })
+      .eq("is_online", true)
+      .eq("is_draft", false)
+      .eq("shops.status", "approved"),
+
+    supabase
+      .from("promotions")
+      .select("id, shop:shops!inner(status)", { count: "exact", head: true })
+      .eq("is_active", true)
+      .eq("shops.status", "approved")
+      .lte("starts_at", maintenant)
+      .gte("ends_at", maintenant),
+
+    // Le plan 3D : les vraies boutiques de chaque étage.
+    supabase
+      .from("shops")
+      .select("slug, name, logo_url, is_open_now, mall_level, category:categories!shops_category_id_fkey(hue, name_fr, name_ar)")
+      .eq("status", "approved")
+      .gte("mall_level", 0)
+      .lte("mall_level", 4)
+      .order("mall_unit"),
+
+    supabase.from("shops").select("logo_url").eq("status", "approved").not("logo_url", "is", null).limit(3),
+  ]);
+
+  /* ─── Données dérivées ────────────────────────────────────────────── */
+
+  const serviceTiles = Object.values(
+    (services.data ?? []).reduce<Record<string, PracticalService>>((acc, s) => {
+      acc[s.kind] ??= s;
+      return acc;
+    }, {}),
+  );
+
+  /* Une pastille par boutique, pas par direct (le premier rencontré est le plus pertinent). */
+  const boutiquesEnDirect = Object.values(
+    (livesRail.data ?? []).reduce<
+      Record<string, { id: string; status: string; scheduledAt: string | null; shop: { name: string; slug: string; logo_url: string | null } }>
+    >((acc, live) => {
+      acc[live.shop.slug] ??= { id: live.id, status: live.status, scheduledAt: live.scheduled_at, shop: live.shop };
+      return acc;
+    }, {}),
+  );
+  const slugsEnDirect = new Set(boutiquesEnDirect.filter((l) => l.status === "live").map((l) => l.shop.slug));
+
+  function delaiAvantDirect(scheduledAt: string): string {
+    const minutes = Math.max(1, Math.round((new Date(scheduledAt).getTime() - Date.now()) / 60_000));
+    if (minutes < 60) return format(t.live.startsInMin, { n: minutes });
+    const heures = Math.round(minutes / 60);
+    if (heures < 24) return format(t.live.startsInHour, { n: heures });
+    return format(t.live.startsInDay, { n: Math.round(heures / 24) });
+  }
+
+  const avecPhoto = (catalogue.data ?? []).filter((p) => p.images?.[0]);
+  const cartesCoeur: CarteCoeur[] = avecPhoto.slice(0, 8).map((p) => ({
+    id: p.id,
+    name: p.name,
+    name_ar: p.name_ar,
+    price: p.price,
+    image: p.images[0],
+    boutique: p.shop.name,
+  }));
+
+  const affiches: Affiche[] = (sponsored.data ?? []).map((s) => ({
+    id: s.id,
+    titre: s.title,
+    sousTitre: s.subtitle,
+    image: s.image_url,
+    href: s.link_url ?? (s.shop?.slug && s.shop.status === "approved" ? `/boutique/${s.shop.slug}` : null),
+  }));
+
+  /* « Cadeau du jour » : une vraie promotion en cours, qui change chaque jour. */
+  const promosActives = shopPromos.data ?? [];
+  const jour = Math.floor(Date.now() / 86_400_000);
+  const promoDuJour = promosActives.length > 0 ? promosActives[jour % promosActives.length] : null;
+
+  const etages: Etage[] = NIVEAUX.map((niveau) => {
+    const ici = (boutiquesEtages.data ?? []).filter((s) => s.mall_level === niveau);
+    return {
+      niveau,
+      nomFr: [...new Set(ici.map((s) => s.category?.name_fr).filter(Boolean))].slice(0, 2).join(" · "),
+      nomAr: [...new Set(ici.map((s) => s.category?.name_ar).filter(Boolean))].slice(0, 2).join(" · "),
+      boutiques: ici.map((s) => ({
+        slug: s.slug,
+        nom: s.name,
+        logo: s.logo_url,
+        hue: s.category?.hue ?? 300,
+        ouvert: s.is_open_now,
+        live: slugsEnDirect.has(s.slug),
+      })),
+    };
+  });
+
+  const discount = promo.data ? percentOff(promo.data.price, promo.data.compare_at_price) : null;
+
+  const tuilesCategories = categories.map((c) => ({
+    id: c.id,
+    nom: ar ? c.name_ar : c.name_fr,
+    href: ANNUAIRES[c.slug] ?? `/marketplace?categorie=${c.slug}`,
+    hue: c.hue,
+    photo: c.image_url ?? PHOTOS_CATEGORIES[c.slug] ?? null,
+    monogramme: c.monogram,
+  }));
+
+  const mots = ar ? ["عطر", "فستان", "هاتف", "حلويات", "تاكسي"] : ["un parfum", "une robe", "un téléphone", "une pâtisserie", "un taxi"];
+
+  const tuileHub =
+    "press relative flex h-24 flex-col items-center justify-between overflow-hidden rounded-[20px] px-1 pt-[10px] pb-2 text-center";
 
   return (
-    <Link
-      href={ANNUAIRES[category.slug] ?? `/marketplace?categorie=${category.slug}`}
-      className="press cat-surface relative block aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_8px_20px_rgba(60,40,90,0.12)]"
-      style={{ "--hue": category.hue } as React.CSSProperties}
-    >
-      {photo ? (
-        <Image
-          src={photo}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 31vw, 260px"
-          className="fade-in-img object-cover"
-        />
-      ) : (
-        <span aria-hidden className="cat-ink absolute inset-0 flex items-center justify-center pb-5">
-          {Dessin ? <Dessin size={54} /> : <span className="text-[1.75rem] font-black">{category.monogram}</span>}
-        </span>
-      )}
+    <div className="clair-boutique flex min-h-0 flex-1 flex-col bg-[var(--color-app)] text-ink">
+      <DefilementAccueil compacte={<SearchBar flottante withVoice={false} withMenu={false} />}>
+        {/* ═══ En-tête violet : à qui l'on parle, et ce qui se passe maintenant ═══ */}
+        <header className="relative flex-none overflow-hidden rounded-b-[30px] bg-[linear-gradient(140deg,#7E58A6_0%,#6D4B8F_45%,#3E2A56_100%)] px-[18px] pt-4 pb-[46px] text-white">
+          <span
+            aria-hidden
+            className="animate-halo-a pointer-events-none absolute -top-[70px] -end-[60px] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,.18),transparent_65%)]"
+          />
+          <span
+            aria-hidden
+            className="animate-halo-b pointer-events-none absolute -bottom-[90px] -start-[70px] h-[210px] w-[210px] rounded-full bg-[radial-gradient(circle,rgba(208,69,95,.36),transparent_68%)]"
+          />
+          <div className="relative flex items-start gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-[7px]">
+              <h1 className="text-[1.6875rem] leading-[1.05] font-black tracking-[-0.6px]">
+                {profile?.first_name ? format(t.home.greeting, { name: profile.first_name }) : t.home.greetingAnon}{" "}
+                <span className="animate-salut inline-block">👋</span>
+              </h1>
+              <p className="flex items-start gap-2 text-[0.71875rem] leading-[1.4] font-semibold text-white/88">
+                <i
+                  aria-hidden
+                  className={cx("mt-[5px] h-2 w-2 flex-none rounded-full", status.anyOpen && "animate-point-vert")}
+                  style={{ background: status.anyOpen ? "#7EE2A8" : "rgba(255,255,255,.45)" }}
+                />
+                {status.anyOpen
+                  ? format(t.home.activeShops, { n: status.openCount })
+                  : format(t.marketplace.allShops, { n: status.totalCount })}
+              </p>
+            </div>
+            <div className="flex flex-none gap-[7px]">
+              <LanguageToggle sombre />
+              <Link
+                href="/notifications"
+                aria-label={t.nav.notifications}
+                className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-white/25 bg-white/15 text-white"
+              >
+                <BellIcon size={17} />
+                {counts.notifications > 0 && (
+                  <span className="absolute -top-[2px] -end-[2px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#D0455F] px-1 text-[0.5625rem] font-bold text-white">
+                    {counts.notifications > 99 ? "99+" : counts.notifications}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/panier"
+                aria-label={t.cart.title}
+                className="press relative flex h-[38px] w-[38px] items-center justify-center rounded-full bg-white text-[#6D4B8F]"
+              >
+                <CartIcon size={17} />
+                {counts.cart > 0 && (
+                  <span className="absolute -top-[2px] -end-[2px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#241F2E] px-1 text-[0.5625rem] font-extrabold text-white">
+                    {counts.cart > 99 ? "99+" : counts.cart}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </div>
+        </header>
 
-      {/* Le voile : sans lui, un nom blanc sur une photo claire devient illisible. */}
+        {/* La recherche à cheval sur le bord du panneau, au texte d'aide animé. */}
+        <div className="relative z-10 -mt-[26px] flex-none">
+          <SearchBar flottante motsAnimes={mots} placeholder={ar ? "ابحث عن…" : "Chercher…"} />
+        </div>
+
+        <div className="flex flex-col gap-7 pt-5">
+          {/* ─── Tout Gafsa, en un seul endroit ─── */}
+          <section data-rv className="flex flex-col gap-[10px]">
+            <EnteteSection couleur="linear-gradient(135deg,#D0455F,#6D4B8F)" titre={ar ? "كل قفصة في مكان واحد" : "Tout Gafsa, en un seul endroit"} />
+            <div className="grid grid-cols-4 gap-2 px-4">
+              <Link href="/boutiques" data-rvi className={cx(tuileHub, "bg-white shadow-[0_6px_18px_rgba(60,40,90,.08)]")}>
+                <span dir="ltr" className="flex h-8 items-center">
+                  {(logos.data ?? []).map((l, i) => (
+                    <span
+                      key={i}
+                      className="animate-flotte -mr-2 h-[26px] w-[26px] overflow-hidden rounded-full border-2 border-white bg-[#EDE7F5] shadow-[0_2px_6px_rgba(60,40,90,.15)]"
+                      style={{ animationDelay: `${i * 0.3}s` }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- logo 26px */}
+                      <img src={l.logo_url!} alt="" className="h-full w-full object-cover" />
+                    </span>
+                  ))}
+                </span>
+                <span className="flex flex-col items-center leading-[1.1]">
+                  <b data-count={status.totalCount} className="text-[1rem] text-[#6D4B8F] tabular-nums">
+                    {status.totalCount}
+                  </b>
+                  <b className="text-[0.6875rem]">{ar ? "المحلات" : "Boutiques"}</b>
+                </span>
+              </Link>
+              <Link href="/marketplace" data-rvi className={cx(tuileHub, "bg-white shadow-[0_6px_18px_rgba(60,40,90,.08)]")}>
+                <span className="relative h-8 w-[54px]">
+                  {avecPhoto.slice(0, 3).map((p, i) => (
+                    <span
+                      key={p.id}
+                      className="absolute bottom-0 h-7 w-[22px] origin-bottom overflow-hidden rounded-[6px] border-[1.5px] border-white bg-[#EDE7F5] shadow-[0_3px_8px_rgba(60,40,90,.18)]"
+                      style={{ left: `${i * 16}px`, transform: `rotate(${(i - 1) * 12}deg)` }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- vignette 22px */}
+                      <img src={p.images[0]} alt="" className="h-full w-full object-cover" />
+                    </span>
+                  ))}
+                </span>
+                <span className="flex flex-col items-center leading-[1.1]">
+                  <b data-count={nbProduits.count ?? 0} className="text-[1rem] text-[#6D4B8F] tabular-nums">
+                    {(nbProduits.count ?? 0).toLocaleString("fr-FR")}
+                  </b>
+                  <b className="text-[0.6875rem]">{ar ? "المنتجات" : "Produits"}</b>
+                </span>
+              </Link>
+              <Link href="/services" data-rvi className={cx(tuileHub, "bg-white shadow-[0_6px_18px_rgba(60,40,90,.08)]")}>
+                <span className="animate-flotte relative h-8 w-8 overflow-hidden rounded-[11px] bg-[#EDE7F5]">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- vignette 32px */}
+                  <img src="/images/svc-taxi.webp" alt="" className="h-full w-full object-cover" />
+                  <i className="animate-point-vert absolute top-[3px] right-[3px] h-[7px] w-[7px] rounded-full bg-[#2FB36B] shadow-[0_0_0_1.5px_#fff]" />
+                </span>
+                <span className="flex flex-col items-center leading-[1.1]">
+                  <b data-count={serviceTiles.length} className="text-[1rem] text-[#1D7A46] tabular-nums">
+                    {serviceTiles.length}
+                  </b>
+                  <b className="text-[0.6875rem]">{ar ? "الخدمات" : "Services"}</b>
+                </span>
+              </Link>
+              <a
+                href="#promotions"
+                data-rvi
+                className={cx(tuileHub, "bg-[linear-gradient(150deg,#3E2A56,#241F2E)] text-white shadow-[0_8px_20px_rgba(36,31,46,.25)]")}
+              >
+                <span aria-hidden className="absolute -top-6 -end-6 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(208,69,95,.55),transparent_65%)]" />
+                <span className="relative flex h-8 items-center">
+                  <span dir="ltr" className="animate-pulse-promo rounded-[10px] bg-[#D0455F] px-[9px] py-[3px] text-[0.875rem] font-black">
+                    −%
+                  </span>
+                </span>
+                <span className="relative flex flex-col items-center leading-[1.1]">
+                  <b data-count={nbPromotions.count ?? 0} className="text-[1rem] tabular-nums">
+                    {nbPromotions.count ?? 0}
+                  </b>
+                  <b className="text-[0.6875rem]">{ar ? "العروض" : "Bons plans"}</b>
+                </span>
+              </a>
+            </div>
+          </section>
+
+          {/* ─── À l'affiche (sponsorisé) ─── */}
+          <ALAffiche affiches={affiches} locale={locale} />
+
+          {/* ─── Boutiques en direct : anneau conique qui tourne autour des directs ─── */}
+          {LIVES_DANS_LES_MENUS && boutiquesEnDirect.length > 0 && (
+            <section data-rv className="flex flex-col gap-3">
+              <EnteteSection couleur="#D0455F" titre={ar ? "محلات في البثّ" : "Boutiques en direct"}>
+                <Link href="/lives" className="text-[0.75rem] font-extrabold text-[#6D4B8F]">
+                  {ar ? "الكلّ" : "Tout voir"}
+                </Link>
+              </EnteteSection>
+              <div className="no-sb flex gap-[14px] overflow-x-auto px-4 pt-[2px] pb-2">
+                {boutiquesEnDirect.map((live) => (
+                  <Link
+                    key={live.shop.slug}
+                    href={`/lives/${live.id}`}
+                    data-rvi
+                    aria-label={`${live.shop.name} — ${live.status === "live" ? t.live.onAir : t.live.scheduled}`}
+                    className="flex w-[66px] flex-none flex-col items-center gap-[10px]"
+                  >
+                    <span className="relative h-[66px] w-[66px] overflow-hidden rounded-full bg-[#DCD3EA]">
+                      {live.status === "live" && (
+                        <span className="animate-anneau-direct absolute -inset-1/4 bg-[conic-gradient(#D0455F,#F29BB0,#6D4B8F,#D0455F)]" />
+                      )}
+                      <span className="absolute inset-[3px] overflow-hidden rounded-full border-[2.5px] border-[#F4F1FA] bg-[#EDE7F5]">
+                        <Avatar src={live.shop.logo_url} initials={monogram(live.shop.name)} size={56} />
+                      </span>
+                    </span>
+                    <span
+                      className="relative -mt-[19px] flex h-[17px] items-center rounded-[9px] px-[7px] text-[0.53125rem] font-black whitespace-nowrap text-white shadow-[0_0_0_2px_#F4F1FA]"
+                      style={{ background: live.status === "live" ? "#D0455F" : "#6D4B8F" }}
+                    >
+                      {live.status === "live" ? (ar ? "مباشر" : "EN DIRECT") : delaiAvantDirect(live.scheduledAt!)}
+                    </span>
+                    <span className="-mt-1 max-w-[66px] truncate text-[0.6875rem] font-bold text-[#635C74]">{live.shop.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ─── Catégories ─── */}
+          <CategoriesRail tuiles={tuilesCategories} titre={ar ? "الأصناف" : "Catégories"} />
+
+          {/* ─── Promotions : coupon perforé + rangée de remises ─── */}
+          {(promo.data || promosActives.length > 0) && (
+            <section id="promotions" data-rv className="flex scroll-mt-24 flex-col gap-3">
+              <EnteteSection couleur="#D0455F" titre={ar ? "العروض" : "Promotions"} />
+
+              {promo.data && (
+                <div data-rvi className="mx-4 rounded-[24px] bg-white shadow-[0_10px_26px_rgba(60,40,90,.1)]">
+                  <div className="relative h-[160px] overflow-hidden rounded-t-[24px] bg-[#EDE7F5]">
+                    {promo.data.images?.[0] ? (
+                      <ImageZoom images={promo.data.images} alt={promo.data.name} className="block h-full w-full cursor-zoom-in">
+                        <span className="relative block h-[160px] w-full">
+                          <Image src={promo.data.images[0]} alt={promo.data.name} fill sizes="(max-width: 520px) 100vw, 520px" className="object-cover" />
+                        </span>
+                      </ImageZoom>
+                    ) : (
+                      <Placeholder label="photo boutique — vitrine" className="h-[160px] w-full" />
+                    )}
+                    <span aria-hidden className="animate-reflet pointer-events-none absolute -inset-y-[20%] left-0 w-[70px] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent)]" />
+                    <Link
+                      href={`/boutique/${promo.data.shop.slug}`}
+                      className="absolute start-3 top-3 flex max-w-[70%] items-center gap-[6px] rounded-full bg-white/96 py-[3px] ps-[3px] pe-[10px] text-[0.6875rem] font-extrabold text-[#241F2E]"
+                    >
+                      <Avatar src={promo.data.shop.logo_url} initials={monogram(promo.data.shop.name)} size={22} />
+                      <span className="truncate">{promo.data.shop.name}</span>
+                    </Link>
+                    {discount !== null && (
+                      <span
+                        dir="ltr"
+                        className="animate-pulse-promo absolute start-3 bottom-3 rounded-full bg-[#D0455F] px-3 py-[6px] text-[0.9375rem] font-black text-white shadow-[0_6px_14px_rgba(208,69,95,.4)]"
+                      >
+                        −{discount}%
+                      </span>
+                    )}
+                  </div>
+                  {/* La perforation : deux encoches couleur de page, pointillés entre les deux. */}
+                  <div aria-hidden className="relative h-4">
+                    <span className="absolute -top-2 -left-2 h-4 w-4 rounded-full bg-[#F4F1FA]" />
+                    <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-[#F4F1FA]" />
+                    <span className="absolute inset-x-[14px] top-[7px] h-[2px] bg-[repeating-linear-gradient(90deg,rgba(60,40,90,.16)_0_5px,transparent_5px_10px)]" />
+                  </div>
+                  {/*
+                    Deux liens frères, jamais imbriqués : nom et prix → fiche produit,
+                    « زيارة المتجر » → la boutique du produit (slug réel de `shops`).
+                  */}
+                  <div className="flex items-end gap-[10px] px-4 pb-4">
+                    <Link href={lienProduit(promo.data)} className="flex min-w-0 flex-1 flex-col gap-[2px]">
+                      <b className="text-[0.875rem] leading-[1.3]">{ar && promo.data.name_ar ? promo.data.name_ar : promo.data.name}</b>
+                      <span className="flex items-baseline gap-2">
+                        <b className="text-[1.1875rem] tracking-[-0.3px] text-[#6D4B8F]">{formatPrice(promo.data.price, locale)}</b>
+                        {promo.data.compare_at_price && (
+                          <s className="text-[0.75rem] text-[#767085]">{formatPrice(promo.data.compare_at_price, locale)}</s>
+                        )}
+                      </span>
+                    </Link>
+                    <Link
+                      href={`/boutique/${promo.data.shop.slug}`}
+                      className="press flex h-10 flex-none items-center rounded-[20px] bg-[#6D4B8F] px-4 text-[0.75rem] font-extrabold text-white shadow-[0_6px_16px_rgba(109,75,143,.36)]"
+                    >
+                      {t.product.seeShop}
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {promosActives.length > 0 && (
+                <div className="no-sb flex gap-[10px] overflow-x-auto px-4 pb-1">
+                  {promosActives.map((offre) => (
+                    <Link
+                      key={offre.id}
+                      href={`/boutique/${offre.shop.slug}`}
+                      data-rvi
+                      className="flex w-[200px] flex-none items-center gap-[10px] rounded-[18px] bg-white p-[10px] shadow-[0_6px_18px_rgba(60,40,90,.07)]"
+                    >
+                      <Avatar src={offre.shop.logo_url} initials={monogram(offre.shop.name)} size={36} />
+                      <span className="flex min-w-0 flex-1 flex-col leading-[1.25]">
+                        <b className="truncate text-[0.78125rem]">{offre.shop.name}</b>
+                        <span className="truncate text-[0.6875rem] text-[#635C74]">{ar && offre.title_ar ? offre.title_ar : offre.title}</span>
+                      </span>
+                      <span dir="ltr" className="flex-none rounded-[10px] bg-[#D0455F] px-2 py-[3px] text-[0.6875rem] font-black text-white">
+                        −{offre.percent_off}%
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ─── Coup de cœur du jour ─── */}
+          <CoupDeCoeur cartes={cartesCoeur} locale={locale} connecte={Boolean(profile)} />
+
+          {/* ─── Cadeau du jour : une vraie promotion à gratter ─── */}
+          {promoDuJour && (
+            <CadeauGratter
+              locale={locale}
+              promo={{
+                pourcent: promoDuJour.percent_off,
+                titre: ar && promoDuJour.title_ar ? promoDuJour.title_ar : promoDuJour.title,
+                boutique: promoDuJour.shop.name,
+                slug: promoDuJour.shop.slug,
+                fin: promoDuJour.ends_at,
+              }}
+            />
+          )}
+
+          {/* ─── Les étages : le plan 3D du mall ─── */}
+          <Etages3D etages={etages} locale={locale} />
+
+          {/* ─── Services pratiques : pastilles de 176 px sur deux lignes ─── */}
+          {serviceTiles.length > 0 && (
+            <section data-rv className="flex flex-col gap-3">
+              <EnteteSection couleur="oklch(.55 .11 165)" titre={ar ? "خدمات عملية" : "Services pratiques"}>
+                <Link href="/services" className="text-[0.75rem] font-extrabold text-[#6D4B8F]">
+                  {ar ? "الكلّ" : "Tout voir"}
+                </Link>
+              </EnteteSection>
+              <div className="no-sb grid grid-flow-col grid-rows-2 gap-[10px] overflow-x-auto px-4 pb-[6px]">
+                {serviceTiles.map((service) => (
+                  <ChipService
+                    key={service.id}
+                    href={LIEN_SERVICE[service.kind] ?? `/services#${service.kind}`}
+                    nom={ar && service.name_ar ? service.name_ar : service.name}
+                    detail={service.info}
+                    imageUrl={service.image_url}
+                    monogramme={service.monogram}
+                    Dessin={serviceIcon(service.kind) ?? undefined}
+                    hue={service.hue}
+                  />
+                ))}
+                {RACCOURCIS.map((r) => (
+                  <ChipService
+                    key={r.cle}
+                    href={r.href}
+                    nom={r.cle === "animaux" ? t.shortcuts.animals : t.shortcuts.sos}
+                    Dessin={r.cle === "animaux" ? PawIcon : ToolIcon}
+                    hue={r.hue}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ─── G-Shop : gardée à la demande de l'utilisateur ─── */}
+          {(freeShop.data ?? []).length > 0 && (
+            <section data-rv className="flex flex-col gap-3">
+              <EnteteSection couleur="oklch(.47 .12 0)" titre={t.deals.title}>
+                <Link href="/free-shop" className="text-[0.75rem] font-extrabold text-[#6D4B8F]">
+                  {ar ? "الكلّ" : "Tout voir"}
+                </Link>
+              </EnteteSection>
+              <div className="no-sb flex gap-[10px] overflow-x-auto px-4 pb-1">
+                {(freeShop.data ?? []).map((annonce) => (
+                  <Link
+                    key={annonce.id}
+                    href={`/free-shop/${annonce.id}`}
+                    data-rvi
+                    className="w-[168px] flex-none overflow-hidden rounded-[18px] bg-white shadow-[0_6px_18px_rgba(60,40,90,.07)]"
+                  >
+                    <span className="relative block aspect-[4/3] bg-[#EDE7F5]">
+                      {annonce.images[0] ? (
+                        <Image src={annonce.images[0]} alt="" fill sizes="168px" className="object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-[0.625rem] text-[#767085]">{t.deals.title}</span>
+                      )}
+                    </span>
+                    <span className="flex flex-col gap-[2px] px-[10px] py-[9px]">
+                      <span className="truncate text-[0.6875rem] font-bold">{annonce.title}</span>
+                      <span dir="ltr" className="text-[0.65625rem] font-bold text-[#6D4B8F]">
+                        {annonce.price != null ? formatPrice(annonce.price, locale) : t.deals.free}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </DefilementAccueil>
+    </div>
+  );
+}
+
+/** Le titre d'une section (16/800) et sa pastille de couleur, comme le handoff. */
+function EnteteSection({ couleur, titre, children }: { couleur: string; titre: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 px-[18px]">
+      <i aria-hidden className="h-[9px] w-[9px] flex-none rounded-full" style={{ background: couleur }} />
+      <h2 className="text-[1rem] leading-none font-extrabold tracking-[-0.2px]">{titre}</h2>
+      {children && <div className="ms-auto flex items-center">{children}</div>}
+    </div>
+  );
+}
+
+/** Un service, en pastille de 176 px : photo, dessin ou monogramme, puis l'info du jour. */
+function ChipService({
+  href,
+  nom,
+  detail,
+  imageUrl,
+  monogramme,
+  Dessin,
+  hue = 300,
+}: {
+  href: string;
+  nom: string;
+  detail?: string | null;
+  imageUrl?: string | null;
+  monogramme?: string;
+  Dessin?: ComponentType<{ size?: number; className?: string }>;
+  hue?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      data-rvi
+      className="press flex w-[176px] flex-none items-center gap-[10px] rounded-[18px] bg-white p-2 pe-3 shadow-[0_4px_14px_rgba(60,40,90,.06)]"
+    >
       <span
         aria-hidden
-        className="absolute inset-0 bg-[linear-gradient(to_top,rgba(20,14,26,0.82)_0%,rgba(20,14,26,0.25)_48%,rgba(20,14,26,0)_72%)]"
-      />
-
-      <span className="absolute inset-x-[10px] bottom-[9px]">
-        <span className="block text-[0.84375rem] leading-tight font-extrabold text-white">{nom}</span>
-        {compte && (
-          <span className="mt-[2px] block text-[0.59375rem] font-semibold text-white/75">{compte}</span>
+        className={cx("flex h-[42px] w-[42px] flex-none items-center justify-center overflow-hidden rounded-full", !imageUrl && "cat-surface cat-ink")}
+        style={{ "--hue": hue } as React.CSSProperties}
+      >
+        {imageUrl ? (
+          <Image src={imageUrl} alt="" width={42} height={42} className="h-full w-full object-cover" />
+        ) : Dessin ? (
+          <Dessin size={21} />
+        ) : (
+          <span className="text-[0.75rem] font-black">{monogramme}</span>
         )}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col leading-[1.25]">
+        <b className="truncate text-[0.78125rem]">{nom}</b>
+        {detail && <span className="truncate text-[0.6875rem] font-semibold text-[#635C74]">{detail}</span>}
       </span>
     </Link>
   );

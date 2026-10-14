@@ -12,6 +12,47 @@ import type { Database } from "@/types/database";
 type Result = Database["public"]["Functions"]["search_catalog"]["Returns"][number];
 
 /**
+ * Tape puis efface chaque mot, lettre à lettre (90 ms à l'écriture, 45 ms à
+ * l'effacement, 1,4 s de pause sur le mot complet).
+ */
+function useMotTape(mots?: string[]): string {
+  const [texte, setTexte] = useState(mots?.[0] ?? "");
+  useEffect(() => {
+    if (!mots?.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let i = 0;
+    let n = 0;
+    let efface = false;
+    let minuteur: ReturnType<typeof setTimeout>;
+    const pas = () => {
+      const mot = mots[i % mots.length];
+      if (!efface) {
+        n += 1;
+        setTexte(mot.slice(0, n));
+        if (n >= mot.length) {
+          efface = true;
+          minuteur = setTimeout(pas, 1400);
+          return;
+        }
+        minuteur = setTimeout(pas, 90);
+      } else {
+        n -= 1;
+        setTexte(mot.slice(0, Math.max(0, n)));
+        if (n <= 0) {
+          efface = false;
+          i += 1;
+          minuteur = setTimeout(pas, 300);
+          return;
+        }
+        minuteur = setTimeout(pas, 45);
+      }
+    };
+    minuteur = setTimeout(pas, 600);
+    return () => clearTimeout(minuteur);
+  }, [mots]);
+  return texte;
+}
+
+/**
  * Barre de recherche : pill blanche r18, loupe, puce « Parler » (dictée
  * vocale), et un bouton rond violet pour le menu.
  *
@@ -26,6 +67,7 @@ export function SearchBar({
   filterAction,
   initialQuery = "",
   flottante = false,
+  motsAnimes,
 }: {
   placeholder?: string;
   withVoice?: boolean;
@@ -41,6 +83,13 @@ export function SearchBar({
    * pilule du dégradé violet qu'elle recouvre.
    */
   flottante?: boolean;
+  /**
+   * Accueil (handoff) : un texte d'aide qui se tape tout seul après le
+   * placeholder — « Chercher… un parfum », « une robe »… — avec un curseur
+   * violet clignotant. Sous `prefers-reduced-motion`, le premier mot reste
+   * affiché, immobile.
+   */
+  motsAnimes?: string[];
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -62,6 +111,9 @@ export function SearchBar({
   const [voiceAvailable, setVoiceAvailable] = useState(false);
 
   const boxRef = useRef<HTMLDivElement>(null);
+  const [focus, setFocus] = useState(false);
+  const motTape = useMotTape(motsAnimes);
+  const aideAnimee = Boolean(motsAnimes?.length) && !query && !focus;
 
   useEffect(() => {
     setVoiceAvailable(
@@ -176,7 +228,7 @@ export function SearchBar({
             : "shadow-[0_8px_20px_rgba(60,40,90,0.08)]",
         )}
       >
-        <label className="flex min-w-0 flex-1 items-center gap-[9px]">
+        <label className="relative flex min-w-0 flex-1 items-center gap-[9px]">
           <SearchIcon size={15} className="flex-none text-[var(--color-muted)]" />
           <input
             type="search"
@@ -186,12 +238,26 @@ export function SearchBar({
               setTouche(true);
               setQuery(event.target.value);
             }}
-            onFocus={() => results.length > 0 && setOpen(true)}
+            onFocus={() => {
+              setFocus(true);
+              if (results.length > 0) setOpen(true);
+            }}
+            onBlur={() => setFocus(false)}
             enterKeyHint="search"
-            placeholder={placeholder ?? t.common.searchPlaceholder}
+            placeholder={aideAnimee ? "" : (placeholder ?? t.common.searchPlaceholder)}
             aria-label={t.common.search}
             className="min-w-0 flex-1 bg-transparent text-[0.78125rem] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)]"
           />
+          {aideAnimee && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 start-6 end-0 flex items-center overflow-hidden text-[0.78125rem] whitespace-nowrap text-[var(--color-muted)]"
+            >
+              {placeholder ?? t.common.searchPlaceholder}&nbsp;
+              <b className="font-bold text-[var(--color-ink)]">{motTape}</b>
+              <i className="animate-curseur ms-px inline-block h-[15px] w-[1.5px] bg-[var(--color-brand)]" />
+            </span>
+          )}
         </label>
       </form>
 
