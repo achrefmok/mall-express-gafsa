@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useInstallPrompt } from "./use-install-prompt";
 import { WelcomeScreen } from "@/components/shell/welcome-screen";
 import { InvitationRoue } from "@/components/roue/invitation-roue";
+import { EcranOuvertureTransport } from "@/components/transport/ecran-ouverture";
 
 /**
  * Trois responsabilités, volontairement réunies dans un seul composant monté
@@ -13,16 +14,29 @@ import { InvitationRoue } from "@/components/roue/invitation-roue";
  *   · proposer l'installation quand le navigateur le permet ;
  *   · signaler la perte de réseau.
  */
-export function ServiceWorkerBridge({ logo }: { logo?: string | null }) {
+export function ServiceWorkerBridge({
+  logo,
+  app = "gmall",
+}: {
+  logo?: string | null;
+  /** « Taxi & Louage Gafsa » a son propre écran d'ouverture, sans sponsors ni roue. */
+  app?: "gmall" | "transport";
+}) {
   return (
     <>
       <ServiceWorkerRegistration />
       <InstallCapture />
       {/* Monté ici plutôt que dans une coque : il doit couvrir l'écran quelle
           que soit la page d'entrée, y compris une fiche produit partagée. */}
-      <WelcomeScreen logo={logo} />
-      {/* Après l écran d ouverture, et une fois par jour seulement. */}
-      <InvitationRoue />
+      {app === "transport" ? (
+        <EcranOuvertureTransport />
+      ) : (
+        <>
+          <WelcomeScreen logo={logo} />
+          {/* Après l écran d ouverture, et une fois par jour seulement. */}
+          <InvitationRoue />
+        </>
+      )}
       <OfflineBanner />
       <InstallPrompt />
     </>

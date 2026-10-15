@@ -10,6 +10,8 @@ import "./globals.css";
 import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
 import { WebVitals } from "@/components/shell/web-vitals";
 import { lireMarque } from "@/lib/brand";
+import { headers } from "next/headers";
+import { ENTETE_APP } from "@/lib/transport";
 
 const siteUrl = resolveSiteUrl();
 
@@ -78,6 +80,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const prefs = await getPreferences();
+  /*
+    L'application de transport (« Taxi & Louage Gafsa », src/lib/transport.ts)
+    partage ce gabarit : l'intergiciel la signale par un en-tête, et elle
+    reçoit alors ses propres icônes, son manifeste et son écran d'ouverture.
+  */
+  const transport = (await headers()).get(ENTETE_APP) === "transport";
   const t = getDictionary(prefs.locale);
   const { logo: logoMarque, version: versionMarque } = await lireMarque();
 
@@ -107,11 +115,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           la même image. L'adresse change donc quand le logo change, et
           seulement là.
         */}
-        <link rel="icon" href={`/brand-icon/32.png?v=${versionMarque}`} sizes="32x32" type="image/png" />
-        <link rel="icon" href={`/brand-icon/192.png?v=${versionMarque}`} sizes="192x192" type="image/png" />
-        <link rel="apple-touch-icon" href={`/brand-icon/180.png?v=${versionMarque}`} sizes="180x180" />
+        {transport ? (
+          <>
+            <link rel="icon" href="/transport-icon/32" sizes="32x32" type="image/png" />
+            <link rel="icon" href="/transport-icon/192" sizes="192x192" type="image/png" />
+            <link rel="apple-touch-icon" href="/transport-icon/180" sizes="180x180" />
+          </>
+        ) : (
+          <>
+            <link rel="icon" href={`/brand-icon/32.png?v=${versionMarque}`} sizes="32x32" type="image/png" />
+            <link rel="icon" href={`/brand-icon/192.png?v=${versionMarque}`} sizes="192x192" type="image/png" />
+            <link rel="apple-touch-icon" href={`/brand-icon/180.png?v=${versionMarque}`} sizes="180x180" />
+          </>
+        )}
         {/* Voir le commentaire sur `manifest` dans `metadata`, plus haut. */}
-        <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
+        <link
+          rel="manifest"
+          href={transport ? "/manifest-transport.webmanifest" : "/manifest.webmanifest"}
+          crossOrigin="use-credentials"
+        />
       </head>
       <body>
         <a
@@ -125,7 +147,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider initial={prefs} dictionary={t}>
           {children}
           <NavDepthTracker />
-        <ServiceWorkerBridge logo={logoMarque} />
+        <ServiceWorkerBridge logo={logoMarque} app={transport ? "transport" : "gmall"} />
         {/*
           La mesure de performance, sur de vrais téléphones.
 

@@ -15,8 +15,12 @@ import {
   StoreIcon,
   UserIcon,
 } from "@/components/ui/icons";
+import { serviceIcon } from "@/components/ui/category-icons";
 
-export type NavVariant = "client" | "vendor" | "admin";
+const IconeTaxi = serviceIcon("taxi")!;
+const IconeLouage = serviceIcon("louage")!;
+
+export type NavVariant = "client" | "vendor" | "admin" | "transport";
 
 export type NavItem = {
   href: string;
@@ -34,9 +38,22 @@ export type NavItem = {
  * onglet ajouté d'un côté manque de l'autre.
  */
 export function useNavItems(variant: NavVariant, opts?: { isCourier?: boolean }): NavItem[] {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ar = locale === "ar";
 
   const sets: Record<NavVariant, NavItem[]> = {
+    /*
+      « Taxi & Louage Gafsa », l'application de transport sur son propre
+      domaine (src/lib/transport.ts) : ses adresses sont réécrites vers
+      src/app/transport/, mais restent « /taxi », « /louage »… à l'écran.
+    */
+    transport: [
+      { href: "/", label: ar ? "الرئيسية" : "Accueil", icon: <HomeIcon size={17} />, exact: true },
+      { href: "/taxi", label: ar ? "تاكسي" : "Taxi", icon: <IconeTaxi size={17} /> },
+      { href: "/louage", label: ar ? "لواج" : "Louage", icon: <IconeLouage size={17} /> },
+      { href: "/courses", label: ar ? "رحلاتي" : "Mes courses", icon: <BoxIcon size={17} /> },
+      { href: "/profil", label: ar ? "حسابي" : "Profil", icon: <UserIcon size={17} /> },
+    ],
     client: [
       { href: "/accueil", label: t.nav.home, icon: <HomeIcon size={17} />, exact: true },
       { href: "/marketplace", label: t.nav.marketplace, icon: <GridIcon size={17} /> },

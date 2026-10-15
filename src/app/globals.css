@@ -418,6 +418,36 @@ html[data-simplified="true"] body {
   animation: point-pulse 1.8s ease-out infinite;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   « Taxi & Louage Gafsa » — l'identité de l'application de transport
+   (src/lib/transport.ts). Le fond nuit de l'app, la couleur ambre d'un
+   taxi : posée sur le gabarit `src/app/transport/layout.tsx`, elle remplace
+   la marque violette dans tout ce qui s'affiche dessous, composants taxi
+   et louage réutilisés compris. Contrastes mesurés (WCAG) : ambre sur nuit
+   10,8:1, blanc sur le remplissage 5,8:1, texte secondaire 8:1.
+   ═══════════════════════════════════════════════════════════════════════ */
+.theme-transport {
+  --color-app: #14161c;
+  --color-workshop: #0e1015;
+  --color-brand: #fbbf24;
+  --color-brand-fill: #a84a06;
+  --color-brand-tint: rgba(251, 191, 36, 0.14);
+  --color-brand-strong: #d97706;
+  --color-ink: #f3f4f6;
+  --color-muted: #a7adba;
+  --color-faint: #8b92a1;
+  --color-hairline: rgba(251, 191, 36, 0.12);
+  --color-outline: rgba(226, 232, 240, 0.18);
+  --color-surface: rgba(30, 33, 41, 0.92);
+  --color-surface-solid: #1e2129;
+  --color-surface-edge: rgba(226, 232, 240, 0.08);
+  --color-track: rgba(226, 232, 240, 0.16);
+  --color-veil: rgba(20, 22, 28, 0.86);
+  --gradient-brand: linear-gradient(140deg, #f59e0b, #a84a06 55%, #2a1404);
+  background: var(--color-app);
+  color: var(--color-ink);
+}
+
 /* Accueil (handoff « design_handoff_accueil ») — coupées en mouvement réduit
    par la règle globale `prefers-reduced-motion` plus haut. */
 @keyframes gm-caret { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }

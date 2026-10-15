@@ -1,6 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
+import {
+  ENTETE_APP,
+  TRANSPORT_CONFIGURE,
+  cheminCommun,
+  cheminQuiDemenage,
+  cheminTransport,
+  estHoteTransport,
+  urlTransport,
+} from "@/lib/transport";
 
 /** Préfixes réservés, avec le rôle minimal exigé. */
 /*
@@ -66,11 +75,74 @@ const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "da
 ];
 
 /**
+ * L'adresse G-Mall d'un chemin, depuis l'hôte de transport : `NEXT_PUBLIC_SITE_URL`
+ * en production, l'hôte sans son préfixe « taxi. » en développement.
+ */
+function urlGMall(request: NextRequest, chemin: string): URL {
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (process.env.NODE_ENV === "production" && site) return new URL(chemin, site);
+  // En local seulement : le serveur de dev de Next rend toute redirection de
+  // middleware relative à sa propre origine (resolve-routes.js), si bien que
+  // taxi.localhost/marketplace boucle sur lui-même. Sans effet en production,
+  // où G-Mall (NEXT_PUBLIC_SITE_URL) et le transport ont deux domaines.
+  const hote = (request.headers.get("host") ?? request.nextUrl.host).replace(/^taxi\./, "");
+  return new URL(chemin, `${request.nextUrl.protocol}//${hote}`);
+}
+
+/**
+ * Point d'entrée : aiguille entre G-Mall et l'application de transport
+ * (« Taxi & Louage Gafsa », voir `src/lib/transport.ts`), puis applique la
+ * session et les gardes.
+ *
+ * Sur l'hôte de transport, toute réponse « continuer » devient une
+ * réécriture vers `/transport/<chemin>` — préchargements compris, sans quoi
+ * Next mettrait en cache la page G-Mall de `/taxi` —, avec l'en-tête
+ * `x-gm-app: transport` que lit le gabarit racine (manifeste, icônes,
+ * écran d'ouverture).
+ */
+export async function updateSession(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  const transport = estHoteTransport(request.headers.get("host"));
+
+  if (!transport) {
+    // `/transport/…` n'existe que derrière la réécriture de l'autre hôte.
+    if (pathname === "/transport" || pathname.startsWith("/transport/")) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    // Une fois le domaine configuré, taxi et louage vivent là-bas.
+    if (TRANSPORT_CONFIGURE && cheminQuiDemenage(pathname)) {
+      return NextResponse.redirect(urlTransport(`${pathname}${search}`), 308);
+    }
+    return traiterSession(request, false);
+  }
+
+  // Les retours « accueil » des pages taxi reprises mènent ici à l'accueil de l'application.
+  if (pathname === "/accueil") return NextResponse.redirect(new URL("/", request.url));
+
+  if (!cheminTransport(pathname) && !cheminCommun(pathname)) {
+    return NextResponse.redirect(urlGMall(request, `${pathname}${search}`));
+  }
+
+  const res = await traiterSession(request, true);
+
+  if (cheminCommun(pathname) || !res.headers.get("x-middleware-next")) return res;
+
+  const cible = request.nextUrl.clone();
+  cible.pathname = pathname === "/" ? "/transport" : `/transport${pathname}`;
+  // Copie faite après la session : les cookies rafraîchis y sont déjà.
+  const entetes = new Headers(request.headers);
+  entetes.set(ENTETE_APP, "transport");
+  const reecrit = NextResponse.rewrite(cible, { request: { headers: entetes } });
+  res.cookies.getAll().forEach((c) => reecrit.cookies.set(c));
+  return reecrit;
+}
+
+/**
  * Rafraîchit le jeton Supabase à chaque requête et applique les gardes de
  * route. Le rafraîchissement doit se faire ici : un Server Component ne peut
  * pas écrire de cookie, donc sans middleware la session expirerait en place.
  */
-export async function updateSession(request: NextRequest) {
+async function traiterSession(request: NextRequest, transport: boolean) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -131,7 +203,7 @@ export async function updateSession(request: NextRequest) {
   if (user && (pathname === "/connexion" || pathname === "/inscription")) {
     const suite = request.nextUrl.searchParams.get("suite");
     const target = request.nextUrl.clone();
-    target.pathname = suite?.startsWith("/") && !suite.startsWith("//") ? suite : "/accueil";
+    target.pathname = suite?.startsWith("/") && !suite.startsWith("//") ? suite : transport ? "/" : "/accueil";
     target.search = "";
     return NextResponse.redirect(target);
   }
@@ -151,6 +223,25 @@ export async function updateSession(request: NextRequest) {
     Un visiteur anonyme ou un compte client, lui, n'a nulle part où aller
     hors des pages publiques : direction `/preparation`.
   */
+  /*
+    L'application de transport est ouverte à tous dès maintenant (décision du
+    2026-10-15), même pendant la préparation de G-Mall. Ses pages réservées
+    exigent seulement d'être connecté.
+  */
+  if (transport) {
+    const reserve = ["/courses", "/notifications", "/profil", "/devenir-chauffeur"].some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+    if (reserve && !user) {
+      const login = request.nextUrl.clone();
+      login.pathname = "/connexion";
+      login.search = "";
+      login.searchParams.set("suite", pathname);
+      return NextResponse.redirect(login);
+    }
+    return response;
+  }
+
   if (!exemptAccesPublic(pathname)) {
     const { data: reglages } = await supabase
       .from("app_access")

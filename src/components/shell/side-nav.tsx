@@ -30,8 +30,9 @@ export function SideNav({
   /** Vendeur désigné comme livreur : ajoute l'onglet « Livraisons ». */
   isCourier?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const pathname = usePathname();
+  const transport = variant === "transport";
   const items = useNavItems(variant, { isCourier });
 
   // Un vendeur ou un administrateur circule entre plusieurs espaces. Sur
@@ -43,13 +44,14 @@ export function SideNav({
     service worker tentait de suivre depuis notre origine — « Unsafe attempt to
     load URL », puis une page blanche.
   */
-  const spaces: Array<{ href: string; label: string; variant: NavVariant }> = [
-    { href: spaceHref("/accueil"), label: t.account.clientSpace, variant: "client" },
-  ];
-  if ((role === "vendor" || role === "admin") && hasShop) {
+  // L'application de transport est autonome : pas de passage vers les espaces G-Mall.
+  const spaces: Array<{ href: string; label: string; variant: NavVariant }> = transport
+    ? []
+    : [{ href: spaceHref("/accueil"), label: t.account.clientSpace, variant: "client" }];
+  if (!transport && (role === "vendor" || role === "admin") && hasShop) {
     spaces.push({ href: spaceHref("/vendeur"), label: t.vendor.myShop, variant: "vendor" });
   }
-  if (role === "admin") {
+  if (!transport && role === "admin") {
     spaces.push({ href: spaceHref("/admin"), label: t.account.adminSpace, variant: "admin" });
   }
   /*
@@ -57,15 +59,22 @@ export function SideNav({
     l'espace client, et lui inventer une quatrième variante de barre aurait
     fait une barre à une seule entrée.
   */
-  if (role === "dahmani_admin" || role === "admin") {
+  if (!transport && (role === "dahmani_admin" || role === "admin")) {
     spaces.push({ href: spaceHref("/lelma3ardh/gestion"), label: t.dahmani.brand, variant: "client" });
   }
 
   return (
     <div className="hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:border-e lg:border-[var(--color-hairline)] lg:px-5 lg:py-7">
-      <Link href="/accueil" className="flex-none text-[1.125rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
-        G-<span className="text-[var(--color-brand)]">Mall</span>
-      </Link>
+      {transport ? (
+        <Link href="/" className="flex-none text-[1.125rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
+          {locale === "ar" ? "تاكسي و" : "Taxi & "}
+          <span className="text-[var(--color-brand)]">{locale === "ar" ? "لواج قفصة" : "Louage Gafsa"}</span>
+        </Link>
+      ) : (
+        <Link href="/accueil" className="flex-none text-[1.125rem] font-bold tracking-[-0.01875rem] text-[var(--color-ink)]">
+          G-<span className="text-[var(--color-brand)]">Mall</span>
+        </Link>
+      )}
 
       <nav aria-label={t.nav.home} className="flex flex-none flex-col gap-1">
         {items.map((item) => {
@@ -116,6 +125,7 @@ export function SideNav({
         </div>
       )}
 
+      {!transport && (
       <div className="mt-auto flex flex-none flex-col gap-1 border-t border-[var(--color-hairline)] pt-5">
         <Link
           href="/"
@@ -130,6 +140,7 @@ export function SideNav({
           Contact
         </Link>
       </div>
+      )}
     </div>
   );
 }

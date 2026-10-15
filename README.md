@@ -823,6 +823,39 @@ npm run db:smoke      # les 88 requêtes de l'application, sur la vraie base
 | Redirections | Tout `suite=` est vérifié interne avant usage : pas de redirection ouverte |
 | Secrets | La clé `service_role` ne sort jamais du serveur. `npm run db:check` refuse d'afficher la moindre valeur de clé |
 
+### « Taxi & Louage Gafsa » sur son propre domaine
+
+Le taxi et le louage forment une seconde application (nuit/ambre, son
+manifeste, ses icônes, sa connexion), servie par le **même** déploiement.
+L'intergiciel (`src/lib/supabase/middleware.ts` + `src/lib/transport.ts`)
+regarde l'hôte : sur le domaine transport, `/taxi` est réécrit vers
+`src/app/transport/(app)/taxi`, toute page G-Mall renvoie vers G-Mall ; sur
+G-Mall, `/taxi`, `/louage`, `/chauffeurs/*` et `/profil/chauffeur` renvoient
+(308) vers le domaine transport.
+
+Pages propres : accueil (taxis disponibles réels, prochains louages),
+« Mes courses », notifications de course, profil, « Devenir chauffeur »
+(candidature validée ensuite dans `/admin/taxi`). L'application est ouverte
+au public même pendant la préparation de G-Mall ; son inscription ne crée
+que des comptes client (`src/app/actions/transport-auth.ts`).
+
+Mise en service :
+
+1. Vercel → Settings → Domains : ajouter le domaine (ex. `taxi.gmall.tn`).
+2. Vercel → Environment Variables : `NEXT_PUBLIC_TRANSPORT_HOST=taxi.gmall.tn`
+   (hôte seul, sans `https://`), puis redéployer. Tant qu'elle est absente,
+   rien ne change sur G-Mall.
+3. Supabase → Authentication → URL Configuration → Redirect URLs :
+   ajouter `https://taxi.gmall.tn/**`.
+
+Les comptes sont les mêmes, mais les sessions sont séparées : un cookie
+vaut pour un domaine, on se connecte une fois de chaque côté.
+
+En local : `http://taxi.localhost:3000` (tout hôte en `taxi.` est le
+domaine transport en dev). Le serveur de dev de Next rend relatives les
+redirections vers G-Mall (elles bouclent sur `taxi.localhost`) — en
+production, deux domaines distincts, le problème n'existe pas.
+
 ---
 
 ## Structure
