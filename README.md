@@ -842,7 +842,7 @@ que des comptes client (`src/app/actions/transport-auth.ts`).
 Mise en service :
 
 1. Vercel → Settings → Domains : ajouter le domaine (ex. `taxi.gmall.tn`).
-2. Vercel → Environment Variables : `NEXT_PUBLIC_TRANSPORT_HOST=taxi.gmall.tn`
+2. Vercel → Environment Variables : `TRANSPORT_HOST=taxi.gmall.tn`
    (hôte seul, sans `https://`), puis redéployer. Tant qu'elle est absente,
    rien ne change sur G-Mall.
 3. Supabase → Authentication → URL Configuration → Redirect URLs :

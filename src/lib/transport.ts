@@ -11,7 +11,7 @@
  * chaque domaine : on se connecte séparément à chaque application.
  *
  * Configuration :
- *   NEXT_PUBLIC_TRANSPORT_HOST   le domaine de l'application
+ *   TRANSPORT_HOST   le domaine de l'application
  *                                (ex. « taxi-gafsa.vercel.app »). Vide : rien
  *                                ne change, G-Mall sert tout comme avant.
  * En développement, tout hôte « taxi.* » (ex. `taxi.localhost:3000`) est
@@ -28,7 +28,7 @@ export const NOM_COURT_TRANSPORT = { fr: "Taxi & Louage", ar: "تاكسي ولو
 /** L'en-tête posé par l'intergiciel sur une requête de l'application de transport. */
 export const ENTETE_APP = "x-gm-app";
 
-const HOTE_CONFIGURE = (process.env.NEXT_PUBLIC_TRANSPORT_HOST ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+const HOTE_CONFIGURE = (process.env.TRANSPORT_HOST ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 /** Cet hôte (en-tête `host`) est-il celui de l'application de transport ? */
 export function estHoteTransport(host: string | null | undefined): boolean {
