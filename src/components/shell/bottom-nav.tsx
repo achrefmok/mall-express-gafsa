@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 import { cx } from "@/lib/format";
 import { isActive, useNavItems, type NavVariant } from "./nav-items";
+import { BoutonInstaller } from "@/components/pwa/bouton-installer";
 
 /**
  * Barre d'onglets. Trois jeux — client (6), vendeur (5), admin (5) —
@@ -46,6 +47,17 @@ export function BottomNav({ variant, isCourier = false }: { variant: NavVariant;
          deux classes de rembourrage bas se seraient annulées. */
       style={{ paddingBottom: "calc(14px + env(safe-area-inset-bottom))" }}
     >
+      {/*
+        « Installer », posé sur le bord de la barre : visible sur chaque écran
+        tant que l'application n'est pas installée, sans prendre la place
+        d'un onglet. Il disparaît de lui-même une fois installée.
+      */}
+      <div className="pointer-events-none absolute -top-[34px] end-4 flex">
+        <span className="pointer-events-auto">
+          <BoutonInstaller variante="barre" app={variant === "transport" ? "transport" : "gmall"} />
+        </span>
+      </div>
+
       <nav
         aria-label={t.nav.home}
         className="flex justify-around rounded-[26px] border border-[var(--color-surface-edge)] bg-[var(--color-veil)] px-[6px] py-[11px] shadow-[0_12px_30px_rgba(60,40,90,0.14)] backdrop-blur-[16px]"

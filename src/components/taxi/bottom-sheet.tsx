@@ -3,6 +3,7 @@
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { estSaisie, useClavier } from "@/components/shell/clavier-virtuel";
 
 /**
  * Un panneau qui monte du bas, et qui s'attrape.
@@ -75,6 +76,7 @@ export function BottomSheet({
   const [basNav, setBasNav] = useState(0);
   const [monte, setMonte] = useState(false);
   const titreId = useId();
+  const clavier = useClavier();
 
   /*
     La hauteur de la fenêtre, relevée et tenue à jour.
@@ -116,7 +118,15 @@ export function BottomSheet({
     panneau « à mi-hauteur » en occupait davantage qu'annoncé, et le cran
     replié disparaissait presque entièrement derrière la barre.
   */
-  const utile = Math.max(0, vh - basNav);
+  /*
+    Clavier ouvert, le panneau se pose sur le clavier et non plus sur le bas
+    de l'écran : Safari (et Chrome sans réglage) ne rétrécit que la fenêtre
+    visuelle, et le panneau restait ancré derrière le clavier — il n'en
+    dépassait qu'une bande, champ « Destination » compris. La barre
+    d'onglets est alors masquée (ClavierVirtuel) : sa place revient au panneau.
+  */
+  const bas = clavier.ouvert ? clavier.recouvrement : basNav;
+  const utile = Math.max(0, vh - (clavier.ouvert ? 0 : basNav));
   const hauteurPx = utile * HAUTEURS.plein;
 
   const decalage = useCallback(
@@ -193,6 +203,29 @@ export function BottomSheet({
               ? { duration: 0 }
               : { type: "spring", stiffness: 380, damping: 40, mass: 0.9 }
           }
+          /*
+            Écrire dans un panneau à moitié replié, c'est écrire à l'aveugle :
+            le champ touché déplie le panneau, et les suggestions ont la place
+            de s'afficher sous lui.
+          */
+          onFocus={(e) => {
+            if (!estSaisie(e.target)) return;
+            if (hauteur !== "plein") onHauteur("plein");
+            /*
+              Puis le champ remonte en haut de la zone qui défile, son
+              étiquette avec lui : sous lui s'ouvrent les suggestions, et le
+              bouton collé au bas du panneau en masquait la plupart une fois
+              le clavier sorti. Une fois le panneau déplié et le clavier
+              sorti, pas avant : avant, on ne sait pas encore où sera le bord.
+            */
+            const champ = e.target;
+            window.setTimeout(() => {
+              const zone = champ.closest<HTMLElement>("[data-sheet-defile]");
+              if (!zone || document.activeElement !== champ) return;
+              const ecart = champ.getBoundingClientRect().top - zone.getBoundingClientRect().top;
+              zone.scrollTo({ top: zone.scrollTop + ecart - 36, behavior: reduit ? "auto" : "smooth" });
+            }, 450);
+          }}
           drag={reduit ? false : "y"}
           dragConstraints={{ top: 0, bottom: hauteurPx }}
           dragElastic={{ top: 0.02, bottom: 0.12 }}
@@ -217,8 +250,8 @@ export function BottomSheet({
           }}
           style={{
             height: hauteurPx || undefined,
-            // Au-dessus de la barre d'onglets, jamais par-dessus.
-            bottom: basNav,
+            // Au-dessus de la barre d'onglets — ou du clavier —, jamais par-dessus.
+            bottom: bas,
             // Le panneau est promu sur sa propre couche : sans cela, le flou
             // du fond est recomposé à chaque image du geste.
             willChange: "transform",
@@ -254,7 +287,7 @@ export function BottomSheet({
             bas de la liste fait défiler l'écran, ce qui est le défaut le plus
             fréquent de ce genre de panneau.
           */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
+          <div data-sheet-defile className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
             {children}
           </div>
         </m.div>

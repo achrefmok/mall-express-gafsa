@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import {
@@ -174,14 +175,39 @@ async function traiterSession(request: NextRequest, transport: boolean) {
     },
   );
 
+  const { pathname } = request.nextUrl;
+  const prechargement = request.headers.get("next-router-prefetch") === "1";
+
+  /*
+    Le réglage d'ouverture, lu en même temps que la session et non après :
+    c'était un aller-retour réseau de plus, en série, avant le premier octet
+    de chaque page. Il passe par un client anonyme, sans cookie — la table est
+    lisible de tous (policy `app_access_public_select`) —, pour ne jamais
+    toucher au jeton que `getUser()` peut être en train de rafraîchir : les
+    jetons de rafraîchissement sont à usage unique.
+  */
+  const accesRequis = !transport && !prechargement && !exemptAccesPublic(pathname);
+
   // getUser() — et non getSession() : seul getUser() revalide le jeton
   // auprès du serveur d'authentification. getSession() fait confiance au
   // cookie, qu'un client peut forger.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
+  const [
+    {
+      data: { user },
+    },
+    acces,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    accesRequis
+      ? createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        })
+          .from("app_access")
+          .select("public_access")
+          .eq("id", true)
+          .maybeSingle()
+      : null,
+  ]);
 
   /*
     Next.js précharge silencieusement les liens visibles (`<Link>` sans
@@ -198,7 +224,7 @@ async function traiterSession(request: NextRequest, transport: boolean) {
     redirection d'authentification — la vraie navigation, elle, refera la
     demande sans l'en-tête et sera revalidée sur un jeton à jour.
   */
-  if (request.headers.get("next-router-prefetch") === "1") {
+  if (prechargement) {
     return response;
   }
 
@@ -252,14 +278,8 @@ async function traiterSession(request: NextRequest, transport: boolean) {
     return response;
   }
 
-  if (!exemptAccesPublic(pathname)) {
-    const { data: reglages } = await supabase
-      .from("app_access")
-      .select("public_access")
-      .eq("id", true)
-      .maybeSingle();
-
-    const public_access = reglages?.public_access ?? false;
+  if (accesRequis) {
+    const public_access = acces?.data?.public_access ?? false;
 
     if (!public_access) {
       let role: string | null = null;

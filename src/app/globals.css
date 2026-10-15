@@ -804,3 +804,19 @@ html[data-simplified="true"] body {
     transition: none;
   }
 }
+
+/*
+  Clavier ouvert (voir src/components/shell/clavier-virtuel.tsx) : la barre
+  d'onglets se retire. Entre le champ et le clavier, elle ne servirait qu'à
+  manger 80 pixels sur un écran qui n'en a plus que 350.
+*/
+html[data-clavier="ouvert"] [data-bottom-nav] {
+  display: none;
+}
+
+/* Un bouton collé au bas d'un panneau mange la place des suggestions quand
+   le clavier ne laisse plus que quelques centaines de pixels : il reprend sa
+   place dans le flux le temps de la saisie, et se recolle ensuite. */
+html[data-clavier="ouvert"] [data-colle-hors-clavier] {
+  position: relative; /* et non static : son dégradé ::before reste accroché à lui */
+}

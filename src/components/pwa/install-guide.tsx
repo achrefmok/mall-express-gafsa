@@ -18,10 +18,17 @@ import { useInstallPrompt } from "./use-install-prompt";
  * partagé sur Facebook cherchera l'installation dans un endroit où elle n'existe
  * pas, et aucun de nos pas ne lui servirait avant de sortir de là.
  */
-export function InstallGuide({ tone = "light" }: { tone?: "light" | "dark" }) {
+export function InstallGuide({
+  tone = "light",
+  etapesSeules = false,
+}: {
+  tone?: "light" | "dark";
+  /** Les explications seules, déjà dépliées : le bouton qui les ouvre est ailleurs (BoutonInstaller). */
+  etapesSeules?: boolean;
+}) {
   const { t } = useI18n();
   const { state, isIOS, canInstallInOneTap, install } = useInstallPrompt();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(etapesSeules);
   const [android, setAndroid] = useState(false);
   const [inApp, setInApp] = useState(false);
 
@@ -64,16 +71,18 @@ export function InstallGuide({ tone = "light" }: { tone?: "light" | "dark" }) {
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => (canInstallInOneTap ? void install() : setOpen((v) => !v))}
-        aria-expanded={canInstallInOneTap ? undefined : open}
-        className={`press w-full rounded-[16px] py-3 text-[0.8125rem] font-bold ${
-          dark ? "bg-white text-[var(--color-brand)]" : "bg-[var(--color-brand-fill)] text-white"
-        }`}
-      >
-        {t.installGuide.button}
-      </button>
+      {!etapesSeules && (
+        <button
+          type="button"
+          onClick={() => (canInstallInOneTap ? void install() : setOpen((v) => !v))}
+          aria-expanded={canInstallInOneTap ? undefined : open}
+          className={`press w-full rounded-[16px] py-3 text-[0.8125rem] font-bold ${
+            dark ? "bg-white text-[var(--color-brand)]" : "bg-[var(--color-brand-fill)] text-white"
+          }`}
+        >
+          {t.installGuide.button}
+        </button>
+      )}
 
       {!canInstallInOneTap && open && (
         <>

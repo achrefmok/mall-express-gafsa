@@ -139,7 +139,9 @@ export function MessageThread({
           );
         })}
 
-        <div ref={endRef} />
+        {/* La marge de défilement couvre la zone de saisie collée en bas : sans
+            elle, le dernier message arrivait… juste derrière. */}
+        <div ref={endRef} style={{ scrollMarginBottom: "calc(var(--nav-bas, 0px) + var(--clavier, 0px) + 76px)" }} />
       </div>
 
       {error && (
@@ -148,9 +150,17 @@ export function MessageThread({
         </p>
       )}
 
+      {/*
+        La zone de saisie reste au bas de ce qui est visible : au-dessus de la
+        barre d'onglets, ou du clavier quand il est ouvert (la barre se retire
+        alors, voir ClavierVirtuel). Elle était en fin de page — dans un long
+        fil, il fallait défiler jusqu'en bas pour la trouver, et le clavier
+        pouvait la recouvrir avec le bouton « Envoyer ».
+      */}
       <form
         onSubmit={onSend}
-        className="flex flex-none items-center gap-2 border-t border-[var(--color-hairline)] px-4 py-3"
+        style={{ bottom: "calc(var(--nav-bas, 0px) + var(--clavier, 0px))" }}
+        className="sticky z-30 flex flex-none items-center gap-2 border-t border-[var(--color-hairline)] bg-[var(--color-app)] px-4 py-3"
       >
         <input
           value={draft}

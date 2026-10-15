@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
-import { useInstallPrompt } from "./use-install-prompt";
 import { WelcomeScreen } from "@/components/shell/welcome-screen";
 import { InvitationRoue } from "@/components/roue/invitation-roue";
 import { EcranOuvertureTransport } from "@/components/transport/ecran-ouverture";
@@ -38,7 +37,6 @@ export function ServiceWorkerBridge({
         </>
       )}
       <OfflineBanner />
-      <InstallPrompt />
     </>
   );
 }
@@ -115,71 +113,7 @@ function InstallCapture() {
   return null;
 }
 
-const DISMISS_KEY = "meg-install-dismissed";
-
-/**
- * Le bandeau d'invitation, en bas de l'écran.
- *
- * Il ne s'affiche que là où l'installation tient en un geste — donc pas sur
- * iPhone, où aucune API ne l'autorise. Un bandeau qui ne saurait qu'expliquer un
- * détour par le menu de partage se ferait fermer sans être lu ; cette
- * explication vit dans le panneau du profil, où on la cherche.
- */
-function InstallPrompt() {
-  const { t } = useI18n();
-  const { canInstallInOneTap, install } = useInstallPrompt();
-  const [hidden, setHidden] = useState(true);
-
-  useEffect(() => {
-    // Ne pas insister : une fois refusée, l'invitation ne revient pas avant
-    // trente jours.
-    const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) ?? 0);
-    setHidden(Date.now() - dismissedAt < 30 * 86_400_000);
-  }, []);
-
-  if (hidden || !canInstallInOneTap) return null;
-
-  function dismiss() {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    setHidden(true);
-  }
-
-  return (
-    <div className="pb-safe fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[520px] p-3">
-      <div className="animate-slide-up flex items-center gap-3 rounded-[18px] bg-[image:var(--gradient-brand)] p-3 text-white shadow-[0_10px_30px_rgba(60,40,90,0.28)]">
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.75rem] font-bold">
-            {t.brand.first}{t.brand.second}
-          </p>
-          <p className="text-[0.65625rem] opacity-85">{t.install.bannerBody}</p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            void install();
-            dismiss();
-          }}
-          className="flex-none rounded-[13px] bg-white px-3 py-[7px] text-[0.65625rem] font-bold text-[var(--color-on-light)]"
-        >
-          {t.install.action}
-        </button>
-
-        {/*
-          Vingt-et-un pixels de large, collés au bouton « Installer » : manquer
-          la croix revenait à déclencher l'installation, l'action exactement
-          contraire à celle voulue — et la bannière s'affiche sur toutes les
-          pages. Trente-deux pixels, et un écart franc entre les deux commandes.
-        */}
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={t.common.close}
-          className="-me-1 flex h-8 w-8 flex-none items-center justify-center text-[1rem] leading-none opacity-70"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  );
-}
+/*
+  Le bandeau d'invitation à installer a laissé place à `BoutonInstaller`, posé
+  sur la barre d'onglets : fixé en bas de l'écran, il la recouvrait.
+*/

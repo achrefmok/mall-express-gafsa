@@ -425,7 +425,9 @@ export function CourseSheet({
               quand le panneau est replié. Le dégradé au-dessus évite que le
               contenu qui défile ne semble sortir de nulle part.
             */}
-            <div className="sticky bottom-0 -mx-5 mt-1 bg-[var(--color-surface-solid)] px-5 pt-3 pb-1 before:pointer-events-none before:absolute before:inset-x-0 before:-top-5 before:h-5 before:bg-[linear-gradient(to_bottom,transparent,var(--color-surface-solid))] before:content-['']">
+            {/* Décollé pendant la saisie (globals.css) : clavier sorti, il ne
+                reste parfois que 360 pixels, et ses 80 masquaient les suggestions. */}
+            <div data-colle-hors-clavier className="sticky bottom-0 -mx-5 mt-1 bg-[var(--color-surface-solid)] px-5 pt-3 pb-1 before:pointer-events-none before:absolute before:inset-x-0 before:-top-5 before:h-5 before:bg-[linear-gradient(to_bottom,transparent,var(--color-surface-solid))] before:content-['']">
               <BoutonRecherche
                 actif={peutChercher}
                 envoi={pending}
@@ -772,7 +774,12 @@ function ChampDestination({
               key={l.nom}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onChoisir(l)}
+              onClick={() => {
+                onChoisir(l);
+                // Destination choisie : le clavier n'a plus rien à faire là, et
+                // il cachait le bouton « Rechercher ».
+                (document.activeElement as HTMLElement | null)?.blur();
+              }}
               className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-start transition-colors hover:bg-[var(--color-field)]"
             >
               <span aria-hidden className="text-[0.875rem]">

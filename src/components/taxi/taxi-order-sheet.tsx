@@ -260,6 +260,8 @@ export function TaxiOrderSheet({
       {open && (
         <m.div
           className="fixed inset-0 z-[900] flex items-end justify-center bg-[rgba(20,14,26,0.45)] sm:items-center"
+          // Posée sur le clavier quand il est ouvert (ClavierVirtuel).
+          style={{ bottom: "var(--clavier, 0px)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -268,7 +270,7 @@ export function TaxiOrderSheet({
             role="dialog"
             aria-modal="true"
             aria-label={t.taxi.orderTitle}
-            className="flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[22px] bg-[var(--color-surface-solid)] shadow-[0_-12px_40px_rgba(20,14,26,0.25)] sm:rounded-[22px]"
+            className="flex max-h-[calc(var(--hauteur-visible,100dvh)*0.88)] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[22px] bg-[var(--color-surface-solid)] shadow-[0_-12px_40px_rgba(20,14,26,0.25)] sm:rounded-[22px]"
             initial={{ y: 60, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.96 }}

@@ -9,6 +9,7 @@ import "./globals.css";
 
 import { siteUrl as resolveSiteUrl } from "@/lib/site-url";
 import { WebVitals } from "@/components/shell/web-vitals";
+import { ClavierVirtuel } from "@/components/shell/clavier-virtuel";
 import { lireMarque } from "@/lib/brand";
 import { headers } from "next/headers";
 import { ENTETE_APP } from "@/lib/transport";
@@ -76,6 +77,10 @@ export const viewport: Viewport = {
   maximumScale: 5, // jamais 1 : bloquer le zoom casse l'accessibilité
   themeColor: "#17131f", // --color-app, seule palette de l'app (sombre, permanente)
   viewportFit: "cover", // permet l'usage de env(safe-area-inset-*)
+  // Chrome Android rétrécit la page quand le clavier sort, au lieu de la
+  // recouvrir : `dvh`, `fixed` et `sticky` suivent d'eux-mêmes. Safari l'ignore —
+  // `ClavierVirtuel` couvre ce cas.
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -157,6 +162,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           n'utilise ; ici on mesure ce que vit quelqu'un en 3G à Gafsa.
         */}
         <WebVitals />
+        <ClavierVirtuel />
         </I18nProvider>
       </body>
     </html>

@@ -31,20 +31,61 @@ export type InstallState =
  * copies auraient divergé, et celle qu'on aurait oublié de corriger est
  * justement celle qui compte — celle que voit un client déjà entré.
  */
+/** Posé à l'installation : l'onglet du navigateur ne passe pas en mode application. */
+const CLE_INSTALLEE = "meg-installee";
+
+/** Ouverte depuis l'icône de l'écran d'accueil (ou une application Android empaquetée). */
+function modeApplication(): boolean {
+  return (
+    ["standalone", "fullscreen", "minimal-ui", "window-controls-overlay"].some(
+      (mode) => window.matchMedia(`(display-mode: ${mode})`).matches,
+    ) ||
+    // Safari iOS : propriété propriétaire, absente du type Navigator.
+    (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+    document.referrer.startsWith("android-app://")
+  );
+}
+
+function lireInstallee(): boolean {
+  try {
+    return localStorage.getItem(CLE_INSTALLEE) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function ecrireInstallee(valeur: boolean) {
+  try {
+    if (valeur) localStorage.setItem(CLE_INSTALLEE, "1");
+    else localStorage.removeItem(CLE_INSTALLEE);
+  } catch {
+    // Stockage refusé (navigation privée) : on s'en passe.
+  }
+}
+
 export function useInstallPrompt() {
   const [state, setState] = useState<InstallState>({ kind: "manual" });
   const [isIOS, setIsIOS] = useState(false);
   const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  /*
+    Faux au rendu serveur et au premier rendu client : tant qu'on ne sait pas
+    si l'application est installée, un bouton « Installer » ne doit pas
+    apparaître — il clignoterait dans l'application installée elle-même.
+  */
+  const [connu, setConnu] = useState(false);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      // Safari iOS : propriété propriétaire, absente du type Navigator.
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setConnu(true);
 
-    if (standalone) {
+    /*
+      Installée depuis cet onglet : Chrome n'émet plus d'invite, et l'onglet
+      ne passe pas en mode application. Sans ce souvenir, le bouton
+      reviendrait au rechargement suivant. Il s'efface dès que le navigateur
+      propose à nouveau l'installation — c'est qu'elle a été désinstallée.
+    */
+    if (modeApplication() || lireInstallee()) {
       setState({ kind: "installed" });
-      return;
+      if (modeApplication()) return;
     }
 
     setIsIOS(/iPhone|iPad|iPod/.test(navigator.userAgent));
@@ -59,10 +100,14 @@ export function useInstallPrompt() {
     */
     const onPrompt = (incoming: Event) => {
       incoming.preventDefault();
+      ecrireInstallee(false);
       setEvent(incoming as BeforeInstallPromptEvent);
       setState({ kind: "ready" });
     };
-    const onInstalled = () => setState({ kind: "installed" });
+    const onInstalled = () => {
+      ecrireInstallee(true);
+      setState({ kind: "installed" });
+    };
 
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
@@ -84,10 +129,24 @@ export function useInstallPrompt() {
   const install = useCallback(async () => {
     if (!event) return false;
 
-    await event.prompt();
-    const { outcome } = await event.userChoice;
+    /*
+      L'invite ne sert qu'une fois, pour toute la page : un autre bouton
+      (barre d'onglets, profil) a pu l'utiliser avant celui-ci. Elle lève
+      alors une erreur — on retombe sur les explications.
+    */
+    let outcome: "accepted" | "dismissed";
+    try {
+      await event.prompt();
+      ({ outcome } = await event.userChoice);
+    } catch {
+      setEvent(null);
+      setState({ kind: "manual" });
+      return false;
+    }
+    (window as Window & { __megInstallEvent?: Event }).__megInstallEvent = undefined;
 
     if (outcome === "accepted") {
+      ecrireInstallee(true);
       setState({ kind: "installed" });
       return true;
     }
@@ -101,5 +160,5 @@ export function useInstallPrompt() {
     return true;
   }, [event]);
 
-  return { state, isIOS, install, canInstallInOneTap: state.kind === "ready" };
+  return { state, isIOS, install, canInstallInOneTap: state.kind === "ready", connu };
 }

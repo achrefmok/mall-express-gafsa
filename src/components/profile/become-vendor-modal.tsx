@@ -174,6 +174,8 @@ export function BecomeVendorModal({
           <MotionProvider>
             <m.div
               className="fixed inset-0 z-[75] flex items-end justify-center"
+              // Posée sur le clavier quand il est ouvert (ClavierVirtuel).
+              style={{ bottom: "var(--clavier, 0px)" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -190,7 +192,7 @@ export function BecomeVendorModal({
                 role="dialog"
                 aria-modal="true"
                 aria-label={sc.title}
-                className="animate-slide-up pb-safe relative flex max-h-[92vh] w-full max-w-[520px] flex-col rounded-t-[24px] bg-[var(--color-surface)] shadow-[0_-10px_40px_rgba(40,25,60,0.28)]"
+                className="animate-slide-up pb-safe relative flex max-h-[calc(var(--hauteur-visible,100dvh)*0.92)] w-full max-w-[520px] flex-col rounded-t-[24px] bg-[var(--color-surface)] shadow-[0_-10px_40px_rgba(40,25,60,0.28)]"
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}

@@ -188,6 +188,16 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["@supabase/supabase-js"],
+    /*
+      Revenir sur un onglet visité il y a moins de 30 secondes ne refait pas le
+      rendu serveur : la page s'affiche aussitôt depuis le cache du routeur.
+      Sans ce réglage (0 par défaut depuis Next 15), chaque toucher sur la
+      barre d'onglets coûtait un aller-retour complet — plusieurs centaines de
+      millisecondes en 3G. Toute action serveur qui appelle `revalidatePath`
+      (panier, commande, favoris…) vide ce cache : rien de ce que l'on vient
+      de faire n'apparaît périmé.
+    */
+    staleTimes: { dynamic: 30 },
   },
 
   /*

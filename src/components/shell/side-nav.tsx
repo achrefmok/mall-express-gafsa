@@ -7,6 +7,7 @@ import { spaceHref } from "@/lib/space";
 import { cx } from "@/lib/format";
 import { isActive, useNavItems, type NavVariant } from "./nav-items";
 import type { UserRole } from "@/types/database";
+import { BoutonInstaller } from "@/components/pwa/bouton-installer";
 
 /**
  * Navigation latérale, à partir de `lg`. Contrepartie de `BottomNav`, qui
@@ -124,6 +125,10 @@ export function SideNav({
           ))}
         </div>
       )}
+
+      <div className="mt-auto flex-none">
+        <BoutonInstaller variante="colonne" app={transport ? "transport" : "gmall"} />
+      </div>
 
       {!transport && (
       <div className="mt-auto flex flex-none flex-col gap-1 border-t border-[var(--color-hairline)] pt-5">
