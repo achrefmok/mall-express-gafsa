@@ -841,12 +841,12 @@ que des comptes client (`src/app/actions/transport-auth.ts`).
 
 Mise en service :
 
-1. Vercel → Settings → Domains : ajouter le domaine (ex. `taxi.gmall.tn`).
-2. Vercel → Environment Variables : `TRANSPORT_HOST=taxi.gmall.tn`
+1. Vercel → Settings → Domains : ajouter le domaine (ex. `taxi.g-mall.tn`).
+2. Vercel → Environment Variables : `TRANSPORT_HOST=taxi.g-mall.tn`
    (hôte seul, sans `https://`), puis redéployer. Tant qu'elle est absente,
    rien ne change sur G-Mall.
 3. Supabase → Authentication → URL Configuration → Redirect URLs :
-   ajouter `https://taxi.gmall.tn/**`.
+   ajouter `https://taxi.g-mall.tn/**`.
 
 Les comptes sont les mêmes, mais les sessions sont séparées : un cookie
 vaut pour un domaine, on se connecte une fois de chaque côté.

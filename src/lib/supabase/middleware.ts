@@ -76,16 +76,26 @@ const GUARDED: Array<{ prefix: string; role: "client" | "vendor" | "admin" | "da
 
 /**
  * L'adresse G-Mall d'un chemin, depuis l'hôte de transport : `NEXT_PUBLIC_SITE_URL`
- * en production, l'hôte sans son préfixe « taxi. » en développement.
+ * en production, l'hôte sans son préfixe « taxi. » sinon (taxi.g-mall.tn →
+ * g-mall.tn). Une valeur locale ou égale à l'hôte courant est écartée : elle
+ * renverrait vers une adresse injoignable, ou en boucle sur le transport.
  */
 function urlGMall(request: NextRequest, chemin: string): URL {
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (process.env.NODE_ENV === "production" && site) return new URL(chemin, site);
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
+  const hoteCourant = (request.headers.get("host") ?? request.nextUrl.host).toLowerCase();
+  if (process.env.NODE_ENV === "production" && site) {
+    try {
+      const u = new URL(chemin, site);
+      if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname) && u.host.toLowerCase() !== hoteCourant) return u;
+    } catch {
+      // valeur mal formée : repli ci-dessous
+    }
+  }
   // En local seulement : le serveur de dev de Next rend toute redirection de
   // middleware relative à sa propre origine (resolve-routes.js), si bien que
   // taxi.localhost/marketplace boucle sur lui-même. Sans effet en production,
   // où G-Mall (NEXT_PUBLIC_SITE_URL) et le transport ont deux domaines.
-  const hote = (request.headers.get("host") ?? request.nextUrl.host).replace(/^taxi\./, "");
+  const hote = hoteCourant.replace(/^taxi\./, "");
   return new URL(chemin, `${request.nextUrl.protocol}//${hote}`);
 }
 
