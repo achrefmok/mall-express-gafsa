@@ -96,19 +96,23 @@ export function ALAffiche({ affiches, locale }: { affiches: Affiche[]; locale: A
                     <b className="line-clamp-2 text-[1.1875rem] tracking-[-0.3px]">{a.titre}</b>
                     {a.sousTitre && <span className="truncate text-[0.75rem] opacity-85">{a.sousTitre}</span>}
                   </span>
+                  {/*
+                    Seul le bouton ouvre l'affiche. L'image entière était un
+                    lien : en faisant glisser le carrousel au doigt, on
+                    l'ouvrait sans le vouloir.
+                  */}
                   {a.href && (
-                    <span className="flex h-9 flex-none items-center rounded-[18px] bg-white px-[15px] text-[0.78125rem] font-extrabold text-[#241F2E]">
+                    <Link
+                      href={a.href}
+                      className="press flex h-9 flex-none items-center rounded-[18px] bg-white px-[15px] text-[0.78125rem] font-extrabold text-[#241F2E]"
+                    >
                       {ar ? "اكتشف" : "Découvrir"}
-                    </span>
+                    </Link>
                   )}
                 </span>
               </>
             );
-            return a.href ? (
-              <Link key={a.id} href={a.href} className="relative h-full w-full flex-none snap-center overflow-hidden">
-                {contenu}
-              </Link>
-            ) : (
+            return (
               <div key={a.id} className="relative h-full w-full flex-none snap-center overflow-hidden">
                 {contenu}
               </div>

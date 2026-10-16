@@ -9,7 +9,6 @@ import { format } from "@/lib/i18n/format";
 import { LIVES_DANS_LES_MENUS } from "@/lib/features";
 import { cx, formatPrice, monogram, percentOff } from "@/lib/format";
 import { SearchBar } from "@/components/shell/search-bar";
-import { ImageZoom } from "@/components/ui/image-zoom";
 import { Avatar, Placeholder } from "@/components/ui/primitives";
 import { PawIcon, ToolIcon, serviceIcon } from "@/components/ui/category-icons";
 import { BellIcon, CartIcon } from "@/components/ui/icons";
@@ -481,11 +480,11 @@ export default async function HomePage() {
                 <div data-rvi className="mx-4 rounded-[24px] bg-white shadow-[0_10px_26px_rgba(60,40,90,.1)]">
                   <div className="relative h-[160px] overflow-hidden rounded-t-[24px] bg-[#EDE7F5]">
                     {promo.data.images?.[0] ? (
-                      <ImageZoom images={promo.data.images} alt={promo.data.name} className="block h-full w-full cursor-zoom-in">
-                        <span className="relative block h-[160px] w-full">
-                          <Image src={promo.data.images[0]} alt={promo.data.name} fill sizes="(max-width: 520px) 100vw, 520px" className="object-cover" />
-                        </span>
-                      </ImageZoom>
+                      // Image seule, sans action : seuls la pastille boutique, le nom et
+                      // « زيارة المتجر » réagissent au toucher.
+                      <span className="relative block h-[160px] w-full">
+                        <Image src={promo.data.images[0]} alt={promo.data.name} fill sizes="(max-width: 520px) 100vw, 520px" className="object-cover" />
+                      </span>
                     ) : (
                       <Placeholder label="photo boutique — vitrine" className="h-[160px] w-full" />
                     )}

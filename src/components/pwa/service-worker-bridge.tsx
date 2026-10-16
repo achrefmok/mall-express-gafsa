@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { WelcomeScreen } from "@/components/shell/welcome-screen";
 import { InvitationRoue } from "@/components/roue/invitation-roue";
 import { EcranOuvertureTransport } from "@/components/transport/ecran-ouverture";
+import { AncreRetour } from "./ancre-retour";
 
 /**
  * Trois responsabilités, volontairement réunies dans un seul composant monté
@@ -24,6 +25,7 @@ export function ServiceWorkerBridge({
   return (
     <>
       <ServiceWorkerRegistration />
+      <AncreRetour app={app} />
       <InstallCapture />
       {/* Monté ici plutôt que dans une coque : il doit couvrir l'écran quelle
           que soit la page d'entrée, y compris une fiche produit partagée. */}

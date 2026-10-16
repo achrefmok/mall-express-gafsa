@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toggleFavorite } from "@/app/actions/cart";
 import { formatPrice } from "@/lib/format";
 import { lienProduit } from "@/lib/product-url";
@@ -37,7 +36,6 @@ export function CoupDeCoeur({
   connecte: boolean;
 }) {
   const ar = locale === "ar";
-  const router = useRouter();
   const [index, setIndex] = useState(0);
   const [aimes, setAimes] = useState(0);
   const dessus = useRef<HTMLDivElement>(null);
@@ -107,7 +105,8 @@ export function CoupDeCoeur({
     el.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1)";
     el.style.transform = "none";
     etiquettes(0);
-    if (Math.abs(g.dx) < 6) router.push(lienProduit(cartes[index]));
+    // Plus d'ouverture au simple toucher de la photo : en voulant faire
+    // glisser la carte, on ouvrait le produit. Seul « عرض المنتج » l'ouvre.
   }
 
   const pile = cartes.slice(index, index + 3);
@@ -160,10 +159,20 @@ export function CoupDeCoeur({
                 >
                   {ar ? "تخطّي" : "PASSER"}
                 </span>
-                <span className="absolute inset-x-[18px] bottom-4 flex flex-col gap-[2px] leading-[1.2] text-white">
-                  <span className="text-[0.6875rem] font-bold opacity-80">{c.boutique}</span>
-                  <b className="line-clamp-2 text-[1.25rem] tracking-[-0.3px]">{ar && c.name_ar ? c.name_ar : c.name}</b>
-                  <b className="text-[1.0625rem] text-[#F29BB0]">{formatPrice(c.price, locale)}</b>
+                <span className="absolute inset-x-[18px] bottom-4 flex items-end gap-[10px] leading-[1.2] text-white">
+                  <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+                    <span className="text-[0.6875rem] font-bold opacity-80">{c.boutique}</span>
+                    <b className="line-clamp-2 text-[1.25rem] tracking-[-0.3px]">{ar && c.name_ar ? c.name_ar : c.name}</b>
+                    <b className="text-[1.0625rem] text-[#F29BB0]">{formatPrice(c.price, locale)}</b>
+                  </span>
+                  {k === 0 && (
+                    <Link
+                      href={lienProduit(c)}
+                      className="press flex h-9 flex-none items-center rounded-[18px] bg-white px-[14px] text-[0.75rem] font-extrabold text-[#241F2E]"
+                    >
+                      {ar ? "عرض المنتج" : "Voir le produit"}
+                    </Link>
+                  )}
                 </span>
               </div>
             ))
