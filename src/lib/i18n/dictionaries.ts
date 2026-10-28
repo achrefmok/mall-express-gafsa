@@ -272,7 +272,8 @@ const fr = {
     watchOnTiktok: "Regarder sur TikTok",
     tiktokBody:
       "Le direct se regarde dans TikTok. Revenez ici pour commander : le produit, la remise et le panier vous attendent.",
-    tiktokEnded: "Ce direct TikTok est terminé.",
+    // Hors antenne : pas encore commencé *ou* terminé — le lecteur ne sait pas lequel.
+    tiktokEnded: "Ce direct n'est pas en cours sur TikTok pour l'instant.",
     tapToPlay: "Touchez pour lancer le direct",
     tapFullscreenToPlay: "Touchez ⤢ en bas à droite pour lancer le direct",
     products: "Articles",
@@ -1238,7 +1239,7 @@ const ar: Dictionary = {
     watchOnTiktok: "شاهد على تيك توك",
     tiktokBody:
       "يُشاهَد البث على تيك توك. ارجع إلى هنا للطلب: المنتج والتخفيض والسلة بانتظارك.",
-    tiktokEnded: "انتهى بث تيك توك هذا.",
+    tiktokEnded: "هذا البث غير متواصل على تيك توك حاليًا.",
     tapToPlay: "اضغط لتشغيل البث",
     tapFullscreenToPlay: "اضغط على ⤢ أسفل اليمين لتشغيل البث",
     products: "المنتجات",

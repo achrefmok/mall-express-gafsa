@@ -213,12 +213,15 @@ export async function createLive(input: {
 }
 
 /*
-  Source `tiktok` sans la migration `live_source_tiktok` : la base refuse la
-  valeur d'énumération (22P02) ou ne connaît pas la colonne (PGRST204). Le
-  message générique ne dirait pas au commerçant que le reste fonctionne.
+  Source `tiktok` sans ses migrations : la base refuse la valeur
+  d'énumération (22P02), ne connaît pas la colonne (PGRST204), ou la
+  contrainte `lives_source_payload` n'admet pas encore TikTok (23514,
+  20261028002000). Le message générique ne dirait pas au commerçant que le
+  reste fonctionne.
 */
 function liveInsertError(error: { message: string; code?: string }) {
-  if (error.code === "22P02" || error.code === "PGRST204") {
+  const contrainteSource = error.code === "23514" && error.message.includes("lives_source_payload");
+  if (error.code === "22P02" || error.code === "PGRST204" || contrainteSource) {
     return "Les directs TikTok ne sont pas encore activés sur G-Mall. Choisissez une autre source pour l'instant.";
   }
   return readableError(error);
