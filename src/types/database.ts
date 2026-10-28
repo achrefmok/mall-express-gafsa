@@ -24,7 +24,7 @@ export type OrderStatus = "pending" | "to_prepare" | "ready" | "shipped" | "deli
 export type PaymentMethod = "cod" | "call" | "online";
 export type DeliveryMethod = "delivery" | "pickup";
 export type LiveStatus = "scheduled" | "live" | "ended" | "cancelled";
-export type LiveSource = "camera" | "facebook" | "hls";
+export type LiveSource = "camera" | "facebook" | "hls" | "tiktok";
 export type DealStatus = "active" | "expired" | "removed";
 /** G-Shop : toute publication attend l'administration avant d'être publique. */
 export type ModerationStatus = "pending" | "approved" | "rejected";
@@ -484,6 +484,8 @@ export interface Database {
           /** Identifiant de la vidéo chez Facebook, pour ne pas relayer deux fois. */
           facebook_video_id: string | null;
           hls_url: string | null;
+          /** Source `tiktok` : `https://www.tiktok.com/@<compte>/live`. */
+          tiktok_url: string | null;
           broadcaster_peer_id: string | null;
           pinned_product_id: string | null;
           live_percent_off: number | null;

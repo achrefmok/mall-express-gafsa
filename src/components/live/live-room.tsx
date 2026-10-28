@@ -22,6 +22,7 @@ export interface LiveRoomProps {
     source: LiveSource;
     facebook_url: string | null;
     hls_url: string | null;
+    tiktok_url?: string | null;
     live_percent_off: number | null;
     offer_ends_at: string | null;
     viewers_count: number;
@@ -313,6 +314,7 @@ export function LiveRoom({
         source={live.source}
         facebookUrl={live.facebook_url}
         hlsUrl={live.hls_url}
+        tiktokUrl={live.tiktok_url}
         isLive={live.status === "live"}
       />
 

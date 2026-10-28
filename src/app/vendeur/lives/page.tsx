@@ -15,7 +15,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const SOURCE_LABEL = { camera: "sourceCamera", facebook: "sourceFacebook", hls: "sourceHls" } as const;
+const SOURCE_LABEL = {
+  camera: "sourceCamera",
+  facebook: "sourceFacebook",
+  hls: "sourceHls",
+  tiktok: "sourceTiktok",
+} as const;
 
 export default async function VendorLivesPage() {
   const shop = await getMyShop();

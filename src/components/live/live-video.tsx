@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
 import { joinBroadcast, type ViewerState } from "@/lib/live/webrtc";
+import { tiktokAccount } from "@/lib/live/tiktok";
 import type { LiveSource } from "@/types/database";
 
 /**
@@ -11,8 +12,9 @@ import type { LiveSource } from "@/types/database";
  *   camera   — flux WebRTC reçu du téléphone du vendeur
  *   facebook — plugin vidéo officiel, Facebook sert la vidéo
  *   hls      — flux .m3u8 (lecture native Safari/iOS ; ailleurs, lien direct)
+ *   tiktok   — pas de lecteur possible : un bouton ouvre le direct dans TikTok
  *
- * Les trois occupent le même cadre plein écran : les surcouches commerce
+ * Les quatre occupent le même cadre plein écran : les surcouches commerce
  * (produit épinglé, compte à rebours, commentaires) ne changent pas.
  */
 export function LiveVideo({
@@ -20,12 +22,14 @@ export function LiveVideo({
   source,
   facebookUrl,
   hlsUrl,
+  tiktokUrl = null,
   isLive,
 }: {
   liveId: string;
   source: LiveSource;
   facebookUrl: string | null;
   hlsUrl: string | null;
+  tiktokUrl?: string | null;
   isLive: boolean;
 }) {
   if (source === "facebook" && facebookUrl) {
@@ -33,6 +37,9 @@ export function LiveVideo({
   }
   if (source === "hls" && hlsUrl) {
     return <HlsPlayer url={hlsUrl} />;
+  }
+  if (source === "tiktok" && tiktokUrl) {
+    return <TiktokRelay url={tiktokUrl} isLive={isLive} />;
   }
   return <CameraViewer liveId={liveId} isLive={isLive} />;
 }
@@ -382,6 +389,53 @@ function FacebookRelay({ url }: { url: string }) {
         className="absolute start-1/2 top-[52px] z-30 -translate-x-1/2 rounded-[10px] bg-black/55 px-3 py-1 text-[0.59375rem] font-semibold text-white rtl:translate-x-1/2"
       >
         {t.live.openOnFacebook}
+      </a>
+    </div>
+  );
+}
+
+/* ─── Source TikTok ────────────────────────────────────────────────────── */
+
+/**
+ * Un direct TikTok, ouvert dans TikTok.
+ *
+ * TikTok ne fournit aucun lecteur intégrable pour un direct — son greffon ne
+ * lit que les vidéos publiées — et ne sert pas le flux aux sites tiers. Plutôt
+ * qu'un cadre noir, on donne donc au spectateur la seule chose qui marche à
+ * coup sûr : un bouton large qui ouvre le direct. Sur un téléphone où TikTok
+ * est installé, le lien universel `tiktok.com/@compte/live` ouvre directement
+ * l'application, au bon endroit.
+ *
+ * Le cadre reste celui des autres sources : le produit épinglé, la remise et
+ * les commentaires restent posés par-dessus, et c'est ici qu'on achète.
+ */
+function TiktokRelay({ url, isLive }: { url: string; isLive: boolean }) {
+  const { t } = useI18n();
+  const account = tiktokAccount(url);
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-[#1a1424] via-[#221c2b] to-black px-8 pb-[22%] text-center">
+      <span className="rounded-full bg-white/10 px-3 py-1 text-[0.625rem] font-bold tracking-[0.03125rem] text-white/80">
+        {t.live.tiktokRelay}
+      </span>
+
+      {account && <p className="text-[1rem] font-bold text-white">@{account}</p>}
+
+      <p className="max-w-[280px] text-[0.71875rem] leading-[1.5] text-white/70">
+        {isLive ? t.live.tiktokBody : t.live.tiktokEnded}
+      </p>
+
+      {/*
+        Au-dessus des surcouches (`z-30`), comme la porte de sortie Facebook :
+        c'est l'unique moyen de voir la vidéo, il ne doit rien y avoir dessus.
+      */}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative z-30 mt-1 rounded-full bg-white px-6 py-3 text-[0.8125rem] font-bold text-black shadow-lg"
+      >
+        {t.live.watchOnTiktok}
       </a>
     </div>
   );

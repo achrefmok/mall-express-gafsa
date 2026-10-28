@@ -59,6 +59,7 @@ export function NewLiveForm({
   const [source, setSource] = useState<LiveSource>("camera");
   const [facebookUrl, setFacebookUrl] = useState("");
   const [hlsUrl, setHlsUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
   const [pinnedProductId, setPinnedProductId] = useState<string | null>(null);
   const [percentOff, setPercentOff] = useState("30");
   const [offerMinutes, setOfferMinutes] = useState("10");
@@ -79,6 +80,11 @@ export function NewLiveForm({
       hint: "Vous diffusez sur votre page Facebook ; le direct est relayé ici avec vos produits. Audience illimitée.",
     },
     {
+      value: "tiktok",
+      label: t.live.sourceTiktok,
+      hint: "Vous diffusez sur TikTok ; vos clients l'ouvrent dans TikTok d'un geste et commandent ici. Audience illimitée.",
+    },
+    {
       value: "hls",
       label: t.live.sourceHls,
       hint: "Flux fourni par un prestataire externe (Mux, Cloudflare Stream…).",
@@ -95,6 +101,7 @@ export function NewLiveForm({
         source,
         facebookUrl,
         hlsUrl,
+        tiktokUrl,
         pinnedProductId: pinnedProductId ?? undefined,
         percentOff: Number.parseInt(percentOff, 10) || undefined,
         offerMinutes: Number.parseInt(offerMinutes, 10) || undefined,
@@ -265,6 +272,43 @@ export function NewLiveForm({
                 l&apos;application, puis touchez « Partager » sur votre vidéo
                 Facebook et choisissez G-Mall. Le direct se met en ligne
                 sans que vous ayez à copier quoi que ce soit.
+              </span>
+            </label>
+          )}
+
+          {source === "tiktok" && (
+            <label className="mt-1 flex flex-col gap-1">
+              <span className={LABEL}>{t.vendor.tiktokUrl}</span>
+
+              <span className="flex gap-2">
+                <input
+                  value={tiktokUrl}
+                  onChange={(e) => setTiktokUrl(e.target.value)}
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://www.tiktok.com/@votrecompte"
+                  className={cx(FIELD, "min-w-0 flex-1")}
+                />
+
+                {/* Même raccourci que pour Facebook, même repli silencieux. */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const pasted = await navigator.clipboard?.readText();
+                      if (pasted?.trim()) setTiktokUrl(pasted.trim());
+                    } catch {
+                      // Refusé ou indisponible : le champ reste utilisable.
+                    }
+                  }}
+                  className="flex-none rounded-[12px] border border-[var(--color-outline)] bg-[var(--color-veil)] px-3 text-[0.65625rem] font-bold whitespace-nowrap text-[var(--color-brand)]"
+                >
+                  Coller le lien
+                </button>
+              </span>
+
+              <span className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
+                {t.vendor.tiktokUrlHint}
               </span>
             </label>
           )}
