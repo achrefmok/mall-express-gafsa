@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { relayFacebookLive } from "@/app/actions/lives";
+import { relaySharedLive } from "@/app/actions/lives";
 import { cx } from "@/lib/format";
 import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
@@ -16,11 +16,13 @@ import { Button, Card, fieldClass } from "@/components/ui/primitives";
  */
 export function SharedLiveConfirm({
   url,
+  platform,
   suggestedTitle,
   shopName,
   approved,
 }: {
   url: string;
+  platform: "facebook" | "tiktok";
   suggestedTitle: string;
   shopName: string;
   approved: boolean;
@@ -34,7 +36,7 @@ export function SharedLiveConfirm({
     setError(null);
 
     startTransition(async () => {
-      const result = await relayFacebookLive({ url, title });
+      const result = await relaySharedLive({ url, title });
 
       if (result.ok) {
         router.replace(`/vendeur/lives/${result.data.id}`);
@@ -49,7 +51,7 @@ export function SharedLiveConfirm({
     <>
       <Card className="flex flex-col gap-3 p-4">
         <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
-          Direct Facebook reconnu
+          {platform === "tiktok" ? "Direct TikTok reconnu" : "Direct Facebook reconnu"}
         </p>
 
         <p className="rounded-[12px] bg-[var(--color-brand-tint)] p-2 text-[0.65625rem] break-all text-[var(--color-muted)]">
@@ -82,6 +84,14 @@ export function SharedLiveConfirm({
         {error && (
           <p role="alert" className={cx("text-[0.71875rem] font-semibold text-[var(--color-live)]")}>
             {error}
+          </p>
+        )}
+
+        {platform === "tiktok" && (
+          <p className="text-[0.65625rem] leading-[1.5] text-[var(--color-muted)]">
+            TikTok ne permet pas d&apos;afficher un direct sur un autre site :
+            vos clients verront ici un bouton qui ouvre votre direct dans TikTok,
+            avec vos produits et votre remise juste à côté pour commander.
           </p>
         )}
 

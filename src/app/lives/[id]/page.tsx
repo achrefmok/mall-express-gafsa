@@ -88,6 +88,17 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
 
   if (!live) notFound();
 
+  /*
+    Le lien TikTok est lu à part, et seulement pour un direct TikTok : la
+    colonne n'existe qu'une fois la migration `live_source_tiktok` collée, et
+    la nommer dans la requête principale ferait échouer tous les directs d'ici là.
+  */
+  const tiktokUrl =
+    live.source === "tiktok"
+      ? ((await supabase.from("lives").select("tiktok_url").eq("id", id).maybeSingle()).data
+          ?.tiktok_url ?? null)
+      : null;
+
   const [pinned, comments, liveProducts, liked, cartCount] = await Promise.all([
     live.pinned_product_id
       ? supabase
@@ -144,7 +155,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
 
   return (
     <LiveRoom
-      live={live}
+      live={{ ...live, tiktok_url: tiktokUrl }}
       pinnedProduct={pinned}
       initialComments={comments}
       viewerId={profile?.id ?? null}

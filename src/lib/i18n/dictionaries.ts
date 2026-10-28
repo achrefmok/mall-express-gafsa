@@ -268,6 +268,11 @@ const fr = {
     unmuteMic: "Activer le micro",
     facebookRelay: "Direct relayé depuis Facebook",
     openOnFacebook: "Ouvrir sur Facebook",
+    tiktokRelay: "Direct sur TikTok",
+    watchOnTiktok: "Regarder sur TikTok",
+    tiktokBody:
+      "Le direct se regarde dans TikTok. Revenez ici pour commander : le produit, la remise et le panier vous attendent.",
+    tiktokEnded: "Ce direct TikTok est terminé.",
     tapToPlay: "Touchez pour lancer le direct",
     tapFullscreenToPlay: "Touchez ⤢ en bas à droite pour lancer le direct",
     products: "Articles",
@@ -286,6 +291,7 @@ const fr = {
     sourceCamera: "Caméra de l'appareil",
     sourceFacebook: "Direct Facebook",
     sourceHls: "Flux externe (HLS)",
+    sourceTiktok: "Direct TikTok",
     pinnedProduct: "Produit épinglé",
   },
 
@@ -934,6 +940,9 @@ const fr = {
     facebookUrlHint:
       "Lancez le direct sur votre page Facebook, ouvrez la vidéo, puis copiez son adresse. Elle contient /videos/, /watch ou /live. Les liens courts fb.watch ne fonctionnent pas, et la vidéo doit être publique.",
     hlsUrl: "URL du flux HLS (.m3u8)",
+    tiktokUrl: "Lien de votre direct ou de votre profil TikTok",
+    tiktokUrlHint:
+      "L'adresse de votre profil suffit (https://www.tiktok.com/@votrecompte) : elle reste valable d'un direct à l'autre. TikTok ne permet pas d'intégrer un direct — vos clients l'ouvriront dans TikTok d'un geste, et commanderont ici.",
     pinProduct: "Produit à épingler",
     livediscount: "Remise prix live (%)",
     offerDuration: "Durée de l'offre (minutes)",
@@ -1225,6 +1234,11 @@ const ar: Dictionary = {
     unmuteMic: "تشغيل الميكروفون",
     facebookRelay: "بث منقول من فيسبوك",
     openOnFacebook: "فتح على فيسبوك",
+    tiktokRelay: "بث مباشر على تيك توك",
+    watchOnTiktok: "شاهد على تيك توك",
+    tiktokBody:
+      "يُشاهَد البث على تيك توك. ارجع إلى هنا للطلب: المنتج والتخفيض والسلة بانتظارك.",
+    tiktokEnded: "انتهى بث تيك توك هذا.",
     tapToPlay: "اضغط لتشغيل البث",
     tapFullscreenToPlay: "اضغط على ⤢ أسفل اليمين لتشغيل البث",
     products: "المنتجات",
@@ -1243,6 +1257,7 @@ const ar: Dictionary = {
     sourceCamera: "كاميرا الجهاز",
     sourceFacebook: "بث فيسبوك",
     sourceHls: "بث خارجي (HLS)",
+    sourceTiktok: "بث تيك توك",
     pinnedProduct: "المنتج المثبّت",
   },
 
@@ -1878,6 +1893,9 @@ const ar: Dictionary = {
     facebookUrlHint:
       "ابدأ البث على صفحتك على فيسبوك، افتح الفيديو، ثم انسخ عنوانه. يحتوي على /videos/ أو /watch أو /live. روابط fb.watch القصيرة لا تعمل، ويجب أن يكون الفيديو عامًا.",
     hlsUrl: "رابط بث HLS (.m3u8)",
+    tiktokUrl: "رابط بثك أو حسابك على تيك توك",
+    tiktokUrlHint:
+      "يكفي رابط حسابك (https://www.tiktok.com/@حسابك): يبقى صالحًا من بث لآخر. لا يسمح تيك توك بدمج البث المباشر — سيفتحه زبائنك في تيك توك بلمسة، ويطلبون من هنا.",
     pinProduct: "المنتج المثبّت",
     livediscount: "تخفيض سعر البث (%)",
     offerDuration: "مدة العرض (بالدقائق)",

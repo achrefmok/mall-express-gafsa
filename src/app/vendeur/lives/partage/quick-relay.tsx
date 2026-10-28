@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { relayFacebookLive } from "@/app/actions/lives";
+import { relaySharedLive } from "@/app/actions/lives";
 import { cx } from "@/lib/format";
 import { Button, Card, fieldClass } from "@/components/ui/primitives";
 
 type Platform = "android" | "ios" | "desktop";
 
 /**
- * Mise en ligne d'un direct Facebook, quel que soit l'appareil.
+ * Mise en ligne d'un direct Facebook ou TikTok, quel que soit l'appareil.
  *
  * Le geste le plus court diffère d'une plateforme à l'autre, et montrer les
  * trois marches à suivre à tout le monde serait le meilleur moyen qu'aucune ne
@@ -52,7 +52,7 @@ export function QuickRelay({
     try {
       const text = await navigator.clipboard?.readText();
       if (text?.trim()) setUrl(text.trim());
-      else setError("Le presse-papiers est vide. Copiez d'abord le lien depuis Facebook.");
+      else setError("Le presse-papiers est vide. Copiez d'abord le lien depuis Facebook ou TikTok.");
     } catch {
       setError("Votre navigateur n'autorise pas la lecture du presse-papiers. Collez le lien à la main.");
     }
@@ -61,7 +61,7 @@ export function QuickRelay({
   function onRelay() {
     setError(null);
     startTransition(async () => {
-      const result = await relayFacebookLive({ url });
+      const result = await relaySharedLive({ url });
       if (result.ok) {
         router.replace(`/vendeur/lives/${result.data.id}`);
         router.refresh();
@@ -76,14 +76,14 @@ export function QuickRelay({
       {/* ─── La marche à suivre, selon l'appareil ────────────────────── */}
       <Card className="flex flex-col gap-3 p-4">
         <p className="text-[0.8125rem] font-bold text-[var(--color-ink)]">
-          Vous diffusez déjà sur Facebook ?
+          Vous diffusez déjà sur Facebook ou TikTok ?
         </p>
 
         {platform === "android" && installed && (
           <Guide
             steps={[
-              "Sur Facebook, ouvrez votre vidéo en direct",
-              "Touchez « Partager »",
+              "Sur Facebook ou TikTok, ouvrez votre direct",
+              "Touchez « Partager » (sur TikTok : « Partager » → « Plus »)",
               "Choisissez « G-Mall » dans la liste",
             ]}
             note="Le direct se met en ligne sans que vous ayez rien à copier."
@@ -94,7 +94,7 @@ export function QuickRelay({
           <Guide
             steps={[
               "Installez d'abord l'application : menu du navigateur → « Installer l'application »",
-              "Ensuite, sur Facebook : votre vidéo → « Partager » → « G-Mall »",
+              "Ensuite, sur Facebook ou TikTok : votre direct → « Partager » → « G-Mall »",
             ]}
             note="Une fois installée, plus rien à copier : le partage suffit."
           />
@@ -103,7 +103,7 @@ export function QuickRelay({
         {platform === "ios" && (
           <Guide
             steps={[
-              "Sur Facebook, ouvrez votre vidéo en direct",
+              "Sur Facebook ou TikTok, ouvrez votre direct",
               "Touchez « Partager », puis « Copier le lien »",
               "Revenez ici et touchez « Coller le lien »",
             ]}
@@ -114,8 +114,8 @@ export function QuickRelay({
         {platform === "desktop" && (
           <Guide
             steps={[
-              "Sur Facebook, ouvrez votre vidéo en direct",
-              "Copiez l'adresse dans la barre du navigateur",
+              "Sur Facebook, ouvrez votre vidéo en direct et copiez l'adresse de la barre du navigateur",
+              "Sur TikTok, l'adresse de votre profil suffit : https://www.tiktok.com/@votrecompte",
               "Collez-la ci-dessous",
             ]}
             note="Depuis votre téléphone Android, le partage direct évite même cette étape."
@@ -126,7 +126,7 @@ export function QuickRelay({
       {/* ─── Le champ, identique partout ─────────────────────────────── */}
       <Card className="flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1">
-          <span className="text-[0.625rem] text-[var(--color-muted)]">Lien de la vidéo Facebook</span>
+          <span className="text-[0.625rem] text-[var(--color-muted)]">Lien du direct Facebook ou TikTok</span>
 
           <span className="flex gap-2">
             <input
@@ -134,7 +134,7 @@ export function QuickRelay({
               onChange={(event) => setUrl(event.target.value)}
               type="url"
               inputMode="url"
-              placeholder="https://www.facebook.com/…/videos/…"
+              placeholder="https://www.facebook.com/… ou https://www.tiktok.com/@…"
               className={fieldClass({ strong: true, className: "min-w-0 flex-1" })}
             />
             <button
@@ -165,7 +165,7 @@ export function QuickRelay({
         )}
 
         <p className="text-[0.59375rem] leading-[1.45] text-[var(--color-muted)]">
-          La vidéo doit être <strong>publique</strong>. Le titre, le produit
+          Le direct doit être <strong>public</strong>. Le titre, le produit
           épinglé et la remise de votre direct précédent sont repris — tout se
           règle ensuite depuis la console, en cours de diffusion.
         </p>

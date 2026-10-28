@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { done, fail, ok, readableError, requireProfile, requireShopOwner } from "./_helpers";
 import { upsertProduct } from "./vendor";
 import { checkFacebookEmbeddable, resolveFacebookLiveUrl } from "@/lib/live/facebook";
+import { isTiktokUrl, resolveTiktokLiveUrl } from "@/lib/live/tiktok";
 import type { LiveSource } from "@/types/database";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Actions « lives ».
    La vidéo elle-même ne passe pas par ici : en source `camera` les flux
    circulent en pair-à-pair (WebRTC), en source `facebook` c'est Facebook qui
-   sert la vidéo. Ce module gère la couche commerce et l'état du direct.
+   sert la vidéo, en source `tiktok` le spectateur la regarde dans TikTok.
+   Ce module gère la couche commerce et l'état du direct.
    ═══════════════════════════════════════════════════════════════════════ */
 
 export async function followShopOfLive(liveId: string) {
@@ -125,6 +127,7 @@ export async function createLive(input: {
   source: LiveSource;
   facebookUrl?: string;
   hlsUrl?: string;
+  tiktokUrl?: string;
   pinnedProductId?: string;
   percentOff?: number;
   offerMinutes?: number;
@@ -156,6 +159,15 @@ export async function createLive(input: {
     facebookUrl = checked.url;
   }
 
+  let tiktokUrl: string | null = null;
+
+  if (input.source === "tiktok") {
+    if (!input.tiktokUrl?.trim()) return fail("Collez le lien de votre direct TikTok");
+    const checked = await resolveTiktokLiveUrl(input.tiktokUrl);
+    if (!checked.ok) return fail(checked.error);
+    tiktokUrl = checked.url;
+  }
+
   if (input.source === "hls" && !input.hlsUrl?.trim().endsWith(".m3u8")) {
     return fail("L'URL du flux doit se terminer par .m3u8");
   }
@@ -172,6 +184,9 @@ export async function createLive(input: {
       source: input.source,
       facebook_url: facebookUrl,
       hls_url: input.source === "hls" ? input.hlsUrl!.trim() : null,
+      // Absente du payload hors TikTok : un direct Facebook ou caméra reste
+      // possible tant que la migration TikTok n'est pas collée.
+      ...(tiktokUrl ? { tiktok_url: tiktokUrl } : {}),
       pinned_product_id: input.pinnedProductId || null,
       live_percent_off: input.percentOff && input.percentOff > 0 ? input.percentOff : null,
       /*
@@ -191,24 +206,37 @@ export async function createLive(input: {
     .select("id")
     .single();
 
-  if (insertError) return fail(readableError(insertError));
+  if (insertError) return fail(liveInsertError(insertError));
 
   revalidatePath("/vendeur/lives");
   return ok({ id: data.id });
 }
 
+/*
+  Source `tiktok` sans la migration `live_source_tiktok` : la base refuse la
+  valeur d'énumération (22P02) ou ne connaît pas la colonne (PGRST204). Le
+  message générique ne dirait pas au commerçant que le reste fonctionne.
+*/
+function liveInsertError(error: { message: string; code?: string }) {
+  if (error.code === "22P02" || error.code === "PGRST204") {
+    return "Les directs TikTok ne sont pas encore activés sur G-Mall. Choisissez une autre source pour l'instant.";
+  }
+  return readableError(error);
+}
+
 /**
- * Crée un direct Facebook et le passe à l'antenne d'un seul geste.
+ * Crée un direct Facebook ou TikTok et le passe à l'antenne d'un seul geste.
  *
- * Sert le partage depuis le système : le commerçant diffuse sur Facebook,
- * touche « Partager », choisit G-Mall — et le direct est en ligne ici,
- * avec sa couche commerce. Rien à saisir.
+ * Sert le partage depuis le système : le commerçant diffuse sur Facebook ou
+ * sur TikTok, touche « Partager », choisit G-Mall — et le direct est en ligne
+ * ici, avec sa couche commerce. Rien à saisir. La plateforme se lit sur le
+ * lien lui-même.
  *
  * Le produit épinglé et la remise sont reportés du direct précédent : c'est
  * presque toujours la même boutique qui vend la même chose, et ce sont deux
  * champs de moins à remplir dans l'urgence d'une diffusion qui a commencé.
  */
-export async function relayFacebookLive(input: { url: string; title?: string }) {
+export async function relaySharedLive(input: { url: string; title?: string }) {
   const { supabase, shop, error } = await requireShopOwner();
   if (!shop) return fail(error);
 
@@ -216,18 +244,41 @@ export async function relayFacebookLive(input: { url: string; title?: string }) 
     return fail("Votre boutique doit être approuvée avant de diffuser");
   }
 
-  const checked = await resolveFacebookLiveUrl(input.url);
-  if (!checked.ok) return fail(checked.error);
+  const tiktok = isTiktokUrl(input.url);
+  let url: string;
 
-  const embed = await checkFacebookEmbeddable(checked.url);
-  if (!embed.embeddable) return fail(embed.error);
+  if (tiktok) {
+    const checked = await resolveTiktokLiveUrl(input.url);
+    if (!checked.ok) return fail(checked.error);
+    url = checked.url;
+  } else {
+    const checked = await resolveFacebookLiveUrl(input.url);
+    if (!checked.ok) return fail(checked.error);
 
-  // Déjà relayé — on y renvoie au lieu d'ouvrir un doublon.
-  const { data: existing } = await supabase
+    const embed = await checkFacebookEmbeddable(checked.url);
+    if (!embed.embeddable) return fail(embed.error);
+    url = checked.url;
+  }
+
+  /*
+    Déjà relayé — on y renvoie au lieu d'ouvrir un doublon.
+
+    Pour Facebook, le lien désigne une vidéo : le retrouver, c'est retrouver
+    le même direct. Pour TikTok, il désigne le compte, identique d'un direct à
+    l'autre : on ne reprend donc qu'un direct encore ouvert, sans quoi le
+    direct de ce soir rouvrirait celui de la semaine dernière, avec son titre
+    et ses compteurs.
+  */
+  let existingQuery = supabase
     .from("lives")
     .select("id")
     .eq("shop_id", shop.id)
-    .eq("facebook_url", checked.url)
+    .eq(tiktok ? "tiktok_url" : "facebook_url", url);
+  if (tiktok) existingQuery = existingQuery.in("status", ["scheduled", "live"]);
+
+  const { data: existing } = await existingQuery
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (existing) {
@@ -249,8 +300,9 @@ export async function relayFacebookLive(input: { url: string; title?: string }) 
     .insert({
       shop_id: shop.id,
       title: input.title?.trim() || `Direct de ${shop.name}`,
-      source: "facebook",
-      facebook_url: checked.url,
+      ...(tiktok
+        ? { source: "tiktok" as const, tiktok_url: url }
+        : { source: "facebook" as const, facebook_url: url }),
       pinned_product_id: previous?.pinned_product_id ?? null,
       live_percent_off: previous?.live_percent_off ?? null,
       scheduled_at: new Date().toISOString(),
@@ -259,7 +311,7 @@ export async function relayFacebookLive(input: { url: string; title?: string }) 
     .select("id")
     .single();
 
-  if (insertError) return fail(readableError(insertError));
+  if (insertError) return fail(liveInsertError(insertError));
 
   const { error: startError } = await supabase.rpc("start_live", {
     target_live: created.id,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getMyShop } from "@/lib/queries";
 import { resolveFacebookLiveUrl } from "@/lib/live/facebook";
+import { firstTiktokUrl, resolveTiktokLiveUrl } from "@/lib/live/tiktok";
 import { TopBar } from "@/components/shell/top-bar";
 import { SharedLiveConfirm } from "./shared-live-confirm";
 import { QuickRelay } from "./quick-relay";
@@ -17,12 +18,12 @@ export const dynamic = "force-dynamic";
  * Arrivée d'un partage système.
  *
  * Déclaré comme `share_target` dans le manifeste : le commerçant diffuse sur
- * Facebook, touche « Partager », choisit G-Mall, et atterrit ici avec le
- * lien déjà transmis. Un bouton, et le direct est en ligne.
+ * Facebook ou TikTok, touche « Partager », choisit G-Mall, et atterrit ici
+ * avec le lien déjà transmis. Un bouton, et le direct est en ligne.
  *
- * Facebook ne place pas toujours l'adresse dans le même paramètre — parfois
- * dans `url`, parfois noyée dans le texte partagé. On cherche donc dans les
- * deux.
+ * Ni Facebook ni TikTok ne placent toujours l'adresse dans le même paramètre
+ * — parfois dans `url`, parfois noyée dans le texte partagé. On cherche donc
+ * dans les deux.
  */
 export default async function ShareTargetPage({
   searchParams,
@@ -33,8 +34,14 @@ export default async function ShareTargetPage({
   if (!shop) redirect("/vendeur/creer");
 
   const { lien, texte, titre } = await searchParams;
-  const candidate = firstFacebookUrl(lien) ?? firstFacebookUrl(texte);
-  const checked = candidate ? await resolveFacebookLiveUrl(candidate) : null;
+  const tiktokCandidate = firstTiktokUrl(lien) ?? firstTiktokUrl(texte);
+  const candidate = tiktokCandidate ?? firstFacebookUrl(lien) ?? firstFacebookUrl(texte);
+  const platform = tiktokCandidate ? "tiktok" : "facebook";
+  const checked = !candidate
+    ? null
+    : tiktokCandidate
+      ? await resolveTiktokLiveUrl(tiktokCandidate)
+      : await resolveFacebookLiveUrl(candidate);
 
   return (
     <>
@@ -44,6 +51,7 @@ export default async function ShareTargetPage({
         {checked?.ok ? (
           <SharedLiveConfirm
             url={checked.url}
+            platform={platform}
             suggestedTitle={titre?.trim() || ""}
             shopName={shop.name}
             approved={shop.status === "approved"}

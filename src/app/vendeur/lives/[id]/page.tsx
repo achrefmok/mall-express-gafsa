@@ -44,10 +44,21 @@ export default async function VendorLiveConsolePage({
 
   if (!live) notFound();
 
+  /*
+    Le lien TikTok est lu à part, et seulement pour un direct TikTok : la
+    colonne n'existe qu'une fois la migration `live_source_tiktok` collée, et
+    la nommer dans la requête principale ferait échouer tous les directs d'ici là.
+  */
+  const tiktokUrl =
+    live.source === "tiktok"
+      ? ((await supabase.from("lives").select("tiktok_url").eq("id", id).maybeSingle()).data
+          ?.tiktok_url ?? null)
+      : null;
+
   return (
     <>
       <TopBar title={live.title} back="/vendeur/lives" />
-      <BroadcastConsole live={live} products={products ?? []} />
+      <BroadcastConsole live={{ ...live, tiktok_url: tiktokUrl }} products={products ?? []} />
     </>
   );
 }

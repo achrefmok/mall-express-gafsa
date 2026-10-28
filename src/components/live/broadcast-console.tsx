@@ -22,6 +22,7 @@ interface Props {
     source: LiveSource;
     facebook_url: string | null;
     hls_url: string | null;
+    tiktok_url?: string | null;
     pinned_product_id: string | null;
     live_percent_off: number | null;
   };
@@ -100,7 +101,13 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
     diffusion, alors que la capture locale est déjà à l'écran juste au-dessus.
   */
   const relayUrl =
-    live.source === "facebook" ? live.facebook_url : live.source === "hls" ? live.hls_url : null;
+    live.source === "facebook"
+      ? live.facebook_url
+      : live.source === "hls"
+        ? live.hls_url
+        : live.source === "tiktok"
+          ? (live.tiktok_url ?? null)
+          : null;
 
   /* ─── Fil de commentaires, pour répondre pendant le direct ─────────── */
   useEffect(() => {
@@ -272,17 +279,24 @@ export function BroadcastConsole({ live: initialLive, products }: Props) {
             source={live.source}
             facebookUrl={live.facebook_url}
             hlsUrl={live.hls_url}
+            tiktokUrl={live.tiktok_url}
             isLive={onAir}
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
             <p className="text-[0.8125rem] font-bold text-white">
-              {live.source === "facebook" ? t.live.sourceFacebook : t.live.sourceHls}
+              {live.source === "facebook"
+                ? t.live.sourceFacebook
+                : live.source === "tiktok"
+                  ? t.live.sourceTiktok
+                  : t.live.sourceHls}
             </p>
             <p className="text-[0.6875rem] leading-relaxed text-white/65">
               {live.source === "facebook"
                 ? "Lancez le direct depuis l'application Facebook. Les spectateurs le verront ici avec vos produits épinglés."
-                : "Le flux externe est diffusé par votre prestataire."}
+                : live.source === "tiktok"
+                  ? "Lancez le direct depuis l'application TikTok, puis démarrez-le ici. Vos clients auront un bouton pour l'ouvrir dans TikTok, avec vos produits épinglés juste à côté."
+                  : "Le flux externe est diffusé par votre prestataire."}
             </p>
           </div>
         )}
