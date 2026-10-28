@@ -272,8 +272,13 @@ const fr = {
     watchOnTiktok: "Regarder sur TikTok",
     tiktokBody:
       "Le direct se regarde dans TikTok. Revenez ici pour commander : le produit, la remise et le panier vous attendent.",
-    // Hors antenne : pas encore commencé *ou* terminé — le lecteur ne sait pas lequel.
-    tiktokEnded: "Ce direct n'est pas en cours sur TikTok pour l'instant.",
+    /*
+      Hors antenne *sur G-Mall* (pas encore démarré dans la console, ou
+      terminé) : l'état lu est celui de G-Mall, pas celui de TikTok, que l'on
+      ne peut pas interroger. L'ancien texte accusait TikTok alors que le
+      direct y tournait bien.
+    */
+    tiktokEnded: "Ce direct n'est pas encore ouvert sur G-Mall, ou il est terminé.",
     tapToPlay: "Touchez pour lancer le direct",
     tapFullscreenToPlay: "Touchez ⤢ en bas à droite pour lancer le direct",
     products: "Articles",
@@ -1239,7 +1244,7 @@ const ar: Dictionary = {
     watchOnTiktok: "شاهد على تيك توك",
     tiktokBody:
       "يُشاهَد البث على تيك توك. ارجع إلى هنا للطلب: المنتج والتخفيض والسلة بانتظارك.",
-    tiktokEnded: "هذا البث غير متواصل على تيك توك حاليًا.",
+    tiktokEnded: "هذا البث لم يُفتح بعد على G-Mall، أو انتهى.",
     tapToPlay: "اضغط لتشغيل البث",
     tapFullscreenToPlay: "اضغط على ⤢ أسفل اليمين لتشغيل البث",
     products: "المنتجات",
